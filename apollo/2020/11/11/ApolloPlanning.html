@@ -1,0 +1,1105 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Apollo Planning 规划模块 - 峰子的乐园</title>
+<meta name="description" content="规划模块：生成车辆运动轨迹">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Apollo Planning 规划模块">
+<meta property="og:url" content="https://dingfen.github.io/apollo/2020/11/11/ApolloPlanning.html">
+
+
+  <meta property="og:description" content="规划模块：生成车辆运动轨迹">
+
+
+
+  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-11-11T00:00:00+00:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://dingfen.github.io/apollo/2020/11/11/ApolloPlanning.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "https://dingfen.github.io/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser2.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Apollo Planning 规划模块
+
+        
+      </h1>
+      
+        <p class="page__lead">规划模块：生成车辆运动轨迹
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Apollo Planning 规划模块">
+    <meta itemprop="description" content="规划模块：生成车辆运动轨迹">
+    <meta itemprop="datePublished" content="2020-11-11T00:00:00+00:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#apollo-planning-%E6%A8%A1%E5%9D%97">Apollo Planning 模块</a>
+    <ul>
+      <li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+      <li>
+<a href="#%E5%9C%BA%E6%99%AF">场景</a>
+        <ul>
+          <li><a href="#%E6%B2%BF%E8%BD%A6%E9%81%93%E7%BA%BF%E8%A1%8C%E9%A9%B6">沿车道线行驶</a></li>
+          <li><a href="#%E4%BC%9A%E8%BD%A6">会车</a></li>
+          <li><a href="#%E5%81%9C%E8%BD%A6">停车</a></li>
+          <li><a href="#%E5%8D%B3%E5%81%9C%E5%8D%B3%E8%B5%B0park-and-go">即停即走（Park-and-go）</a></li>
+          <li><a href="#%E7%B4%A7%E6%80%A5%E7%8A%B6%E5%86%B5">紧急状况</a></li>
+        </ul>
+      </li>
+      <li><a href="#%E8%A7%84%E5%88%92%E6%A8%A1%E5%9D%97%E7%9A%84%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84">规划模块的体系结构</a></li>
+      <li>
+<a href="#%E8%A7%84%E5%88%92%E6%A8%A1%E5%9D%97%E4%B9%8B%E7%BB%84%E4%BB%B6%E7%B1%BB">规划模块之组件类</a>
+        <ul>
+          <li><a href="#%E5%88%9D%E5%A7%8B%E5%8C%96">初始化</a></li>
+          <li><a href="#%E5%A4%84%E7%90%86">处理</a></li>
+          <li><a href="#%E8%BE%93%E5%85%A5%E6%95%B0%E6%8D%AE">输入数据</a></li>
+          <li><a href="#%E7%94%9F%E6%88%90%E8%BD%A8%E8%BF%B9">生成轨迹</a></li>
+        </ul>
+      </li>
+      <li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="apollo-planning-模块">Apollo Planning 模块</h1>
+
+<h2 id="前言">前言</h2>
+
+<p>本篇博客对 Apollo 的规划（Planning）模块做详细介绍。根据官方文档<sup>1</sup>，规划模块的主要功能是对自动驾驶车辆未来的时空轨迹进行规划。为了让读者对规划模块在整个 Apollo 系统中的位置有一个大致的印象，我特意从官网上截取此图👇。可以看到规划模块的数据上游是定位（Localization），预测（Prediction），感知（Perception）模块，而下游是控制（Control）模块。</p>
+
+<p><img src="/assets/img/Apollo_3_5_software_architecture.png" alt=""></p>
+
+<h2 id="场景">场景</h2>
+
+<p>规划模块中，Apollo 设计团队引入了场景的概念，每个驾驶案例都被当做为一个不同的驾驶场景，这使得规划模块更具模块化，且更有针对性。更重要的是，对一个特定场景的修改不会影响其他场景。Apollo 5.5 主要注重于城市道路上的沿车道线自动驾驶，并引入了两种新的规划场景<sup>2</sup>。这里主要介绍 5 种驾驶场景，由于篇幅原因，我就在这里做简要介绍，详细内容可以点击<a href="https://github.com/ApolloAuto/apollo/blob/r5.5.0/modules/planning/README.md">参考文献 [2]</a>。</p>
+
+<h3 id="沿车道线行驶">沿车道线行驶</h3>
+
+<p>默认场景模式，该场景包括但不限于遵守基本交通规则，或者基本转弯的单车道（例如巡航）或变道。</p>
+
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/Planning_default.png" width="80%">
+</center>
+
+<h3 id="会车">会车</h3>
+
+<p>该场景包括了在有停<img class="emoji" title=":stop_sign:" alt=":stop_sign:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f6d1.png" height="20" width="20"> 标志的、有交通灯 <img class="emoji" title=":traffic_light:" alt=":traffic_light:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f6a5.png" height="20" width="20"> 的、什么都没有的十字路口上的会车情况。总的来说，自动驾驶车辆在遇到这些十字路口时，都会先抵达十字路口边，然后注意观察来往车辆并小心前进，最终通过十字路口</p>
+
+<center>
+	<img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/unprotected1.png" width="80%">
+</center>
+
+<h3 id="停车">停车</h3>
+
+<p>停车场景中采用了一个令 Apollo 团队感到非常骄傲的 <a href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md">Open Space Planner</a> 算法，该规划算法尤其适用于停车场景。文档中，一共介绍了两个子场景：</p>
+
+<ul>
+  <li>
+    <p>Valet 场景，用于将车辆停放在一个目标车位中</p>
+
+    <center>
+      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/parking2.png" width="80%">
+  </center>
+  </li>
+  <li>
+    <p>Pull Over 场景，用于到达目的地后，完成的路边停车任务。</p>
+
+    <center>
+      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/pull_over1.png" width="80%">
+  </center>
+  </li>
+</ul>
+
+<h3 id="即停即走park-and-go">即停即走（Park-and-go）</h3>
+
+<p>即停即走场景用于路边停车，并开始生成到达下一个目的地的新路径，有点像出租车放下一名乘客后的场景，对于路边交付，乘客接送或下车等情况非常有用。该场景将 Open Space Planner 算法与其他传统的轨迹规划算法结合在一起，以确保汽车不仅安全停车，而且还能够按照生成的轨迹驶出停车位。</p>
+
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/park_and_go.png" width="80%">
+</center>
+
+<h3 id="紧急状况">紧急状况</h3>
+
+<p>紧急场景是为确保在给定触发事件的情况下（通过人工输入或由于一个或多个软硬件故障）让车辆能安全停下。 该场景对于城市驾驶极为重要，因为在道路上经常会遇到几种无法预料的情况，要求车辆完全停车。例如，有两种类型的紧急停车：</p>
+
+<ul>
+  <li>靠边停车，自动驾驶车辆使用 Open Space Planner 靠边停车</li>
+  <li>在车道停止，自动驾驶汽车在充分意识到周遭安全的情况下，在车道内停车</li>
+</ul>
+
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/emergency.png" width="80%">
+</center>
+
+<h2 id="规划模块的体系结构">规划模块的体系结构</h2>
+
+<p>在 Apollo 5.5 版本中，Apollo 团队对规划模块的体系结构进行了修改，以纳入城市道路上的新驾驶方案。 如下图所示，因为新加入了有两种复杂方案：紧急情况和即停即走。为了有效地使用这些方案，团队引入了 2 个新的决策器—路径重用决策器（Path Reuse Decider）和限速决策器（Speed Bound Decider），并更新了现有决策器，使规划体系结构既强大又灵活，足以应付许多不同类型的城市道路驾驶方案。</p>
+
+<p>每个驾驶场景都有其独特的驾驶参数集，使其更安全，高效，更易于自定义和调试，也更加灵活。</p>
+
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/architecture_5.5.png">
+</center>
+<h2 id="规划模块之组件类">规划模块之组件类</h2>
+
+<p>如果你认真了解了 <a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html">Apollo Cyber RT 组件</a>的相关知识，就明白模块的起点就是 <code class="language-plaintext highlighter-rouge">Component</code> 类，一切的模块都是继承 <code class="language-plaintext highlighter-rouge">Component</code> 类而来的。自然地，我把这它作为全面认识规划模块的切入点。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">PlanningComponent</span> <span class="k">final</span>
+    <span class="o">:</span> <span class="k">public</span> <span class="n">cyber</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">prediction</span><span class="o">::</span><span class="n">PredictionObstacles</span><span class="p">,</span> <span class="n">canbus</span><span class="o">::</span><span class="n">Chassis</span><span class="p">,</span>
+                              <span class="n">localization</span><span class="o">::</span><span class="n">LocalizationEstimate</span><span class="o">&gt;</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="kt">bool</span> <span class="n">Init</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="n">Proc</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">prediction</span><span class="o">::</span><span class="n">PredictionObstacles</span><span class="o">&gt;&amp;</span>
+                <span class="n">prediction_obstacles</span><span class="p">,</span>
+            <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">canbus</span><span class="o">::</span><span class="n">Chassis</span><span class="o">&gt;&amp;</span> <span class="n">chassis</span><span class="p">,</span>
+            <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">LocalizationEstimate</span><span class="o">&gt;&amp;</span>
+                <span class="n">localization_estimate</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+ <span class="nl">private:</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">perception</span><span class="o">::</span><span class="n">TrafficLightDetection</span><span class="o">&gt;&gt;</span>
+      <span class="n">traffic_light_reader_</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingResponse</span><span class="o">&gt;&gt;</span> <span class="n">routing_reader_</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">planning</span><span class="o">::</span><span class="n">PadMessage</span><span class="o">&gt;&gt;</span> <span class="n">pad_msg_reader_</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">relative_map</span><span class="o">::</span><span class="n">MapMsg</span><span class="o">&gt;&gt;</span> <span class="n">relative_map_reader_</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">storytelling</span><span class="o">::</span><span class="n">Stories</span><span class="o">&gt;&gt;</span> <span class="n">story_telling_reader_</span><span class="p">;</span>
+
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">ADCTrajectory</span><span class="o">&gt;&gt;</span> <span class="n">planning_writer_</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingRequest</span><span class="o">&gt;&gt;</span> <span class="n">rerouting_writer_</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">PlanningLearningData</span><span class="o">&gt;&gt;</span>
+      <span class="n">planning_learning_data_writer_</span><span class="p">;</span>
+<span class="cm">/*   ....   */</span>
+ <span class="c1">// 与 Reader 一一对应的私有变量</span>
+  <span class="n">perception</span><span class="o">::</span><span class="n">TrafficLightDetection</span> <span class="n">traffic_light_</span><span class="p">;</span>
+  <span class="n">routing</span><span class="o">::</span><span class="n">RoutingResponse</span> <span class="n">routing_</span><span class="p">;</span>
+  <span class="n">planning</span><span class="o">::</span><span class="n">PadMessage</span> <span class="n">pad_msg_</span><span class="p">;</span>
+  <span class="n">relative_map</span><span class="o">::</span><span class="n">MapMsg</span> <span class="n">relative_map_</span><span class="p">;</span>
+  <span class="n">storytelling</span><span class="o">::</span><span class="n">Stories</span> <span class="n">stories_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>我们一条条地看，<code class="language-plaintext highlighter-rouge">PlanningComponent</code> 类继承的是 <code class="language-plaintext highlighter-rouge">Component&lt;prediction::PredictionObstacles, canbus::Chassis,  localization::LocalizationEstimate&gt;</code> 类，简单地说，从名字上看，<code class="language-plaintext highlighter-rouge">PlanningComponent</code> 类需要处理三类消息：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">prediction::PredictionObstacles</code> 预测的障碍物行为</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">canbus::Chassis</code>  canbus 总线传来的底盘状态</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">localization::LocalizationEstimate</code> 来自定位模块的定位信息</li>
+</ul>
+
+<p>但是，<code class="language-plaintext highlighter-rouge">PlanningComponent</code> 类内部有非常多的不同类型的订阅者 <code class="language-plaintext highlighter-rouge">Reader</code> 和发布者 <code class="language-plaintext highlighter-rouge">Writer</code> 。这些订阅者和发布者的用途，大都可以通过名称猜出个大概。值得注意的是，类的成员变量中，存在与 <code class="language-plaintext highlighter-rouge">Reader</code> 一一对应的变量，看起来它们是用于存放对应的 <code class="language-plaintext highlighter-rouge">Reader</code> 接收的消息，很快下文就证实了我的猜想<img class="emoji" title=":smiley:" alt=":smiley:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f603.png" height="20" width="20">。</p>
+
+<p><span id="Init"></span></p>
+
+<h3 id="初始化">初始化</h3>
+
+<p><code class="language-plaintext highlighter-rouge">Init()</code> 函数实现了模块初始化，在 <code class="language-plaintext highlighter-rouge">modules/</code> 中的代码不论取名、类型还是函数实现都非常长，这点不同于 Cyber RT，因此在大多数情况下，我选择部分截取代码，如果想要看完整的代码，移步 <code class="language-plaintext highlighter-rouge">modules/planning/planning_component.cc::Init()</code> 。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">injector_</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">DependencyInjector</span><span class="o">&gt;</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">FLAGS_use_navigation_mode</span><span class="p">)</span>
+    <span class="n">planning_base_</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">NaviPlanning</span><span class="o">&gt;</span><span class="p">(</span><span class="n">injector_</span><span class="p">);</span>
+  <span class="k">else</span>
+    <span class="n">planning_base_</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">OnLanePlanning</span><span class="o">&gt;</span><span class="p">(</span><span class="n">injector_</span><span class="p">);</span>
+
+  <span class="n">ACHECK</span><span class="p">(</span><span class="n">ComponentBase</span><span class="o">::</span><span class="n">GetProtoConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">config_</span><span class="p">))</span>
+      <span class="o">&lt;&lt;</span> <span class="s">"failed to load planning config file "</span>
+      <span class="o">&lt;&lt;</span> <span class="n">ComponentBase</span><span class="o">::</span><span class="n">ConfigFilePath</span><span class="p">();</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">FLAGS_planning_offline_learning</span> <span class="o">||</span>
+      <span class="n">config_</span><span class="p">.</span><span class="n">learning_mode</span><span class="p">()</span> <span class="o">!=</span> <span class="n">PlanningConfig</span><span class="o">::</span><span class="n">NO_LEARNING</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">message_process_</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">config_</span><span class="p">,</span> <span class="n">injector_</span><span class="p">))</span>
+      <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+
+  <span class="n">planning_base_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">config_</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>上面代码首先创建了一个 <code class="language-plaintext highlighter-rouge">DependencyInjector</code> 类的指针，然后根据 <code class="language-plaintext highlighter-rouge">FLAGS_use_navigation_mode</code> 模式的不同，选择创建不同的 <code class="language-plaintext highlighter-rouge">PlanningBase</code> 的子类，然后就是读取配置文件路径，再就是 <code class="language-plaintext highlighter-rouge">PlanningBase</code> 子类的初始化。先来说说这些规划子类的区别。</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">OpenSpacePlanning</code>  主要的应用场景是自主泊车和狭窄路段的掉头，<a href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md">官方文档参考</a>，但很奇怪的是，我没有找到相应的实现代码<img class="emoji" title=":confused:" alt=":confused:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f615.png" height="20" width="20">
+</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">NaviPlanning</code>   主要用于在确定了导航路线的情况下的自动驾驶</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">OnLanePlanning</code>   主要的应用于开放道路下沿车道线的自动驾驶。</li>
+</ul>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">routing_reader_</span> <span class="o">=</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">RoutingResponse</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="n">config_</span><span class="p">.</span><span class="n">topic_config</span><span class="p">().</span><span class="n">routing_response_topic</span><span class="p">(),</span>
+      <span class="p">[</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">RoutingResponse</span><span class="o">&gt;&amp;</span> <span class="n">routing</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">AINFO</span> <span class="o">&lt;&lt;</span> <span class="s">"Received routing data: run routing callback."</span>
+              <span class="o">&lt;&lt;</span> <span class="n">routing</span><span class="o">-&gt;</span><span class="n">header</span><span class="p">().</span><span class="n">DebugString</span><span class="p">();</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+        <span class="n">routing_</span><span class="p">.</span><span class="n">CopyFrom</span><span class="p">(</span><span class="o">*</span><span class="n">routing</span><span class="p">);</span>
+      <span class="p">});</span>
+<span class="c1">// 接下来几个 Reader 类似的写法</span>
+  <span class="n">planning_writer_</span> <span class="o">=</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">ADCTrajectory</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="n">config_</span><span class="p">.</span><span class="n">topic_config</span><span class="p">().</span><span class="n">planning_trajectory_topic</span><span class="p">());</span>
+<span class="c1">// 接下来的 Writer 类似的写法</span>
+</code></pre></div></div>
+
+<p>紧接着，<code class="language-plaintext highlighter-rouge">Init()</code> 函数就用<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">我之前博文中介绍的方式</a>创建订阅者 <code class="language-plaintext highlighter-rouge">Reader</code> 和发布者 <code class="language-plaintext highlighter-rouge">Writer</code> 。仔细看上面给出的代码，<code class="language-plaintext highlighter-rouge">CreateReader</code> 函数的参数，一个是从配置文件中取得相应的配置信息，另一个是构建的回调函数。</p>
+
+<p>咱们先来看一下后者：构建函数。根据我在<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">这篇博客中所讲的流程</a>，传入的回调函数是在 <code class="language-plaintext highlighter-rouge">Reader</code> 接收到消息后就会被调用的，从内容来看，<code class="language-plaintext highlighter-rouge">Reader</code> 在收到对应的消息后，调用 <code class="language-plaintext highlighter-rouge">CopyFrom()</code> 函数，把消息拷贝到自己的私有变量中。至于 <code class="language-plaintext highlighter-rouge">Writer</code> 就比较平凡了，就是获取了配置文件里相应的信息<img class="emoji" title=":man_shrugging:" alt=":man_shrugging:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f937-2642.png" height="20" width="20">。</p>
+
+<p>那么这个“配置文件中的相应信息”到底是什么信息呢<img class="emoji" title=":confused:" alt=":confused:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f615.png" height="20" width="20">？打开 <code class="language-plaintext highlighter-rouge">modules/planning/conf/planning_config.pb.txt</code>，你就会恍然大悟<img class="emoji" title=":point_down:" alt=":point_down:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f447.png" height="20" width="20">，原来上面代码中的 <code class="language-plaintext highlighter-rouge">config_.topic_config().planning_trajectory_topic()</code>  就是一个字符串，对应的就是信道的名字。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>topic_config {
+  chassis_topic: "/apollo/canbus/chassis"
+  hmi_status_topic: "/apollo/hmi/status"
+  localization_topic: "/apollo/localization/pose"
+  planning_pad_topic: "/apollo/planning/pad"
+  planning_trajectory_topic: "/apollo/planning"
+  prediction_topic: "/apollo/prediction"
+  relative_map_topic: "/apollo/relative_map"
+  routing_request_topic: "/apollo/routing_request"
+  routing_response_topic: "/apollo/routing_response"
+  story_telling_topic: "/apollo/storytelling"
+  traffic_light_detection_topic: "/apollo/perception/traffic_light"
+  planning_learning_data_topic: "/apollo/planning/learning_data"
+}
+</code></pre></div></div>
+
+<p>这就是初始化函数的全部内容了。</p>
+
+<h3 id="处理">处理</h3>
+
+<p>再来看 <code class="language-plaintext highlighter-rouge">PlanningComponent::Proc()</code> 函数，之前的博客中我说过，<code class="language-plaintext highlighter-rouge">Proc()</code> 函数是可以由用户自己编写完成的，而之后，该函数会被封装处理，最终让对应的协程开始执行。不同于在 Cyber RT 中的精雕细琢，我这次采用不同的办法，先快速过一遍 <code class="language-plaintext highlighter-rouge">Proc()</code> 函数，然后找出自己感兴趣的，进而深入研究。那么先来看 <code class="language-plaintext highlighter-rouge">Proc()</code> 函数的第一部分：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 函数头前面已经给出了 这里就不放了 并去掉了一些错误诊断语句</span>
+<span class="c1">// check and process possible rerouting request</span>
+  <span class="n">CheckRerouting</span><span class="p">();</span>
+
+<span class="c1">// process fused input data</span>
+  <span class="n">local_view_</span><span class="p">.</span><span class="n">prediction_obstacles</span> <span class="o">=</span> <span class="n">prediction_obstacles</span><span class="p">;</span>
+  <span class="n">local_view_</span><span class="p">.</span><span class="n">chassis</span> <span class="o">=</span> <span class="n">chassis</span><span class="p">;</span>
+  <span class="n">local_view_</span><span class="p">.</span><span class="n">localization_estimate</span> <span class="o">=</span> <span class="n">localization_estimate</span><span class="p">;</span>
+  <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">local_view_</span><span class="p">.</span><span class="n">routing</span> <span class="o">||</span>
+        <span class="n">hdmap</span><span class="o">::</span><span class="n">PncMap</span><span class="o">::</span><span class="n">IsNewRouting</span><span class="p">(</span><span class="o">*</span><span class="n">local_view_</span><span class="p">.</span><span class="n">routing</span><span class="p">,</span> <span class="n">routing_</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">local_view_</span><span class="p">.</span><span class="n">routing</span> <span class="o">=</span>
+          <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingResponse</span><span class="o">&gt;</span><span class="p">(</span><span class="n">routing_</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+    <span class="n">local_view_</span><span class="p">.</span><span class="n">traffic_light</span> <span class="o">=</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">TrafficLightDetection</span><span class="o">&gt;</span><span class="p">(</span><span class="n">traffic_light_</span><span class="p">);</span>
+    <span class="n">local_view_</span><span class="p">.</span><span class="n">relative_map</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">MapMsg</span><span class="o">&gt;</span><span class="p">(</span><span class="n">relative_map_</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+    <span class="n">local_view_</span><span class="p">.</span><span class="n">pad_msg</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">PadMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="n">pad_msg_</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+    <span class="n">local_view_</span><span class="p">.</span><span class="n">stories</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">Stories</span><span class="o">&gt;</span><span class="p">(</span><span class="n">stories_</span><span class="p">);</span>
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<p>首先，<code class="language-plaintext highlighter-rouge">Proc()</code> 函数调用 <code class="language-plaintext highlighter-rouge">CheckRerouting()</code> 检查并处理了可能的重新路由需求，然后就是构建自己对象内的成员 <code class="language-plaintext highlighter-rouge">local_view_</code> ，没错，为了防止多线程竞争，使用了非常多次的互斥锁<img class="emoji" title=":lock:" alt=":lock:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f512.png" height="20" width="20"> 。该成员变量包含了所有规划模块需要的输入，这些输入信息非常重要，可能会经常使用，详细情况在下文的<a href="#input">输入</a>部分。</p>
+
+<p>我们先把诸多疑问抛置脑后，直接来看 <code class="language-plaintext highlighter-rouge">Proc()</code> 函数的第二部分。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">if</span> <span class="p">(</span><span class="n">config_</span><span class="p">.</span><span class="n">learning_mode</span><span class="p">()</span> <span class="o">!=</span> <span class="n">PlanningConfig</span><span class="o">::</span><span class="n">NO_LEARNING</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// data process for online training</span>
+    <span class="n">message_process_</span><span class="p">.</span><span class="n">OnChassis</span><span class="p">(</span><span class="o">*</span><span class="n">local_view_</span><span class="p">.</span><span class="n">chassis</span><span class="p">);</span>
+    <span class="n">message_process_</span><span class="p">.</span><span class="n">OnPrediction</span><span class="p">(</span><span class="o">*</span><span class="n">local_view_</span><span class="p">.</span><span class="n">prediction_obstacles</span><span class="p">);</span>
+    <span class="n">message_process_</span><span class="p">.</span><span class="n">OnRoutingResponse</span><span class="p">(</span><span class="o">*</span><span class="n">local_view_</span><span class="p">.</span><span class="n">routing</span><span class="p">);</span>
+    <span class="n">message_process_</span><span class="p">.</span><span class="n">OnStoryTelling</span><span class="p">(</span><span class="o">*</span><span class="n">local_view_</span><span class="p">.</span><span class="n">stories</span><span class="p">);</span>
+    <span class="n">message_process_</span><span class="p">.</span><span class="n">OnTrafficLightDetection</span><span class="p">(</span><span class="o">*</span><span class="n">local_view_</span><span class="p">.</span><span class="n">traffic_light</span><span class="p">);</span>
+    <span class="n">message_process_</span><span class="p">.</span><span class="n">OnLocalization</span><span class="p">(</span><span class="o">*</span><span class="n">local_view_</span><span class="p">.</span><span class="n">localization_estimate</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">// publish learning data frame for RL test</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">config_</span><span class="p">.</span><span class="n">learning_mode</span><span class="p">()</span> <span class="o">==</span> <span class="n">PlanningConfig</span><span class="o">::</span><span class="n">RL_TEST</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">PlanningLearningData</span> <span class="n">planning_learning_data</span><span class="p">;</span>
+    <span class="n">LearningDataFrame</span><span class="o">*</span> <span class="n">learning_data_frame</span> <span class="o">=</span>
+        <span class="n">injector_</span><span class="o">-&gt;</span><span class="n">learning_based_data</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetLatestLearningDataFrame</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">learning_data_frame</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">planning_learning_data</span><span class="p">.</span><span class="n">mutable_learning_data_frame</span><span class="p">()</span>
+                            <span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="o">*</span><span class="n">learning_data_frame</span><span class="p">);</span>
+      <span class="n">common</span><span class="o">::</span><span class="n">util</span><span class="o">::</span><span class="n">FillHeader</span><span class="p">(</span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">planning_learning_data</span><span class="p">);</span>
+      <span class="n">planning_learning_data_writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">planning_learning_data</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">AERROR</span> <span class="o">&lt;&lt;</span> <span class="s">"fail to generate learning data frame"</span><span class="p">;</span>
+      <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从注释中看出，<code class="language-plaintext highlighter-rouge">MessageProcess</code> 类有用于线上训练的功能，在 <code class="language-plaintext highlighter-rouge">learning_mode</code> 打开时，它会收集刚刚输入得到信息。之后，<code class="language-plaintext highlighter-rouge">injector_</code> 获得最新的学习数据帧（frame），并通过 <code class="language-plaintext highlighter-rouge">planning_learning_data_writer_</code> 发布者发布，用于强化学习（Reinforcement Learning）测试。</p>
+
+<p>同样，跳过学习部分（这不是我所关心的重点），再来看第三部分代码：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">ADCTrajectory</span> <span class="n">adc_trajectory_pb</span><span class="p">;</span>
+  <span class="n">planning_base_</span><span class="o">-&gt;</span><span class="n">RunOnce</span><span class="p">(</span><span class="n">local_view_</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">adc_trajectory_pb</span><span class="p">);</span>
+  <span class="n">common</span><span class="o">::</span><span class="n">util</span><span class="o">::</span><span class="n">FillHeader</span><span class="p">(</span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">adc_trajectory_pb</span><span class="p">);</span>
+
+  <span class="c1">// modify trajectory relative time due to the timestamp change in header</span>
+  <span class="k">auto</span> <span class="n">start_time</span> <span class="o">=</span> <span class="n">adc_trajectory_pb</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">();</span>
+  <span class="k">const</span> <span class="kt">double</span> <span class="n">dt</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">-</span> <span class="n">adc_trajectory_pb</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">();</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">p</span> <span class="o">:</span> <span class="o">*</span><span class="n">adc_trajectory_pb</span><span class="p">.</span><span class="n">mutable_trajectory_point</span><span class="p">())</span> <span class="p">{</span>
+    <span class="n">p</span><span class="p">.</span><span class="n">set_relative_time</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">relative_time</span><span class="p">()</span> <span class="o">+</span> <span class="n">dt</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">planning_writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">adc_trajectory_pb</span><span class="p">);</span>
+
+  <span class="c1">// record in history</span>
+  <span class="k">auto</span><span class="o">*</span> <span class="n">history</span> <span class="o">=</span> <span class="n">injector_</span><span class="o">-&gt;</span><span class="n">history</span><span class="p">();</span>
+  <span class="n">history</span><span class="o">-&gt;</span><span class="n">Add</span><span class="p">(</span><span class="n">adc_trajectory_pb</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>在第三部分代码中，首先调用 <code class="language-plaintext highlighter-rouge">RunOnce()</code> 函数生成了自动驾驶轨迹，放在了 <code class="language-plaintext highlighter-rouge">ADCTrajectory</code> 类的消息中，看来这就是生产规划路径的关键逻辑，这是我比较关心的。然后，根据注释，我推断，程序修改了轨迹中所有点的相对时间，并通过发布者 <code class="language-plaintext highlighter-rouge">planning_writer_</code> 发送消息，最后进行历史记录。至此，<code class="language-plaintext highlighter-rouge">PlanningComponent::Proc()</code> 函数结束。</p>
+
+<p><span id="input"></span></p>
+<h3 id="输入数据">输入数据</h3>
+
+<p>前文说到，<code class="language-plaintext highlighter-rouge">Proc()</code> 函数先检查路由情况，再收集输入数据到 <code class="language-plaintext highlighter-rouge">local_view_</code> 这个私有变量中。为了弄清模块的输入输出信息，进而了解整个 Apollo 系统的数据流通情况，我需要对输入数据做一个全面的解读。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">LocalView</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">prediction</span><span class="o">::</span><span class="n">PredictionObstacles</span><span class="o">&gt;</span> <span class="n">prediction_obstacles</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">canbus</span><span class="o">::</span><span class="n">Chassis</span><span class="o">&gt;</span> <span class="n">chassis</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">LocalizationEstimate</span><span class="o">&gt;</span> <span class="n">localization_estimate</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">perception</span><span class="o">::</span><span class="n">TrafficLightDetection</span><span class="o">&gt;</span> <span class="n">traffic_light</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingResponse</span><span class="o">&gt;</span> <span class="n">routing</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">relative_map</span><span class="o">::</span><span class="n">MapMsg</span><span class="o">&gt;</span> <span class="n">relative_map</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">PadMessage</span><span class="o">&gt;</span> <span class="n">pad_msg</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">storytelling</span><span class="o">::</span><span class="n">Stories</span><span class="o">&gt;</span> <span class="n">stories</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<ul>
+  <li>prediction_obstacles 从信道中获得的指针，类型为 <code class="language-plaintext highlighter-rouge">PredictionObstacles</code>，代码文件在 <code class="language-plaintext highlighter-rouge">modules/prediction/proto/prediction_obstacle.proto</code> 中，该类型的消息来自<strong>预测模块</strong>，包含了以下信息：
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">Header</code> 头结构：包含了这条消息<strong>发布的时刻</strong>（以秒为单位），目前位置的模块名，该消息的序列号（每个模块各自维护的）等，几乎每个消息都包含有这个头结构，下面就不提及了。</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">PredictionObstacle</code> 预测模块中的若干个障碍物行为：有感知模块中的障碍物（<code class="language-plaintext highlighter-rouge">PerceptionObstacle</code>），它包括障碍物的 id，它的三维坐标、速度加速度、边界大小（长高宽）、特殊的形状、类型（行人、非机动车、机动车）、运动轨迹等；还有时间戳，记录 GPS 给出的时刻；还有预测的时间长度；多种可能的运动轨迹；障碍物的运动趋势、优先级等。</li>
+      <li>开始的时间戳：记录预测开始的时刻</li>
+      <li>结束时间戳：预测结束的时刻</li>
+      <li>自动驾驶车辆的运动趋势，停止、正常行驶还是正在变道等</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">Scenery</code>  现在的场景</li>
+    </ul>
+  </li>
+  <li>chassis 从信道获得的指针，类型为 <code class="language-plaintext highlighter-rouge">Chassis</code>，这条消息直接来自<strong>总线 CanBus</strong>，代码文件在 <code class="language-plaintext highlighter-rouge">modules/canbus/proto/chassis.proto</code> 中，该类包含了很多信息，主要是汽车底盘所给出的机械状态信息，比如：
+    <ul>
+      <li>驾驶模式，有手动驾驶、自动驾驶、仅控制方向、仅控制速度以及紧急模式</li>
+      <li>档位情况、引擎转速、车辆速度、里程表、燃油情况、电池电量等</li>
+      <li>刹车、油门踏板的力度，方向盘的旋转角度，车轮转速</li>
+      <li>转向灯、雾灯、大灯的工作情况</li>
+    </ul>
+  </li>
+  <li>localization_estimate 从信道中获得的指针，类型为 <code class="language-plaintext highlighter-rouge">LocalizationEstimate</code>，代码文件在 <code class="language-plaintext highlighter-rouge">modules/localization/proto/localization.proto</code> 中，这条消息来自<strong>定位模块</strong>，该类主要包含了：
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">Pose</code> 位置姿势，包括车头朝向，在地图上的线速度、线加速度和相对位置，角速度、仰角度等</li>
+      <li>测量上述姿势的时刻</li>
+      <li>车辆已经经过的轨迹点列</li>
+      <li>MSF 定位状态与质量</li>
+    </ul>
+  </li>
+</ul>
+
+<p>上面的三条消息都是通过 <code class="language-plaintext highlighter-rouge">Proc()</code> 函数的参数传来的，回顾一下<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">在通信里讲过的过程</a>，这三条信息会被融合起来，随后程序会唤醒封装了 <code class="language-plaintext highlighter-rouge">Component::Process()</code> 的协程，让协程处于 Ready 状态，最后通过调度算法会让某个线程对它进行执行。而以下介绍的五条消息，与上三条不一样，这些消息，是通过 <code class="language-plaintext highlighter-rouge">Reader</code> 获得的，回顾<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html#reader-%E7%B1%BB">在这篇博客里讲的订阅者内容</a>，这些消息到来后，程序会唤醒封装了<em>入队操作</em>和 <em><code class="language-plaintext highlighter-rouge">Reader</code> 回调函数</em>的协程，让它处于 Ready 状态，最后调度算法调度某个线程进行执行。接下来，我们就详细看一下这五条消息吧：</p>
+
+<ul>
+  <li>traffic_light 获得现在的交通信号灯情况，类型为 <code class="language-plaintext highlighter-rouge">TrafficLightDetection</code> ，来自<strong>感知模块</strong>，该类在 <code class="language-plaintext highlighter-rouge">modules/perception/camera/lib/traffic_light/detector/detection/detection.h</code> 中定义，主要是从摄像机拍摄的图片中获得目前的信号灯情况</li>
+  <li>routing 导航路线，类型为 <code class="language-plaintext highlighter-rouge">RoutingResponse</code> ，来自<strong>路由模块</strong>，从 <code class="language-plaintext highlighter-rouge">RoutingComponent</code> 类看出，<code class="language-plaintext highlighter-rouge">RoutingResponse</code> 就是该组件发布的消息类，类在 <code class="language-plaintext highlighter-rouge">modules/routing/proto/routing.proto</code> 文件中定义，<code class="language-plaintext highlighter-rouge">RoutingResponse</code> 包含有：
+    <ul>
+      <li>导航中要通过的道路，以及总路程等</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">RoutingRequest</code> 可理解为要响应的路由请求</li>
+      <li>地图版本和现在的状态等</li>
+    </ul>
+  </li>
+  <li>relative_map 相对地图，类型为 <code class="language-plaintext highlighter-rouge">MapMsg</code>，是<code class="language-plaintext highlighter-rouge">RelativeMapComponent</code> 类发出的一个相对地图消息，在 <code class="language-plaintext highlighter-rouge">modules/map/relative_map/proto/navigation.proto</code> 文件中定义，包含
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">Header</code> 头结构</li>
+      <li>车辆的高清的三维坐标，定位信息</li>
+      <li>系统中的编号与对应的路名、车道表</li>
+      <li>从感知模块中获得的车道线标记</li>
+    </ul>
+  </li>
+  <li>pad_msg 便笺，类在 <code class="language-plaintext highlighter-rouge">modules/planning/proto/pad_msg.proto</code> 定义，除了一个头结构外，仅包含了驾驶动作，比如直行跟随，左右变道，靠边停车等。</li>
+</ul>
+
+<h3 id="生成轨迹">生成轨迹</h3>
+
+<p>在<a href="#Init">初始化</a>小节中，根据 <code class="language-plaintext highlighter-rouge">FLAGS_use_navigation_mode</code> 的设置， <code class="language-plaintext highlighter-rouge">planning_base_</code> 会指向不同的子类，或 <code class="language-plaintext highlighter-rouge">NaviPlanning</code> 类或是 <code class="language-plaintext highlighter-rouge">OnLanePlanning</code> 类，然后调用 <code class="language-plaintext highlighter-rouge">RunOnce()</code> 函数。</p>
+
+<p>首先来看一下默认的规划类的 <code class="language-plaintext highlighter-rouge">OnLanePlanning::RunOnce()</code> 函数，回顾一下 <code class="language-plaintext highlighter-rouge">Component::Proc()</code> 函数的调用和组件的相关知识，你应该就会明白它是<strong>事件触发</strong>的，而不是时间触发的。该函数很长很复杂，很多地方我也并不关心（而且也看不懂），若有机会，可以细致地研究一下，大体上，它完成了以下步骤：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">OnLanePlanning</span><span class="o">::</span><span class="n">RunOnce</span><span class="p">(</span><span class="k">const</span> <span class="n">LocalView</span><span class="o">&amp;</span> <span class="n">local_view</span><span class="p">,</span>
+                             <span class="n">ADCTrajectory</span><span class="o">*</span> <span class="k">const</span> <span class="n">ptr_trajectory_pb</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//  更新汽车状态和参考线的状态，如果状态无效，直接返回</span>
+    <span class="c1">//  ...  </span>
+    <span class="c1">// 是否为出现导航路线变换，如果是 初始化 planner</span>
+    <span class="c1">//  加上预估的规划触发的周期 得到 stitchingTrajectory</span>
+  <span class="c1">// planning is triggered by prediction data, but we can still use an estimated</span>
+  <span class="c1">// cycle time for stitching</span>
+  <span class="n">status</span> <span class="o">=</span> <span class="n">InitFrame</span><span class="p">(</span><span class="n">frame_num</span><span class="p">,</span> <span class="n">stitching_trajectory</span><span class="p">.</span><span class="n">back</span><span class="p">(),</span> <span class="n">vehicle_state</span><span class="p">);</span>
+    <span class="c1">//  判断是否符合交通规则</span>
+    <span class="c1">//  开始正在的规划 planner 开始规划</span>
+  <span class="n">status</span> <span class="o">=</span> <span class="n">Plan</span><span class="p">(</span><span class="n">start_timestamp</span><span class="p">,</span> <span class="n">stitching_trajectory</span><span class="p">,</span> <span class="n">ptr_trajectory_pb</span><span class="p">);</span>
+    <span class="c1">//  记录规划所花费的时间</span>
+    <span class="c1">//  ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么 <code class="language-plaintext highlighter-rouge">Planner</code> 又是什么东西呢？事实上才 <code class="language-plaintext highlighter-rouge">OnLanePlanning::Init()</code> 函数中就已经根据配置文件，由 <code class="language-plaintext highlighter-rouge">PlannerDispatcher</code> 指定了。我一共发现 4 种用于不同场景的 <code class="language-plaintext highlighter-rouge">Planner</code> ：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">RTKReplayPlanner</code>  根据录制的轨迹来规划行车路线</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">PublicRoadPlanner</code> 开放道路的轨迹规划器</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">LatticePlanner</code>  基于网格算法的轨迹规划器</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">NaviPlanner</code>  基于实时相对地图的规划器</li>
+</ul>
+
+<p>未完待续……</p>
+
+<h2 id="参考">参考</h2>
+
+<p>[1] <a href="https://github.com/ApolloAuto/apollo/">Github Apollo</a></p>
+
+<p>[2] <a href="https://github.com/ApolloAuto/apollo/blob/r5.5.0/modules/planning/README.md">Apollo Planning Docs</a></p>
+
+<p>[3] <a href="https://github.com/daohu527/Dig-into-Apollo/tree/master/modules/planning">apollo介绍之planning模块</a></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#cyber-rt" class="page__taxonomy-item" rel="tag">Cyber RT</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-11-11T00:00:00+00:00">November 11, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Apollo+Planning+%E8%A7%84%E5%88%92%E6%A8%A1%E5%9D%97%20https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F11%2FApolloPlanning.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F11%2FApolloPlanning.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F11%2FApolloPlanning.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/apollo/2020/11/07/CyberCommu2.html" class="pagination--pager" title="Apollo Cyber RT 通信（下）
+">previous</a>
+    
+    
+      <a href="/apollo/2020/11/18/CyberServiceDiscovery.html" class="pagination--pager" title="Apollo Cyber RT 服务与服务发现
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/07/05/CSAPPLab05.html" rel="permalink">深入理解计算机系统之动态存储分配器实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手写一个 malloc 函数
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/06/29/CSAPPLab04.html" rel="permalink">深入理解计算机系统之代码优化实验
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">如何写出对缓存友好的代码
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/05/27/CSAPPLab03.html" rel="permalink">深入理解计算机系统之缓冲区溢出炸弹实验
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">当心缓冲区溢出！
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/05/26/CSAPPLab02.html" rel="permalink">深入理解计算机系统之二进制炸弹实验
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">如何有效提升x86汇编阅读能力和GDB调试器使用能力
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2021 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://dingfen.github.io/apollo/2020/11/11/ApolloPlanning.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/apollo/2020/11/11/ApolloPlanning"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

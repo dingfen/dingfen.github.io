@@ -1,0 +1,1256 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Apollo Cyber RT 通信（下） - 峰子的乐园</title>
+<meta name="description" content="对 Cyber RT 的通信架构的深入研究">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Apollo Cyber RT 通信（下）">
+<meta property="og:url" content="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">
+
+
+  <meta property="og:description" content="对 Cyber RT 的通信架构的深入研究">
+
+
+
+  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-11-07T00:00:00+00:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "https://dingfen.github.io/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Apollo Cyber RT 通信（下）
+
+        
+      </h1>
+      
+        <p class="page__lead">对 Cyber RT 的通信架构的深入研究
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  10 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Apollo Cyber RT 通信（下）">
+    <meta itemprop="description" content="对 Cyber RT 的通信架构的深入研究">
+    <meta itemprop="datePublished" content="2020-11-07T00:00:00+00:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#apollo-cyber-rt-%E9%80%9A%E4%BF%A1%E4%B8%8B">Apollo Cyber RT 通信（下）</a>
+    <ul>
+      <li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+      <li>
+<a href="#receiver--transmitter">Receiver &amp; Transmitter</a>
+        <ul>
+          <li><a href="#receivermanager">ReceiverManager</a></li>
+          <li><a href="#transport">Transport</a></li>
+          <li><a href="#receiver--transmitter-1">Receiver &amp; Transmitter</a></li>
+        </ul>
+      </li>
+      <li>
+<a href="#data-%E9%83%A8%E5%88%86">Data 部分</a>
+        <ul>
+          <li><a href="#datavisitor">DataVisitor</a></li>
+          <li><a href="#datadispatcher">DataDispatcher</a></li>
+          <li><a href="#datanotifier">DataNotifier</a></li>
+          <li><a href="#datafusion--alllatest">DataFusion &amp; AllLatest</a></li>
+          <li><a href="#channelbuffer--cachebuffer">ChannelBuffer &amp; CacheBuffer</a></li>
+        </ul>
+      </li>
+      <li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+      <li><a href="#%E5%8F%82%E8%80%83">参考</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="apollo-cyber-rt-通信下">Apollo Cyber RT 通信（下）</h1>
+
+<h2 id="前言">前言</h2>
+
+<p>欢迎回来！今天我继续和大家聊 Cyber RT 的通信，<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">上文</a>我探讨了 Cyber RT 的两种通信方式和三种通信模型，并从通信架构的角度，一层层地给大家详细介绍了通信时代码的具体工作情况。由于通信内容过多，全放在一篇博客理论太长，于是我将这些内容简单地一分为二，事实上它们应当是有机的整体。</p>
+
+<p>上文末尾，我介绍了 <code class="language-plaintext highlighter-rouge">Blocker</code> 类的功能，今天这篇博客，我们继续向深处进军↖(^ω^)↗。</p>
+
+<center>
+<img src="/assets/img/CyberLayer.png">
+</center>
+<h2 id="receiver--transmitter">Receiver &amp; Transmitter</h2>
+
+<p>我们在上文已经认识了 <code class="language-plaintext highlighter-rouge">Reader</code> 和 <code class="language-plaintext highlighter-rouge">Writer</code> ，现在继续往下走。如果你仔细看代码的话，在 <code class="language-plaintext highlighter-rouge">Reader</code> 和 <code class="language-plaintext highlighter-rouge">Writer</code> 初始化时，都会分别构建好底层的 <code class="language-plaintext highlighter-rouge">Receiver</code> 和 <code class="language-plaintext highlighter-rouge">Transmitter</code> 对象。为了描述简便，我之前有意地忽略了，现在把它拿出来。<code class="language-plaintext highlighter-rouge">Reader</code> 部分的比较复杂，还使用了 <code class="language-plaintext highlighter-rouge">ReceiverManager</code> 进行管理；<code class="language-plaintext highlighter-rouge">Writer</code> 就比较直接了，在 <code class="language-plaintext highlighter-rouge">Init()</code> 函数中可以直接看到。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Init</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">receiver_</span> <span class="o">=</span> <span class="n">ReceiverManager</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetReceiver</span><span class="p">(</span><span class="n">role_attr_</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">bool</span> <span class="n">Writer</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Init</span><span class="p">()</span> <span class="p">{</span>
+   <span class="cm">/*  ....   */</span>
+    <span class="n">transmitter_</span> <span class="o">=</span>
+        <span class="n">transport</span><span class="o">::</span><span class="n">Transport</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CreateTransmitter</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">role_attr_</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们不妨把这里作为突破口，打开新世界的大门。</p>
+
+<p><span id="1"></span></p>
+
+<h3 id="receivermanager">ReceiverManager</h3>
+
+<p>之前提到过，<code class="language-plaintext highlighter-rouge">Reader</code> 在初始化时，需要用 <code class="language-plaintext highlighter-rouge">ReceiverManager::GetReceiver()</code> 获得 <code class="language-plaintext highlighter-rouge">Receiver</code> 对象。它的内部分封装了一个 <code class="language-plaintext highlighter-rouge">unordered_map</code> 表，将信道名字和与之对应的 <code class="language-plaintext highlighter-rouge">Receiver</code> 对象保存在表中。再看看下面的代码，可得出一个结论，<em>如果同一个进程内，不同的 <code class="language-plaintext highlighter-rouge">Reader</code> 对象订阅同一个信道，事实上使用的是同一个 <code class="language-plaintext highlighter-rouge">Receiver</code></em> <sup>2</sup>。再看看那个很长的 <code class="language-plaintext highlighter-rouge">CreateReceiver()</code> 函数调用，除了传递一个配置信息参数外，还有一个很长的回调函数。回调函数会做：</p>
+
+<ul>
+  <li>加入一个 Transport 事件，类型为 Dispatch</li>
+  <li>调用数据分发器 <code class="language-plaintext highlighter-rouge">DataDispatcher::Dispatch()</code>  函数</li>
+  <li>加入一个 Transport 事件，类型为 Notify</li>
+</ul>
+
+<p>这些步骤具体做了什么？我们目前还不知道，求知的欲望驱使着我们继续往下探索。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="k">auto</span> <span class="n">ReceiverManager</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">GetReceiver</span><span class="p">(</span><span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">role_attr</span><span class="p">)</span> 
+    <span class="o">-&gt;</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">transport</span><span class="o">::</span><span class="n">Receiver</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+  <span class="c1">// because multi reader for one channel will write datacache multi times,</span>
+  <span class="c1">// so reader for datacache we use map to keep one instance for per channel</span>
+  <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">channel_name</span> <span class="o">=</span> <span class="n">role_attr</span><span class="p">.</span><span class="n">channel_name</span><span class="p">();</span>
+    <span class="c1">// 如果信道名字对应的 Receiver 还没有创建 那就创建</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">receiver_map_</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="n">channel_name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// 一个巨长的 CreateReceiver() 函数调用</span>
+    <span class="n">receiver_map_</span><span class="p">[</span><span class="n">channel_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">transport</span><span class="o">::</span><span class="n">Transport</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CreateReceiver</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="p">(</span>
+            		<span class="n">role_attr</span><span class="p">,</span> <span class="p">[](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&amp;</span> <span class="n">msg</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">transport</span><span class="o">::</span><span class="n">MessageInfo</span><span class="o">&amp;</span> <span class="n">msg_info</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">reader_attr</span><span class="p">)</span> <span class="p">{</span>
+              <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">msg_info</span><span class="p">;</span>
+              <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">reader_attr</span><span class="p">;</span>
+              <span class="n">PerfEventCache</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddTransportEvent</span><span class="p">(</span>
+                  <span class="n">TransPerf</span><span class="o">::</span><span class="n">DISPATCH</span><span class="p">,</span> <span class="n">reader_attr</span><span class="p">.</span><span class="n">channel_id</span><span class="p">(),</span>
+                  <span class="n">msg_info</span><span class="p">.</span><span class="n">seq_num</span><span class="p">());</span>
+              <span class="n">data</span><span class="o">::</span><span class="n">DataDispatcher</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Dispatch</span><span class="p">(</span>
+                  <span class="n">reader_attr</span><span class="p">.</span><span class="n">channel_id</span><span class="p">(),</span> <span class="n">msg</span><span class="p">);</span>
+              <span class="n">PerfEventCache</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddTransportEvent</span><span class="p">(</span>
+                  <span class="n">TransPerf</span><span class="o">::</span><span class="n">NOTIFY</span><span class="p">,</span> <span class="n">reader_attr</span><span class="p">.</span><span class="n">channel_id</span><span class="p">(),</span>
+                  <span class="n">msg_info</span><span class="p">.</span><span class="n">seq_num</span><span class="p">());</span>
+            <span class="p">});</span>
+  <span class="p">}</span>
+    <span class="c1">// 如果已经有了 直接返回</span>
+  <span class="k">return</span> <span class="n">receiver_map_</span><span class="p">[</span><span class="n">channel_name</span><span class="p">];</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="transport">Transport</h3>
+
+<p><code class="language-plaintext highlighter-rouge">Transport</code> 类，单例模式，有如下指针成员，emm……在还没完全弄懂底层代码的情况下，也很难告诉你们这些类的具体作用：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">Participant</code> 类  FastRtps 相关</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">Notifier</code> 类 与 Shm 相关</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">IntraDispatcher</code> 类 Intra 的分发器</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">ShmDispatcher</code> 类 Shm 的分发器</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">RtpsDispatcher</code> 类 Rtps 的分发器</li>
+</ul>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Transport</span> <span class="p">{</span>
+ <span class="nl">private:</span>
+  <span class="n">ParticipantPtr</span> <span class="n">participant_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">NotifierPtr</span> <span class="n">notifier_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">IntraDispatcherPtr</span> <span class="n">intra_dispatcher_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">ShmDispatcherPtr</span> <span class="n">shm_dispatcher_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">RtpsDispatcherPtr</span> <span class="n">rtps_dispatcher_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>和之前 Cyber RT 给人的感觉一样，一旦它要创建什么重要的东西，不调用个几层是根本不可能完成的。在这里，<code class="language-plaintext highlighter-rouge">Transport</code> 类的两个函数 <code class="language-plaintext highlighter-rouge">CreateTransmitter</code> 和 <code class="language-plaintext highlighter-rouge">CreateReceiver</code> 都会根据传入的 mode ，去构造出对应的子类对象，分别对应我在这篇博客开头提到的四种不同场景下的传输实现类。哦，提醒一下，默认的 mode 是 Hybrid ，也就是三种模式混用。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M</span><span class="p">&gt;</span>
+<span class="k">auto</span> <span class="n">Transport</span><span class="o">::</span><span class="n">CreateTransmitter</span><span class="p">(</span><span class="k">const</span> <span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">attr</span><span class="p">,</span>
+  <span class="k">const</span> <span class="n">OptionalMode</span><span class="o">&amp;</span> <span class="n">mode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Transmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+  <span class="cm">/*  ....  */</span>
+ <span class="c1">// 往 modified_attr 中加入 qos profile</span>
+ <span class="c1">// 根据各种模式 创建相应的 Transmitter 子类</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">INTRA</span><span class="p">:</span>
+      <span class="n">transmitter</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">IntraTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">SHM</span><span class="p">:</span>
+      <span class="n">transmitter</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ShmTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">RTPS</span><span class="p">:</span>
+      <span class="n">transmitter</span> <span class="o">=</span>
+          <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">RtpsTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">,</span> <span class="n">participant</span><span class="p">());</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="nl">default:</span>
+      <span class="n">transmitter</span> <span class="o">=</span>
+          <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">HybridTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">,</span> <span class="n">participant</span><span class="p">());</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">mode</span> <span class="o">!=</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">HYBRID</span><span class="p">)</span>
+    <span class="n">transmitter</span><span class="o">-&gt;</span><span class="n">Enable</span><span class="p">();</span>
+  <span class="k">return</span> <span class="n">transmitter</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Transmitter</code> 类是写消息，而 <code class="language-plaintext highlighter-rouge">Receiver</code> 类是读消息，因此 <code class="language-plaintext highlighter-rouge">Receiver</code> 类比 <code class="language-plaintext highlighter-rouge">Transmitter</code> 类多了一个参数 <code class="language-plaintext highlighter-rouge">MessageListener</code> ，其本质就是个回调函数：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="n">MessageListener</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">MessageInfo</span><span class="o">&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">RoleAttributes</span><span class="o">&amp;</span><span class="p">)</span><span class="o">&gt;</span><span class="p">;</span>
+</code></pre></div></div>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M</span><span class="p">&gt;</span>
+<span class="k">auto</span> <span class="n">Transport</span><span class="o">::</span><span class="n">CreateReceiver</span><span class="p">(</span><span class="k">const</span> <span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">attr</span><span class="p">,</span>
+    <span class="k">const</span> <span class="k">typename</span> <span class="n">Receiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;::</span><span class="n">MessageListener</span><span class="o">&amp;</span> <span class="n">msg_listener</span><span class="p">,</span>
+    <span class="k">const</span> <span class="n">OptionalMode</span><span class="o">&amp;</span> <span class="n">mode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Receiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+ <span class="cm">/*  ....   */</span>
+ <span class="c1">// 往 modified_attr 中加入 qos profile</span>
+ <span class="c1">// 根据各种模式 创建相应的 Receiver 子类</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">INTRA</span><span class="p">:</span>
+      <span class="n">receiver</span> <span class="o">=</span>
+          <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">IntraReceiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">,</span> <span class="n">msg_listener</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">SHM</span><span class="p">:</span>
+      <span class="n">receiver</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ShmReceiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">,</span> <span class="n">msg_listener</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">RTPS</span><span class="p">:</span>
+      <span class="n">receiver</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">RtpsReceiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">,</span> <span class="n">msg_listener</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="nl">default:</span>
+      <span class="n">receiver</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">HybridReceiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span>
+          <span class="n">modified_attr</span><span class="p">,</span> <span class="n">msg_listener</span><span class="p">,</span> <span class="n">participant</span><span class="p">());</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">mode</span> <span class="o">!=</span> <span class="n">OptionalMode</span><span class="o">::</span><span class="n">HYBRID</span><span class="p">)</span>
+    <span class="n">receiver</span><span class="o">-&gt;</span><span class="n">Enable</span><span class="p">();</span>
+  <span class="k">return</span> <span class="n">receiver</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>最后一部分代码：在 <code class="language-plaintext highlighter-rouge">Receiver</code> 对象被创建时，只要模式不是 Hybrid，都会立刻调用 <code class="language-plaintext highlighter-rouge">Receiver::Enable()</code> 函数开启接收。</p>
+
+<p><span id="2"></span></p>
+
+<h3 id="receiver--transmitter-1">Receiver &amp; Transmitter</h3>
+
+<p>这两个类是 <code class="language-plaintext highlighter-rouge">EndPoint</code> 的子类。关于 <code class="language-plaintext highlighter-rouge">Endpoint</code> 类<sup>5</sup>，那可就是整个架构的类继承的终点了，其内部有三个成员</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">bool enabled_</code> 用来标记是否被启用</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">Identity id_</code> 用于标识，对于每个 <code class="language-plaintext highlighter-rouge">Endpoint</code> 对象拥有唯一的 id 号，其子类也是用这个来进行标识</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">RoleAttributes attr_</code> 用来记录配置文件中的数据。</li>
+</ul>
+
+<p>其中 <code class="language-plaintext highlighter-rouge">Receiver</code> 类只有一个回调函数 <code class="language-plaintext highlighter-rouge">msg_listener_</code>，该回调函数就是 <code class="language-plaintext highlighter-rouge">Receiver</code> 构造时传入的函数。在新消息到来时，会被调用👇：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M</span><span class="p">&gt;</span>
+<span class="kt">void</span> <span class="n">Receiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;::</span><span class="n">OnNewMessage</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">,</span>
+                               <span class="k">const</span> <span class="n">MessageInfo</span><span class="o">&amp;</span> <span class="n">msg_info</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">msg_listener_</span> <span class="o">!=</span> <span class="nb">nullptr</span><span class="p">)</span>
+    <span class="n">msg_listener_</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">msg_info</span><span class="p">,</span> <span class="n">attr_</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 <a href="#1">ReceiverManager</a> 那一小节中，已经说到该函数有三个步骤，其中<sup>5</sup>，调用 <code class="language-plaintext highlighter-rouge">DataDispatcher::Dispatch</code> 非常关键。因为从这步可以看出上层和底层最终完成了闭环。当底层 <code class="language-plaintext highlighter-rouge">Receiver</code> 的回调函数 <code class="language-plaintext highlighter-rouge">msg_listener</code> 收到消息被调用时，上层的分发器 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 会把来自底层的消息发到等待的消息缓存里，然后调用上层的通知器 <code class="language-plaintext highlighter-rouge">DataNotifier::Notify()</code> ，唤醒对应的 <code class="language-plaintext highlighter-rouge">Component</code> 的封装了 <code class="language-plaintext highlighter-rouge">Process()</code> 的协程，让协程处理这些消息。</p>
+
+<p>再看看 <code class="language-plaintext highlighter-rouge">Receiver</code> 的四个子类，每个子类都包含了相应的 Dispatcher 的指针，例如，<code class="language-plaintext highlighter-rouge">RtpsReceiver</code> 类含有 <code class="language-plaintext highlighter-rouge">RtpsDispatcherPtr</code> 成员。这些 Dispatcher 的功能就是增删监听者，从而让 <code class="language-plaintext highlighter-rouge">Receiver</code> 关闭或开启，比如：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M</span><span class="p">&gt;</span>
+<span class="kt">void</span> <span class="n">RtpsReceiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;::</span><span class="n">Enable</span><span class="p">()</span> <span class="p">{</span>
+ <span class="cm">/*  ....  */</span>
+  <span class="n">dispatcher_</span><span class="o">-&gt;</span><span class="n">AddListener</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">attr_</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RtpsReceiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;::</span><span class="n">OnNewMessage</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span>
+                             <span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_2</span><span class="p">));</span>
+  <span class="k">this</span><span class="o">-&gt;</span><span class="n">enabled_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M</span><span class="p">&gt;</span>
+<span class="kt">void</span> <span class="n">RtpsReceiver</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;::</span><span class="n">Disable</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">dispatcher_</span><span class="o">-&gt;</span><span class="n">RemoveListener</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">attr_</span><span class="p">);</span>
+  <span class="k">this</span><span class="o">-&gt;</span><span class="n">enabled_</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>简单地介绍一下 <code class="language-plaintext highlighter-rouge">Dispatcher</code> 类（别和下面的 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 搞混了）。它主要负责记录一个 <code class="language-plaintext highlighter-rouge">channel_id</code> 和对应 <code class="language-plaintext highlighter-rouge">ListenerHandlerBasePtr</code> 的关系表。而<code class="language-plaintext highlighter-rouge">AddListener()</code> 和 <code class="language-plaintext highlighter-rouge">RemoveListener()</code> 函数是从关系表中，拿到给定信道的对应 <code class="language-plaintext highlighter-rouge">ListenerHandlerBase</code> ，并在这上面连接（Connect）或不连接（Disconnect）相应的回调函数。由于时间精力有限，这边解释得比较混乱，若想具体了解其工作机制，可以参考文章最后的文献。总的来说，这有点像在 <a href="https://www.qt.io/cn">Qt</a> 中实现的信号槽机制：信号在特定情况下被发射出去，对应的信号响应函数在槽中监听。信号与槽通过 Connect 函数关联，一个信号可以发射到多个槽，多个信号可以被一个槽监听。</p>
+
+<hr>
+
+<p>再来看看 <code class="language-plaintext highlighter-rouge">Transmitter</code> 类，它是真正的数据写者的基类。它有两个成员，分别为序列号 <code class="language-plaintext highlighter-rouge">seq_num_</code> 和消息信息 <code class="language-plaintext highlighter-rouge">msg_info_</code> 。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">Transmitter</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Endpoint</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="k">explicit</span> <span class="n">Transmitter</span><span class="p">(</span><span class="k">const</span> <span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">attr</span><span class="p">);</span>
+  <span class="k">virtual</span> <span class="kt">bool</span> <span class="n">Transmit</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">);</span>
+  <span class="k">virtual</span> <span class="kt">bool</span> <span class="n">Transmit</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">,</span> <span class="k">const</span> <span class="n">MessageInfo</span><span class="o">&amp;</span> <span class="n">msg_info</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="kt">uint64_t</span> <span class="n">NextSeqNum</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="o">++</span><span class="n">seq_num_</span><span class="p">;</span> <span class="p">}</span>
+  <span class="kt">uint64_t</span> <span class="n">seq_num</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">seq_num_</span><span class="p">;</span> <span class="p">}</span>
+ <span class="nl">protected:</span>
+  <span class="kt">uint64_t</span> <span class="n">seq_num_</span><span class="p">;</span>
+  <span class="n">MessageInfo</span> <span class="n">msg_info_</span><span class="p">;</span>
+<span class="p">};</span>
+
+</code></pre></div></div>
+
+<p>我主要研究其中的 <code class="language-plaintext highlighter-rouge">Transmit()</code> 函数，其四个子类都具体实现了 <code class="language-plaintext highlighter-rouge">Transmit()</code> 函数，如果你仔细看过前一篇博客，就知道这也是 <code class="language-plaintext highlighter-rouge">Writer</code> 类一直在调用的函数。那么这个 <code class="language-plaintext highlighter-rouge">Transmit()</code> 函数有什么具体步骤呢？</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">Writer</code> 调用 <code class="language-plaintext highlighter-rouge">Transmitter::Transmit()</code> 函数</li>
+  <li>设置 <code class="language-plaintext highlighter-rouge">msg_info::seq_num = NextSeqNum</code> 消息的序列号</li>
+  <li>加入一个 Transport事件，类型为 Transmit Begin</li>
+  <li>调用子类实现的 <code class="language-plaintext highlighter-rouge">Transmit()</code> 函数，该函数通过传入一条消息即可以完成数据写入任务。</li>
+</ul>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M</span><span class="p">&gt;</span>
+<span class="kt">bool</span> <span class="n">Transmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;::</span><span class="n">Transmit</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">msg_info_</span><span class="p">.</span><span class="n">set_seq_num</span><span class="p">(</span><span class="n">NextSeqNum</span><span class="p">());</span>
+  <span class="n">PerfEventCache</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddTransportEvent</span><span class="p">(</span>
+      <span class="n">TransPerf</span><span class="o">::</span><span class="n">TRANSMIT_BEGIN</span><span class="p">,</span> <span class="n">attr_</span><span class="p">.</span><span class="n">channel_id</span><span class="p">(),</span> <span class="n">msg_info_</span><span class="p">.</span><span class="n">seq_num</span><span class="p">());</span>
+  <span class="k">return</span> <span class="n">Transmit</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">msg_info_</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>好，我对 <code class="language-plaintext highlighter-rouge">Receiver</code> 和 <code class="language-plaintext highlighter-rouge">Transmitter</code> 类的介绍就到这里了。我不打算再继续介绍它们的子类以及更加底层的设计是如何实现的，因为这边牵扯到非常多的技术细节，弄懂这些会消耗非常多的精力，而且这些东西也远远超出了课题组目前的要求。</p>
+
+<h2 id="data-部分">Data 部分</h2>
+
+<p>通信架构的内容已经全部介绍完了（至少对于发布—订阅通信方式来说），但还是感觉缺了什么东西，把这两者有效地连接起来😅。没错，我至今还没有说清楚，<code class="language-plaintext highlighter-rouge">Writer</code> 发布的消息是如何让 <code class="language-plaintext highlighter-rouge">Reader</code> 看到的。而这就牵扯到 <code class="language-plaintext highlighter-rouge">cyber/data</code> 中实现的类了。</p>
+
+<h3 id="datavisitor">DataVisitor</h3>
+
+<p>先来说说数据访问类 <code class="language-plaintext highlighter-rouge">DataVisitor</code> ，它是 <code class="language-plaintext highlighter-rouge">DataVisitorBase</code> 的子类。它的主要成员和构造函数如下。先来说几个明显可以得到的结论：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">DataVisitor</code> 对象都会有若干个缓存类 <code class="language-plaintext highlighter-rouge">ChannelBuffer</code> ，还有一个 <code class="language-plaintext highlighter-rouge">DataFusion</code> 对象，融合了所有的消息类型</li>
+  <li>在初始化的时候，首先构建这些 <code class="language-plaintext highlighter-rouge">ChannelBuffer</code> ，然后它们都会被加入到<strong>相应类型</strong>的 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 的管理中</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">data_notifier_</code> （存在于 <code class="language-plaintext highlighter-rouge">DataVisitorBase</code> 中），会向信道 0 加入一个 <code class="language-plaintext highlighter-rouge">notifier_</code> ，类型为 <code class="language-plaintext highlighter-rouge">struct Notifier { std::function&lt;void()&gt; callback; };</code>，这表明信道 0 注定与其他信道不一般 <img class="emoji" title=":thinking:" alt=":thinking:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f914.png" height="20" width="20">
+</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">data_fusion_</code> 会构建并指向 <code class="language-plaintext highlighter-rouge">AllLatest</code> 对象，从类型来看，它们整合了所有的消息类型，应当用于信息的最后收集发送</li>
+</ul>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M0</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M1</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">DataVisitor</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="p">,</span> <span class="n">NullType</span><span class="p">,</span> <span class="n">NullType</span><span class="o">&gt;</span> <span class="o">:</span> <span class="k">public</span> <span class="n">DataVisitorBase</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="k">explicit</span> <span class="n">DataVisitor</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">VisitorConfig</span><span class="o">&gt;&amp;</span> <span class="n">configs</span><span class="p">)</span>
+      <span class="o">:</span> <span class="n">buffer_m0_</span><span class="p">(</span><span class="n">configs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">channel_id</span><span class="p">,</span> <span class="k">new</span> <span class="n">BufferType</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">configs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">queue_size</span><span class="p">)),</span>
+     <span class="n">buffer_m1_</span><span class="p">(</span><span class="n">configs</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">channel_id</span><span class="p">,</span> <span class="k">new</span> <span class="n">BufferType</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">configs</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">queue_size</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">DataDispatcher</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddBuffer</span><span class="p">(</span><span class="n">buffer_m0_</span><span class="p">);</span>
+    <span class="n">DataDispatcher</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddBuffer</span><span class="p">(</span><span class="n">buffer_m1_</span><span class="p">);</span>
+    <span class="n">data_notifier_</span><span class="o">-&gt;</span><span class="n">AddNotifier</span><span class="p">(</span><span class="n">buffer_m0_</span><span class="p">.</span><span class="n">channel_id</span><span class="p">(),</span> <span class="n">notifier_</span><span class="p">);</span>
+    <span class="n">data_fusion_</span> <span class="o">=</span> <span class="k">new</span> <span class="n">fusion</span><span class="o">::</span><span class="n">AllLatest</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">buffer_m0_</span><span class="p">,</span> <span class="n">buffer_m1_</span><span class="p">);</span>
+  <span class="p">}</span>
+ <span class="nl">private:</span>
+  <span class="n">fusion</span><span class="o">::</span><span class="n">DataFusion</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;*</span> <span class="n">data_fusion_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;</span> <span class="n">buffer_m0_</span><span class="p">;</span>
+  <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;</span> <span class="n">buffer_m1_</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="cm">/** DataVisitorBase 内有
+ * 指向 DataNotifier 的指针
+ * 封装为 Notifier 的回调函数  */</span>
+<span class="k">class</span> <span class="nc">DataVisitorBase</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="kt">void</span> <span class="n">RegisterNotifyCallback</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;&amp;&amp;</span> <span class="n">callback</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">notifier_</span><span class="o">-&gt;</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span><span class="p">;</span>
+  <span class="p">}</span>
+ <span class="nl">protected:</span>
+  <span class="kt">uint64_t</span> <span class="n">next_msg_index_</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">DataNotifier</span><span class="o">*</span> <span class="n">data_notifier_</span> <span class="o">=</span> <span class="n">DataNotifier</span><span class="o">::</span><span class="n">Instance</span><span class="p">();</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Notifier</span><span class="o">&gt;</span> <span class="n">notifier_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p><em>该类主要用于消息数据的访问，存放到来的消息数据，并提供接口供消息读取</em>。事实上，我们之前在讨论<a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html#%E7%9C%9F%E5%AE%9E%E6%A8%A1%E5%BC%8F%E4%B8%8E%E6%A8%A1%E6%8B%9F%E6%A8%A1%E5%BC%8F">组件的初始化的最后部分时</a>见过它，也在<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html#reader-%E7%B1%BB">订阅者初始化时遇见过它</a>，但当时我都有意地略过了。现在我们重拾这部分内容（为了简单且不失一般性，我以两个信道的情况为例），把这部分彻底搞明白：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M0</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M1</span><span class="p">&gt;</span>
+<span class="kt">bool</span> <span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="p">,</span> <span class="n">NullType</span><span class="p">,</span> <span class="n">NullType</span><span class="o">&gt;::</span><span class="n">Initialize</span><span class="p">()</span> <span class="p">{</span>
+   <span class="cm">/*   ....   */</span>
+  <span class="c1">// 创建 DataVisitor 和 RoutineFactory   最后创建任务</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">data</span><span class="o">::</span><span class="n">VisitorConfig</span><span class="o">&gt;</span> <span class="n">config_list</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">reader</span> <span class="o">:</span> <span class="n">readers_</span><span class="p">)</span>
+    <span class="n">config_list</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">reader</span><span class="o">-&gt;</span><span class="n">ChannelId</span><span class="p">(),</span> <span class="n">reader</span><span class="o">-&gt;</span><span class="n">PendingQueueSize</span><span class="p">());</span>
+   <span class="c1">// 创建了两个信道的 DataVisitor 并用在了协程工厂类</span>
+  <span class="k">auto</span> <span class="n">dv</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">data</span><span class="o">::</span><span class="n">DataVisitor</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">config_list</span><span class="p">);</span>
+  <span class="n">croutine</span><span class="o">::</span><span class="n">RoutineFactory</span> <span class="n">factory</span> <span class="o">=</span> <span class="n">croutine</span><span class="o">::</span><span class="n">CreateRoutineFactory</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">dv</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">sched</span><span class="o">-&gt;</span><span class="n">CreateTask</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码做了：</p>
+
+<ul>
+  <li>
+    <p>收集了所有的 <code class="language-plaintext highlighter-rouge">Reader</code> 对象的所读信道 id 和消息队列大小，放入到 <code class="language-plaintext highlighter-rouge">config_list</code> 后就创建 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 对象</p>
+  </li>
+  <li>
+    <p>在上面 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 类的构造函数中，根据传入的信道 id 和消息队列尺寸，<code class="language-plaintext highlighter-rouge">DataVisitor</code> 内为其创建了两个 <code class="language-plaintext highlighter-rouge">ChannelBuffer</code> 作为缓冲区</p>
+
+    <ul>
+      <li>调用数据分发器将它们加入到 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 的管理中</li>
+      <li>调用 <code class="language-plaintext highlighter-rouge">DataNotifier::AddNotifier()</code> 函数，传入第 0 个读者的信道 id ，加入到 <code class="language-plaintext highlighter-rouge">DataNotifier</code> 的管理中。<code class="language-plaintext highlighter-rouge">DataDispatcher</code> 与 <code class="language-plaintext highlighter-rouge">DataNotifier</code> 类均为单例，之后我们会对它们做详细介绍</li>
+      <li>创建 <code class="language-plaintext highlighter-rouge">DataFusion</code> 对象，这也是之后要了解的╮(╯▽╰)╭</li>
+    </ul>
+  </li>
+  <li>
+    <p>创建协程工厂，并构建出要封装为协程的函数：</p>
+
+    <div class="language-c++ highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>  <span class="n">factory</span><span class="p">.</span><span class="n">create_routine</span> <span class="o">=</span> <span class="p">[</span><span class="o">=</span><span class="p">]()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">[</span><span class="o">=</span><span class="p">]()</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;</span> <span class="n">msg0</span><span class="p">;</span>     <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;</span> <span class="n">msg1</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+      <span class="n">CRoutine</span><span class="o">::</span><span class="n">GetCurrentRoutine</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_state</span><span class="p">(</span><span class="n">RoutineState</span><span class="o">::</span><span class="n">DATA_WAIT</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">dv</span><span class="o">-&gt;</span><span class="n">TryFetch</span><span class="p">(</span><span class="n">msg0</span><span class="p">,</span> <span class="n">msg1</span><span class="p">))</span> <span class="p">{</span>  <span class="c1">// 取数据</span>
+        <span class="n">f</span><span class="p">(</span><span class="n">msg0</span><span class="p">,</span> <span class="n">msg1</span><span class="p">);</span>	<span class="c1">// f 函数就是组件初始化时创建的 func 函数</span>
+        <span class="n">CRoutine</span><span class="o">::</span><span class="n">Yield</span><span class="p">(</span><span class="n">RoutineState</span><span class="o">::</span><span class="n">READY</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span>
+        <span class="n">CRoutine</span><span class="o">::</span><span class="n">Yield</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">};</span> <span class="p">};</span>
+</code></pre></div>    </div>
+
+    <p>协程做的就是调用 <code class="language-plaintext highlighter-rouge">dv-&gt;TryFetch()</code> 取数据（下文会详细说明），如果成功就调用组件的 <code class="language-plaintext highlighter-rouge">Process()</code> 函数，且协程的状态从等待数据转变为了就绪，而一旦协程就绪，就可以被 <code class="language-plaintext highlighter-rouge">Processor</code> 类运行</p>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">Scheduler</code> 创建任务，在<code class="language-plaintext highlighter-rouge">CreateTask()</code> 函数中，调用 <code class="language-plaintext highlighter-rouge">visitor-&gt;RegisterNotifyCallback()</code> 函数</p>
+
+    <div class="language-c++ highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>  <span class="n">visitor</span><span class="o">-&gt;</span><span class="n">RegisterNotifyCallback</span><span class="p">([</span><span class="k">this</span><span class="p">,</span> <span class="n">task_id</span><span class="p">]()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="n">stop_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="k">this</span><span class="o">-&gt;</span><span class="n">NotifyProcessor</span><span class="p">(</span><span class="n">task_id</span><span class="p">);</span>
+  <span class="p">});</span>
+</code></pre></div>    </div>
+
+    <p>上面的函数被赋值给了 <code class="language-plaintext highlighter-rouge">DataVisitorBase::notifier_</code> ，用于唤醒相应的协程来处理该新消息</p>
+  </li>
+</ul>
+
+<p>说完这部分过程后，我发现我们至少还要理解一下 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 、 <code class="language-plaintext highlighter-rouge">DataNotifier</code> 、 <code class="language-plaintext highlighter-rouge">DataFusion</code> 和 <code class="language-plaintext highlighter-rouge">AllLatest</code> 类😂😂😂。</p>
+
+<h3 id="datadispatcher">DataDispatcher</h3>
+
+<p>千里之行，始于足下。先来看看数据分发类 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> ，顾名思义，它将底层传来的数据进行分发，具体来说，当新消息到来时，通过 <code class="language-plaintext highlighter-rouge">Dispatch()</code> 函数把它们放到该信道下的所有消息缓冲区中。它是个单例模式，但是个模板类，意味着每一个消息类型会有对应的一个唯一的 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 对象。类内记录了一个信道 id 与多个 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 对象对应的表。注意到：一个信道可以有多个订阅者 <code class="language-plaintext highlighter-rouge">Reader</code> ，每个订阅者拥有一个 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 缓冲区，而这个缓冲区就是之前 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 类在构造时给每个消息类型创建的 <code class="language-plaintext highlighter-rouge">ChannelBuffer</code> 。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">DataDispatcher</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="kt">void</span> <span class="n">AddBuffer</span><span class="p">(</span><span class="k">const</span> <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">channel_buffer</span><span class="p">);</span>
+  <span class="kt">bool</span> <span class="n">Dispatch</span><span class="p">(</span><span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">channel_id</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">msg</span><span class="p">);</span>
+ <span class="nl">private:</span>
+  <span class="n">DataNotifier</span><span class="o">*</span> <span class="n">notifier_</span> <span class="o">=</span> <span class="n">DataNotifier</span><span class="o">::</span><span class="n">Instance</span><span class="p">();</span>
+  <span class="n">AtomicHashMap</span><span class="o">&lt;</span><span class="kt">uint64_t</span><span class="p">,</span> <span class="n">BufferVector</span><span class="o">&gt;</span> <span class="n">buffers_map_</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="kt">bool</span> <span class="n">DataDispatcher</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">Dispatch</span><span class="p">(</span><span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">channel_id</span><span class="p">,</span>
+                                 <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">BufferVector</span><span class="o">*</span> <span class="n">buffers</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">IsShutdown</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="c1">// 每次收到该信道的消息时，就会给所有缓冲区都放一份消息</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">buffers_map_</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="n">channel_id</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buffers</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">buffer_wptr</span> <span class="o">:</span> <span class="o">*</span><span class="n">buffers</span><span class="p">)</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">buffer</span> <span class="o">=</span> <span class="n">buffer_wptr</span><span class="p">.</span><span class="n">lock</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">buffer</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">());</span>
+       <span class="c1">// 向 CacheBuffer 填入数据</span>
+        <span class="n">buffer</span><span class="o">-&gt;</span><span class="n">Fill</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+      <span class="p">}</span>
+  <span class="p">}</span> <span class="k">else</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">notifier_</span><span class="o">-&gt;</span><span class="n">Notify</span><span class="p">(</span><span class="n">channel_id</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">DataDispatcher::Dispatch()</code> 函数非常重要，在 <a href="#1">ReceiverManager</a> 和 <a href="#2">Receiver &amp;&amp; Transmitter</a> 中我们已经提到，他是连接上层和底层的最关键一环。在 <code class="language-plaintext highlighter-rouge">Receiver</code> 对象每次收到该信道的消息时，就会调用<code class="language-plaintext highlighter-rouge">DataDispatcher::Dispatch()</code> 函数分发刚收到的数据，函数会先从表中取出所有对应信道的缓冲区，然后调用 <code class="language-plaintext highlighter-rouge">CacheBuffer::Fill()</code> 函数来给缓冲区填数据（稍后介绍这个函数），最后调用 <code class="language-plaintext highlighter-rouge">DataNotifier::Notify()</code> 函数，唤醒它们对应的协程来取数据并运行。现在你应该明白，为何 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 在构造时，需要把刚刚建立的缓冲区给 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 管理，不然的话，缓冲区拿不到消息啊。</p>
+
+<h3 id="datanotifier">DataNotifier</h3>
+
+<p>再来看看 <code class="language-plaintext highlighter-rouge">DataNotifier</code> 类。它是个单例模式，类内有一个信道 id 与多个 <code class="language-plaintext highlighter-rouge">Notifer</code> 对应的表，这是考虑到一个信道可以有多个订阅者。很显然，前文提到的在 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 构造时，调用 <code class="language-plaintext highlighter-rouge">AddNotifier()</code> 就是要把自己的 <code class="language-plaintext highlighter-rouge">Notifier</code> 存到这个表中。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DataNotifier</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="kt">void</span> <span class="n">AddNotifier</span><span class="p">(</span><span class="kt">uint64_t</span> <span class="n">channel_id</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Notifier</span><span class="o">&gt;&amp;</span> <span class="n">notifier</span><span class="p">);</span>
+  <span class="kt">bool</span> <span class="n">Notify</span><span class="p">(</span><span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">channel_id</span><span class="p">);</span>
+ <span class="nl">private:</span>
+  <span class="n">AtomicHashMap</span><span class="o">&lt;</span><span class="kt">uint64_t</span><span class="p">,</span> <span class="n">NotifyVector</span><span class="o">&gt;</span> <span class="n">notifies_map_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>至于 <code class="language-plaintext highlighter-rouge">AddNotifier()</code> 函数的实现，emm……很平凡，无非就是找到对应的信道 id ，然后将参数中的 <code class="language-plaintext highlighter-rouge">Notifier</code> 放入到数组里（如果没有数组，新建一个）。重要的是唤醒函数 <code class="language-plaintext highlighter-rouge">Notify()</code> ，该函数内部会调用 <code class="language-plaintext highlighter-rouge">notifier-&gt;callback()</code> ，回顾一下，这个 <code class="language-plaintext highlighter-rouge">notifier</code> 是在 <code class="language-plaintext highlighter-rouge">Scheduler</code> 创建任务时被设置的，内含有 <code class="language-plaintext highlighter-rouge">NotifyProcessor()</code> 函数，可以唤醒协程。在 <a href="#2">Receiver &amp;&amp; Transmitter</a> 和 <a href="#1">ReceiverManager</a> 也提到，第二步的分发器最终会调用该函数，唤醒所有监听该信道的协程，来处理到来的消息。这样，你也就明白为什么 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 类在构造时要把 <code class="language-plaintext highlighter-rouge">notifier</code> 加入进去了，不然的话信道来了个消息，就没法唤醒协程，<code class="language-plaintext highlighter-rouge">Reader</code> 就不知道了呀。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">inline</span> <span class="kt">bool</span> <span class="n">DataNotifier</span><span class="o">::</span><span class="n">Notify</span><span class="p">(</span><span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">channel_id</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">NotifyVector</span><span class="o">*</span> <span class="n">notifies</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">notifies_map_</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="n">channel_id</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">notifies</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">notifier</span> <span class="o">:</span> <span class="o">*</span><span class="n">notifies</span><span class="p">)</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">notifier</span> <span class="o">&amp;&amp;</span> <span class="n">notifier</span><span class="o">-&gt;</span><span class="n">callback</span><span class="p">)</span>
+        <span class="n">notifier</span><span class="o">-&gt;</span><span class="n">callback</span><span class="p">();</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="datafusion--alllatest">DataFusion &amp; AllLatest</h3>
+
+<p>再来看看 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 构造函数的最后一步，创建 <code class="language-plaintext highlighter-rouge">DataFusion</code> 对象，看看名字，就应该明白该对象用于信道数据的融合。<code class="language-plaintext highlighter-rouge">DataFusion</code> 是 <code class="language-plaintext highlighter-rouge">AllLatest</code> 的基类，<code class="language-plaintext highlighter-rouge">DataFusion</code> 类十分简单，仅提供了一个 <code class="language-plaintext highlighter-rouge">Fusion()</code> 接口，具体由 <code class="language-plaintext highlighter-rouge">AllLatest</code> 实现。所以，我们重点看一下 <code class="language-plaintext highlighter-rouge">AllLatest</code> 类，哈，听名字就知道它会取所有信道中的<strong>最新值</strong>，再结合它是 <code class="language-plaintext highlighter-rouge">DataFusion</code> 的子类，所以主要功能应该是<strong>融合多个信道的最新数据</strong>。</p>
+
+<p>我还是以两个信道的情况为例，该类成员有几个 <code class="language-plaintext highlighter-rouge">ChannelBuffer</code> 类，其中一个比较特殊，类型是数据融合的 <code class="language-plaintext highlighter-rouge">buffer_fusion_</code> 。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M0</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M1</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">AllLatest</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="p">,</span> <span class="n">NullType</span><span class="p">,</span> <span class="n">NullType</span><span class="o">&gt;</span> <span class="o">:</span> <span class="k">public</span> <span class="n">DataFusion</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;</span> <span class="p">{</span>
+     <span class="c1">// 所谓融合消息，就是放在 tuple 里</span>
+ <span class="k">using</span> <span class="n">FusionDataType</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+ <span class="nl">private:</span>
+  <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;</span> <span class="n">buffer_m0_</span><span class="p">;</span>
+  <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;</span> <span class="n">buffer_m1_</span><span class="p">;</span>
+  <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">FusionDataType</span><span class="o">&gt;</span> <span class="n">buffer_fusion_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>在构造函数中，特殊的信道 0 的消息缓冲区会调用 <code class="language-plaintext highlighter-rouge">SetFusionCallback()</code> 来设置<strong>回调函数</strong> <img class="emoji" title=":point_down:" alt=":point_down:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f447.png" height="20" width="20">，<em>为方便表述，我给它起名 <code class="language-plaintext highlighter-rouge">FusionFunc</code></em> 。从下面的代码中看出， <code class="language-plaintext highlighter-rouge">FusionFunc</code> 先判断是否所有信道都有消息，并获取最新的消息，如果都有消息的话就将这些消息融合，即用 <code class="language-plaintext highlighter-rouge">std::tuple</code> 封装，再调用 <code class="language-plaintext highlighter-rouge">Fill()</code> 函数填入到 <code class="language-plaintext highlighter-rouge">buffer_fusion_</code> 的 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 中。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">AllLatest</span><span class="p">(</span><span class="k">const</span> <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">buffer_0</span><span class="p">,</span> <span class="k">const</span> <span class="n">ChannelBuffer</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;&amp;</span> <span class="n">buffer_1</span><span class="p">)</span>
+      <span class="o">:</span> <span class="n">buffer_m0_</span><span class="p">(</span><span class="n">buffer_0</span><span class="p">),</span> <span class="n">buffer_m1_</span><span class="p">(</span><span class="n">buffer_1</span><span class="p">),</span>
+        <span class="n">buffer_fusion_</span><span class="p">(</span><span class="n">buffer_m0_</span><span class="p">.</span><span class="n">channel_id</span><span class="p">(),</span>
+           <span class="k">new</span> <span class="n">CacheBuffer</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">FusionDataType</span><span class="o">&gt;&gt;</span><span class="p">(</span>
+              <span class="n">buffer_0</span><span class="p">.</span><span class="n">Buffer</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Capacity</span><span class="p">()</span> <span class="o">-</span> <span class="kt">uint64_t</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span> <span class="p">{</span>
+    <span class="n">buffer_m0_</span><span class="p">.</span><span class="n">Buffer</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetFusionCallback</span><span class="p">(</span> <span class="c1">// buffer0 设置融合的回调函数</span>
+        <span class="p">[</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">m0</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;</span> <span class="n">m1</span><span class="p">;</span>
+          <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">buffer_m1_</span><span class="p">.</span><span class="n">Latest</span><span class="p">(</span><span class="n">m1</span><span class="p">))</span> <span class="c1">// 信道内是否有消息 有的话取出最后一个</span>
+            <span class="k">return</span><span class="p">;</span>
+          <span class="k">auto</span> <span class="n">data</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">FusionDataType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">m0</span><span class="p">,</span> <span class="n">m1</span><span class="p">);</span>
+          <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lg</span><span class="p">(</span><span class="n">buffer_fusion_</span><span class="p">.</span><span class="n">Buffer</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">());</span>
+          <span class="c1">// 填充到消息中</span>
+          <span class="n">buffer_fusion_</span><span class="p">.</span><span class="n">Buffer</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Fill</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+        <span class="p">});</span>
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<p><strong>何时调用</strong> <code class="language-plaintext highlighter-rouge">FusionFunc</code> 呢？答案在这个 <code class="language-plaintext highlighter-rouge">Fill()</code> 函数（见下代码）中，它诡计多端——如果 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 有回调函数 <code class="language-plaintext highlighter-rouge">FusionFunc</code>，会调用回调函数；如果没有，会把接收到的数据放入缓冲区中。很显然在上面的构造函数中，只有信道 0 设置了回调函数 <code class="language-plaintext highlighter-rouge">FusionFunc</code>。<em>因此当信道 0 有数据到来， <code class="language-plaintext highlighter-rouge">DataDispatcher::Dispatch()</code> 被调用时（代码见 DataDispatcher 部分），进而调用 <code class="language-plaintext highlighter-rouge">Fill()</code> 函数时， <code class="language-plaintext highlighter-rouge">FusionFunc</code> 才会被调用</em>，将最新的消息融合，并将融合的消息填入到 <code class="language-plaintext highlighter-rouge">buffer_fusion_</code> 中。而其他信道的数据到来时， <code class="language-plaintext highlighter-rouge">Fill()</code> 函数只是单纯往对应的 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 中填数据。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="kt">void</span> <span class="n">CacheBuffer</span><span class="o">::</span><span class="n">Fill</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">fusion_callback_</span><span class="p">)</span>
+      <span class="n">fusion_callback_</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>  <span class="c1">// buffer 0 运行这个</span>
+    <span class="k">else</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">Full</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">buffer_</span><span class="p">[</span><span class="n">GetIndex</span><span class="p">(</span><span class="n">head_</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+        <span class="o">++</span><span class="n">head_</span><span class="p">;</span>     <span class="o">++</span><span class="n">tail_</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">buffer_</span><span class="p">[</span><span class="n">GetIndex</span><span class="p">(</span><span class="n">tail_</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+        <span class="o">++</span><span class="n">tail_</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在协程的处理函数中（回顾一下， DataVisitor 的创建协程工厂中提到的）会调用 <code class="language-plaintext highlighter-rouge">DataVisitor::TryFetch()</code> 函数，再调用 <code class="language-plaintext highlighter-rouge">Fusion()</code> 函数（代码如下），它从融合数据的缓冲区 <code class="language-plaintext highlighter-rouge">buffer_fusion_</code> 中拿走（Fetch）融合消息，这也就意味着同时拿多个信道上的最新消息，保证了每次给 <code class="language-plaintext highlighter-rouge">Component::Process()</code> 函数的参数都必须“全员到齐”，并且所有信息都是最新的。综上所述，只有信道 0 收到消息后，才会融合其他信道的消息，往往主导通信处理的节奏，因此信道 0 的选取就比较关键了。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">DataVisitor</span><span class="o">::</span><span class="n">TryFetch</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">m0</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;&amp;</span> <span class="n">m1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">data_fusion_</span><span class="o">-&gt;</span><span class="n">Fusion</span><span class="p">(</span><span class="o">&amp;</span><span class="n">next_msg_index_</span><span class="p">,</span> <span class="n">m0</span><span class="p">,</span> <span class="n">m1</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">next_msg_index_</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">bool</span> <span class="n">AllLatest</span><span class="o">::</span><span class="n">Fusion</span><span class="p">(</span><span class="kt">uint64_t</span><span class="o">*</span> <span class="n">index</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">m0</span><span class="p">,</span>
+              <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;&amp;</span> <span class="n">m1</span><span class="p">)</span> <span class="k">override</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">FusionDataType</span><span class="o">&gt;</span> <span class="n">fusion_data</span><span class="p">;</span>
+  <span class="c1">// 从 fusion 缓冲区中取数据</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">buffer_fusion_</span><span class="p">.</span><span class="n">Fetch</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">fusion_data</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="c1">// 得到了数据 分别赋值给 m0 m1</span>
+  <span class="n">m0</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="o">*</span><span class="n">fusion_data</span><span class="p">);</span>
+  <span class="n">m1</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">get</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="o">*</span><span class="n">fusion_data</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="channelbuffer--cachebuffer">ChannelBuffer &amp; CacheBuffer</h3>
+
+<p>前文我一直提到一个词，叫做缓冲区。事实上这个词具体指向了两个类，<code class="language-plaintext highlighter-rouge">ChannelBuffer</code> 和 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 类。为了让读者更好地理解“缓冲区”这个词，我简要地介绍一下这两个类。<code class="language-plaintext highlighter-rouge">ChannelBuffer</code> 类包含了两个成员：信道 id 和 指向 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 的指针。它的函数 <code class="language-plaintext highlighter-rouge">Fetch()</code> 和 <code class="language-plaintext highlighter-rouge">Latest()</code> 分别用于取对应索引的消息和取得最新消息。而 <code class="language-plaintext highlighter-rouge">CacheBuffer</code> 类，其实质就是一个循环队列，用来放置某个信道产生的数据。需要注意的是，<code class="language-plaintext highlighter-rouge">CacheBuffer</code> 占用的内存是恒定的，因为里面的数组长度一开始就被限定了，所以，一旦缓冲区装满了，它会毫不犹豫地丢弃最旧的消息，推入最新的消息。具体的队列实现在 <code class="language-plaintext highlighter-rouge">cyber/data/cache_buffer.h</code> 和 <code class="language-plaintext highlighter-rouge">cyber/data/channel_buffer.h</code>，很简单，有兴趣可以直接读代码。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>(⊙o⊙)哦终于，我把 Cyber RT 所有的通信机制都看完了，哦，BTW，上篇通信链接在<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">这里</a>。现在，在把所有的内容都搞明白后，让我们理一理自己昏沉的头脑，跳脱出代码的边边框框，从上帝视角审视一下数据是如何流通的。</p>
+
+<p>这里有两张非常好的图，感谢 [2]，我可以不用自己动手，花费数小时画图了😀</p>
+
+<p><img src="/assets/img/msg.png" alt=""></p>
+
+<p>在上面这张图中，仍然以两个信道的 <code class="language-plaintext highlighter-rouge">Component</code> 为例，从左上角出发：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">Component</code> 初始化建成了两个 <code class="language-plaintext highlighter-rouge">Reader</code> 对象，然后创建了一个 <code class="language-plaintext highlighter-rouge">DataVisitor&lt;M0, M1&gt;</code> 对象</li>
+  <li>两个 <code class="language-plaintext highlighter-rouge">Reader</code> 对象也分别创建了一个 <code class="language-plaintext highlighter-rouge">DataVisitor&lt;&gt;</code> 对象，回顾一下上篇提到的 <code class="language-plaintext highlighter-rouge">Reader</code> 的初始化过程</li>
+  <li>这些 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 对象会分别创建出 <code class="language-plaintext highlighter-rouge">ChannelBuffer</code> ，并使用 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 管理这些缓冲区（注意看它内部的表）</li>
+  <li>当接收到新消息后，<code class="language-plaintext highlighter-rouge">DataDispatcher</code> 会给对应的信道上的所有缓冲区进行分派，特别地，若信道 0 有新消息，还会对其他消息进行融合（注意看 <code class="language-plaintext highlighter-rouge">AllLatest</code> 对象）</li>
+  <li>之后，<code class="language-plaintext highlighter-rouge">DataVisitor</code> 会使用 <code class="language-plaintext highlighter-rouge">DataNotifier</code> 对象，唤醒相应的协程，处理收到的数据</li>
+</ul>
+
+<p>现在，我们再来看看底层的通信架构，虽然有些部分我略去未讲，但这张图我们还是可以看明白的🐶。这次，我们从最右边开始看起。</p>
+
+<p><img src="/assets/img/msg2.png" alt=""></p>
+
+<ul>
+  <li>可以看出两个 <code class="language-plaintext highlighter-rouge">Reader</code> 对象共用了一个 <code class="language-plaintext highlighter-rouge">Receiver</code> 。这是因为在同一个进程内，不同的 <code class="language-plaintext highlighter-rouge">Reader</code> 对象订阅同一个信道，就会使用同一个 <code class="language-plaintext highlighter-rouge">Receiver</code>
+</li>
+  <li>默认选择的 <code class="language-plaintext highlighter-rouge">Receiver</code> 是 hybrid 的，因此需要三个底层接收类 <code class="language-plaintext highlighter-rouge">IntraReceiver</code> 、<code class="language-plaintext highlighter-rouge">ShmReceiver</code> 和 <code class="language-plaintext highlighter-rouge">RtpsReceiver</code> 配合</li>
+  <li>在创建 <code class="language-plaintext highlighter-rouge">Receiver</code> 时，监听者处理函数 <code class="language-plaintext highlighter-rouge">msg_listener_</code> 就已经“准备就绪”了。</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">Dispatcher</code> 的表中记录了监听者和它们负责的信道，并把它们连接 <code class="language-plaintext highlighter-rouge">Connect</code> 起来，如同 Qt 中的信号槽机制</li>
+  <li>一有新消息到达（最左边的函数是我陌生的），那么就会立刻触发信号槽机制，调用 <code class="language-plaintext highlighter-rouge">msg_listener</code> 函数，之后就是上层 <code class="language-plaintext highlighter-rouge">DataDispatcher</code> 的工作了</li>
+</ul>
+
+<p>最后的最后，事实上我还是落了一个东西：服务—客户通信方式😓😓😂😂。的确，这篇博客的内容全是关于发布—订阅通信方式的，对于 <code class="language-plaintext highlighter-rouge">Service</code> 和 <code class="language-plaintext highlighter-rouge">Client</code> ，几乎没有提及，之后，我就会补上这一部分服务发现的内容。</p>
+
+<h2 id="参考">参考</h2>
+
+<p>[1] <a href="https://github.com/daohu527/Dig-into-Apollo/tree/master/cyber">Dig into Apollo - Cyber</a></p>
+
+<p>[2] <a href="https://blog.csdn.net/jinzhuojun/article/details/108066714">自动驾驶平台Apollo 5.5阅读手记：Cyber RT中的通信传输</a></p>
+
+<p>[3] <a href="https://blog.csdn.net/qq_25762163/article/details/103803032">百度Apollo系统学习-Cyber RT 通信-上层</a></p>
+
+<p>[4] <a href="https://blog.csdn.net/kesalin/article/details/88914029">百度 Apollo Cyber RT简介、基本概念以及与 ROS 对照</a></p>
+
+<p>[5] <a href="https://blog.csdn.net/qq_25762163/article/details/103895527">百度Apollo系统学习-Cyber RT 通信-底层</a></p>
+
+<p>[6] <a href="https://cyber-rt.readthedocs.io/en/latest/api/cppapi.html#cyber-node-reader-h">cyber-rt.readthedocs.io</a></p>
+
+<p>[7] 自动驾驶汽车平台技术基础/杨世春等编著. —北京：清华大学出版社</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#cyber-rt" class="page__taxonomy-item" rel="tag">Cyber RT</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-11-07T00:00:00+00:00">November 7, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Apollo+Cyber+RT+%E9%80%9A%E4%BF%A1%EF%BC%88%E4%B8%8B%EF%BC%89%20https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F07%2FCyberCommu2.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F07%2FCyberCommu2.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F07%2FCyberCommu2.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/apollo/2020/11/03/CyberCommu1.html" class="pagination--pager" title="Apollo Cyber RT 通信（上）
+">previous</a>
+    
+    
+      <a href="/apollo/2020/11/11/ApolloPlanning.html" class="pagination--pager" title="Apollo Planning 规划模块
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/07/05/CSAPPLab05.html" rel="permalink">深入理解计算机系统之动态存储分配器实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手写一个 malloc 函数
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/06/29/CSAPPLab04.html" rel="permalink">深入理解计算机系统之代码优化实验
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">如何写出对缓存友好的代码
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/05/27/CSAPPLab03.html" rel="permalink">深入理解计算机系统之缓冲区溢出炸弹实验
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">当心缓冲区溢出！
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/csapp/2021/05/26/CSAPPLab02.html" rel="permalink">深入理解计算机系统之二进制炸弹实验
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">如何有效提升x86汇编阅读能力和GDB调试器使用能力
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2021 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/apollo/2020/11/07/CyberCommu2"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>
