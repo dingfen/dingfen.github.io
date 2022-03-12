@@ -1,0 +1,1052 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Apollo Cyber RT 通信（上） - 峰子的乐园</title>
+<meta name="description" content="对 Cyber RT 的通信架构的深入研究">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Apollo Cyber RT 通信（上）">
+<meta property="og:url" content="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">
+
+
+  <meta property="og:description" content="对 Cyber RT 的通信架构的深入研究">
+
+
+
+  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-11-03T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "https://dingfen.github.io/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Apollo Cyber RT 通信（上）
+
+        
+      </h1>
+      
+        <p class="page__lead">对 Cyber RT 的通信架构的深入研究
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Apollo Cyber RT 通信（上）">
+    <meta itemprop="description" content="对 Cyber RT 的通信架构的深入研究">
+    <meta itemprop="datePublished" content="2020-11-03T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#apollo-cyber-rt-通信上">Apollo Cyber RT 通信（上）</a>
+    <ul>
+      <li><a href="#前言">前言</a>
+        <ul>
+          <li><a href="#ros-的历史遗留">ROS 的历史遗留</a></li>
+        </ul>
+      </li>
+      <li><a href="#三种通信模型7">三种通信模型7</a></li>
+      <li><a href="#通信架构">通信架构</a>
+        <ul>
+          <li><a href="#节点-node">节点 Node</a></li>
+          <li><a href="#nodechannelimpl-与-nodeserviceimpl-幕后创建者">NodeChannelImpl 与 NodeServiceImpl ——幕后创建者</a></li>
+          <li><a href="#reader--writer">Reader &amp;&amp; Writer</a>
+            <ul>
+              <li><a href="#reader-类">Reader 类</a></li>
+              <li><a href="#writer-类">Writer 类</a></li>
+            </ul>
+          </li>
+          <li><a href="#blocker缓存者">Blocker——缓存者</a>
+            <ul>
+              <li><a href="#blockermanager模拟模式助手">BlockerManager——模拟模式助手</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a href="#小结">小结</a></li>
+      <li><a href="#参考">参考</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="apollo-cyber-rt-通信上">Apollo Cyber RT 通信（上）</h1>
+
+<h2 id="前言">前言</h2>
+
+<p>在<a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html">之前的博客</a>中，我和大家讨论了 Apollo Cyber RT 组件的相关内容，在介绍组件的内容时，我们谈到每个组件都有自己的读者信道 <code class="language-plaintext highlighter-rouge">Reader&lt;M&gt;</code> 和 <code class="language-plaintext highlighter-rouge">Node</code> 节点类对象， <code class="language-plaintext highlighter-rouge">DataVisitor</code> 数据访问类在创建协程工厂时也起到了关键作用。由此可见，通信问题已经成为了在学习 Cyber RT 过程中绕不过去的槛儿，那么，Cyber RT 怎么保证这么多的组件能够齐心协力，高效地完成一件件任务呢？今天我就来带领大家探讨一下这类问题。由于通信部分的内容过多，写在一篇博客里太长，所以我把它分成了两部分。</p>
+
+<h3 id="ros-的历史遗留">ROS 的历史遗留</h3>
+
+<p>之前在研究 Apollo 时，我了解到 Apollo 3.5 版本前，各个模块直接通过一个简单的运行时框架，构建在 ROS 之上。</p>
+
+<p><img src="/assets/img/Apollo_3.0_diagram.png" alt="" /></p>
+
+<p>而之后的版本，都加上了 Cyber RT，它不仅仅是一个运行时框架，还承担了数据通信和任务调度，以及记录日志等任务。但是从软件工程的角度出发，对底层的大改必然会牵动上层，为了尽可能地不影响上层代码，Cyber RT 不得不依照 ROS 的“规矩”，提供有相同名称的功能近似的接口，这之后我们可以将 ROS 与 Cyber RT 进行比较。</p>
+
+<p><img src="/assets/img/Apollo_5_5_Architecture.png" alt="" /></p>
+
+<p>于是我就发现，与 ROS &amp; ROS2 中类似的是，Cyber RT 也支持两种通信方式，详情见<a href="https://dingfen.github.io/apollo/2020/10/14/apollo-intro.html#相关术语介绍">术语介绍</a>：</p>
+
+<ul>
+  <li><strong>发布—订阅通信方式</strong>（Publish-Subscribe），也叫基于信道的通信方式，常用于数据流处理中节点间通信。即<strong>发布者</strong>（Publisher）在信道（channel，ROS 中对应地称为 topic）上发布消息，相应的<strong>订阅者</strong>（Subscriber）便会收到消息数据</li>
+  <li><strong>服务—客户通信方式</strong>（Service-Client），也叫基于服务的通信方式，常用于双向的、需要有请求和应答的通信场景。</li>
+</ul>
+
+<h2 id="三种通信模型7">三种通信模型<sup>7</sup></h2>
+
+<p>在 Cyber RT 中提供了不同的通信方式，以应对各类自动驾驶需求。根据上层模块所处的进程，可以将模块间的关系分为：</p>
+
+<ul>
+  <li>同一进程内。在同一个进程节点之间的相互通信，对于进程内的数据，<strong>直接传递消息对象的指针</strong>，可以避免消息数据复制的开销，尤其是一些较大的消息，如点云和图像等</li>
+  <li>同主机进程间。在不同进程之间的节点传播或交换信息，可以利用<strong>共享内存传输</strong>，这样不仅可以减少传输中的数据复制，显著提升传输效率，还能够满足一对多的传输场景</li>
+  <li>跨主机。跨主机的数据利用 socket 传输，跨主机通信采用了第三方的开源库 <a href="https://www.eprosima.com/index.php/resources-all/rtps">Fast RTPS</a>（Real Time Publish Subscribe Protocol，实时发布订阅协议），是 DDS（Data Distribution Service）标准的一个非常流行的开源实现，支持 RTPS 协议版本的一个订阅发布消息组件，具有高性能，实时性高，多平台支持等优点</li>
+</ul>
+
+<h2 id="通信架构">通信架构</h2>
+
+<p><span id="l"></span></p>
+<center>
+<img src="/assets/img/CyberLayer.png" />
+</center>
+
+<p>首先来看一下通信的层级划分（上图）<sup>2</sup>，再重复一遍，自动驾驶系统中的各个模块基本都由 <code class="language-plaintext highlighter-rouge">Component</code> 类实现，而一个 <code class="language-plaintext highlighter-rouge">Component</code> 对象包含一个 <code class="language-plaintext highlighter-rouge">Node</code> 对象。<code class="language-plaintext highlighter-rouge">Node</code> 对象会根据需要创建和管理 <code class="language-plaintext highlighter-rouge">Writer</code>，<code class="language-plaintext highlighter-rouge">Reader</code>，<code class="language-plaintext highlighter-rouge">Service</code> 和 <code class="language-plaintext highlighter-rouge">Client</code> 对象。而在通信类下面， <code class="language-plaintext highlighter-rouge">Trasmitter</code> 和 <code class="language-plaintext highlighter-rouge">Receiver</code> 类。前者用于数据发送，后者用于数据接收。它们是数据传输层的抽象，而底下还有多个用于<strong>不同场景下的传输实现类</strong>，比如对于 <code class="language-plaintext highlighter-rouge">Trasmitter</code> 类，就有 <code class="language-plaintext highlighter-rouge">IntraTransmitter</code> 类，<code class="language-plaintext highlighter-rouge">ShmTransmitter</code> 类，<code class="language-plaintext highlighter-rouge">RtpsTransmitter</code> 类和 <code class="language-plaintext highlighter-rouge">HybridTransmitter</code> 类。同样地， <code class="language-plaintext highlighter-rouge">Receiver</code> 类也有类似的情况 。在这里我就简单地说明一下这些底层类的作用，因为这些东西过于细节，我往后也不会重点研究，但是还是有必要稍微了解一下的😀：</p>
+
+<ul>
+  <li>RTPS 基于 <a href="https://www.eprosima.com/index.php/">eProsimar</a> 的 Fast RTPS，介绍同上</li>
+  <li>Shared memory 共享内存模式</li>
+  <li>Intra-Process 用于进程内通信</li>
+  <li>Hybrid 混合使用以上几种通信模式</li>
+</ul>
+
+<p>OK，接下来，我们放慢脚步，一层一层地剥开通信的实现情况🐶。</p>
+
+<h3 id="节点-node">节点 Node</h3>
+
+<p><code class="language-plaintext highlighter-rouge">Node</code> 是整个数据拓扑网络中的基本单元。<code class="language-plaintext highlighter-rouge">Node</code> 对象会根据需要创建和管理 <code class="language-plaintext highlighter-rouge">Writer</code>，<code class="language-plaintext highlighter-rouge">Reader</code>，<code class="language-plaintext highlighter-rouge">Service</code> 和 <code class="language-plaintext highlighter-rouge">Client</code> 对象。<code class="language-plaintext highlighter-rouge">Reader</code> 和 <code class="language-plaintext highlighter-rouge">Writer</code>，用于发布—订阅模式。<code class="language-plaintext highlighter-rouge">Service</code> 和 <code class="language-plaintext highlighter-rouge">Client</code>，用于服务—客户模式。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">class</span> <span class="nc">Node</span> <span class="p">{</span>
+ 	<span class="k">private</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">node_name_</span><span class="p">;</span>
+     	<span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name_space_</span><span class="p">;</span>
+     	<span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">ReaderBase</span><span class="o">&gt;&gt;</span> <span class="n">readers_</span><span class="p">;</span>
+     	<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">NodeChannelImpl</span><span class="o">&gt;</span> <span class="n">node_channel_impl_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+     	<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">NodeServiceImpl</span><span class="o">&gt;</span> <span class="n">node_service_impl_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="k">auto</span> <span class="n">Node</span><span class="o">::</span><span class="n">CreateReader</span><span class="p">(</span><span class="k">const</span> <span class="n">ReaderConfig</span><span class="o">&amp;</span> <span class="n">config</span><span class="p">,</span> <span class="k">const</span> <span class="n">CallbackFunc</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&amp;</span> <span class="n">reader_func</span><span class="p">)</span>
+    <span class="o">-&gt;</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+  <span class="cm">/* ....  */</span>
+  <span class="k">auto</span> <span class="n">reader</span> <span class="o">=</span>
+      <span class="n">node_channel_impl_</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="p">&gt;(</span><span class="n">config</span><span class="p">,</span> <span class="n">reader_func</span><span class="p">);</span>
+  <span class="cm">/* ....  */</span>
+  <span class="k">return</span> <span class="n">reader</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>其中 <code class="language-plaintext highlighter-rouge">Node</code> 类的成员变量：<code class="language-plaintext highlighter-rouge">NodeChannelImpl</code> 指针和 <code class="language-plaintext highlighter-rouge">NodeServiceImpl</code> 指针，对于我们进一步了解通信非常重要，因为在 <code class="language-plaintext highlighter-rouge">Node::CreateReader</code> 函数中，<code class="language-plaintext highlighter-rouge">Node</code> 使用了 <code class="language-plaintext highlighter-rouge">NodeChannelImpl</code> 指针创建 <code class="language-plaintext highlighter-rouge">Reader</code> 对象。同理于其他三个，<code class="language-plaintext highlighter-rouge">Node</code> 类都是使用相应的指针来创建对象，没错，它们才是幕后黑手。</p>
+
+<h3 id="nodechannelimpl-与-nodeserviceimpl-幕后创建者">NodeChannelImpl 与 NodeServiceImpl ——幕后创建者</h3>
+
+<p>为方便讨论，我以 <code class="language-plaintext highlighter-rouge">NodeChannelImpl</code> 类为例，并从 <code class="language-plaintext highlighter-rouge">CreateReader</code> 函数出发，在 <code class="language-plaintext highlighter-rouge">Node</code> 类中调用了 <code class="language-plaintext highlighter-rouge">NodeChannelImpl::CreateReader()</code> 后，</p>
+
+<ol>
+  <li>创建 <code class="language-plaintext highlighter-rouge">RoleAttributes</code> 对象，把该对象的一些配置数据全部填好（如果你对该对象包含了什么很感兴趣，那么请看 <code class="language-plaintext highlighter-rouge">cyber/proto/role_attributes.proto</code>）</li>
+  <li>根据现在的模式（真实模式还是模拟模式），来决定如何创建读者类。根据代码，真实模式时使用 <code class="language-plaintext highlighter-rouge">Reader&lt;M&gt;</code> ，模拟模式使用 <code class="language-plaintext highlighter-rouge">IntraReader&lt;M&gt;</code></li>
+</ol>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 为方便说明，对代码进行裁减 真实代码情况见 cyber/node/node_channel_impl.h 文件</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="k">auto</span> <span class="n">NodeChannelImpl</span><span class="o">::</span><span class="n">CreateReader</span><span class="p">(</span><span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">role_attr</span><span class="p">,</span>
+                                   <span class="k">const</span> <span class="n">CallbackFunc</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&amp;</span> <span class="n">reader_func</span><span class="p">,</span>
+                                   <span class="kt">uint32_t</span> <span class="n">pending_queue_size</span><span class="p">)</span>
+    <span class="o">-&gt;</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+  <span class="cm">/*  ....  */</span>
+  <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span> <span class="n">new_attr</span><span class="p">(</span><span class="n">role_attr</span><span class="p">);</span>
+  <span class="n">FillInAttr</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">new_attr</span><span class="p">);</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span> <span class="n">reader_ptr</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">is_reality_mode_</span><span class="p">)</span>
+    <span class="n">reader_ptr</span> <span class="o">=</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">blocker</span><span class="o">::</span><span class="n">IntraReader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">new_attr</span><span class="p">,</span> <span class="n">reader_func</span><span class="p">);</span>
+  <span class="k">else</span> 
+    <span class="n">reader_ptr</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">new_attr</span><span class="p">,</span> <span class="n">reader_func</span><span class="p">,</span>
+                                                    <span class="n">pending_queue_size</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">reader_ptr</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>令人感到安心的是，<code class="language-plaintext highlighter-rouge">NodeChannelImpl</code> 类在创建 <code class="language-plaintext highlighter-rouge">Write</code> 对象时，步骤与 <code class="language-plaintext highlighter-rouge">Reader</code> 几乎一致，甚至可以说，他们只是把几个关键词换了一下而已。</p>
+
+<p>那么，对于 <code class="language-plaintext highlighter-rouge">NodeServiceImpl</code> 类，情况有没有改变呢？emm……情况稍有变化：（以 <code class="language-plaintext highlighter-rouge">Service</code> 类为例）</p>
+
+<ol>
+  <li>直接创建 <code class="language-plaintext highlighter-rouge">Service</code> 对象，并进行初始化（初始化里干的事情日后再聊）</li>
+  <li>将创建好的 <code class="language-plaintext highlighter-rouge">Service</code> 指针放入到数组 <code class="language-plaintext highlighter-rouge">serivce_list_</code> 中</li>
+  <li>调用服务发现的拓扑管理类 <code class="language-plaintext highlighter-rouge">service_discovery::TopologyManager</code> 中的 <code class="language-plaintext highlighter-rouge">Join()</code> 函数（这边是个大坑，日后再聊+1 🐶）</li>
+</ol>
+
+<h3 id="reader--writer">Reader &amp;&amp; Writer</h3>
+
+<p>比起服务—客户的通信模式，我更关注发布—订阅模式；比起模拟模式，我更关注真实模式，因此先作重点介绍。</p>
+
+<h4 id="reader-类">Reader 类</h4>
+
+<p>那么兜兜转转，我们终于来到了读者类。首先来看一下 <code class="language-plaintext highlighter-rouge">Reader</code> 的基本情况。唔，它继承自 <code class="language-plaintext highlighter-rouge">ReaderBase</code> 类，它包含一个 <code class="language-plaintext highlighter-rouge">Blocker</code> 和一个 <code class="language-plaintext highlighter-rouge">Receiver</code> 对象，它们是我们要重点关注的。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Reader</span> <span class="o">:</span> <span class="k">public</span> <span class="n">ReaderBase</span> <span class="p">{</span>
+ <span class="k">explicit</span> <span class="n">Reader</span><span class="p">(</span><span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">role_attr</span><span class="p">,</span>
+              <span class="k">const</span> <span class="n">CallbackFunc</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&amp;</span> <span class="n">reader_func</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">,</span>
+              <span class="kt">uint32_t</span> <span class="n">pending_queue_size</span> <span class="o">=</span> <span class="n">DEFAULT_PENDING_QUEUE_SIZE</span><span class="p">);</span>
+ <span class="nl">protected:</span>
+  <span class="kt">double</span> <span class="n">latest_recv_time_sec_</span><span class="p">;</span>			<span class="c1">// 接受消息的最近时间</span>
+  <span class="kt">double</span> <span class="n">second_to_lastest_recv_time_sec_</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">;</span>		<span class="c1">// 接受消息的第二近时间</span>
+  <span class="kt">uint32_t</span> <span class="n">pending_queue_size_</span><span class="p">;</span>			<span class="c1">// 消息缓冲区的最大值</span>
+ <span class="nl">private:</span>
+  <span class="n">CallbackFunc</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span> <span class="n">reader_func_</span><span class="p">;</span>
+  <span class="n">ReceiverPtr</span> <span class="n">receiver_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">croutine_name_</span><span class="p">;</span>
+  <span class="n">BlockerPtr</span> <span class="n">blocker_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">ChangeConnection</span> <span class="n">change_conn_</span><span class="p">;</span>
+  <span class="n">service_discovery</span><span class="o">::</span><span class="n">ChannelManagerPtr</span> <span class="n">channel_manager_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>根据我们在上一小节的理解，<code class="language-plaintext highlighter-rouge">Reader</code> 对象只会在<strong>真实模式</strong>下被创建。既然已经说到了创建，我们就先来看一下 <code class="language-plaintext highlighter-rouge">Reader</code> 的创建过程吧😀。在 <code class="language-plaintext highlighter-rouge">Reader</code> 类的构造函数中，其类的 <code class="language-plaintext highlighter-rouge">Blocker</code> 成员也进行构造，这边的过程很简单。而进一步对 <code class="language-plaintext highlighter-rouge">Reader</code> 进行初始化，调用 <code class="language-plaintext highlighter-rouge">Reader::Init()</code> 函数时，情况就复杂了起来：</p>
+
+<ol>
+  <li>创建回调函数。用 <code class="language-plaintext highlighter-rouge">Reader::Enqueue()</code> + 传入的回调函数封装出一个新的回调函数 <code class="language-plaintext highlighter-rouge">func</code></li>
+  <li><a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html#%E7%9C%9F%E5%AE%9E%E6%A8%A1%E5%BC%8F%E4%B8%8E%E6%A8%A1%E6%8B%9F%E6%A8%A1%E5%BC%8F">与组件的初始化过程的最后几步相似</a>，<code class="language-plaintext highlighter-rouge">Reader</code> 类的初始化中，也拿出了 <code class="language-plaintext highlighter-rouge">Scheduler</code> 类，创建了 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 对象（通信下篇会对其详细阐述）和协程工厂对象，并用它们创建了一个任务，目的就是将第一步中封装好的回调函数 <code class="language-plaintext highlighter-rouge">func</code> 包装为协程，最后根据调度算法的安排，在合适的时候调用。此外还把对应的协程名字记录到 <code class="language-plaintext highlighter-rouge">croutine_name_</code> 中</li>
+  <li>根据 <code class="language-plaintext highlighter-rouge">Reader</code> 对象的属性，从接收器管理类 <code class="language-plaintext highlighter-rouge">ReceiverManager&lt;M&gt;</code> 中取出相对应的 <code class="language-plaintext highlighter-rouge">Receiver</code> 对象，该对象用于接受消息</li>
+  <li>从 <code class="language-plaintext highlighter-rouge">service_discovery::TopologyManager</code> 那里拿到信道管理器 <code class="language-plaintext highlighter-rouge">channel_manager</code> ，最后把这个 <code class="language-plaintext highlighter-rouge">Reader</code> 对象加入到拓扑结构中</li>
+</ol>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 为方便说明，对代码进行裁减 真实代码情况见 cyber/node/reader.h 文件</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>  <span class="kt">bool</span> <span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Init</span><span class="p">()</span> <span class="p">{</span>
+ <span class="cm">/*  ....  */</span>
+    <span class="c1">// 第一步</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&amp;</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">func</span><span class="p">;</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="p">[</span><span class="k">this</span><span class="p">](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">Enqueue</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">reader_func_</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+    <span class="p">};</span>
+    <span class="c1">// 第二步</span>
+  <span class="k">auto</span> <span class="n">sched</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">::</span><span class="n">Instance</span><span class="p">();</span>
+  <span class="n">croutine_name_</span> <span class="o">=</span> <span class="n">role_attr_</span><span class="p">.</span><span class="n">node_name</span><span class="p">()</span> <span class="o">+</span> <span class="s">"_"</span> <span class="o">+</span> <span class="n">role_attr_</span><span class="p">.</span><span class="n">channel_name</span><span class="p">();</span>
+  <span class="k">auto</span> <span class="n">dv</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">data</span><span class="o">::</span><span class="n">DataVisitor</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span><span class="p">(</span>
+      <span class="n">role_attr_</span><span class="p">.</span><span class="n">channel_id</span><span class="p">(),</span> <span class="n">pending_queue_size_</span><span class="p">);</span>
+  <span class="n">croutine</span><span class="o">::</span><span class="n">RoutineFactory</span> <span class="n">factory</span> <span class="o">=</span>
+      <span class="n">croutine</span><span class="o">::</span><span class="n">CreateRoutineFactory</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">func</span><span class="p">),</span> <span class="n">dv</span><span class="p">);</span>
+  <span class="n">sched</span><span class="o">-&gt;</span><span class="n">CreateTask</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">croutine_name_</span><span class="p">);</span>
+<span class="c1">// 第三步</span>
+  <span class="n">receiver_</span> <span class="o">=</span> <span class="n">ReceiverManager</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetReceiver</span><span class="p">(</span><span class="n">role_attr_</span><span class="p">);</span>
+  <span class="k">this</span><span class="o">-&gt;</span><span class="n">role_attr_</span><span class="p">.</span><span class="n">set_id</span><span class="p">(</span><span class="n">receiver_</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">().</span><span class="n">HashValue</span><span class="p">());</span>
+ <span class="c1">// 第四步</span>
+  <span class="n">channel_manager_</span> <span class="o">=</span> <span class="n">service_discovery</span><span class="o">::</span><span class="n">TopologyManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">channel_manager</span><span class="p">();</span>
+  <span class="n">JoinTheTopology</span><span class="p">();</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>好，那么 <code class="language-plaintext highlighter-rouge">Reader</code> 主要功能是什么呢？根据官方文档<sup>6</sup>，<code class="language-plaintext highlighter-rouge">Reader</code> 类订阅了一个信道，然后就有两个主要功能，这些都牵扯到后面要介绍的类，因此在这里就简单说明一下：</p>
+
+<ul>
+  <li>传入一个回调函数 <code class="language-plaintext highlighter-rouge">CallbackFunc</code> ，用来处理刚刚到达的消息。“处理消息”的意思就是把消息压入 <code class="language-plaintext highlighter-rouge">Blocker</code> 类的队列中，然后用回调函数处理。</li>
+  <li>可以观察到 <code class="language-plaintext highlighter-rouge">Blocker</code> 类中的缓存消息。用户可以使用函数 <code class="language-plaintext highlighter-rouge">Observe()</code> 将消息从发布队列取出，放入到观察队列中。一个 <code class="language-plaintext highlighter-rouge">Reader</code> 使用一个 <code class="language-plaintext highlighter-rouge">ChannelBuffer</code> ，处理了的消息会被存放在这里。</li>
+</ul>
+
+<p>好，除了初始化和主要的功能，暂时不讨论其他 <code class="language-plaintext highlighter-rouge">Reader</code> 相关的函数，因为它们要么过于平凡，要么涉及到了服务发现的内容（我无法在一篇博客中讨论这么多东西），接下来，我们可以去看看 <code class="language-plaintext highlighter-rouge">Reader</code> 类的反面，<code class="language-plaintext highlighter-rouge">Writer</code> 类是怎么做的。</p>
+
+<h4 id="writer-类">Writer 类</h4>
+
+<p>同样，从 <code class="language-plaintext highlighter-rouge">Writer</code> 类的组成开始，它继承 <code class="language-plaintext highlighter-rouge">WriterBase</code> 类，但组成比 <code class="language-plaintext highlighter-rouge">Reader</code> 类简单很多，只有一个 <code class="language-plaintext highlighter-rouge">Transmitter</code> 需要我们重点关注。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">Writer</span> <span class="o">:</span> <span class="k">public</span> <span class="n">WriterBase</span> <span class="p">{</span>
+ <span class="k">explicit</span> <span class="n">Writer</span><span class="p">(</span><span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">role_attr</span><span class="p">);</span>
+ <span class="nl">private:</span>
+  <span class="n">TransmitterPtr</span> <span class="n">transmitter_</span><span class="p">;</span>
+  <span class="n">ChangeConnection</span> <span class="n">change_conn_</span><span class="p">;</span>
+  <span class="n">service_discovery</span><span class="o">::</span><span class="n">ChannelManagerPtr</span> <span class="n">channel_manager_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>也一样，<code class="language-plaintext highlighter-rouge">Writer</code> 类只会在真实模式下被创建，其构建和初始化过程比 <code class="language-plaintext highlighter-rouge">Reader</code> 类对象简单：</p>
+
+<ol>
+  <li>构建好 <code class="language-plaintext highlighter-rouge">WriterBase::role_attr</code> ，把基本的属性数据填充好</li>
+  <li>创建 <code class="language-plaintext highlighter-rouge">Transmitter</code> 对象（下文会提到）</li>
+  <li>从 <code class="language-plaintext highlighter-rouge">service_discovery::TopologyManager</code> 那里拿到信道管理器 <code class="language-plaintext highlighter-rouge">channel_manager</code> ，最后把该 <code class="language-plaintext highlighter-rouge">Writer</code> 对象加入到拓扑结构中</li>
+</ol>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="n">Writer</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Writer</span><span class="p">(</span><span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">role_attr</span><span class="p">)</span>
+    <span class="o">:</span> <span class="n">WriterBase</span><span class="p">(</span><span class="n">role_attr</span><span class="p">),</span> <span class="n">transmitter_</span><span class="p">(</span><span class="nb">nullptr</span><span class="p">),</span> <span class="n">channel_manager_</span><span class="p">(</span><span class="nb">nullptr</span><span class="p">)</span> <span class="p">{}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="kt">bool</span> <span class="n">Writer</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Init</span><span class="p">()</span> <span class="p">{</span>
+   <span class="cm">/*  ....   */</span>
+    <span class="n">transmitter_</span> <span class="o">=</span>
+        <span class="n">transport</span><span class="o">::</span><span class="n">Transport</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CreateTransmitter</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">role_attr_</span><span class="p">);</span>
+    <span class="cm">/*  ....  */</span>
+  <span class="k">this</span><span class="o">-&gt;</span><span class="n">role_attr_</span><span class="p">.</span><span class="n">set_id</span><span class="p">(</span><span class="n">transmitter_</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">().</span><span class="n">HashValue</span><span class="p">());</span>
+  <span class="n">channel_manager_</span> <span class="o">=</span>
+      <span class="n">service_discovery</span><span class="o">::</span><span class="n">TopologyManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">channel_manager</span><span class="p">();</span>
+  <span class="n">JoinTheTopology</span><span class="p">();</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>` Writer<code class="language-plaintext highlighter-rouge"> 类的主要功能想必大家也猜得到：向对应的信道写数据，其 </code>Write()<code class="language-plaintext highlighter-rouge"> 函数会调用 </code>transport::Transmitter-&gt;Transmit()<code class="language-plaintext highlighter-rouge"> 函数，每个 </code>Writer<code class="language-plaintext highlighter-rouge"> 只能向一个信道写东西，但一个信道可以有多个 </code>Writer` 对象。</p>
+
+<h3 id="blocker缓存者">Blocker——缓存者</h3>
+
+<p><code class="language-plaintext highlighter-rouge">Blocker</code> 类是 <code class="language-plaintext highlighter-rouge">Reader</code> 的一个成员，它继承自 <code class="language-plaintext highlighter-rouge">BlockerBase</code> 类，还是和之前一样，我们先来看一下 <code class="language-plaintext highlighter-rouge">Blocker</code> 类的组成。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">Blocker</span> <span class="o">:</span> <span class="k">public</span> <span class="n">BlockerBase</span> <span class="p">{</span> 
+  <span class="n">BlockerAttr</span> <span class="n">attr_</span><span class="p">;</span>		<span class="c1">// Blocker的配置属性</span>
+  <span class="n">MessageQueue</span> <span class="n">observed_msg_queue_</span><span class="p">;</span>		<span class="c1">// 观察队列</span>
+  <span class="n">MessageQueue</span> <span class="n">published_msg_queue_</span><span class="p">;</span>	<span class="c1">// 发布队列</span>
+
+  <span class="n">CallbackMap</span> <span class="n">published_callbacks_</span><span class="p">;</span>		<span class="c1">// id 与 回调函数的表 其实就是 unordered_map</span>
+  <span class="n">MessageType</span> <span class="n">dummy_msg_</span><span class="p">;</span>	<span class="c1">// 假消息 常用于空值返回</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>前面我提到，<code class="language-plaintext highlighter-rouge">Reader</code> 类中有成员 <code class="language-plaintext highlighter-rouge">Blocker</code> ，用于缓存消息，因此有一个发布队列。当调用 <code class="language-plaintext highlighter-rouge">Blocker::Enqueue()</code> 函数时，<code class="language-plaintext highlighter-rouge">Blocker</code> 会将得到的新消息推入到队首，当队列已满时，就自动把队尾的旧消息移除。而为了用户能观察到队列中的消息，<code class="language-plaintext highlighter-rouge">Blocker</code> 类又加上了一个观察队列。当调用 <code class="language-plaintext highlighter-rouge">Blocker::Observe()</code> 时，就将发布队列拷贝一份给了观察队列。</p>
+
+<p>对于每一个 <code class="language-plaintext highlighter-rouge">Blocker</code> 类，它保存了一张 <code class="language-plaintext highlighter-rouge">callback_id</code> 和回调函数指针的一一对应关系表 <code class="language-plaintext highlighter-rouge">published_callbacks_</code>，记录了其所在 <code class="language-plaintext highlighter-rouge">Reader</code> 对象的一些回调函数。之所以是<strong>一些</strong>，是因为 <code class="language-plaintext highlighter-rouge">Blocker</code> 的主要功能应该是提供一个管理者获取数据的入口，方便调试、记录日志、运行模拟环境和监控整个系统，所以在 <code class="language-plaintext highlighter-rouge">Blocker</code> 类里注册的回调函数应该都是管理员注册的监控函数，和系统主逻辑没关系<sup>3</sup>😅。<em>其实在<strong>真实模式</strong>下，主逻辑完全都没有到过这里，这是我花了很多时间反复确认的。</em></p>
+
+<p>好，这时候结合 <code class="language-plaintext highlighter-rouge">Reader</code> 类的部分内容，就可以更好地理解 <code class="language-plaintext highlighter-rouge">Blocker</code> 类的作用了。<code class="language-plaintext highlighter-rouge">Reader</code> 类调用 <code class="language-plaintext highlighter-rouge">Enqueue()</code> 函数时，先更新时间参数，再调用 <code class="language-plaintext highlighter-rouge">Blocker::Publish()</code> 函数，其中 <code class="language-plaintext highlighter-rouge">Enqueue()</code> 将消息推入到发布队列中，然后 <code class="language-plaintext highlighter-rouge">Notify()</code> 函数用 <code class="language-plaintext highlighter-rouge">published_callbacks_</code> 内的所有的回调函数去处理消息。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="kt">void</span> <span class="n">Blocker</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">Publish</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Enqueue</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+  <span class="n">Notify</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>这个 <code class="language-plaintext highlighter-rouge">Publish()</code> 函数非常重要，在讨论下文的 <code class="language-plaintext highlighter-rouge">BlockerManager</code> 会用到。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="kt">void</span> <span class="n">Blocker</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">Enqueue</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="cm">/*  ....  */</span>
+  <span class="n">published_msg_queue_</span><span class="p">.</span><span class="n">push_front</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">published_msg_queue_</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">attr_</span><span class="p">.</span><span class="n">capacity</span><span class="p">)</span>
+    <span class="n">published_msg_queue_</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="kt">void</span> <span class="n">Blocker</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">Notify</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">item</span> <span class="o">:</span> <span class="n">published_callbacks_</span><span class="p">)</span>
+    <span class="n">item</span><span class="p">.</span><span class="n">second</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么 <code class="language-plaintext highlighter-rouge">published_callbacks_</code> 是如何得到的呢？答案是，通过 <code class="language-plaintext highlighter-rouge">Subscribe()</code> 函数加入的。只需要调用 <code class="language-plaintext highlighter-rouge">Blocker::Subscribe()</code> 函数，就可以将回调函数 id 和回调函数指针一同放入到这张表中。</p>
+
+<h4 id="blockermanager模拟模式助手">BlockerManager——模拟模式助手</h4>
+
+<p>好，接下来我们将目光暂时转移到模拟模式下。先再次介绍一下 <code class="language-plaintext highlighter-rouge">IntraReader</code> 类与 <code class="language-plaintext highlighter-rouge">IntraWriter</code> 类。它们俩都是在<strong>模拟模式</strong>下才会出现的对象。代码文件位于 <code class="language-plaintext highlighter-rouge">cyber/blocker/intra_reader.h</code> 和 <code class="language-plaintext highlighter-rouge">cyber/bolcker/intra_writer.h</code>，它们的实现与 <code class="language-plaintext highlighter-rouge">BlockerManager</code> 类关系密切，这也是为何它们的代码文件会位于 <code class="language-plaintext highlighter-rouge">cyber/blocker</code> 而不是和 <code class="language-plaintext highlighter-rouge">Reader</code> 一样位于 <code class="language-plaintext highlighter-rouge">cyber/node</code> 的重要原因（也是为什么我选择在这里讲它们俩的原因😅）。它们分别继承自 <code class="language-plaintext highlighter-rouge">Reader</code> 和 <code class="language-plaintext highlighter-rouge">Writer</code> 。因为这是模拟模式下创建的对象，所以它们不会去创建协程，去获取传感器的数据。</p>
+
+<p>老规矩，我们先看看 <code class="language-plaintext highlighter-rouge">IntraReader</code> 和 <code class="language-plaintext highlighter-rouge">IntraWriter</code> “肚子里有什么东西”👇。看来货不多，<code class="language-plaintext highlighter-rouge">IntraReader</code> 类只有一个回调函数，<code class="language-plaintext highlighter-rouge">IntraWriter</code> 类只有个 <code class="language-plaintext highlighter-rouge">BlockerManager</code> 类的指针。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">IntraReader</span> <span class="o">:</span> <span class="k">public</span> <span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="n">IntraReader</span><span class="p">(</span><span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">attr</span><span class="p">,</span> <span class="k">const</span> <span class="n">Callback</span><span class="o">&amp;</span> <span class="n">callback</span><span class="p">);</span>
+  <span class="kt">bool</span> <span class="n">Init</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+  <span class="kt">void</span> <span class="n">Enqueue</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+ <span class="nl">private:</span>
+  <span class="kt">void</span> <span class="n">OnMessage</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg_ptr</span><span class="p">);</span>
+  <span class="n">Callback</span> <span class="n">msg_callback_</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">IntraWriter</span> <span class="o">:</span> <span class="k">public</span> <span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="k">explicit</span> <span class="n">IntraWriter</span><span class="p">(</span><span class="k">const</span> <span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="o">&amp;</span> <span class="n">attr</span><span class="p">);</span>
+  <span class="kt">bool</span> <span class="n">Init</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="n">Write</span><span class="p">(</span><span class="k">const</span> <span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg_ptr</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+ <span class="nl">private:</span>
+  <span class="n">BlockerManagerPtr</span> <span class="n">blocker_manager_</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>再来看看为什么称 <code class="language-plaintext highlighter-rouge">BlockerManager</code> 为模拟模式的助手。因为 <code class="language-plaintext highlighter-rouge">IntraReader</code> 和 <code class="language-plaintext highlighter-rouge">IntraWriter</code> 都或多或少与它有点关系。看看它们的初始化，<code class="language-plaintext highlighter-rouge">IntraReader</code> 类重载了 <code class="language-plaintext highlighter-rouge">Reader::Init()</code> 函数。在初始化中，它不会创建协程，而是直接调用 <code class="language-plaintext highlighter-rouge">BlockerManager::Subscribe()</code>，把 <code class="language-plaintext highlighter-rouge">IntraReader::OnMessage()</code> 函数（记录时间并调用 <code class="language-plaintext highlighter-rouge">IntraReader</code> 创建时传入的回调函数）注册为该信道对应 <code class="language-plaintext highlighter-rouge">Blocker</code> 的回调函数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">BlockerManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Subscribe</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">role_attr_</span><span class="p">.</span><span class="n">channel_name</span><span class="p">(),</span> <span class="k">this</span><span class="o">-&gt;</span><span class="n">role_attr_</span><span class="p">.</span><span class="n">qos_profile</span><span class="p">().</span><span class="n">depth</span><span class="p">(),</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">role_attr_</span><span class="p">.</span><span class="n">node_name</span><span class="p">(),</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">IntraReader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">OnMessage</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span>
+                <span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>对于 <code class="language-plaintext highlighter-rouge">IntraWriter</code> 类，就更直接了，在初始化时它直接用 <code class="language-plaintext highlighter-rouge">BlockManager</code> 创建了一个 <code class="language-plaintext highlighter-rouge">Blocker</code> 对象。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">MessageT</span><span class="p">&gt;</span>
+<span class="kt">bool</span> <span class="n">IntraWriter</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;::</span><span class="n">Init</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">blocker_manager_</span> <span class="o">=</span> <span class="n">BlockerManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">();</span>
+    <span class="n">blocker_manager_</span><span class="o">-&gt;</span><span class="n">GetOrCreateBlocker</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">BlockerAttr</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">role_attr_</span><span class="p">.</span><span class="n">channel_name</span><span class="p">()));</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">BlockerManager</code> 类（单例模式）在模拟模式下发挥了非常大的作用！还是老样子，看看它有什么东西，哦，只有一个 <code class="language-plaintext highlighter-rouge">BlockerMap</code> ，它将信道名字与对应 <code class="language-plaintext highlighter-rouge">Blocker</code> 记录了下来。 <code class="language-plaintext highlighter-rouge">IntraReader::Enqueue()</code> 和 <code class="language-plaintext highlighter-rouge">IntraWriter::Write()</code> 都调用了 <code class="language-plaintext highlighter-rouge">BlockerManager::Publish()</code> 函数</p>
+
+<p>再来看看它们工作时会怎么干吧。先来看一下 <code class="language-plaintext highlighter-rouge">IntraReader::Enqueue()</code> 函数，它会调用 <code class="language-plaintext highlighter-rouge">BlockerManager::Publish()</code> 函数，<code class="language-plaintext highlighter-rouge">IntraReader::Observe()</code> 函数也是从 <code class="language-plaintext highlighter-rouge">BlockerManager</code> 中取出一个 <code class="language-plaintext highlighter-rouge">Blocker</code> 对象，后调用 <code class="language-plaintext highlighter-rouge">Observe()</code> 。对于 <code class="language-plaintext highlighter-rouge">IntraWriter</code> 类，其 <code class="language-plaintext highlighter-rouge">Write()</code> 函数也是直接调用 <code class="language-plaintext highlighter-rouge">BlockerManager::Publish()</code> 函数来放入数据，而 <code class="language-plaintext highlighter-rouge">BlockerManager::Publish()</code> 函数👇会先选取（或构造）出对应信道的 <code class="language-plaintext highlighter-rouge">Blocker</code> 对象，然后调用 <code class="language-plaintext highlighter-rouge">Blocker::Publish()</code> 函数，这个函数我在前文已经讨论过了，<code class="language-plaintext highlighter-rouge">Blocker::Publish()</code> 函数会先调用 <code class="language-plaintext highlighter-rouge">Enqueue()</code> 将消息推入到发布队列中，然后 <code class="language-plaintext highlighter-rouge">Notify()</code> 函数通知 <code class="language-plaintext highlighter-rouge">published_callbacks_</code> 内的所有的回调函数去处理消息。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">BlockerManager</span> <span class="p">{</span>
+  <span class="k">static</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BlockerManager</span><span class="o">&gt;&amp;</span> <span class="n">Instance</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="k">auto</span> <span class="n">instance</span> <span class="o">=</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BlockerManager</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BlockerManager</span><span class="p">());</span>
+    <span class="k">return</span> <span class="n">instance</span><span class="p">;</span>
+  <span class="p">}</span>
+ <span class="nl">private:</span>
+  <span class="n">BlockerMap</span> <span class="n">blockers_</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">blocker_mutex_</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="kt">bool</span> <span class="n">BlockerManager</span><span class="o">::</span><span class="n">Publish</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">channel_name</span><span class="p">,</span>
+                             <span class="k">const</span> <span class="k">typename</span> <span class="n">Blocker</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">MessagePtr</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">blocker</span> <span class="o">=</span> <span class="n">GetOrCreateBlocker</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">BlockerAttr</span><span class="p">(</span><span class="n">channel_name</span><span class="p">));</span>
+  <span class="n">blocker</span><span class="o">-&gt;</span><span class="n">Publish</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="小结">小结</h2>
+
+<p>在这篇博客中，我先介绍了一下 Cyber RT 的通信架构和三种通信模型，然后，开始一层层地介绍涉及到通信的类。在下篇博客中，我会将剩下的东西介绍清楚，最后我会给出一个更加完整的总结。</p>
+
+<h2 id="参考">参考</h2>
+
+<p>[1] <a href="https://github.com/daohu527/Dig-into-Apollo/tree/master/cyber">Dig into Apollo - Cyber</a></p>
+
+<p>[2] <a href="https://blog.csdn.net/jinzhuojun/article/details/108066714">自动驾驶平台Apollo 5.5阅读手记：Cyber RT中的通信传输</a></p>
+
+<p>[3] <a href="https://blog.csdn.net/qq_25762163/article/details/103803032">百度Apollo系统学习-Cyber RT 通信-上层</a></p>
+
+<p>[4] <a href="https://blog.csdn.net/kesalin/article/details/88914029">百度 Apollo Cyber RT简介、基本概念以及与 ROS 对照</a></p>
+
+<p>[5] <a href="https://blog.csdn.net/qq_25762163/article/details/103895527">百度Apollo系统学习-Cyber RT 通信-底层</a></p>
+
+<p>[6] <a href="https://cyber-rt.readthedocs.io/en/latest/api/cppapi.html#cyber-node-reader-h">cyber-rt.readthedocs.io</a></p>
+
+<p>[7] 自动驾驶汽车平台技术基础/杨世春等编著. —北京：清华大学出版社</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#cyber-rt" class="page__taxonomy-item" rel="tag">Cyber RT</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-11-03T00:00:00+08:00">November 3, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Apollo+Cyber+RT+%E9%80%9A%E4%BF%A1%EF%BC%88%E4%B8%8A%EF%BC%89%20https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F03%2FCyberCommu1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F03%2FCyberCommu1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Fapollo%2F2020%2F11%2F03%2FCyberCommu1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/apollo/2020/10/25/CyberComponent.html" class="pagination--pager" title="Apollo Cyber RT 组件
+">previous</a>
+    
+    
+      <a href="/apollo/2020/11/07/CyberCommu2.html" class="pagination--pager" title="Apollo Cyber RT 通信（下）
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/apollo/2020/11/03/CyberCommu1"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>
