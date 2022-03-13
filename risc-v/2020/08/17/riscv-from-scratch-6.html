@@ -1,0 +1,1094 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>RISC-V from Scratch 6 - 峰子的乐园</title>
+<meta name="description" content="RISC-V from Scratch 6：时钟中断">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="RISC-V from Scratch 6">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/08/17/riscv-from-scratch-6.html">
+
+
+  <meta property="og:description" content="RISC-V from Scratch 6：时钟中断">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-08-17T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/08/17/riscv-from-scratch-6.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          RISC-V from Scratch 6
+
+        
+      </h1>
+      
+        <p class="page__lead">RISC-V from Scratch 6：时钟中断
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="RISC-V from Scratch 6">
+    <meta itemprop="description" content="RISC-V from Scratch 6：时钟中断">
+    <meta itemprop="datePublished" content="2020-08-17T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#risc-v-from-scratch-6">RISC-V from scratch 6</a>
+    <ul>
+      <li><a href="#简介">简介</a></li>
+      <li><a href="#搭建环境">搭建环境</a></li>
+      <li><a href="#往期回顾">往期回顾</a></li>
+      <li><a href="#工具类函数库">工具类函数库</a></li>
+      <li><a href="#时钟中断">时钟中断</a>
+        <ul>
+          <li><a href="#知识预备">知识预备</a></li>
+          <li><a href="#mtvec-寄存器">mtvec 寄存器</a></li>
+          <li><a href="#中断处理程序">中断处理程序</a></li>
+          <li><a href="#makefile-编译">Makefile 编译</a></li>
+        </ul>
+      </li>
+      <li><a href="#监管者模式">监管者模式</a>
+        <ul>
+          <li><a href="#痛苦的尝试">痛苦的尝试</a></li>
+          <li><a href="#最终">最终</a></li>
+        </ul>
+      </li>
+      <li><a href="#接下来">接下来</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="risc-v-from-scratch-6">RISC-V from scratch 6</h1>
+
+<p>接上一篇<a href="https://dingfen.github.io/risc-v/2020/08/06/riscv-from-scratch-5.html">博客</a>，我今天继续写 <em>RISC-V from scratch</em> 系列博客。原本我打算将该<a href="https://github.com/twilco/riscv-from-scratch">英文系列</a>全部翻译成中文，但原作者貌似没有把这一系列完成就咕咕了，<strong>因此本文的内容是我自己实践的内容，以及一些自己的想法，放在这里同大家探讨，算是狗尾续貂，弥补遗憾</strong>。</p>
+
+<h2 id="简介">简介</h2>
+
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，我们之前已经介绍了 RISC-V 的特权架构以及几个重要的寄存器，在更久以前，我们还介绍了一些相关底层概念（例如编译、链接、原语运行时、汇编等）。具体来说，在上一篇文章中，我们在 <strong>UART</strong> 驱动程序的基础上，写了一个自己的链接器脚本，将数据安放在了合适的位置，我们还完善了 <code class="language-plaintext highlighter-rouge">boot.s</code> 文件，为中断程序处理做好了准备。为了使我们更好地利用驱动程序，并进一步做到进程并发、调度等，在这篇博客中，我将介绍：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">printf</code> 等工具类函数的实现</li>
+  <li>在机器模式中实现对时钟中断的处理</li>
+  <li>将时钟中断处理程序放到监管者模式下</li>
+</ul>
+
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+
+<p>如果你还未看本系列博客的第一部分，没有安装 <code class="language-plaintext highlighter-rouge">riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+
+<h2 id="往期回顾">往期回顾</h2>
+
+<p>在正式内容开始前，我们先来看看上次实验进行到哪里了：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kt">char</span> <span class="n">sg</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"hello world!"</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">102</span><span class="p">;</span>
+    <span class="k">static</span> <span class="kt">int</span> <span class="n">sl</span> <span class="o">=</span> <span class="mi">105</span><span class="p">;</span>
+    <span class="n">uartinit</span><span class="p">();</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">12</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">uartputc</span><span class="p">(</span><span class="n">sg</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><img src="/assets/img/run_5.png" alt="" /></p>
+
+<p>不错，我们已经可以熟练地使用驱动程序打印字符串了！但是，我们仍然不满足于此，我们最终的期望，一定是和其他机器一样，可以在 C 语言中使用 <code class="language-plaintext highlighter-rouge">printf</code> 等函数将字符打印出来。此外，实现了 <code class="language-plaintext highlighter-rouge">printf</code> 函数，也可以让我们调试更加方便（所谓的 <code class="language-plaintext highlighter-rouge">printf</code> 大法🤪），对中断处理程序的实现有一定帮助。</p>
+
+<h2 id="工具类函数库">工具类函数库</h2>
+
+<p>虽然我们即将实现的这些工具类函数都可以在 C/C++ 的库函数里面找到，不需要自己重复造轮子，但既然 <em>RISC-V from scratch</em> 这一系列的初衷就是从零开始完成 RISC-V 内核，那么博主还是要头铁地试一试的。对这一部分不感兴趣的读者，可以直接跳过啦。</p>
+
+<p>首先，新建一个文件取名 <code class="language-plaintext highlighter-rouge">print.c</code> ，再根据 <a href="http://www.cplusplus.com/reference/cstdio/printf/">C/C++ 中的规定</a>，对 <code class="language-plaintext highlighter-rouge">printf</code> 函数定义：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * @param fmt the string format
+ * @return return length of written chars if success 
+ */</span> 
+<span class="kt">int</span> <span class="nf">printf</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">fmt</span><span class="p">,</span> <span class="p">...)</span> <span class="p">{</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果大家对 C 语言中的可变参数语法不是很熟悉，那么建议看看<a href="https://www.runoob.com/cprogramming/c-variable-arguments.html">菜鸟教程</a>或者 <a href="https://www.geeksforgeeks.org/variable-length-argument-c/">GeeksforGeeks</a>。</p>
+
+<p>考虑到今后的应用前景和代码结构，博主一并实现了 <code class="language-plaintext highlighter-rouge">vsprintf</code> 和 <code class="language-plaintext highlighter-rouge">sprintf</code> 函数，以及<code class="language-plaintext highlighter-rouge">strcpy</code>、<code class="language-plaintext highlighter-rouge">strlen</code> 等函数，但目前只实现了 <code class="language-plaintext highlighter-rouge">%d %x %s</code> 等。出于篇幅原因，只展示一些核心代码，其他的工具类函数实现都比较简单，就不罗嗦了。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * @param s  output string after replacement
+ * @param fmt input string format
+ * @param arg the variable arguments
+ * @return the length of output string s
+ */</span> 
+<span class="kt">int</span> <span class="nf">vsprintf</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">fmt</span><span class="p">,</span> <span class="kt">va_list</span> <span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// ...</span>
+        <span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">(</span><span class="n">fmt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">fmt</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+        <span class="c1">// char put</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">!=</span> <span class="sc">'%'</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">fmt</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>  <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="c1">// %d %x %s and %% </span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">fmt</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">;</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="sc">'d'</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">va_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">itoa</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">tmpstr</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+                <span class="n">strcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">tmpstr</span><span class="p">);</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="n">tmp</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">'x'</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">va_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">itoa</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">tmpstr</span><span class="p">,</span> <span class="mi">16</span><span class="p">);</span>
+                <span class="n">strcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">tmpstr</span><span class="p">);</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="n">tmp</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">'s'</span><span class="p">:</span>
+                <span class="n">pt</span> <span class="o">=</span> <span class="n">va_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span><span class="p">);</span>
+                <span class="n">strcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">pt</span><span class="p">);</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="n">strlen</span><span class="p">(</span><span class="n">pt</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">'%'</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="sc">'%'</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+            <span class="nl">default:</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>说一个小细节，整数的打印有两种进制可供选择，将整数转为相应的字符串是通过 <code class="language-plaintext highlighter-rouge">int itoa(int num, char *str, int base)</code> 函数实现的。该函数也不难实现。<code class="language-plaintext highlighter-rouge">printf</code> 函数就很容易了，只要把参数转换为相应的类型，再调用 <code class="language-plaintext highlighter-rouge">vsprintf</code> 函数和 <code class="language-plaintext highlighter-rouge">uartputc</code> 函数就行了：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * @param fmt the string format
+ * @return return length of written chars if success 
+ */</span> 
+<span class="kt">int</span> <span class="nf">printf</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">fmt</span><span class="p">,</span> <span class="p">...)</span> <span class="p">{</span>
+    <span class="kt">va_list</span> <span class="n">va</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">len</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">str</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+    <span class="n">va_start</span><span class="p">(</span><span class="n">va</span><span class="p">,</span> <span class="n">fmt</span><span class="p">);</span>
+    <span class="n">len</span> <span class="o">=</span> <span class="n">vsprintf</span><span class="p">(</span><span class="n">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">va</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">len</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">uartputc</span><span class="p">(</span><span class="n">str</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="n">va_end</span><span class="p">(</span><span class="n">va</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">len</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="时钟中断">时钟中断</h2>
+
+<h3 id="知识预备">知识预备</h3>
+
+<p>到这里，如果大家仍不熟悉 RISC-V 特权架构，特别是中断处理的相关知识的话，就要好好补补了：</p>
+
+<ul>
+  <li><a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a></li>
+  <li><a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a></li>
+  <li><a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a></li>
+</ul>
+
+<p>其中，官方的 RISC-V 特权指令集手册解释最为详尽，推荐英文好的读者仔细读一下相关内容。</p>
+
+<p>关于时钟中断，它是中断的三种来源之一，触发中断的条件非常简单：在相关中断使能全打开的情况下，当 <code class="language-plaintext highlighter-rouge">mtime</code> 寄存器中的值大于或等于 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器中的值时，就会触发时钟中断。值得注意的是，在机器模式下，只有当 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器被重新写入后，<code class="language-plaintext highlighter-rouge">mip</code> 寄存器中的时钟中断标志位才会被清除。因此，每次处理时钟中断，都不能忘记更新 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 。</p>
+
+<blockquote>
+  <p><em>Platforms provide a 64-bit <strong>memory-mapped machine-mode</strong> timer compare register (</em><strong>mtimecmp</strong><em>), which causes a timer interrupt to be posted when the</em> <strong>mtime</strong> <em>register contains a value greater than or equal to the value in the</em> <strong>mtimecmp</strong> <em>register.</em></p>
+
+  <p>The <strong>MTIP</strong> bit is read-only and is cleared by writing to the <strong>memory-mapped machine-mode timer compare register (mtimecmp)</strong>.</p>
+</blockquote>
+
+<p>这里我要好好解释一下什么是 <strong>memory-mapped machine-mode</strong> 寄存器。如果你详细读过 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a> 和 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>，那么你一定发现上面引用中提到的寄存器 <code class="language-plaintext highlighter-rouge">mtime</code> 和 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 都不在 CSR 寄存器表中，它们是 memory-mapped（内存映射）寄存器，意味着他们存在于机器内存的某个位置。由<a href="http://www.ittc.ku.edu/~heechul/courses/eecs388/lab6.pdf">网上的资料</a>得知，在 QEMU 提供的 virt 机器中，时钟中断事实上是由一个叫 CLINT 的外部中断设别产生的，在 <code class="language-plaintext highlighter-rouge">virt</code> 机器中，<code class="language-plaintext highlighter-rouge">mtime</code> 的内存地址是 <code class="language-plaintext highlighter-rouge">0x200bff8</code>，<code class="language-plaintext highlighter-rouge">mtimecmp</code> 的内存地址是 <code class="language-plaintext highlighter-rouge">0x2004000</code> 。</p>
+
+<h3 id="mtvec-寄存器"><code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器</h3>
+
+<p>回顾一下 <a href="https://dingfen.github.io/risc-v/2020/08/06/riscv-from-scratch-5.html"><em>RISC-V from Scratch</em> 5 </a>和 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>，其中都提到了<code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器，它的作用是存储处理程序的基址。很显然我们即将写的时钟中断处理程序就应当在此，注意，<code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器要求中断处理程序地址 4 字节对齐。好，万事俱备，只欠东风。首先，新建一个文件取名 <code class="language-plaintext highlighter-rouge">mtrap.s</code> ，然后定义符号 <code class="language-plaintext highlighter-rouge">mtrap_vector </code>。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">.global</span> <span class="nv">mtrap_vector</span>
+<span class="nf">.section</span> <span class="nv">.text</span>
+<span class="nf">.align</span> <span class="mi">4</span>
+<span class="nl">mtrap_vector:</span>
+</code></pre></div></div>
+
+<p>那么，我们该使用 <code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器的哪一种寻址方式呢？其实都可以，简单点地，使用直接寻址，所有的中断/异常的处理都会跳转到这里；使用间接寻址，中断和异常就会分开，略显复杂但更易理解。</p>
+
+<p>博主在实验时两个方式都用过了，我就介绍一下间接寻址吧。所有的中断处理程序的开始地址在 <code class="language-plaintext highlighter-rouge">mtrap_vector</code> 处形成数组，机器模式的时钟中断（中断编号为 7，因此在第 8 个）直接跳转到 <code class="language-plaintext highlighter-rouge">mtimer</code> 处。由于其他中断我们还没写，这就直接用 <code class="language-plaintext highlighter-rouge">nop</code> 语句代替了😅。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">.global</span> <span class="nv">mtrap_vector</span>
+<span class="nf">.section</span> <span class="nv">.text</span>
+<span class="nf">.align</span> <span class="mi">4</span>
+<span class="nl">mtrap_vector:</span>
+    <span class="nf">nop</span>                     <span class="err">#</span> <span class="nv">User</span> <span class="nv">Software</span> <span class="nv">Interrupt</span>
+    <span class="nf">nop</span>                     <span class="err">#</span> <span class="nv">Supervisor</span> <span class="nv">software</span> <span class="nv">Interrupt</span>
+    <span class="nf">nop</span>                     <span class="err">#</span> 
+    <span class="nf">nop</span>                     <span class="err">#</span> <span class="nv">Machine</span> <span class="nv">software</span> <span class="nv">Interrupt</span>
+    <span class="nf">nop</span>                     <span class="err">#</span> <span class="nv">User</span> <span class="nv">timer</span> <span class="nv">Interrupt</span>
+    <span class="nf">nop</span>                     <span class="err">#</span> <span class="nv">Supervisor</span> <span class="nv">timer</span> <span class="nv">Interrupt</span>
+    <span class="nf">nop</span>                     <span class="err">#</span>
+    <span class="nf">j</span>    <span class="nv">mtimer</span>             <span class="err">#</span> <span class="nv">Machine</span> <span class="nv">timer</span> <span class="nv">Interrupt</span>
+</code></pre></div></div>
+
+<h3 id="中断处理程序">中断处理程序</h3>
+
+<p>在 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>中，我们已经知道了发生中断/异常时，机器的行动过程。那么在中断处理程序中，我们到底需要做什么呢？如果大家学过本科的<a href="http://staff.ustc.edu.cn/~llxx/cod/reference_books/tang.pdf">计算机组成原理</a>的话，那么应该知道这些：</p>
+
+<ul>
+  <li>保存现场</li>
+  <li>完成中断服务</li>
+  <li>恢复现场</li>
+  <li>返回主函数</li>
+</ul>
+
+<p><strong>保存现场</strong>，就是说当程序因为中断从正常运行的程序切换到中断处理程序后，为不打扰正常程序的运行，第一件事情就是将所有的寄存器值和之前的 PC 值都保存下来，以便日后恢复。RISC-V 在响应中断时就自动帮我们把 PC 值保存在了<code class="language-plaintext highlighter-rouge">mepc</code> 寄存器中，但其余寄存器的值是需要我们自己保存的。我们可以将所有的寄存器值都保存在栈中，也可以给 <code class="language-plaintext highlighter-rouge">mscratch</code> 寄存器分配一定空间，然后将值保存在那里。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">mtimer:</span>    
+    <span class="nf">addi</span> <span class="nb">sp</span><span class="p">,</span> <span class="nb">sp</span><span class="p">,</span> <span class="o">-</span><span class="mi">32</span>
+    <span class="nf">sd</span>   <span class="nv">a0</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="nf">sd</span>   <span class="nv">a1</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="nf">sd</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">16</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="nf">sd</span>   <span class="nv">a3</span><span class="p">,</span> <span class="mi">24</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="err">#</span> <span class="nf">...</span>
+</code></pre></div></div>
+
+<p><strong>中断服务</strong>，就是具体处理中断的程序啦。首先，我们可以通过 <code class="language-plaintext highlighter-rouge">mcause</code> 寄存器判断一下这是不是我们要处理的中断，然后就可以调用打印函数打印一句话，证明中断程序已经执行了。哦，不能忘记每次时钟中断处理都要更新 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器，否则时钟中断信号就不会被清除。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="err">#</span> <span class="nf">get</span> <span class="nv">the</span> <span class="nv">cause</span> <span class="nv">of</span> <span class="nv">interrupt</span> <span class="nv">or</span> <span class="nv">exception</span>
+    <span class="err">#</span> <span class="nf">to</span> <span class="nv">make</span> <span class="nv">sure</span> <span class="nv">it</span> <span class="nv">is</span> <span class="nv">mtimer</span>
+    <span class="nf">csrr</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">mcause</span>
+    <span class="nf">andi</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="mh">0x3f</span>   <span class="err">#</span> <span class="nv">get</span> <span class="nv">the</span> <span class="nv">last</span> <span class="mi">7</span> <span class="nv">bit</span>
+    <span class="nf">li</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">7</span>          <span class="err">#</span> <span class="nv">mtimer</span> <span class="nv">interrupt</span> <span class="nv">is</span> <span class="mi">7</span>
+    <span class="nf">beq</span>  <span class="nv">a1</span><span class="p">,</span> <span class="nv">a2</span><span class="p">,</span> <span class="mi">1</span><span class="nv">f</span>
+    <span class="nf">j</span>    <span class="mi">3</span><span class="nv">f</span>
+<span class="err">1:</span>
+    <span class="err">#</span> <span class="nf">handle</span> <span class="nv">timer</span> <span class="nv">interrupt</span>
+    <span class="err">#</span> <span class="nf">add</span> <span class="nv">mtimecmp</span>
+    <span class="nf">la</span>   <span class="nv">a1</span><span class="p">,</span> <span class="mh">0x2004000</span>
+    <span class="nf">ld</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nv">a1</span><span class="p">)</span>
+    <span class="nf">li</span>   <span class="nv">a3</span><span class="p">,</span> <span class="mi">2000000</span>
+    <span class="nf">add</span>  <span class="nv">a2</span><span class="p">,</span> <span class="nv">a2</span><span class="p">,</span> <span class="nv">a3</span>
+    <span class="nf">sd</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nv">a1</span><span class="p">)</span>
+    
+    <span class="nf">call</span> <span class="nv">printime</span>
+</code></pre></div></div>
+
+<p><strong>恢复现场</strong>，到此为止中断程序就快做完了，马上要准备返回正常运行的程序了。我们需要把之前保存的寄存器值全部恢复过来。由于篇幅原因，我只写出了部分寄存器的保存和恢复，但保险起见，我们最好保存所有的寄存器。在程序的最后，使用 <code class="language-plaintext highlighter-rouge">mret</code> 语句将 <code class="language-plaintext highlighter-rouge">mepc</code> 寄存器中保存的 PC 值取出，恢复正常程序的执行。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">3:</span>
+    <span class="nf">ld</span>   <span class="nv">a0</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="nf">ld</span>   <span class="nv">a1</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="nf">ld</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">16</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="nf">ld</span>   <span class="nv">a3</span><span class="p">,</span> <span class="mi">24</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+    <span class="nf">addi</span> <span class="nb">sp</span><span class="p">,</span> <span class="nb">sp</span><span class="p">,</span> <span class="mi">32</span>
+    <span class="nf">mret</span>
+</code></pre></div></div>
+
+<p>关于 <code class="language-plaintext highlighter-rouge">printime</code> 函数，我们使用 C 语言实现：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">timer</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">void</span> <span class="nf">printime</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Hello RISC-V %x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">timer</span><span class="o">++</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在就可以了么？还没有！我们必须在 <code class="language-plaintext highlighter-rouge">boot.s</code> 中先行更新一下 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器，不让其为 0 ，否则系统会以为我们完全没有引入时钟中断！</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">li</span>   <span class="nv">t5</span><span class="p">,</span> <span class="mh">0x2004000</span>
+<span class="nf">li</span>   <span class="nv">t4</span><span class="p">,</span> <span class="mi">2000000</span>
+<span class="nf">sw</span>   <span class="nv">t4</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nv">t5</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="makefile-编译">Makefile 编译</h3>
+
+<p>整个项目进展到这里，已经有很多文件需要我们去处理了。我们先停下脚步，整理一下我们的文件夹。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>riscv-from-scratch
+|--- build						# 项目构建后生成的文件
+|--- kernel						# 整个项目的源代码
+|    |--- boot.s
+|    |--- main.c
+|    |--- print.c
+|    |--- ns16550a.c
+|    |--- ns16550a.h
+|    |--- mtrap.s
+|    |--- my-virt.ld
+|--- Makefile
+</code></pre></div></div>
+
+<p>现在仍然按照 <a href="https://dingfen.github.io/risc-v/2020/08/01/riscv-from-scratch-4.html"><em>RISC-V from scratch 4</em></a> 中使用的编译命令恐怕就很麻烦了，每次编译光写这么多文件名就足够令人头大，而且每次一点小小的更新都要将所有文件都重新编译链接也不是很划算。因此这里还是推荐使用 Makefile 帮助大家构建工程。</p>
+
+<div class="language-makefile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">CC</span><span class="o">=</span>riscv64-unknown-elf-gcc
+<span class="nv">AS</span><span class="o">=</span>riscv64-unknown-elf-as
+<span class="nv">LD</span><span class="o">=</span>riscv64-unknown-elf-ld
+<span class="nv">TARGET</span><span class="o">=</span>build/a.out
+<span class="nv">CFLAG</span><span class="o">=</span> <span class="nt">-c</span> <span class="nt">-ffreestanding</span>
+<span class="nv">VIRTLD</span><span class="o">=</span><span class="nt">-T</span> kernel/my-virt.ld
+
+<span class="nl">all</span><span class="o">:</span> <span class="nf">build/boot.o build/main.o build/mtrap.o  build/ns16550a.o build/print.o</span>
+	<span class="nv">$(LD)</span> <span class="nv">$(VIRTLD)</span> <span class="nv">$^</span> <span class="nt">-o</span> <span class="nv">$(TARGET)</span>
+
+<span class="nl">build/%.o</span><span class="o">:</span> <span class="nf">kernel/%.s</span>
+	<span class="nv">$(AS)</span> <span class="nt">-g</span> <span class="nv">$^</span> <span class="nt">-o</span> <span class="nv">$@</span>
+
+<span class="nl">build/%.o</span><span class="o">:</span> <span class="nf">kernel/%.c</span>
+	<span class="nv">$(CC)</span> <span class="nv">$(CFLAG)</span> <span class="nv">$^</span> <span class="nt">-o</span> <span class="nv">$@</span>
+
+<span class="nl">qemu</span><span class="o">:</span> <span class="nf">$(TARGET)</span>
+	qemu-system-riscv64 <span class="nt">-machine</span> virt <span class="nt">-m</span> 128M <span class="nt">-nographic</span> <span class="se">\</span>
+ 	<span class="nt">-kernel</span> build/a.out  <span class="se">\</span>
+    <span class="nt">-bios</span> none
+    
+<span class="nl">clean</span><span class="o">:</span>
+	<span class="nb">rm </span>build/<span class="k">*</span>
+</code></pre></div></div>
+
+<p>编译运行，哇，它成功了！</p>
+
+<p><img src="/assets/img/run_6.png" alt="" /></p>
+
+<h2 id="监管者模式">监管者模式</h2>
+
+<p>什么是监管者模式？相比于机器模式的最高权限和强制手段，监管者模式没有这么高的权限。一般来说，监管者模式就是为对标现代操作系统而生的。监管者模式通常存在于复杂的 RISC-V 系统上，其核心功能就是支持内存分页、内存保护、中断/异常处理等，并且为用户模式提供隔离以及 SEE (Supervisor Execution Environment)。</p>
+
+<p>回顾一下我们的程序，你会发现除了 <code class="language-plaintext highlighter-rouge">main.c</code> 函数的部分在监管者模式执行，其他代码几乎都在机器模式下执行。由于机器模式有近乎无限大的权限，让大量代码在该模式下运行是危险的，因此我们应当尽量用中断委托等手段，让更少的代码运行在机器模式下，还有一个重要的原因是，时钟中断处理程序往往与进程调度、切换有关，如果这些操作全在机器模式下完成，是十分不便且危险的。</p>
+
+<h3 id="痛苦的尝试">痛苦的尝试</h3>
+
+<p>哈哈哈，接下来就是长时间的查阅资料与令人绝望的编写尝试，我受教颇多。我甚至发现很多实验情况与 RISC-V 官方文档描述的不符，可能是 <code class="language-plaintext highlighter-rouge">virt</code> 机器上对 RISC-V 机制的理解和实现不是很到位，也可能是我能力有限，没有领悟到关键。<u>不想看这么多啰嗦和令人作呕的尝试的读者可直接跳过这部分。</u></p>
+
+<p>这里，我尝试将时钟中断处理放在监管者模式下。在学习完 RISC-V 的中断委托机制后，我首先写出如下代码，将所有的中断/异常处理都委托给监管者模式。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">li</span>   <span class="nv">t5</span><span class="p">,</span> <span class="mh">0xffff</span>
+<span class="nf">csrw</span> <span class="nv">medeleg</span><span class="p">,</span> <span class="nv">t5</span>
+<span class="nf">csrw</span> <span class="nv">mideleg</span><span class="p">,</span> <span class="nv">t5</span>
+</code></pre></div></div>
+
+<p>如果你使用 GDB 跑一下上面的代码，会发现 <code class="language-plaintext highlighter-rouge">medeleg</code> 、<code class="language-plaintext highlighter-rouge">mideleg</code> 寄存器的值并不是 <code class="language-plaintext highlighter-rouge">0xffff</code> ，这是因为在 <code class="language-plaintext highlighter-rouge">virt</code> 机器上，有些中断/异常是不允许被委托给监管者模式的，因此这些位域会被硬接地。实践出真知，经过调试运行后，我发现 <code class="language-plaintext highlighter-rouge">medeleg</code> 、<code class="language-plaintext highlighter-rouge">mideleg</code> 寄存器分别为 <code class="language-plaintext highlighter-rouge">0xbfff</code> 和 <code class="language-plaintext highlighter-rouge">0x666</code> 。参考 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html#mcause">mcause 寄存器对应事件表</a>，这意味着，能被委托给监管者模式的中断事件只有 <code class="language-plaintext highlighter-rouge">SEIP</code>、<code class="language-plaintext highlighter-rouge">STIP</code>、<code class="language-plaintext highlighter-rouge">SSIP</code> ；而所有的异常事件都能被委托给监管者模式。这真是令人奇怪，这意味着机器模式、用户模式下的中断处理程序无法被委托给监管者模式了。</p>
+
+<p>然而实践告诉我，事实上监管者模式下的时钟中断处理也不是直接跳转到监管者模式的😅。它貌似无论如何都会跳转到机器模式下的处理程序，这可能是因为，<strong>对 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器的更改只能在机器模式下完成。</strong></p>
+
+<p><img src="/assets/img/gdb_value.png" alt="" /></p>
+
+<p>第一种尝试，按照 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a> 如下描述</p>
+
+<blockquote>
+  <p>The <strong>UTIP</strong> and <strong>STIP</strong> bits may be written by M-mode software to <strong>deliver timer interrupts to lower privilege levels</strong>. User and supervisor software may clear the UTIP and STIP bits with calls to the AEE and SEE respectively.</p>
+</blockquote>
+
+<p>我们只需要在 <code class="language-plaintext highlighter-rouge">mtrap.s</code> 中将 <code class="language-plaintext highlighter-rouge">mip</code> 寄存器的 <code class="language-plaintext highlighter-rouge">STIP</code> 位置为 1 ，就可以将时钟中断传递给监管者模式了。但要注意到，进入监管者模式处理时钟中断后，就无法将 <code class="language-plaintext highlighter-rouge">mip</code> 寄存器的 <code class="language-plaintext highlighter-rouge">STIP</code> 位清除了（没错就是不行），可能因为这是机器模式才有的权限！意味着你的程序从此永远都在处理时钟中断的路上。为此，你必须在监管者模式处理时钟中断完成后，再跳入到机器模式下将 <code class="language-plaintext highlighter-rouge">mip.STIP</code> 位清除（见下左图）。</p>
+
+<center>
+<img src="/assets/img/try.png" />
+</center>
+
+<p>第二种尝试。我试着在机器模式下将 <code class="language-plaintext highlighter-rouge">sip.STIP</code> 位置为 1 ，然后监管者模式的时钟中断就可以启动了，再将 <code class="language-plaintext highlighter-rouge">sip.STIP</code> 位置为 0 ，但这个尝试不成功，因为 <code class="language-plaintext highlighter-rouge">sip.STIP</code> 在机器模式下居然无法被置为 1 （见上中图）。</p>
+
+<p>第三种尝试。我发现 <code class="language-plaintext highlighter-rouge">sip.STIP</code> 位置为 1 不成功，于是直接打算将 <code class="language-plaintext highlighter-rouge">sip.SSIP</code> 置为 1 ，即将时钟中断转变成软件中断处理😅，这次，居然成功了（见上右图）。</p>
+
+<p>事实上还有一条野路子，就是在进入机器模式的时钟中断处理程序后，强行更改 <code class="language-plaintext highlighter-rouge">mepc</code> 寄存器和 <code class="language-plaintext highlighter-rouge">sepc</code> 寄存器，让程序执行完机器模式的中断后，<code class="language-plaintext highlighter-rouge">mret</code> 地跳转到监管者模式下，然后 <code class="language-plaintext highlighter-rouge">sret</code> 地回到主程序中😅，这样做只能取得部分成功，中断处理程序在处理第二个时钟中断时会莫名卡一下。</p>
+
+<p>经过这几天的尝试，我也是被这些奇怪的东西搞的晕头转向，之所以写这么详细，一方面是记录一下自己的实践过程，利于未来解决这一问题，另一方面也是提醒读者和我，要不断思考、尝试、总结，再次说明，读者没有必要细究这部分内容，保护头发，远离玄学。</p>
+
+<h3 id="最终">最终</h3>
+
+<p>最终我的实验方式是，在机器模式下的处理程序中将 <code class="language-plaintext highlighter-rouge">sip.SSIP</code> 置为 1 ，即将时钟中断转变成软件中断处理😅，然后触发监管者模式的中断处理程序，进而打印出字符串以及清除中断信号。以下是详细介绍：</p>
+
+<p>首先，因为我们是将时钟中断转变为监管者模式的软件中断，期望用监管者模式下的处理程序处理中断。因此，我们仍然需要用到中断委托机制，将软件中断委托给监管者模式。这里我偷个懒，直接把 <code class="language-plaintext highlighter-rouge">0xffff</code> 赋值给 <code class="language-plaintext highlighter-rouge">mideleg</code> 和 <code class="language-plaintext highlighter-rouge">medeleg</code> 寄存器了。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">li</span>   <span class="nv">t5</span><span class="p">,</span> <span class="mh">0xffff</span>
+<span class="nf">csrw</span> <span class="nv">medeleg</span><span class="p">,</span> <span class="nv">t5</span>
+<span class="nf">csrw</span> <span class="nv">mideleg</span><span class="p">,</span> <span class="nv">t5</span>
+</code></pre></div></div>
+
+<p>我们的时钟中断会首先触发机器模式下的时钟处理程序，而当且仅当在机器模式下，程序才能更新 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器，因此，M-mode 下的时钟处理程序需要完成：</p>
+
+<ul>
+  <li>读取 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器，累加后在写入</li>
+  <li>给出监管者模式的软件中断信号</li>
+</ul>
+
+<p><u>特别注意：我们的代码中无需时刻比较 `mtime` 寄存器和 `mtimecmp` 寄存器的大小，我推测这是硬件帮我们做的事。</u>我们只需要关心 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器的值就行了。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">1:</span>
+    <span class="err">#</span> <span class="nf">handle</span> <span class="nv">timer</span> <span class="nv">interrupt</span> <span class="nv">add</span> <span class="nv">mtimecmp</span>
+    <span class="nf">la</span>   <span class="nv">a1</span><span class="p">,</span> <span class="mh">0x2004000</span>
+    <span class="nf">ld</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nv">a1</span><span class="p">)</span>
+    <span class="nf">li</span>   <span class="nv">a3</span><span class="p">,</span> <span class="mi">2000000</span>
+    <span class="nf">add</span>  <span class="nv">a2</span><span class="p">,</span> <span class="nv">a2</span><span class="p">,</span> <span class="nv">a3</span>
+    <span class="nf">sd</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nv">a1</span><span class="p">)</span>
+    <span class="err">#</span> <span class="nf">delegate</span> <span class="nv">to</span> <span class="nv">S</span><span class="o">-</span><span class="nv">mode</span> <span class="nv">Software</span> <span class="nv">Interrupt</span>
+	<span class="nf">li</span>   <span class="nv">a1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span>
+    <span class="nf">csrw</span> <span class="nb">si</span><span class="nv">p</span><span class="p">,</span> <span class="nv">a1</span>
+</code></pre></div></div>
+
+<p>由于在这里我们将 <code class="language-plaintext highlighter-rouge">sip.SSIP</code> 位置为 1 ，因此会马上触发监管者模式下的中断程序。我将监管者模式的中断处理程序放在文件 <code class="language-plaintext highlighter-rouge">strap.s</code> 中，那么这中断处理程序该怎么写呢？其实还是老样子：</p>
+
+<ul>
+  <li>保存现场</li>
+  <li>完成中断服务</li>
+  <li>恢复现场</li>
+  <li>返回主函数</li>
+</ul>
+
+<p>保存、恢复现场的部分就略过了，重点说一下中断服务，首先需要判断是什么中断/异常类型，再调用 <code class="language-plaintext highlighter-rouge">printime</code> 函数，最后清除软件中断信号。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">strap_vector:</span>
+	<span class="err">#</span> <span class="nf">save</span> <span class="nv">registers</span>
+	<span class="err">#</span> <span class="nf">get</span> <span class="nv">cause</span> <span class="nv">of</span> <span class="nv">interrupt</span>
+    <span class="nf">csrr</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">scause</span>
+    <span class="nf">andi</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="mh">0x3f</span>
+    <span class="nf">li</span>   <span class="nv">a2</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="nf">bne</span>  <span class="nv">a1</span><span class="p">,</span> <span class="nv">a2</span><span class="p">,</span> <span class="mi">1</span><span class="nv">f</span>
+    <span class="nf">call</span> <span class="nv">printime</span>
+    <span class="nf">li</span>   <span class="nv">a1</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="nf">csrw</span> <span class="nb">si</span><span class="nv">p</span><span class="p">,</span> <span class="nv">a1</span>
+    <span class="err">#</span> <span class="nf">load</span> <span class="nv">registers</span>
+    <span class="err">#</span> <span class="nf">sret</span>
+</code></pre></div></div>
+
+<p>最后，大家修改一下 Makefile ，再进行编译运行，就会发现字符串非常有规律地被打印出来了！而且，打印函数还是运行在监管者模式下的。这为我们接下来的进程调度工作做了很好地铺垫。</p>
+
+<h2 id="接下来">接下来</h2>
+
+<p>呼，本博文一下子介绍了 <code class="language-plaintext highlighter-rouge">printf</code> 函数的实现和时钟中断处理。有没有感觉头晕脑涨了呢，千万不要灰心丧气，这也是我好几天的工作成果，遇到过不去的地方是很正常的。遗憾的是，我最终也没有弄明白如何”正确“地处理时钟中断委托，恳请网上的各位大佬们指点迷津啊🤷。</p>
+
+<p>和前文讲的一样，接下来，我们开始准备攻克下一个难题——进程。首先需要明白进程的含义，并定义一个进程的结构体，最后，我们期望得到一个可多进程运行的小内核。除此之外，我们可能也需要弄明白如何把从键盘的输入字符打印在屏幕上。</p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-08-17T00:00:00+08:00">August 17, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=RISC-V+from+Scratch+6%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F17%2Friscv-from-scratch-6.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F17%2Friscv-from-scratch-6.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F17%2Friscv-from-scratch-6.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/08/06/riscv-from-scratch-5.html" class="pagination--pager" title="RISC-V from Scratch 5
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/08/29/riscv-from-scratch-7.html" class="pagination--pager" title="RISC-V from Scratch 7
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/08/17/riscv-from-scratch-6.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/08/17/riscv-from-scratch-6"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

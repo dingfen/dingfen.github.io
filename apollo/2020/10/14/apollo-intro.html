@@ -1,0 +1,909 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Apollo 软件系统概述 - 峰子的乐园</title>
+<meta name="description" content="对百度 Apollo 自动驾驶系统初步认识">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Apollo 软件系统概述">
+<meta property="og:url" content="http://localhost:4000/apollo/2020/10/14/apollo-intro.html">
+
+
+  <meta property="og:description" content="对百度 Apollo 自动驾驶系统初步认识">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-10-14T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/apollo/2020/10/14/apollo-intro.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Apollo 软件系统概述
+
+        
+      </h1>
+      
+        <p class="page__lead">对百度 Apollo 自动驾驶系统初步认识
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Apollo 软件系统概述">
+    <meta itemprop="description" content="对百度 Apollo 自动驾驶系统初步认识">
+    <meta itemprop="datePublished" content="2020-10-14T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#百度-apollo-55-自动驾驶软件系统概述">百度 Apollo 5.5 自动驾驶软件系统概述</a>
+    <ul>
+      <li><a href="#什么是-apollo">什么是 Apollo？</a></li>
+      <li><a href="#安装与构建">安装与构建</a></li>
+      <li><a href="#软件架构概览">软件架构概览</a>
+        <ul>
+          <li><a href="#perception">Perception</a></li>
+          <li><a href="#prediction">Prediction</a></li>
+          <li><a href="#planning">Planning</a></li>
+          <li><a href="#control">Control</a></li>
+          <li><a href="#canbus">CANBus</a></li>
+          <li><a href="#localization">Localization</a></li>
+          <li><a href="#miscellaneous">Miscellaneous</a></li>
+        </ul>
+      </li>
+      <li><a href="#什么是-cyber-rt">什么是 Cyber RT</a></li>
+      <li><a href="#相关术语介绍">相关术语介绍</a>
+        <ul>
+          <li><a href="#component">Component</a></li>
+          <li><a href="#node">Node</a></li>
+          <li><a href="#channel">Channel</a></li>
+          <li><a href="#readerwriter">Reader/Writer</a></li>
+          <li><a href="#task-与-croutine">Task 与 CRoutine</a></li>
+          <li><a href="#serviceclient">Service/Client</a></li>
+        </ul>
+      </li>
+      <li><a href="#结语">结语</a></li>
+      <li><a href="#参考文献">参考文献</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="百度-apollo-55-自动驾驶软件系统概述">百度 Apollo 5.5 自动驾驶软件系统概述</h1>
+
+<p>由于课题组研究需要，博主这段时间一直在研究百度的 Apollo 自动驾驶系统，其中有一些成果和感悟，放在这里与大家分享，也算作一个研究笔记吧。</p>
+
+<h2 id="什么是-apollo">什么是 Apollo？</h2>
+
+<p><a href="https://apollo.auto/">Apollo</a> 是百度开发的自动驾驶开源框架，其特点是高性能和灵活的架构，可以加速对自动驾驶的开发、测试、部署流程。博主这次主要介绍一下 <a href="https://github.com/ApolloAuto/apollo">Apollo 5.5</a> 的软件架构。下面是整个 Apollo 代码的目录结构，主要是按照功能模块划分：</p>
+
+<ul>
+  <li>cyber 消息中间件，替换 ROS 作为消息层</li>
+  <li>docker 容器相关</li>
+  <li>docs 文档相关</li>
+  <li>
+    <p>modules 自动驾驶模块，主要的定位，预测，感知，规划都在这里</p>
+
+    <ul>
+      <li>calibration 校准模块，主要用于传感器坐标的校准，用于感知模块做传感器融合</li>
+      <li>canbus 通讯总线，接受并执行控制模块的指令，以及收集汽车的底盘状态进行反馈</li>
+      <li>common 集合了一些常用到的基本功能</li>
+      <li>contrib</li>
+      <li>control 控制模块，顺着规划生成的路径，对车辆轨迹进行控制，它发送机械控制命令到 Can 总线，实现车辆的控制</li>
+      <li>data 地图等生成好的数据放在这里（其他数据待补充）</li>
+      <li>dreamview 仿真，能够对自动驾驶过程中的数据进行回放，其他厂家也有推出一些仿真平台，后面有机会再介绍下</li>
+      <li>drivers 雷达，lidar，GPS, canbus，camera等驱动</li>
+      <li>guardian 监护模块，万一出现软硬件故障，可以采取相应处理的措施保证安全</li>
+      <li>localization 定位模块，融合 GPS、IMU、LiDAR等设备，获取汽车的定位信息</li>
+      <li>map 地图模块</li>
+      <li>monitor 监控模块，接受来自各个模块的数据和状态，传送到人机交互接口，可以及时地将自动驾驶车辆的各个软硬件设备情况告知驾驶员</li>
+      <li>perception 感知模块，获取汽车当前的环境，行人，车辆，红绿灯等，给planning模块规划线路</li>
+      <li>planning 规划模块，针对感知到的情况，对自动驾驶车辆规划时空轨迹，与路由模块不同，这指的是短期规划</li>
+      <li>prediction 预测模块，对障碍物的轨迹做预测</li>
+      <li>routing 路由模块，对目的地进行导航，查询走过的路线图</li>
+      <li>third_party_perception 第三方感知模块</li>
+      <li>tools 工具，这里面的工具有很多，有机会可详细介绍</li>
+      <li>transform 转换</li>
+      <li>v2x（vehicle-to-everything）其希望实现车辆与一切可能影响车辆的实体实现信息交互，能减少事故发生，减缓交通拥堵，降低环境污染以及提供其他信息服务</li>
+    </ul>
+  </li>
+  <li>scripts 脚本</li>
+  <li>third_party 第三方库</li>
+  <li>tools 工具目录</li>
+</ul>
+
+<h2 id="安装与构建">安装与构建</h2>
+
+<p>在开始前，你需要一个 Ubuntu 操作系统和 Apollo 源码。<a href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/prerequisite_software_installation_guide.md">官方的准备内容</a>非常详细，这里不再罗列。</p>
+
+<p><a href="https://github.com/ApolloAuto/apollo/blob/master/docs/quickstart/apollo_software_installation_guide.md">Apollo 的 构建与运行文档</a>也非常详细。值得注意的是，考虑到github下载速度过慢，国内用户推荐使用<a href="https://github.com/ApolloAuto/apollo/blob/master/docs/howto/how_to_clone_apollo_repo_from_cn.md">gitee</a>。</p>
+
+<h2 id="软件架构概览">软件架构概览</h2>
+
+<p>下图是 Apollo 5.5 的软件架构图，软件平台包括各个模块以及 Cyber RT 框架和 ROS 系统。<strong>在本篇博文中，这次我重点关注的是建立在 Cyber RT 上的软件模块部分</strong>。为了充分了解工作原理，可能还会涉及到一些自动驾驶的硬件方面的知识。</p>
+
+<p><img src="/assets/img/Apollo_5_5_Architecture.png" alt="" /></p>
+
+<p>博主从 <a href="https://github.com/ApolloAuto/apollo/blob/r5.5.0/docs/specs/Apollo_3.5_Software_Architecture.md">Apollo 官方文档</a>中找到了软件系统模块之间的关系图。每个模块都作为独立的 CarOS-based 的 ROS 节点运行。 每个模块节点都发送和接受某些消息。 接下来，我会对各个模块作专门的介绍，并了解他们之间的交互作用。不同于官方文档，我尽量避开技术细节，用更加通俗的语言去阐述各个模块的功能。</p>
+
+<p><img src="/assets/img/Apollo_3_5_software_architecture.png" alt="" /></p>
+
+<h3 id="perception">Perception</h3>
+
+<p>感知模块。相当于自动驾驶车辆的眼睛和耳朵，这是自动驾驶系统获取外界信息的主要模块，是不可或缺的部分。该模块主要感知（或者说把注意力集中在）行车时遇到的<strong>障碍物、交通信号灯、车道线、交通标志</strong>等。这很容易理解，因为人在驾驶时也需要注意这些事物，机器也一样。</p>
+
+<p>感知模块需要调用的硬件设备主要是<strong>摄像机、激光雷达和雷达</strong>。这其中就涉及到深度学习识别图像技术，以及激光雷达测距技术和雷达点云阵列建模技术等。在一开始，我认为不需要深入理解这些技术在干嘛，需要了解的是，感知模块在得到硬件设备的输入后，会输出交通信号灯的指示和感知范围内障碍物的距离、速度、位置等信息。</p>
+
+<h3 id="prediction">Prediction</h3>
+
+<p>正如那张关系图绘制的那样，在接受到感知模块传来的信息时，预测模块会首先开始工作，自动驾驶系统必须和人类一样，能对场景中未来一段时间可能发生的情况进行正确而又适当的判断。预测模块就必须做到这一点，为此，它将于<a href="#Planning">规划模块</a>、<a href="#Localization">定位模块</a>等一起合作，给汽车下达一些合适的指令。</p>
+
+<p>预测模块中内置了一个复杂的预测数学模型，该数学模型通过对接收到的信息进行分析，再结合目前的场景，给出各个物体的可能速度和路径的概率，进而预测物体的时空轨迹。</p>
+
+<p><span id="Planning"></span></p>
+<h3 id="planning">Planning</h3>
+
+<p>规划模块。它负责为自动驾驶车辆规划一条可行的时空轨迹。为了完成这一艰巨的任务，规划模块需要</p>
+
+<ul>
+  <li>自动驾驶车辆的自身状态，例如速度、位置、朝向、加速度等</li>
+  <li>地图相关信息，例如道路基础设施、交通灯、交通标志和导航信息</li>
+  <li>周围的障碍物情况，例如周围车辆、行人、非机动车等未来可能的状态</li>
+</ul>
+
+<p>参考<a href="https://github.com/ApolloAuto/apollo/blob/master/modules/planning/README.md">规划模块的相关文档</a>，在5.5版本前，规划模块在不同的场景下，使用了相同的配置和参数进行规划。在5.5版本中，Apollo 聚焦于城市街道上的 curb-to-curb 自动驾驶，引入了两个新的规划场景。而在6.0版本中，Apollo 引入了两种新的规划模式：E2E 模式和混合模式。这两个模式都采用了基于学习的方法，对未来的行车轨迹进行规划。</p>
+
+<p>从<a href="https://github.com/ApolloAuto/apollo/blob/master/modules/planning/README.md">文档</a>中可进一步了解到，Apollo 团队目前正聚焦于五种重要场景的解决，分别是沿车道线行驶、十字路口会车、找到停车位停车、从停车位离开和避让紧急车辆。</p>
+
+<h3 id="control">Control</h3>
+
+<p>根据规划轨迹和汽车的当前状态，控制模块使用不同的控制算法，尽可能地给乘客带来舒适的驾驶体验。控制模块可以在常规和导航模式下工作。它要求的输入有：</p>
+
+<ul>
+  <li>规划好的时空轨迹</li>
+  <li>自动驾驶车辆的状态</li>
+  <li>定位信息</li>
+</ul>
+
+<p>控制模块在接收到完整的信息后，会使用控制算法产生一系列诸如油门、刹车、转向等控制命令。</p>
+
+<h3 id="canbus">CANBus</h3>
+
+<p>总线部分，用于传递控制指令到汽车的底盘上，这可能是汽车工业的总线。除了传达控制指令之外，它还会收集汽车底盘的状态信息，并反馈给控制模块等，用于矫正可能出现的偏差。</p>
+
+<p><span id="Localization"></span></p>
+<h3 id="localization">Localization</h3>
+
+<p>定位模块有两种方式提供定位服务：</p>
+
+<ul>
+  <li>RTK（Real Time Kinematic），整合了 GPS 和 IMU（惯性测量单元）信息</li>
+  <li>多感知器融合的方案，在 RTK 的基础上加入了 LiDAR 信息</li>
+</ul>
+
+<p>输出的当然就是车辆的精确位置了。</p>
+
+<h3 id="miscellaneous">Miscellaneous</h3>
+
+<ul>
+  <li>HMI 人机交互接口，包括驾驶时的显示器和 DreamView（用于回看自动驾驶过程），主要功能是可视化地查看车辆驾驶的状态、测试模块、提供调试工具，以及方便司机实时地控制车辆的行驶等。</li>
+  <li>Monitor 接收来自不同模块的数据，传给 HMI 给司机查看；监管各个软硬件系统</li>
+  <li>Guardian 会根据 Monitor 传来的信息，决定采取何种行动来保证安全</li>
+  <li>HD-Map 用于查询，提供关于道路情况的特制结构化信息</li>
+  <li>StoryTelling 用于隔离和管理复杂的场景，考虑到某些场景在真实情况下实验可能会发生危险，该模块就虚拟地创建可以触发多个模块动作的场景情况。</li>
+</ul>
+
+<h2 id="什么是-cyber-rt">什么是 Cyber RT</h2>
+
+<p>Apollo Cyber RT 是一个专门为自动驾驶场景设计的开源、高性能<strong>运行时框架</strong>。基于集中式计算模型，大大提升了自主驾驶的高并发性、低延迟性和高吞吐量。</p>
+
+<p>简单来说，Cyber 是百度 Apollo 推出的替代 ROS 的消息中间件，自动驾驶中的各个模块通过 Cyber 进行消息传输，同时 Cyber 还提供了任务调度、录制Bag包等功能。</p>
+
+<p>那么为什么百度 Apollo 团队要花大力气开发 Cyber RT呢？<a href="https://github.com/ApolloAuto/apollo/blob/master/cyber/README.md">官方文档</a>上是这么说的：</p>
+
+<blockquote>
+  <p>During the last few years of the development of autonomous driving technologies, we have learned a lot from our previous experience with Apollo. The industry is evolving and so is Apollo. Going forward, Apollo has already moved from development to productization, with volume deployments in the real world, we see the demands for the highest level of robustness and performance. That’s why we spent years building and perfecting Apollo Cyber RT, which addresses that requirements of autonomous driving solutions.</p>
+</blockquote>
+
+<p>总结一下，就是多年的开发经验以及现实世界中的自动驾驶系统的批量部署，Apollo 团队认识到了自动驾驶对健壮性和性能的最高水平的需求，所以开发了 Cyber RT。</p>
+
+<p>简单地说说它的优点：</p>
+
+<ul>
+  <li>加快开发。有一系列的开发工具，大量的感知器驱动和便利的数据任务接口</li>
+  <li>易于部署。有高效和自适应的消息通信，可配置的用户级调度器以及相比之下更少的依赖项</li>
+  <li>可个性化扩展。开源的运行时架构和为自动驾驶设计的模块化编程方式，可以方便用户个性化的自动驾驶系统</li>
+</ul>
+
+<h2 id="相关术语介绍">相关术语介绍</h2>
+
+<p>在这一小节，我参考<a href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber/CyberRT_Terms.md">百度 Apollo 文档</a>，先给大家讲解一下 Cyber RT 中经常出现的术语。</p>
+
+<h3 id="component">Component</h3>
+
+<p>组件，简单的来说就是一个算法模块。在自动驾驶系统中，感知、定位、控制系统等<strong>模块</strong>以组件 (Component) 的形式存在于 Cyber RT 下，每个组件通过网络通道 (Channel) 与其他组件进行通信。组件的概念不仅对模块进行了解耦，还提供了将模块划分为组件的设计灵活性。</p>
+
+<p>Cyber RT 为开发者提供了 Component 类簇，开发者的算法业务模块只需要继承相关的Component 类，并实现其中的接口即可，主要是关于实现算法、消息处理相关的逻辑。除此之外，Cyber RT 基于协程（后面我们会提到），为开发者提供了并行计算相关的接口。</p>
+
+<h3 id="node">Node</h3>
+
+<p>节点是 Cyber RT 的基础构件；每个模块都包含节点，它能够基于信道、服务等功能与其他节点进行通信。各个节点之间进行通信即可形成拓扑关系，并完成指定任务。通过使用节点，可将代码和功能解耦，提高了系统的容错能力和可维护性，使系统简化。同时，节点允许了 Cyber RT 能够布置在任意多个机器上并同时运行。</p>
+
+<h3 id="channel">Channel</h3>
+
+<p>信道。在 Cyber RT 中，若需要完成节点之间的通信，则需要建立一条信息传输通道，这被称为信道。节点可以将消息发送进入某一指定的信道之中，若有其他节点定义接口接收此信道消息，则可完成消息收发过程。若没有，则消息也依然存在于信道之中。</p>
+
+<h3 id="readerwriter">Reader/Writer</h3>
+
+<p>若需要完成基于信道的通信，首先需要定义消息的发送方（Writer）和接收方（Reader），以保证消息可以通过 Writer 和 Reader 共同指定的 Channel ，从一个节点传输到另一个节点。这类通信方式称之为基于信道的通信（也成发布—订阅通信），有如下特点：</p>
+
+<ul>
+  <li>同一个节点可以同时发送多条消息，也可以同时接收多条消息，即可以同时定义多个 Writer 和 Reader</li>
+  <li>基于信道的通信是一种单向通信，消息只能由 Writer 传输到 Reader，而不能够反向传输</li>
+  <li>信道中的消息不需要实时应答，也就是说，当某一条消息通过 Writer 送入 Channel 后，可以没有 Reader 来读取消息。当某一个 Reader 想要读取 Channel 中的信息时，Channel 中也许并没有消息输入</li>
+</ul>
+
+<h3 id="task-与-croutine">Task 与 CRoutine</h3>
+
+<p>任务 (Task) 是对 Cyber RT 中异步计算任务的抽象描述。</p>
+
+<p>CRoutine 就是指的协程 (Coroutine) ，Cyber RT 实现了 CRoutine 来优化线程的使用和系统资源的分配。</p>
+
+<h3 id="serviceclient">Service/Client</h3>
+
+<p>基于服务（Service）的通信是 Cyber RT 中的另一种通信方式，与信道通信相同，基于服务的通信也需要有消息的收发节点。但与信道不同的是，服务需要两个节点之间完成请求或应答才可完成通信。</p>
+
+<p>在自动驾驶系统中，除了各节点的消息发送和接收之外，很多场景还需要在节点之间进行双向通信，并能够获得应答。这就需要利用服务来通信。不同于 Channel 的通信方式，Service 的一个节点如果想要获取信息，需要给另一个节点发送请求，以此来获取响应，这就完成了节点之间的双向通信。在 Service 中，发送请求的一方为客户端（Client），接收请求的一端为服务端（Server）。</p>
+
+<h2 id="结语">结语</h2>
+
+<p>这篇博客粗略介绍了一下 Apollo 系统的各个软件模块以及 Cyber RT 的相关术语。接下来，根据课题组的具体要求，我会深入到 Cyber RT，继续研究 Apollo 自动驾驶系统。</p>
+
+<h2 id="参考文献">参考文献</h2>
+
+<p>[1] <a href="https://github.com/daohu527/Dig-into-Apollo">Dig into Apollo</a></p>
+
+<p>[2] <a href="https://github.com/ApolloAuto/apollo">Apollo 官方文档</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#module" class="page__taxonomy-item" rel="tag">module</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#software-system" class="page__taxonomy-item" rel="tag">Software System</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-10-14T00:00:00+08:00">October 14, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Apollo+%E8%BD%AF%E4%BB%B6%E7%B3%BB%E7%BB%9F%E6%A6%82%E8%BF%B0%20http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F14%2Fapollo-intro.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F14%2Fapollo-intro.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F14%2Fapollo-intro.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/09/27/WHY-RISC-V-4.html" class="pagination--pager" title="Why RISC-V ?
+">previous</a>
+    
+    
+      <a href="/apollo/2020/10/17/Cyber-RT.html" class="pagination--pager" title="Apollo Cyber RT 调度系统
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/apollo/2020/10/14/apollo-intro.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/apollo/2020/10/14/apollo-intro"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

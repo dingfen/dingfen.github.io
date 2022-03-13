@@ -1,0 +1,1024 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>C语言中容易忽视的小知识 - 峰子的乐园</title>
+<meta name="description" content="触及到你知识盲区的东西">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="C语言中容易忽视的小知识">
+<meta property="og:url" content="http://localhost:4000/cpp/2021/08/23/non-trivial-thing-in-C.html">
+
+
+  <meta property="og:description" content="触及到你知识盲区的东西">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser3.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-08-23T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/cpp/2021/08/23/non-trivial-thing-in-C.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser3.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          C语言中容易忽视的小知识
+
+        
+      </h1>
+      
+        <p class="page__lead">触及到你知识盲区的东西
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="C语言中容易忽视的小知识">
+    <meta itemprop="description" content="触及到你知识盲区的东西">
+    <meta itemprop="datePublished" content="2021-08-23T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#一在c文件中引用c函数">一、在C文件中引用C++函数</a></li>
+  <li><a href="#二宏操作陷阱">二、宏操作——陷阱</a></li>
+  <li><a href="#三宏操作技巧">三、宏操作——技巧</a></li>
+  <li><a href="#四可变参数函数">四、可变参数函数</a></li>
+  <li><a href="#五setjmp-和-longjmp">五、setjmp 和 longjmp</a></li>
+  <li><a href="#五c中的类型">五、C中的类型</a></li>
+  <li><a href="#六gnc-c中的attributes">六、GNC C中的Attributes</a></li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h2 id="一在c文件中引用c函数">一、在C文件中引用C++函数</h2>
+
+<ol>
+  <li>将要使用的函数声明放在一个头文件中</li>
+  <li>把要被C语言调用的C++函数的声明放在<code class="language-plaintext highlighter-rouge">extern "C"{ ... }</code>语句块里</li>
+  <li>注意：标准C++的头文件包含不能放在<code class="language-plaintext highlighter-rouge">extern "C"{ ... }</code>语句块里</li>
+</ol>
+
+<p>当然，要在C++文件调用C文件的函数也是可行的。</p>
+
+<p>而要在C文件中引用C++函数，下面给出一个示例：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// C function declaration in fun.h</span>
+
+<span class="cp">#ifdef __cplusplus
+</span><span class="k">extern</span> <span class="s">"C"</span> <span class="p">{</span>
+<span class="cp">#endif
+</span>
+<span class="c1">// 要调用的C++函数</span>
+<span class="kt">int</span> <span class="n">add</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">sum</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">num</span><span class="p">);</span>
+
+<span class="cp">#ifdef __cplusplus
+</span><span class="p">}</span>
+<span class="cp">#endif
+</span></code></pre></div></div>
+
+<p>用 <code class="language-plaintext highlighter-rouge">extern "C" { ... }</code> 语句块将 C++ 函数的声明包裹起来。然后，完成C++函数的定义：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Cpp function defined in fun.cpp</span>
+<span class="cp">#include &lt;vector&gt;
+#include &lt;iostream&gt;
+#include &lt;numeric&gt;
+#include "fun.h"
+</span>
+<span class="kt">int</span> <span class="nf">add</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"a = "</span> <span class="o">&lt;&lt;</span> <span class="n">a</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"b = "</span> <span class="o">&lt;&lt;</span> <span class="n">b</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">sum</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">num</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">c</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">c</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">accumulate</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">c</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意到，<code class="language-plaintext highlighter-rouge">add()</code> 和 <code class="language-plaintext highlighter-rouge">sum()</code> 函数都是C++函数，使用了很多“C++才有的”技术，但这并不妨碍C函数使用它们：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// main.c call them in the end</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="k">const</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">vec</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">};</span>
+    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>  <span class="kt">int</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+    <span class="c1">// 调用了Cpp里面的函数</span>
+    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
+    <span class="c1">// 复杂点的例子</span>
+    <span class="kt">int</span> <span class="n">d</span> <span class="o">=</span> <span class="n">sum</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">d</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>为什么要这么做?</p>
+
+<blockquote>
+  <p>extern “C”的主要作用就是为了能够正确实现C++代码调用其他C语言代码。<strong>加上extern “C”后，会指示编译器这部分代码按C语言的进行编译，而不是C++的</strong>。由于C++支持函数重载，因此编译器编译函数的过程中会将<strong>函数的参数类型</strong>也加到编译后的代码中，而不仅仅是函数名；而C语言并不支持函数重载，因此编译C语言代码的函数时不会带上函数的参数类型，一般之包括函数名。</p>
+</blockquote>
+
+<h2 id="二宏操作陷阱">二、宏操作——陷阱</h2>
+
+<p>宏是C语言中的历史产物，C++为了向前兼容C，完全继承了C语言中的预处理器和宏操作部分。目前主流的认知就是<strong>尽量不要用宏实现函数，而改用内联函数或者模板代替</strong>。因此这里也建议不要过于依赖宏定义。</p>
+
+<p>宏以及处理它的预处理器最大的缺陷就是，将用宏的地方进行简单的文本替换。这样一来，宏是根本不会进入编译器的symbol table，编译器在报错时就会出现魔数情况，也不会处理可能出现的宏命名重复，此外，宏也没有变量的作用域功能，只有简单的 <code class="language-plaintext highlighter-rouge">#ifndef</code> 和 <code class="language-plaintext highlighter-rouge">#undef</code> 来控制宏的作用范围。这些还只是最经常出现的小问题。更大的问题在于括号有无或者<code class="language-plaintext highlighter-rouge">++</code>、<code class="language-plaintext highlighter-rouge">--</code>等情况，例如：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define MAX(a,b) ((a)&gt;(b)?(a):(b))
+</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="n">MAX</span><span class="p">(</span><span class="n">i</span><span class="o">++</span><span class="p">,</span><span class="n">j</span><span class="o">++</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>那么i和j最终等于多少呢？得到的结果又是多少呢？非常烧脑的问题。而且就算我们理清了<code class="language-plaintext highlighter-rouge">i++</code>了几次，那么当宏的具体实现出现变化，结果可能会出现变化。</p>
+
+<p>又比如：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define DOSOMETHING() cmd1; \
+					  cmd2; 
+</span><span class="c1">// when some_condition() return true, the DOSOMETHING()</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">some_condition</span><span class="p">())</span> <span class="p">{</span>
+    <span class="n">DOSOMETHING</span><span class="p">()</span>
+<span class="p">}</span>
+<span class="c1">// ????</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">some_condition</span><span class="p">())</span>
+    <span class="n">DOSOMETHING</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>当然，如果你一定要用宏实现，为避免用户使用不当（用户是真的不知道该用上面的哪一种），可以加一个小技巧：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define DOSOMETHING() do {cmd1; cmd2; } while(0)
+</span></code></pre></div></div>
+
+<p>此时无论选取那一种写法，都是正确的。</p>
+
+<p>此外该技巧也可以用在其他地方：它可以避免使用<code class="language-plaintext highlighter-rouge">goto</code> 语句。若使用<code class="language-plaintext highlighter-rouge">do {...} while(0)</code>包裹整个过程，在过程中出现错误或异常时，可以直接使用 <code class="language-plaintext highlighter-rouge">break</code> 跳出循环，直接来到循环外的错误处理，而不需要<code class="language-plaintext highlighter-rouge">goto</code>。这在程序结构、编译优化上有很多好处。</p>
+
+<p>总之，使用宏时一定要对宏有充分了解，不然会出现非常多奇怪的问题。</p>
+
+<h2 id="三宏操作技巧">三、宏操作——技巧</h2>
+
+<p>不过，即使宏的缺点很多，而且大多宏函数都可被内联函数、模板替代，但是宏仍有存在的意义。即使是在 C++ 中，编译器也赐予了一些预定义宏：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">__FILE__</code> ：编译的文件的绝对路径；</li>
+  <li><code class="language-plaintext highlighter-rouge">__LINE__</code> ：当前行号；</li>
+  <li><code class="language-plaintext highlighter-rouge">__TIME__</code> ：当前时间；</li>
+  <li><code class="language-plaintext highlighter-rouge">__DATE__</code> ：当前日期。</li>
+  <li><code class="language-plaintext highlighter-rouge">__cplusplus</code> ：当前编译器完全遵循的 C++ 版本。<code class="language-plaintext highlighter-rouge">C++98</code> 和 <code class="language-plaintext highlighter-rouge">C++03</code> 对应了 <code class="language-plaintext highlighter-rouge">199711L</code>，<code class="language-plaintext highlighter-rouge">C++11</code> 对应了 <code class="language-plaintext highlighter-rouge">201103L</code>，<code class="language-plaintext highlighter-rouge">C++14</code> 对应了 <code class="language-plaintext highlighter-rouge">201402L</code></li>
+</ul>
+
+<p>这些预定义的宏是 C++ 标准规定的，此外不同版本的 C++ 也有更多的预定义宏。</p>
+
+<p>其次是另一个老生常谈的作用。确保头文件不被二次 <code class="language-plaintext highlighter-rouge">include</code>，从而报出重定义的错误。不过也有<code class="language-plaintext highlighter-rouge">#pragma once</code>这种写法。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#ifndef XXXX_XXX_XX
+#define XXXX_XXX_XX
+</span>
+<span class="k">class</span> <span class="p">{</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="cp">#endif XXXX_XXX_XX
+</span></code></pre></div></div>
+
+<p>此外，还有很多有趣的用法，比如字符串连接：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 字符串连接 将数字变为字符串</span>
+<span class="cp">#define Con(x, y)  x##y
+#define ToString(x) #x
+</span></code></pre></div></div>
+
+<p>又比如一些耍杂技的宏函数（仍建议使用内联函数）：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 用宏来求两个数的最大值</span>
+ <span class="cm">/* 通过比较x,y的指针类型，得到警告 若类型一致 通过void消除 */</span> 
+<span class="cp">#define max(x, y) ({    \
+    typeof(x) _max1 = (x);  \
+    typeof(y) _max2= (y);   \
+    (void) (&amp;_max1 == &amp;_max2);  \
+    _max1 &gt; _max2 ? _max1: _max2;   \
+    })
+</span></code></pre></div></div>
+
+<p>在特殊情况下，使用宏可以快速定义一批变量，或者写完一整片相同形式的代码：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 使用宏可以快速定义一批变量</span>
+<span class="cp">#define LIST_OF_VARIABLIES \
+        X(value1)  \
+        X(value2)  \
+        X(value3)
+</span>
+<span class="c1">// 定义了 int value1 int value2 int value3</span>
+<span class="cp">#define X(name) int name;
+</span><span class="n">LIST_OF_VARIABLES</span>
+<span class="cp">#undef X
+</span>
+<span class="cp">#define Y(x, z) double x = (z);
+#define print(t) printf("t = %d\n", t);
+#define prints(x) printf("x = %s\n", x);
+</span></code></pre></div></div>
+
+<h2 id="四可变参数函数">四、可变参数函数</h2>
+
+<p>在编写程序时，我们经常会遇到函数在编译期间接收到的参数数量不确定的情况。比如，经常使用的<code class="language-plaintext highlighter-rouge">printf()</code>函数，我们可以传入任意数量的参数。那么，这一切究竟如何实现？</p>
+
+<p>事实上，C语言就已经提供了这样的一个解决方案，示例代码如下：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;stdarg.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">add</span><span class="p">(</span><span class="kt">int</span> <span class="n">num</span><span class="p">,</span> <span class="p">...)</span> <span class="p">{</span>
+    <span class="kt">va_list</span> <span class="n">valist</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="c1">// 为 传入的参数初始化 valist</span>
+    <span class="n">va_start</span><span class="p">(</span><span class="n">valist</span><span class="p">,</span> <span class="n">num</span><span class="p">);</span>
+    <span class="c1">// 访问 所有的参数</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">sum</span> <span class="o">+=</span> <span class="n">va_arg</span><span class="p">(</span><span class="n">valist</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="c1">// 结束调用valist 清理内存</span>
+    <span class="n">va_end</span><span class="p">(</span><span class="n">valist</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">sum</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">add()</code> 最后一个参数写成省略号，即三个点号（<strong>…</strong>），省略号之前的那个参数是 <code class="language-plaintext highlighter-rouge">int</code>，代表了要传递的可变参数的总数。为了使用这个功能，需要 <code class="language-plaintext highlighter-rouge">#include &lt;stdarg.h&gt;</code>，该文件提供了实现可变参数功能的函数和宏。具体步骤如下：</p>
+
+<ol>
+  <li>定义一个函数，最后一个参数为省略号，省略号前面可以设置自定义参数。</li>
+  <li>在函数定义中创建一个 <code class="language-plaintext highlighter-rouge">va_list</code> 类型变量，该类型是在 <code class="language-plaintext highlighter-rouge">stdarg.h</code> 头文件中定义的。</li>
+  <li>使用 <code class="language-plaintext highlighter-rouge">int</code> 参数和 <code class="language-plaintext highlighter-rouge">va_start</code> 宏来初始化 <code class="language-plaintext highlighter-rouge">va_list</code> 变量为一个参数列表。宏 <code class="language-plaintext highlighter-rouge">va_start</code> 是在 <code class="language-plaintext highlighter-rouge">stdarg.h</code> 头文件中定义的。</li>
+  <li>使用 <code class="language-plaintext highlighter-rouge">va_arg</code> 宏和 <code class="language-plaintext highlighter-rouge">va_list</code> 变量来访问参数列表中的每个项。</li>
+  <li>使用宏 <code class="language-plaintext highlighter-rouge">va_end</code> 来清理赋予 <code class="language-plaintext highlighter-rouge">va_list</code> 变量的内存。</li>
+</ol>
+
+<p>除此之外，还有一个不被用到的 <code class="language-plaintext highlighter-rouge">va_copy</code>，示例如下：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">va_list</span> <span class="n">valist1</span><span class="p">;</span>
+    <span class="kt">va_list</span> <span class="n">valist2</span><span class="p">;</span>
+    <span class="n">va_start</span><span class="p">(</span><span class="n">valist1</span><span class="p">,</span> <span class="n">num</span><span class="p">);</span>
+    <span class="c1">// valist2 is dest  after that valist2 equals to valist1</span>
+    <span class="n">va_copy</span><span class="p">(</span><span class="n">valist2</span><span class="p">,</span> <span class="n">valist1</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%d, "</span><span class="p">,</span> <span class="n">va_arg</span><span class="p">(</span><span class="n">valist2</span><span class="p">,</span> <span class="kt">int</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="n">va_end</span><span class="p">(</span><span class="n">valist1</span><span class="p">);</span>
+    <span class="n">va_end</span><span class="p">(</span><span class="n">valist2</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="五setjmp-和-longjmp">五、setjmp 和 longjmp</h2>
+
+<p>C语言中，即使是<code class="language-plaintext highlighter-rouge">goto</code> 语句也是不能跨函数的。为了从深层次的函数调用中立刻返回错误信息（尤其是函数递归调用时），C语言添加了两个用于跨函数跳转的函数： <code class="language-plaintext highlighter-rouge">setjmp</code> 和 <code class="language-plaintext highlighter-rouge">longjmp</code> 。再说一遍，这两个函数可以实现非本地跳转，将程序控制直接从一个函数转移到另一个函数，不需要经过正常的调用——返回，比如：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="cm">/* ... */</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">MAXLINE</span><span class="p">,</span> <span class="n">stdin</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="n">do_line</span><span class="p">(</span><span class="n">line</span><span class="p">);</span>
+    <span class="cm">/* ... */</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">do_line</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* ... */</span>
+    <span class="k">while</span><span class="p">((</span><span class="n">cmd</span> <span class="o">=</span> <span class="n">get_token</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">cmd_add</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">cmd_add</span><span class="p">()</span> <span class="p">{</span>
+    <span class="cm">/* ... */</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上述程序有非常多的函数调用，且嵌套多层，设想若在 <code class="language-plaintext highlighter-rouge">cmd_add</code> 函数发现一个错误，需要返回 <code class="language-plaintext highlighter-rouge">main</code> 函数并读下一个输入行，我们就不得不将函数返回值逐层返回，操作非常麻烦。</p>
+
+<p>使用 <code class="language-plaintext highlighter-rouge">setjmp</code> 和 <code class="language-plaintext highlighter-rouge">longjmp</code> 函数，可以使程序在栈上跳过若干调用帧，返回到当前函数调用路径上的某一个函数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;setjmp.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">setjmp</span><span class="p">(</span><span class="kt">jmp_buf</span> <span class="n">env</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">sigsetjmp</span><span class="p">(</span><span class="n">sigjmp_buf</span> <span class="n">env</span><span class="p">,</span> <span class="kt">int</span> <span class="n">savesigs</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">longjmp</span><span class="p">(</span><span class="kt">jmp_buf</span> <span class="n">env</span><span class="p">,</span> <span class="kt">int</span> <span class="n">val</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">siglongjmp</span><span class="p">(</span><span class="n">sigjmp_buf</span> <span class="n">env</span><span class="p">,</span> <span class="kt">int</span> <span class="n">val</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>其中，<code class="language-plaintext highlighter-rouge">sigsetjmp</code> 和 <code class="language-plaintext highlighter-rouge">siglongjmp</code> 函数都是 <code class="language-plaintext highlighter-rouge">setjmp</code> 和 <code class="language-plaintext highlighter-rouge">longjmp</code> 的可以被信号处理程序使用的版本。</p>
+
+<p>首先要在希望返回到的位置调用 <code class="language-plaintext highlighter-rouge">setjmp()</code>，<code class="language-plaintext highlighter-rouge">setjmp</code> 的参数 <code class="language-plaintext highlighter-rouge">env</code> 的类型是 <code class="language-plaintext highlighter-rouge">jmp_buf</code> 。这一数据类型是某种形式的数组，用于存放在调用 <code class="language-plaintext highlighter-rouge">longjmp()</code> 时，用来恢复栈状态的所有信息。通常 <code class="language-plaintext highlighter-rouge">env</code> 为全局变量，因为需要在另一个函数中使用。然后，<code class="language-plaintext highlighter-rouge">longjmp()</code> 函数在出现错误时被调用，程序跳转到调用 <code class="language-plaintext highlighter-rouge">setjmp()</code> 的地方。来看一个具体示例：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">jmp_buf</span> <span class="n">env</span><span class="p">;</span>
+<span class="cm">/* ... */</span>
+<span class="k">switch</span><span class="p">(</span><span class="n">setjmp</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">foo</span><span class="p">();</span> <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Error 1!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Error 2!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">error1</span><span class="p">)</span>
+        <span class="n">longjmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="n">bar</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">bar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">error2</span><span class="p">)</span>
+        <span class="n">longjmp</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>当一个错误发生，<code class="language-plaintext highlighter-rouge">longjmp</code> 函数跳过了所有中间调用，直接返回到 <code class="language-plaintext highlighter-rouge">switch</code> 语句中，其中第二个函数参数 <code class="language-plaintext highlighter-rouge">val</code>将成为从 <code class="language-plaintext highlighter-rouge">setjmp</code> 处返回的值。显然，对于一个 <code class="language-plaintext highlighter-rouge">setjmp</code> 可以收到多个 <code class="language-plaintext highlighter-rouge">longjmp</code> 的返回值，并用 <code class="language-plaintext highlighter-rouge">switch</code> 语句处理。</p>
+
+<p>如果还是难以记住，可以将 <code class="language-plaintext highlighter-rouge">setjmp</code> 看作 Java 中 <code class="language-plaintext highlighter-rouge">try</code> 中的 <code class="language-plaintext highlighter-rouge">catch</code> 语句，将 <code class="language-plaintext highlighter-rouge">longjmp</code> 函数看作 <code class="language-plaintext highlighter-rouge">throw</code> 语句。</p>
+
+<h2 id="五c中的类型">五、C中的类型</h2>
+
+<p>C语言中有哪些类型是被重新命名的？它们的用处是什么？本质又是什么呢？</p>
+
+<p>注意：在C++中用到 <code class="language-plaintext highlighter-rouge">size_t</code> 或其他在C中定义的类型时，推荐使用 <code class="language-plaintext highlighter-rouge">#include&lt;stddef.h&gt;</code>。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>类型</th>
+      <th>实质</th>
+      <th>描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ptrdiff_t</td>
+      <td>signed int</td>
+      <td>两个指针相减的结果的有符号整数类型</td>
+    </tr>
+    <tr>
+      <td>size_t</td>
+      <td>unsigned int</td>
+      <td>通常用于数组的索引以及表示变量存储空间的大小</td>
+    </tr>
+    <tr>
+      <td>wchar_t</td>
+      <td>int</td>
+      <td>宽字节字符类型，可以表示，在支持的语言环境中，指定的最大扩展字符集的所有成员</td>
+    </tr>
+    <tr>
+      <td>nullptr_t<sup>C++11</sup></td>
+      <td>关键字<code class="language-plaintext highlighter-rouge">nullptr</code>的类型</td>
+      <td>该类型表示它不是指向某个东西的指针类型，当多个重载函数接收不同的指针类型时，重载一个接收<code class="language-plaintext highlighter-rouge">std::nullptr_t</code>用于处理传入null指针的情况</td>
+    </tr>
+    <tr>
+      <td>max_align_t<sup>C++11</sup></td>
+      <td>实现定义</td>
+      <td>一种对齐要求，至少与每个标量类型一样严格（大）的类型</td>
+    </tr>
+    <tr>
+      <td>NULL</td>
+      <td>宏 （void*) 0 or 0</td>
+      <td>C语言中表示空指针，但在C++中仅表示0，C++中的空指针推荐使用<code class="language-plaintext highlighter-rouge">nullptr</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="六gnc-c中的attributes">六、GNC C中的Attributes</h2>
+
+<p>在GNC C中，可以将你要调用的函数用“特殊的东西”声明，可以帮助编译器优化你的函数，并可以帮你挑出一些更加细微的错误。</p>
+
+<p>那么这些<strong>特殊的东西</strong>，就是这里介绍的关键字<code class="language-plaintext highlighter-rouge">__attribute__</code>了。在声明时，它可以帮你给函数设定一个特殊的属性。这个关键字通常会带有如下几个东西：</p>
+
+<ul>
+  <li>
+    <p>noreturn</p>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">err_sys</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">fmt</span><span class="p">,</span> <span class="p">...)</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">noreturn</span><span class="p">))</span>
+</code></pre></div>    </div>
+
+    <p>通常用在一些标准库函数中，例如<code class="language-plaintext highlighter-rouge">abort</code>或者<code class="language-plaintext highlighter-rouge">exit</code>，意思是不能<code class="language-plaintext highlighter-rouge">return</code>，GCC会得知这一点，并且GCC就会对其进行优化：<strong>不会考虑如果<code class="language-plaintext highlighter-rouge">err_sys</code>出现返回值的情况</strong>。更重要的是，可以避免出现未初始化变量的警告。</p>
+  </li>
+  <li>
+    <p>noinline</p>
+
+    <p>阻止函数内联。</p>
+  </li>
+</ul>
+
+<p>事实上，GCC的attribute有三大类：</p>
+
+<ul>
+  <li>Function attributes described <a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html">here</a></li>
+  <li>Variable attributes described <a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html">here</a></li>
+  <li>Type attributes described <a href="http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html">here</a></li>
+</ul>
+
+<p>这里就不一一介绍了。</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#c" class="page__taxonomy-item" rel="tag">C</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-08-23T00:00:00+08:00">August 23, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=C%E8%AF%AD%E8%A8%80%E4%B8%AD%E5%AE%B9%E6%98%93%E5%BF%BD%E8%A7%86%E7%9A%84%E5%B0%8F%E7%9F%A5%E8%AF%86%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F08%2F23%2Fnon-trivial-thing-in-C.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F08%2F23%2Fnon-trivial-thing-in-C.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F08%2F23%2Fnon-trivial-thing-in-C.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/miscellaneous/2021/08/22/VimTech.html" class="pagination--pager" title="熟练使用 Vim
+">previous</a>
+    
+    
+      <a href="/cpp/2021/08/25/tricks-in-LinuxC.html" class="pagination--pager" title="在 Linux 中更好地使用C/C++语言
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/cpp/2021/08/23/non-trivial-thing-in-C.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/cpp/2021/08/23/non-trivial-thing-in-C"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

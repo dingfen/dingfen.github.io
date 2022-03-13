@@ -1,0 +1,1282 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>RISC-V from Scratch 4 - 峰子的乐园</title>
+<meta name="description" content="RISC-V from Scratch 4：写 UART 驱动（2 / 3）">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="RISC-V from Scratch 4">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/08/01/riscv-from-scratch-4.html">
+
+
+  <meta property="og:description" content="RISC-V from Scratch 4：写 UART 驱动（2 / 3）">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-08-01T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/08/01/riscv-from-scratch-4.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          RISC-V from Scratch 4
+
+        
+      </h1>
+      
+        <p class="page__lead">RISC-V from Scratch 4：写 UART 驱动（2 / 3）
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="RISC-V from Scratch 4">
+    <meta itemprop="description" content="RISC-V from Scratch 4：写 UART 驱动（2 / 3）">
+    <meta itemprop="datePublished" content="2020-08-01T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#risc-v-from-scratch-4-写-uart-驱动">RISC-V from scratch 4: 写 UART 驱动</a>
+    <ul>
+      <li><a href="#简介">简介</a></li>
+      <li><a href="#搭建环境">搭建环境</a></li>
+      <li><a href="#uart-回顾">UART 回顾</a></li>
+      <li><a href="#uart-细节">UART 细节</a></li>
+      <li><a href="#开工uart-驱动">开工！UART 驱动</a></li>
+      <li><a href="#构建工程">构建工程</a></li>
+      <li><a href="#运行与调试">运行与调试</a></li>
+      <li><a href="#接下来">接下来</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="risc-v-from-scratch-4-写-uart-驱动">RISC-V from scratch 4: 写 UART 驱动</h1>
+
+<p>接上一篇<a href="https://dingfen.github.io/risc-v/2020/07/27/riscv-from-scratch-3.html">博客</a>，我今天继续写 <em>RISC-V from scratch</em> 系列博客。我原本打算将该系列全部翻译成中文，但原作者貌似没有把这一系列完成就咕咕了，<strong>因此本文的内容是我自己实践的内容，以及一些自己的想法，放在这里同大家探讨，算是狗尾续貂，弥补遗憾</strong>。</p>
+
+<h2 id="简介">简介</h2>
+
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，我们之前已经探索了很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。具体来说，在上一篇文章中，我们初步认识了 <strong>UART</strong>，并从 <code class="language-plaintext highlighter-rouge">riscv64-virt.dts</code> 中找到了关于 UART 的基本信息，我们还在链接器脚本里添加了 UART 的基本地址，且已经搭建了一个驱动程序框架。</p>
+
+<p>在我实际动手操作的过程中，发现使用 RISC-V 汇编写 UART 驱动程序是吃力不讨好的行为，因此，我使用 C 语言完成了驱动的编写，这就是本篇博客的主要内容。如果大家想要看一下原博主的内容，那么就请参考 <a href="https://twilco.github.io/riscv-from-scratch/2019/07/28/riscv-from-scratch-4.html">RISC-V from scratch 4: Creating a function prologue for our UART driver (2 / 3)</a> 。</p>
+
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+
+<p>如果你还未看本系列博客的第一部分，没有安装 <code class="language-plaintext highlighter-rouge">riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+
+<p>之后，再将博主创建的 github 库下载下来，作为我们的工作点。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone git@github.com:twilco/riscv-from-scratch.git
+<span class="c"># or `git clone https://github.com/twilco/riscv-from-scratch.git` to clone</span>
+<span class="c"># via HTTPS rather than SSH</span>
+<span class="c"># alternatively, if you are a GitHub user, you can fork this repo.</span>
+<span class="c"># https://help.github.com/en/articles/fork-a-repo</span>
+<span class="nb">cd </span>riscv-from-scratch/work
+</code></pre></div></div>
+
+<p>译注：亲测无需下载 github 库也可实现下面的实验。</p>
+
+<h2 id="uart-回顾">UART 回顾</h2>
+
+<p>本博客的目的是在 <code class="language-plaintext highlighter-rouge">virt</code> 机器上，使用 UART 在屏幕打印出字符。为了使这一工作顺利，我们先来回顾一下 UART 在 <code class="language-plaintext highlighter-rouge">virt</code> 机器上的布局。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        uart@10000000 <span class="o">{</span>
+                interrupts <span class="o">=</span> &lt;0x0a&gt;<span class="p">;</span>
+                interrupt-parent <span class="o">=</span> &lt;0x02&gt;<span class="p">;</span>
+                clock-frequency <span class="o">=</span> &lt;0x384000&gt;<span class="p">;</span>
+                reg <span class="o">=</span> &lt;0x00 0x10000000 0x00 0x100&gt;<span class="p">;</span>
+                compatible <span class="o">=</span> <span class="s2">"ns16550a"</span><span class="p">;</span>
+        <span class="o">}</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>参考之前的<a href="https://dingfen.github.io/risc-v/2020/07/27/riscv-from-scratch-3.html">博客</a>，我们已经了解到 UART 是用于传输、接收系列数据的硬件设备，根据上面所列的数据，UART 的时钟频率是3.6864 MHz，UART 在内存的位置起始于 <code class="language-plaintext highlighter-rouge">0x10000000</code> ，长度为 <code class="language-plaintext highlighter-rouge">0x100</code> 字节，我们在链接器脚本中定义了全局符号 <code class="language-plaintext highlighter-rouge">__uart_base_add</code> 。UART 与 NS16550a 编程模型兼容。</p>
+
+<h2 id="uart-细节">UART 细节</h2>
+
+<p>完整的了解该硬件是写驱动程序的前提。我细读了 <a href="https://www.lammertbies.nl/comm/info/serial-uart">Serial UART information</a> 和 <a href="http://www.byterunner.com/16550.html">TECHNICAL DATA ON 16550</a>，算是大致清楚了 UART 结构的数据存储传递情况 <code class="language-plaintext highlighter-rouge">: )</code>。</p>
+
+<p>考虑到文章的篇幅，以及读者的耐心等原因，我在这里简单的扯两句，想要完整的了解 UART ，啃英文技术文档是必不可少的。</p>
+
+<p>在 UART 中，可访问的 I/O 端口一共有8个，他们的功能作用列于下表，<code class="language-plaintext highlighter-rouge">base address</code> 指的就是 UART 的起始内存位置，而 <code class="language-plaintext highlighter-rouge">DLAB</code> 位于 <code class="language-plaintext highlighter-rouge">LCR</code> 寄存器，是一个用于转换功能的转换位。</p>
+
+<table>
+<caption>UART register to port conversion table</caption>
+<tbody>
+<tr>
+<th>&nbsp;</th>
+<th colspan="2">DLAB = 0</th>
+<th colspan="2">DLAB = 1</th>
+</tr>
+<tr>
+<th>I/O port</th>
+<th>Read</th>
+<th>Write</th>
+<th>Read</th>
+<th>Write</th>
+</tr>
+<tr class="odd" align="center">
+<td>base</td>
+<td><b>RHR</b><br />
+receiver<br />
+buffer</td>
+<td><b>THR</b><br />
+transmitter<br />
+holding</td>
+<td colspan="2"><b>DLL</b> divisor latch LSB</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 1</td>
+<td><b>IER</b><br />
+interrupt<br />
+enable</td>
+<td><b>IER</b><br />
+interrupt<br />
+enable</td>
+<td colspan="2"><b>DLM</b> divisor latch MSB</td>
+</tr>
+<tr class="odd" align="center">
+<td width="20%">base + 2</td>
+<td width="20%"><b>IIR</b><br />
+interrupt<br />
+identification</td>
+<td width="20%"><b>FCR</b><br />
+FIFO<br />
+control</td>
+<td width="20%"><b>IIR</b><br />
+interrupt<br />
+identification</td>
+<td width="20%"><b>FCR</b><br />
+FIFO<br />
+control</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 3</td>
+<td colspan="4"><b>LCR</b> line control</td>
+</tr>
+<tr class="odd" align="center">
+<td>base + 4</td>
+<td colspan="4"><b>MCR</b> modem control</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 5</td>
+<td><b>LSR</b><br />
+line<br />
+status</td>
+<td>–<br />
+factory<br />
+test</td>
+<td><b>LSR</b><br />
+line<br />
+status</td>
+<td>–<br />
+factory<br />
+test</td>
+</tr>
+<tr class="odd" align="center">
+<td>base + 6</td>
+<td><b>MSR</b><br />
+modem<br />
+status</td>
+<td>–<br />
+not<br />
+used</td>
+<td><b>MSR</b><br />
+modem<br />
+status</td>
+<td>–<br />
+not<br />
+used</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 7</td>
+<td colspan="4"><b>SCR</b> scratch</td>
+</tr>
+</tbody>
+</table>
+
+<p>上表简单罗列了一下各个寄存器的位置、名称、相关功能等，基于这些内容，我们就已经可以明白很多了：</p>
+<ul>
+  <li>
+    <p>访问寄存器的方法非常简单，将之前定义的 <code class="language-plaintext highlighter-rouge">__uart_base_addr</code> 加上偏移量，就是各个寄存器的地址了</p>
+  </li>
+  <li>
+    <p>我们的任务是在屏幕上打印出字符，显然不能将 <code class="language-plaintext highlighter-rouge">DLAB</code> 设置为1，DLAB = 1 时，RHR IER 寄存器就被用来设置通信速率了。具体描述见下：</p>
+
+    <blockquote>
+      <p><strong>DLL</strong> (Divisor Latch LSB Register) contains the lower 8-bit value that the MCU divides into the MCU clock (PCLK) to generate the UART baud rate.</p>
+
+      <p><strong>DLM</strong> (Divisor Latch MSB Register) contains the upper 8-bit value that the MCU divides into the MCU clock (PCLK) to generate the UART baud rate.</p>
+    </blockquote>
+  </li>
+  <li>
+    <p>IER 寄存器是中断使能寄存器，到现在为止，我似乎还未解答读者的一个疑问，就是 UART 为什么需要中断。这里我稍加解释一下：在计算机运行起来时，需要处理很多驱动、系统调用等程序，若没有中断，那么 CPU 只能非常卑微地、每时每刻地“询问各个寄存器的变化情况”，以及时作出响应，若每个驱动都这么干，CPU 不得累死。有了中断，UART 就可以自己发送信号给 CPU ，通知它来处理事件。</p>
+  </li>
+</ul>
+
+<p>虽然我们已经清楚了各个寄存器的地址以及它们的作用，但事实上具体如何控制我们仍旧不清楚，为此，我们必须参考更加详细的文档。</p>
+
+<hr />
+
+<table border="0" cellspacing="1" cellpadding="5" align="center">
+						<tr bgcolor="#666666">
+							<td align="center" valign="middle"><font color="white"><b>A2</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>A1</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>A0</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>REG.</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 7</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 6</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 5</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 4</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 3</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 2</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 1</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 0</b></font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">RHR</font></td>
+							<td align="center" valign="middle">bit 7</td>
+							<td align="center" valign="middle"><font color="#006699">bit 6</font></td>
+							<td align="center" valign="middle">bit 5</td>
+							<td align="center" valign="middle"><font color="#006699">bit 4</font></td>
+							<td align="center" valign="middle">bit 3</td>
+							<td align="center" valign="middle"><font color="#006699">bit 2</font></td>
+							<td align="center" valign="middle">bit 1</td>
+							<td align="center" valign="middle"><font color="#006699">bit 0</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">THR</font></td>
+							<td align="center" valign="middle">bit 7</td>
+							<td align="center" valign="middle"><font color="#006699">bit 6</font></td>
+							<td align="center" valign="middle">bit 5</td>
+							<td align="center" valign="middle"><font color="#006699">bit 4</font></td>
+							<td align="center" valign="middle">bit 3</td>
+							<td align="center" valign="middle"><font color="#006699">bit 2</font></td>
+							<td align="center" valign="middle">bit 1</td>
+							<td align="center" valign="middle"><font color="#006699">bit 0</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">IER</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="left" valign="middle">modem status interrupt</td>
+							<td align="left" valign="middle"><font color="#006699">receive line status interrupt</font></td>
+							<td align="left" valign="middle">transmit holding register interrupt</td>
+							<td align="left" valign="middle"><font color="#006699">receive holding register interrupt</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">FCR</font></td>
+							<td align="left" valign="middle">RCVR trigger MSB</td>
+							<td align="left" valign="middle"><font color="#006699">RCVR trigger LSB</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="left" valign="middle">DMA mode select</td>
+							<td align="left" valign="middle"><font color="#006699">transmit FIFO reset</font></td>
+							<td align="left" valign="middle">receiver FIFO reset</td>
+							<td align="left" valign="middle"><font color="#006699">FIFO enable</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">ISR</font></td>
+							<td align="left" valign="middle">0/FIFO enabled</td>
+							<td align="left" valign="middle"><font color="#006699">0/FIFO enabled</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="left" valign="middle">interrupt prior. bit 2</td>
+							<td align="left" valign="middle"><font color="#006699">interrupt prior. bit 1</font></td>
+							<td align="left" valign="middle">interrupt prior. bit 0</td>
+							<td align="left" valign="middle"><font color="#006699">interrupt status</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">LCR</font></td>
+							<td align="left" valign="middle">divisor latch enable</td>
+							<td align="left" valign="middle"><font color="#006699">set break</font></td>
+							<td align="left" valign="middle">set parity</td>
+							<td align="left" valign="middle"><font color="#006699">even parity</font></td>
+							<td align="left" valign="middle">parity enable</td>
+							<td align="left" valign="middle"><font color="#006699">stop bits</font></td>
+							<td align="left" valign="middle">word length bit 1</td>
+							<td align="left" valign="middle"><font color="#006699">word length bit 0</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">MCR</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="left" valign="middle"><font color="#006699">loop back</font></td>
+							<td align="center" valign="middle">OP2</td>
+							<td align="center" valign="middle"><font color="#006699">OP1</font></td>
+							<td align="center" valign="middle">RTS</td>
+							<td align="left" valign="middle"><font color="#006699">DTR</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">LSR</font></td>
+							<td align="left" valign="middle">0/FIFO error</td>
+							<td align="left" valign="middle"><font color="#006699">transmit empty</font></td>
+							<td align="left" valign="middle">transmit holding empty</td>
+							<td align="left" valign="middle"><font color="#006699">break interrupt</font></td>
+							<td align="left" valign="middle">framing error</td>
+							<td align="left" valign="middle"><font color="#006699">parity error</font></td>
+							<td align="left" valign="middle">overrun error</td>
+							<td align="left" valign="middle"><font color="#006699">receive data ready</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">MSR</font></td>
+							<td align="center" valign="middle">CD</td>
+							<td align="center" valign="middle"><font color="#006699">RI</font></td>
+							<td align="center" valign="middle">DSR</td>
+							<td align="center" valign="middle"><font color="#006699">CTS</font></td>
+							<td align="center" valign="middle">delta CD</td>
+							<td align="center" valign="middle"><font color="#006699">delta RI</font></td>
+							<td align="center" valign="middle">delta DSR</td>
+							<td align="center" valign="middle"><font color="#006699">delta CTS</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">SPR</font></td>
+							<td align="center" valign="middle">bit 7</td>
+							<td align="center" valign="middle"><font color="#006699">bit 6</font></td>
+							<td align="center" valign="middle">bit 5</td>
+							<td align="center" valign="middle"><font color="#006699">bit 4</font></td>
+							<td align="center" valign="middle">bit 3</td>
+							<td align="center" valign="middle"><font color="#006699">bit 2</font></td>
+							<td align="center" valign="middle">bit 1</td>
+							<td align="center" valign="middle"><font color="#006699">bit 0</font></td>
+						</tr>
+					</table>
+<p><span id="tip">为了完成接下来的工作，有几点必须<strong>注意</strong>：</span></p>
+
+<ul>
+  <li>
+    <p>RHR (Receiver Holding Register) 与 THR (Transmitter Holding Register) 事实上共用一个地址，在 UART 读模式时，地址0被解读为 RHR 寄存器，它将 RHR 中的数据读入。在写模式时，被解读为 THR 寄存器，将数据传输到目标地。</p>
+  </li>
+  <li>
+    <p>LCR 寄存器的 0，1 bit 位，规定了字长，相当于在说一次能传几位数据。ASCII 码都是用一个字节8位表示的，所以一次传8位肯定是最方便的。</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>BIT-1</th>
+          <th>BIT-0</th>
+          <th>Word Length</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>0</td>
+          <td>0</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>1</td>
+          <td>6</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>0</td>
+          <td>7</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>1</td>
+          <td>8</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>
+    <p>FCR 寄存器主要控制 FIFO，那么我们到底需不需要 FIFO 呢？参考 <a href="https://www.lammertbies.nl/comm/info/serial-uart">Serial UART information</a> ，我发现如果不使用 FIFO，那么 THR 一次只能存储一个 character，这在 5G 已经开始商用的年代，是不是有点太少了😅，而使用 FIFO 就可以将多个 character 写入或者传输，效率明显提高了，因此我们选择使用 FIFO。</p>
+  </li>
+  <li>
+    <p>那么我们怎么知道数据是否被写入或传输了？LSR 寄存器貌似可以回答这个问题，LSR bit 5 为 0 时，表明 THR 已经满了，而为 1 时，THR为空。LSR bit 0 为 0 时，表示没有数据在 RHR 中，而为 1 时，表示数据已经被放入到 RHR 中，可以读取数据了。</p>
+  </li>
+</ul>
+
+<p>好啦，我们所需要的内容，我已经介绍的差不多了。大家一定发现这里面还有很多很多内容尚待挖掘，但是这里空白太小，我写不下。还是那句话，要想深入研究的话，啃英文技术文档是必不可少的。</p>
+
+<h2 id="开工uart-驱动">开工！UART 驱动</h2>
+
+<p>再次强调，本博客的驱动是使用 C 语言实现的，要想看原博主的 RISC-V 汇编语言实现，那么就点<a href="https://twilco.github.io/riscv-from-scratch/2019/07/28/riscv-from-scratch-4.html">这里</a>。</p>
+
+<p>首先，创建一个新文件，就叫它 <code class="language-plaintext highlighter-rouge">ns16550a.h</code> 吧，这里面主要放一些宏定义和函数声明，有了这些宏，整个程序就更加人性化了，编写更加方便，理解更加轻松。这些宏的值，参考上一节的内容，大家应该不难理解吧。</p>
+
+<p>虽然宏定义这些年被批判的很惨，主要缘由是无法进入符号表导致 debug 困难，以及一不小心会出现一些与程序员主观不符的表达式，或者改变了某个变量的值而不自知等等。但是考虑到驱动程序小而快的要求，全部定义成全局常量显然不合适，而直接使用立即数肯定会被批判一番，所以，在有些地方，宏定义还是绕不开的。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// file ns16550a.h</span>
+<span class="cp">#ifndef _DF_RISCV_NS16550A_H
+#define _DF_RISCV_NS16550A_H
+</span>
+<span class="cp">#define REG_RHR  0  // read mode: Receive holding reg   
+#define REG_THR  0  // write mode: Transmit Holding Reg
+#define REG_IER  1  // write mode: interrupt enable reg
+#define REG_FCR  2  // write mode: FIFO control Reg
+#define REG_ISR  2  // read mode: Interrupt Status Reg
+#define REG_LCR  3  // write mode:Line Control Reg
+#define REG_MCR  4  // write mode:Modem Control Reg
+#define REG_LSR  5  // read mode: Line Status Reg
+#define REG_MSR  6  // read mode: Modem Status Reg
+</span>
+
+<span class="cp">#define UART_DLL  0  // LSB of divisor Latch when enabled
+#define UART_DLM  1  // MSB of divisor Latch when enabled
+</span>
+<span class="cp">#define UART_BASE_ADDR  0x10000000L
+</span>
+<span class="k">volatile</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">Reg</span><span class="p">(</span><span class="kt">int</span> <span class="n">reg</span><span class="p">);</span>
+<span class="kt">unsigned</span> <span class="kt">char</span> <span class="nf">ReadReg</span><span class="p">(</span><span class="kt">int</span> <span class="n">reg</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">WriteReg</span><span class="p">(</span><span class="kt">int</span> <span class="n">reg</span><span class="p">,</span> <span class="kt">char</span> <span class="n">c</span><span class="p">);</span>
+
+<span class="kt">void</span> <span class="nf">uartinit</span><span class="p">();</span>
+<span class="kt">void</span> <span class="nf">uartputc</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">uartgetc</span><span class="p">();</span>
+
+<span class="cp">#endif // _DF_RISCV_NS16550A_H
+</span></code></pre></div></div>
+
+<p>大家一定注意到，除了宏定义，我还声明了几个函数。这些函数的实现，全部放在了 <code class="language-plaintext highlighter-rouge">ns16550a.c</code> 文件中。</p>
+
+<p>很明显，函数的实现就是本博客的重头戏了。</p>
+
+<p>首先，我们实现函数 <code class="language-plaintext highlighter-rouge">Reg</code> 它接收一个偏移量，返回一个 <code class="language-plaintext highlighter-rouge">char</code> 指针，即该寄存器的数值。从上一节的讨论中，我们已经明白，UART 的寄存器地址就是它的起始地址加上偏移量，这样一来，这个函数应该没什么大问题：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">inline</span> <span class="k">volatile</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">Reg</span><span class="p">(</span><span class="kt">int</span> <span class="n">reg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="k">volatile</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="p">)(</span><span class="n">UART_BASE_ADDR</span><span class="o">+</span><span class="n">reg</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>唯一要注意的是，因为寄存器的值非常容易变化，<code class="language-plaintext highlighter-rouge">volatile</code> 关键字可以保证程序每次读取寄存器值的内容都是最新的。</p>
+
+<p>实现了这个函数后，<code class="language-plaintext highlighter-rouge">ReadReg</code> 函数和 <code class="language-plaintext highlighter-rouge">WriteReg</code> 函数应该不成问题：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">inline</span> <span class="kt">unsigned</span> <span class="kt">char</span> <span class="nf">ReadReg</span><span class="p">(</span><span class="kt">int</span> <span class="n">reg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">Reg</span><span class="p">(</span><span class="n">reg</span><span class="p">)));</span>
+<span class="p">}</span>
+
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">WriteReg</span><span class="p">(</span><span class="kt">int</span> <span class="n">reg</span><span class="p">,</span> <span class="kt">char</span> <span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">(</span><span class="o">*</span><span class="n">Reg</span><span class="p">(</span><span class="n">reg</span><span class="p">))</span> <span class="o">=</span> <span class="n">c</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>接下来就是对 UART 设备的初始化，在计算机刚刚开机时，我们无法保证设备内（尤其是寄存器）的值到底是什么的，因此，在使用 UART 设备前，初始化是完全必要的。</p>
+
+<p>这是我在 <code class="language-plaintext highlighter-rouge">ns16550a.c</code> 中编写的初始化代码：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">uartinit</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// disable interrupt</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">REG_IER</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">);</span>
+    <span class="c1">// set baud rate</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">REG_LCR</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">);</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">UART_DLL</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">);</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">UART_DLM</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">);</span>
+    <span class="c1">// set word length to 8-bits</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">REG_LCR</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">);</span>
+    <span class="c1">// enable FIFOs</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">REG_FCR</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">);</span>
+    <span class="c1">// enable receiver interrupts</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">REG_IER</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果你弄懂了之前我写的<a href="#tip">注意事项</a>，那么这边的代码对你来说就问题不大了。如你所见，<code class="language-plaintext highlighter-rouge">WriteReg</code> 函数可以让我们的代码变得更加简洁明了。在 <code class="language-plaintext highlighter-rouge">uartinit</code> 函数中，首先要将中断置为失效（我们当然不希望在 UART 初始化的时候就开始产生中断），然后，设置 UART 的传输速率，再设置传输的字长为 8 bit，并打开 FIFO 功能，最后不能忘记，一定要打开中断功能，那么，UART 的初始化就算是完成了！</p>
+
+<p>好了，将 UART 初始化后，接下来就是把字符传到屏幕上的时刻了，回顾一下我们之前了解到的，UART 中寄存器 LSR 的 bit 5 是用来指示 THR 寄存器是否为空，那么我们可以写个死循环，每时每刻判断是否有字符需要传输。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">uartputc</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">ReadReg</span><span class="p">(</span><span class="n">REG_LSR</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">;</span>
+    <span class="n">WriteReg</span><span class="p">(</span><span class="n">REG_THR</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我承认使用死循环来处理是一个非常愚蠢的做法：浪费了大量的 CPU 计算资源。但这却是最简单的方案。我早已经迫不及待地想看到我们的成果了！</p>
+
+<p>现在，我们已经接近完工了，只要把之前博客中的 <code class="language-plaintext highlighter-rouge">main</code> 函数稍加改造，就可以了：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="n">p</span> <span class="o">=</span> <span class="sc">'h'</span><span class="p">;</span>
+    <span class="n">uartinit</span><span class="p">();</span>
+    <span class="n">uartputc</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+    <span class="n">p</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">uartputc</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>先将 UART 初始化，再让 UART 输出一个 ‘h’ 和 ‘i’ 。</p>
+
+<hr />
+
+<p><strong>08-05 Update</strong></p>
+
+<p>也许我该写一下如何实现 <code class="language-plaintext highlighter-rouge">uartgetc</code> 函数？emmm… 只要我们认真学习了 UART 的相关知识，会发现 <code class="language-plaintext highlighter-rouge">uartgetc</code> 函数不难写：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">uartgetc</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ReadReg</span><span class="p">(</span><span class="n">REG_LSR</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mh">0x01</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">ReadReg</span><span class="p">(</span><span class="n">REG_RHR</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>嗯哼，貌似只要每次调用该函数时，判断 LSR 寄存器来检查 RHR 寄存器是否为空就可以了。但是这样真的可以吗？</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// the echo program I wrote in naive way</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="n">uartgetc</span><span class="p">();</span>
+    <span class="n">uartputc</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>若真的将 <code class="language-plaintext highlighter-rouge">main</code> 函数构建并运行，你会发现得到的输出永远是 -1 。你的屏幕上永远不会显示出你在键盘上摁下的字符。为什么？道理很简单，我们的小内核还不足以“感知”键盘的敲击。换句话说，我在交代完小内核所有的任务并让它开始运行后，它飞快地帮我做完了所有事情，不会等待我在键盘上敲击字符，直接认为什么东西都没有输入，以至于我根本来不及反应。因此，我们需要一个完整的中断响应机制，让内核感知到键盘发出信号，才能实现 <code class="language-plaintext highlighter-rouge">echo</code>。</p>
+
+<h2 id="构建工程">构建工程</h2>
+
+<p>到目前为止，我们的工程算是初具规模，如果大家都按着我的步调来的话，那么工程中的文件应当有</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>work
+|--	crt0.s
+|--	main.c
+|-- ns16550a.c
+|-- ns16550a.h
+</code></pre></div></div>
+
+<p>编译过程与之前<a href="https://dingfen.github.io/risc-v/2020/07/27/riscv-from-scratch-3.html">博客</a>提到的类似，只不过要改几个文件名</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>riscv64-unknown-elf-gcc <span class="nt">-g</span> <span class="nt">-ffreestanding</span> <span class="nt">-O0</span> <span class="nt">-Wl</span>,--gc-sections <span class="se">\</span>
+    <span class="nt">-nostartfiles</span> <span class="nt">-nostdlib</span> <span class="nt">-nodefaultlibs</span> <span class="nt">-Wl</span>,-T,riscv64-virt.ld <span class="se">\</span>
+    crt0.s main.c ns16550a.c
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">-ffreestanding</code> <a href="https://stackoverflow.com/questions/17692428/what-is-ffreestanding-option-in-gcc#17692510">告诉编译器标准库可能不存在</a>，因此不能做任何假设。在主机环境中运行应用程序时，此选项不是必需的，但是我们没有这样做，因为重要的是告诉编译器该信息。</p>
+
+<p><code class="language-plaintext highlighter-rouge">-Wl</code> 是逗号分隔的标志列表，以传递给链接器 <code class="language-plaintext highlighter-rouge">ld</code>。 <code class="language-plaintext highlighter-rouge">--gc-sections</code> 代表“垃圾收集 section”，告诉<code class="language-plaintext highlighter-rouge">ld</code> 在链接后删除未使用的节。 <code class="language-plaintext highlighter-rouge">-nostartfiles</code>，<code class="language-plaintext highlighter-rouge">-nostdlib</code> 和 <code class="language-plaintext highlighter-rouge">-nodefaultlibs</code> 分别告诉链接器不要链接任何标准系统启动文件（例如默认 <code class="language-plaintext highlighter-rouge">crt0</code>），任何标准系统 stdlib 实现或任何标准系统默认可链接库。我们提供了自己的 <code class="language-plaintext highlighter-rouge">crt0</code> 和链接描述文件，因此传递这些标志以告知编译器，我们不希望使用这些默认设置中的任何一个。</p>
+
+<p><code class="language-plaintext highlighter-rouge">-T</code> 允许你将你的链接器脚本路径传给链接器，在我们这次实验中就是 <code class="language-plaintext highlighter-rouge">riscv64-virt.ld</code> 。最后，加上我们想要编译的文件名就可以了。</p>
+
+<p>每次打这么长的命令想必令大家感到不愉快，这里还是建议大家写个 <code class="language-plaintext highlighter-rouge">Makefile</code> ：</p>
+
+<div class="language-makefile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">CC</span><span class="o">=</span>riscv64-unknown-elf-gcc
+<span class="nv">FLAG</span><span class="o">=</span> <span class="nt">-g</span> <span class="nt">-ffreestanding</span> <span class="nt">-O0</span> <span class="nt">-Wl</span>,--gc-sections <span class="nt">-nostartfiles</span> <span class="nt">-nostdlib</span> <span class="nt">-nodefaultlibs</span>
+<span class="nv">VIRTLD</span><span class="o">=</span><span class="nt">-Wl</span>,-T,kernel/riscv64-virt.ld
+<span class="nv">TARGET</span><span class="o">=</span>build/a.out
+<span class="nl">all</span><span class="o">:</span> <span class="nf">work/crt0.s work/ns16550a.c work/main.c</span>
+	<span class="nv">$(CC)</span> <span class="nv">$(FLAG)</span> <span class="nv">$(VIRTLD)</span> <span class="nv">$^</span> <span class="nt">-o</span> <span class="nv">$(TARGET)</span>
+</code></pre></div></div>
+
+<p>这样的话，大家每次在 shell 中敲入 <code class="language-plaintext highlighter-rouge">make</code> 就可以了。紧接着，我们就需要用 <code class="language-plaintext highlighter-rouge">qemu</code> 运行一下，看看它会不会与我们打招呼：</p>
+
+<div class="language-makefile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">qemu</span><span class="o">:</span> <span class="nf">$(TARGET)</span>
+	qemu-system-riscv64 <span class="nt">-machine</span> virt <span class="nt">-m</span> 128M <span class="nt">-nographic</span> <span class="se">\</span>
+ 	<span class="nt">-kernel</span> build/a.out  <span class="se">\</span>
+    <span class="nt">-bios</span> none
+</code></pre></div></div>
+
+<p>还是一样，我怕麻烦，将这些命令都放到了 <code class="language-plaintext highlighter-rouge">Makefile</code> 中，敲入 <code class="language-plaintext highlighter-rouge">make qemu</code> ，就会运行这些命令了！</p>
+
+<h2 id="运行与调试">运行与调试</h2>
+
+<p>如果大家成功地做完了上面的步骤，那么，在你的文件夹下，输入：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> make
+<span class="o">&gt;</span> make qemu
+</code></pre></div></div>
+
+<p>应该会出现下面的情况：</p>
+
+<p><img src="/assets/img/uarthi.png" alt="" /></p>
+
+<p>看，在最后一行，hi 已经出现了，说明我们的驱动已经可以工作了（虽然粗糙拙劣至极）。</p>
+
+<p>如果大家想要调试，在 GDB 中看程序一条一条执行的话，那么建议在 <code class="language-plaintext highlighter-rouge">Makefile</code> 中写入：</p>
+
+<div class="language-makefile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">qemudebug</span><span class="o">:</span> <span class="nf">$(TARGET)</span>
+	qemu-system-riscv64 <span class="nt">-machine</span> virt <span class="nt">-m</span> 128M <span class="nt">-nographic</span> <span class="nt">-gdb</span> tcp::1234 <span class="se">\</span>
+ 	<span class="nt">-kernel</span> build/a.out  <span class="se">\</span>
+ 	<span class="nt">-bios</span> none <span class="nt">-S</span>
+</code></pre></div></div>
+
+<p>然后在终端输入：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make qemudebug
+</code></pre></div></div>
+
+<p>再打开另一个终端，使用 <code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-gdb</code>，具体内容参考<a href="https://dingfen.github.io/risc-v/2020/07/26/riscv-from-scratch-2.html">该博客</a></p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">(</span>gdb<span class="o">)</span> target remote :1234                                                                             │
+Remote debugging using :1234
+
+<span class="o">(</span>gdb<span class="o">)</span> b main
+Breakpoint 1 at 0x80000xxx: file main.c, line 2.
+</code></pre></div></div>
+
+<h2 id="接下来">接下来</h2>
+
+<p>好了，UART 驱动程序我们大致算是完成了！</p>
+
+<p>到此为止，我们的小内核干了什么？很遗憾，几乎什么也没有，它与我们说了 hi 后就死机了😅，要写出更加复杂的功能，我们还有很长的路要走，接下来，我们要细细研究一下 RISC-V 体系结构的三种模式：<code class="language-plaintext highlighter-rouge">machine mode</code>、<code class="language-plaintext highlighter-rouge">user mode</code>、<code class="language-plaintext highlighter-rouge">supervisor mode</code>，并要合理安排一下内存布局，做一些更棒的事情。</p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-08-01T00:00:00+08:00">August 1, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=RISC-V+from+Scratch+4%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F01%2Friscv-from-scratch-4.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F01%2Friscv-from-scratch-4.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F01%2Friscv-from-scratch-4.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/07/27/riscv-from-scratch-3.html" class="pagination--pager" title="RISC-V from Scratch 3
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/08/05/riscv-privileged.html" class="pagination--pager" title="RISC-V 特权架构
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/08/01/riscv-from-scratch-4.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/08/01/riscv-from-scratch-4"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,889 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>并行正则采样排序之 MPI 实现 - 峰子的乐园</title>
+<meta name="description" content="并行正则采样排序是一个非常适合新手快速上手MPI的项目">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="并行正则采样排序之 MPI 实现">
+<meta property="og:url" content="http://localhost:4000/mpi&openmp/2021/01/23/psrs_sort.html">
+
+
+  <meta property="og:description" content="并行正则采样排序是一个非常适合新手快速上手MPI的项目">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-01-23T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/mpi&openmp/2021/01/23/psrs_sort.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser2.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          并行正则采样排序之 MPI 实现
+
+        
+      </h1>
+      
+        <p class="page__lead">并行正则采样排序是一个非常适合新手快速上手MPI的项目
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="并行正则采样排序之 MPI 实现">
+    <meta itemprop="description" content="并行正则采样排序是一个非常适合新手快速上手MPI的项目">
+    <meta itemprop="datePublished" content="2021-01-23T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#%E5%B9%B6%E8%A1%8C%E6%AD%A3%E5%88%99%E9%87%87%E6%A0%B7%E6%8E%92%E5%BA%8F%E4%B9%8B-mpi-%E5%AE%9E%E7%8E%B0">并行正则采样排序之 MPI 实现</a>
+    <ul>
+      <li><a href="#%E7%AE%97%E6%B3%95%E4%BB%8B%E7%BB%8D%E4%B8%8E%E5%8E%9F%E7%90%86">算法介绍与原理</a></li>
+      <li>
+<a href="#%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0">具体实现</a>
+        <ul>
+          <li><a href="#%E5%88%86%E6%AE%B5%E5%BF%AB%E6%8E%92">分段快排</a></li>
+          <li><a href="#%E6%8A%BD%E5%8F%96%E4%BB%A3%E8%A1%A8">抽取代表</a></li>
+          <li><a href="#%E4%B8%BB%E5%85%83%E5%88%92%E5%88%86">主元划分</a></li>
+          <li><a href="#%E5%85%A8%E5%B1%80%E4%BA%A4%E6%8D%A2">全局交换</a></li>
+          <li><a href="#%E6%94%B6%E9%9B%86%E6%95%B0%E7%BB%84">收集数组</a></li>
+        </ul>
+      </li>
+      <li><a href="#%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90">复杂度分析</a></li>
+      <li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="并行正则采样排序之-mpi-实现">并行正则采样排序之 MPI 实现</h1>
+
+<h2 id="算法介绍与原理">算法介绍与原理</h2>
+
+<p>在并行计算中，流行一种比快速排序更高效的算法——并行正则采样排序算法。<strong>并行正则采样排序 PSRS</strong>（Parallel Sorting by Regular Sampling），是一种基于<strong>均匀划分</strong>（Uniform Partition）原理的负载均衡的并行排序算法。假定待排序的元素有 n 个，系统中有 p 个处理器，算法将</p>
+
+<ol>
+  <li>将 n 个元素均匀地分割成 p 段，每段含有 n/p 个元素</li>
+  <li>给每段元素指派一个处理器，每个处理器对各自管辖的这部分元素进行<strong>快速排序</strong>
+</li>
+  <li>从各段元素中抽取几个代表元素，再从它们产生出 p-1 个主元</li>
+  <li>找出这些主元与原来的各局部有序的元素之间的偏序关系，进而将各个局部有序段重新划分成 p 段</li>
+  <li>通过全局交换将各个段中的对应部分集合到一起，最后将集合到一起的元素采用<strong>多路归并</strong>方法进行排序</li>
+</ol>
+
+<p>不得不说，整个算法步骤较多，过程复杂，令人一时难以理解，博主通过图片的形式再描述一遍算法，希望能帮助各位。</p>
+
+<center>
+   <img src="/assets/img/PP/psrs.png">
+</center>
+
+<h2 id="具体实现">具体实现</h2>
+
+<p>首先，还是老规矩，先生成随机数组，然后使用单个处理器（这里使用 <code class="language-plaintext highlighter-rouge">Proc#0</code>）排序，得到最终答案，用于检验并行程序的正确性。在做好这些初始化工作后，并行正则采样排序的实现正式开始！<img class="emoji" title=":muscle:" alt=":muscle:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4aa.png" height="20" width="20"></p>
+
+<h3 id="分段快排">分段快排</h3>
+
+<p>由 <code class="language-plaintext highlighter-rouge">Proc#0</code> 将所有数据分段发送给所有的处理器，每个处理器均匀地接收到部分数据，并调用 <code class="language-plaintext highlighter-rouge">qsort()</code> 函数进行快排。然而，均匀地分派给各处理器，就不得不考虑<strong>均分后的余数问题</strong>。当然，我们可以用 <code class="language-plaintext highlighter-rouge">MPI_Send</code> 和 <code class="language-plaintext highlighter-rouge">MPI_Recv</code>  函数，外加一个循环，来实现数据分派。但这样做 1）编程复杂，容易出错。2）不易阅读，难以理解。这里我采用了一个比较厉害的函数：<a href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Scatterv.html">MPI_Scatterv</a></p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">MPI_Scatterv</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">sendbuf</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">sendcounts</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">displs</span><span class="p">,</span>
+                 <span class="n">MPI_Datatype</span> <span class="n">sendtype</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">recvbuf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">recvcount</span><span class="p">,</span>
+                 <span class="n">MPI_Datatype</span> <span class="n">recvtype</span><span class="p">,</span>
+                 <span class="kt">int</span> <span class="n">root</span><span class="p">,</span> <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>总的来说，就是将一个处理器中包含的内容，全都<strong>散播</strong>到各个处理器中。当然，具体到每个处理器应该获得多长的数据，以及获得哪部分的数据，就分别由 <code class="language-plaintext highlighter-rouge">sendcounts</code> 和 <code class="language-plaintext highlighter-rouge">displs</code> 这两个数组决定了。</p>
+
+<p>回到本问题，我将除法计算中得到的余数，全部扔给了最后一个处理器，那么 <code class="language-plaintext highlighter-rouge">sendcounts</code> 的最后一个元素长度就需要加上余数，其余不变。于是便有如下实现：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 分段数据 移交各个处理器  group = 数组长度n / 处理器数p</span>
+<span class="kt">int</span> <span class="n">sendcounts</span><span class="p">[</span><span class="n">num_procs</span><span class="p">];</span>
+<span class="kt">int</span> <span class="n">displs</span><span class="p">[</span><span class="n">num_procs</span><span class="p">];</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">sendcounts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span><span class="p">;</span>
+    <span class="n">displs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="o">*</span><span class="n">group</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">sendcounts</span><span class="p">[</span><span class="n">num_procs</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span><span class="o">+</span><span class="n">mod</span><span class="p">;</span>
+<span class="n">MPI_Scatterv</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">sendcounts</span><span class="p">,</span> <span class="n">displs</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">group</span><span class="o">+</span><span class="n">mod</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+
+<span class="n">group_len</span> <span class="o">=</span> <span class="n">sendcounts</span><span class="p">[</span><span class="n">id_procs</span><span class="p">];</span>
+<span class="c1">// 均匀划分 局部排序</span>
+<span class="n">qsort</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">group_len</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="n">compare</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="抽取代表">抽取代表</h3>
+
+<p>让每个处理器从已经排好序的数据中，抽取出第$ w, 2w, 3w, … (p-1)w $个代表元素，其中$ w = n/p^2 $。每个处理器抽取好 p-1 个数据后，全部送到 <code class="language-plaintext highlighter-rouge">Proc#0</code> 处理器中，由它来完成对代表元素的排序。</p>
+
+<p>很有意思哈，第一步要求 <code class="language-plaintext highlighter-rouge">Proc#0</code> 把数据发送给各个处理器，而第二步是要求 <code class="language-plaintext highlighter-rouge">Proc#0</code> 接收来自各处理器的数据。</p>
+
+<center>
+    <img src="/assets/img/PP/Scatter&amp;Gather.png">
+</center>
+
+<p>简单介绍一下，<code class="language-plaintext highlighter-rouge">MPI_Scatterv</code>  的反操作 <a href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Gatherv.html">MPI_Gatherv</a>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">MPI_Gatherv</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">sendbuf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sendcount</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">sendtype</span><span class="p">,</span>
+                <span class="kt">void</span> <span class="o">*</span><span class="n">recvbuf</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">recvcounts</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">displs</span><span class="p">,</span>
+                <span class="n">MPI_Datatype</span> <span class="n">recvtype</span><span class="p">,</span> <span class="kt">int</span> <span class="n">root</span><span class="p">,</span> <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>其中的参数要求与 <code class="language-plaintext highlighter-rouge">MPI_Scatter</code> 相似，毕竟是镜像操作。</p>
+
+<p>有了之前的编程经验，相信收集数据的编程就不难了，不过还是要注意一下，偏移量和长度等细节问题。细心的读者可能发现了，这边接收数据的长度都为常值，因此可以使用一个更简单的函数 <a href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Gather.html">MPI_Gather</a></p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 正则采样</span>
+<span class="kt">int</span> <span class="n">recvcounts</span><span class="p">[</span><span class="n">num_procs</span><span class="p">];</span>
+<span class="kt">int</span> <span class="n">samples</span><span class="p">[</span><span class="n">num_procs</span> <span class="o">*</span> <span class="n">num_procs</span><span class="p">];</span>
+<span class="kt">int</span> <span class="n">s</span><span class="p">[</span><span class="n">num_procs</span><span class="p">];</span>    
+<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">group</span> <span class="o">/</span> <span class="n">num_procs</span><span class="p">];</span>
+<span class="c1">// 采到样本 收集到Proc#0</span>
+<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">recvcounts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_procs</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="n">displs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_procs</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="n">MPI_Gatherv</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">num_procs</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">recvcounts</span><span class="p">,</span> <span class="n">displs</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+
+<span class="c1">// 采样排序</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">qsort</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">(</span><span class="n">num_procs</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">num_procs</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="n">compare</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="主元划分">主元划分</h3>
+
+<p>上小节中，<code class="language-plaintext highlighter-rouge">Proc#0</code> 处理器对代表元素完成排序后，需要从中抽取第$ p-1,2(p-1),…,(p-1)(p-1) $ 个主元，并将它们全部广播到所有处理器中。然后，每个处理器根据这 p-1 个主元，将自己的数据划分为 p 段。</p>
+
+<p>将有序数组划分为 p 段，还是很简单的吧 <img class="emoji" title=":laughing:" alt=":laughing:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f606.png" height="20" width="20">。只需要遍历一下有序数组，就可以了。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 进行主元划分</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">pcounts</span><span class="p">[</span><span class="n">num_procs</span><span class="p">];</span>
+<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">pcounts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">pivot</span><span class="p">[</span><span class="n">num_procs</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">INT32_MAX</span><span class="p">;</span>
+
+<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">group_len</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">pivot</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+        <span class="n">pcounts</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">i</span><span class="o">--</span><span class="p">;</span>
+        <span class="n">index</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="全局交换">全局交换</h3>
+
+<p>上小节中，每个处理器都将自己的数据划分为 p 段。为表述方便，记$ W^j_i $ 为 <code class="language-plaintext highlighter-rouge">Proc#i</code> 中的第 j 段。将所有处理器的$ W^j $ 都发送给 <code class="language-plaintext highlighter-rouge">Proc#j</code> 处理器，然后每个处理器再对接收到的数据使用<strong>归并排序</strong>。完成任务后，将所有有序数据发回给 <code class="language-plaintext highlighter-rouge">Proc#0</code> ，让它完成答案校验。</p>
+
+<p>让我们再补充一个 MPI 的函数 <a href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Alltoallv.html">MPI_Alltoallv</a> :</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">MPI_Alltoallv</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">sendbuf</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">sendcounts</span><span class="p">,</span>
+                  <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">sdispls</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">sendtype</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">recvbuf</span><span class="p">,</span>
+                  <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">recvcounts</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="o">*</span><span class="n">rdispls</span><span class="p">,</span> <span class="n">MPI_Datatype</span> <span class="n">recvtype</span><span class="p">,</span>
+                  <span class="n">MPI_Comm</span> <span class="n">comm</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>该函数的功能是，让每个处理器发送一个消息给所有处理器（包括自己），这些消息都在它的发送缓冲中以处理器标识符号的顺序有序地存放。如下图所示，每个处理器都从所有处理器接收到一个消息，并以标号的顺序存放在缓冲区中。</p>
+
+<center>
+   <img src="/assets/img/PP/Alltoall.png">
+</center>
+
+<p>回到本次实现，不难发现，对$ W^j_i $ 的操作，就是全局交换，与 <code class="language-plaintext highlighter-rouge">MPI_Alltoall</code> 函数所描述的功能完全一致。那么紧接着的一个问题是，如何编码呢？</p>
+
+<p>首先，明确一个坏消息：$ W^j_i $ 的长度都是不定的，且只有本地的处理器知道它的长度。这意味着，在直接使用 <code class="language-plaintext highlighter-rouge">MPI_Alltoallv</code> 函数来完成全局交换之前，所有处理器还需要<strong>全局交换每个数据段的长度</strong><img class="emoji" title=":scream:" alt=":scream:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f631.png" height="20" width="20"> 。否则，我无法赋值 <code class="language-plaintext highlighter-rouge">MPI_Alltoallv</code> 函数中的各个数组值。好在，这部分代码很简单，就当做正式作战之前的一次热身吧。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 发送各个段的长度</span>
+<span class="kt">int</span> <span class="n">rcounts</span><span class="p">[</span><span class="n">num_procs</span><span class="p">];</span>
+<span class="n">MPI_Alltoall</span><span class="p">(</span><span class="n">pcounts</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">rcounts</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>现在，每个处理器都已经知道了自己要发多长的消息，也知道了自己要收多长的消息。还需要知道，这些消息在哪，也就是它们的偏移量是什么。其实也简单，毕竟一个紧挨着一个，只要根据长度累加起来就可以。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 计算位移</span>
+<span class="kt">int</span> <span class="n">rdispls</span><span class="p">[</span><span class="n">num_procs</span><span class="p">];</span>
+<span class="n">sdispls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">rdispls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_procs</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">sdispls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdispls</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">pcounts</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+    <span class="n">rdispls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rdispls</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">rcounts</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+<span class="p">}</span>
+<span class="c1">// 计算总长度</span>
+<span class="kt">int</span> <span class="n">totalcounts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">totalcounts</span> <span class="o">+=</span> <span class="n">rcounts</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</code></pre></div></div>
+
+<p>然后，就是创造一个接收缓冲区，并调用函数，归并排序！</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">totalcounts</span><span class="o">*</span><span class="nf">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+<span class="c1">// 每个处理器发送数据给其他所有处理器，且每个处理发送的数据长度都不同</span>
+<span class="c1">// 故有长度数组和位移数组</span>
+<span class="n">MPI_Alltoallv</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">pcounts</span><span class="p">,</span> <span class="n">sdispls</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rcounts</span><span class="p">,</span> <span class="n">rdispls</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+<span class="c1">// 归并排序</span>
+<span class="n">merge_sort</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">totalcounts</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="收集数组">收集数组</h3>
+
+<p>现在，排序任务已经完成，只剩接收工作了。</p>
+
+<p>回想一下，MPI 是如何收集数据的？使用 <code class="language-plaintext highlighter-rouge">MPI_Gather</code> 函数！注意到，<code class="language-plaintext highlighter-rouge">Proc#0</code> 不清楚各处理器中到底有多少有序元素。所以说，还是和上一小节一样，需要先收集各处理器中数组的长度。正所谓，兵马未动粮草先行。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MPI_Gather</span><span class="p">(</span><span class="o">&amp;</span><span class="n">totalcounts</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">rcounts</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>然后，根据得到的长度，计算偏移量，再使用 <code class="language-plaintext highlighter-rouge">MPI_Gatherv</code> 函数（这里为方便，复用了一些之前定义的数组）</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">rdispls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">rdispls</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rdispls</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">rcounts</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+<span class="n">MPI_Gatherv</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">totalcounts</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">rcounts</span><span class="p">,</span> <span class="n">rdispls</span><span class="p">,</span> <span class="n">MPI_INT</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>于是，现在所有的有序数组都存放在 <code class="language-plaintext highlighter-rouge">result</code> 数组中了 <img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20">。</p>
+
+<h2 id="复杂度分析">复杂度分析</h2>
+
+<p>完成了 PSRS 排序的实现后，我简单地讨论一下 PSRS 算法的复杂度。在第一部分的快速排序中，时间复杂度为$ O(k \log k)，k=n/p $。然后，各处理器选择 p-1 个代表元素，代价为$ O(p) $。再由 <code class="language-plaintext highlighter-rouge">Proc#0</code> 对所有送来的代表元素进行排序，然后选出主元，这里若使用快速排序，代价为$ O(p^2 \log p^2) $，而若使用归并排序，则所需代价为$ O(p^2) $。每个处理器接收到主元后，再对有序数组进行划分，代价为$ O(k+p) $，最后，各个处理器全局交换，并行归并排序，代价为$ O(k+\log p) $。考虑到实际应用中，需要排序的数据长度 n 一定远远多于现有的处理器 p，此时可以视 p 为一个小常数，那么 PSRS 排序算法的时间复杂度，就可以简化为 $ O(k\log k+k) $。</p>
+
+<p>从消息复杂度的角度看，<code class="language-plaintext highlighter-rouge">Proc#0</code> 收集代表元素，并播送主元的复杂度为 $ O(p^2+p) $。在全局交换部分的消息复杂度与具体算法实现相关，但其最大值不会超过 $O(n)$。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>PSRS 排序过程复杂，编写 MPI 容易出错。在实现时，建议尽量地借助<strong>群集通信</strong>的相关函数，可以有效地减少代码量，减少错误，增强代码的可读性。同时，借助这次对 PSRS 排序的实现，提高对这些群集通信函数的熟练度，因此作为一个练手项目，是一个不错的选择。</p>
+
+<p>博主本人的实现见<a href="https://github.com/dingfen/ParallelComputing/blob/master/sort/psrs_sort.c">PSRS排序</a>。</p>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            tex2jax: {
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            inlineMath: [['$','$']]
+            }
+        });
+    </script>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#mpi" class="page__taxonomy-item" rel="tag">MPI</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#mpi-openmp" class="page__taxonomy-item" rel="tag">MPI&amp;OpenMP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-01-23T00:00:00+08:00">January 23, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E5%B9%B6%E8%A1%8C%E6%AD%A3%E5%88%99%E9%87%87%E6%A0%B7%E6%8E%92%E5%BA%8F%E4%B9%8B+MPI+%E5%AE%9E%E7%8E%B0%20http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F01%2F23%2Fpsrs_sort.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F01%2F23%2Fpsrs_sort.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F01%2F23%2Fpsrs_sort.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/mpi&amp;openmp/2020/12/17/PP02.html" class="pagination--pager" title="并行程序中的求和
+">previous</a>
+    
+    
+      <a href="/miscellaneous/2021/04/05/selenium.html" class="pagination--pager" title="python 自动化——获取学生提交的作业
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/mpi&openmp/2021/01/23/psrs_sort.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/mpi&openmp/2021/01/23/psrs_sort"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

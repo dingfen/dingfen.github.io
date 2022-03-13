@@ -1,0 +1,765 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Why RISC-V ? - 峰子的乐园</title>
+<meta name="description" content="介绍完 RISC-V 的标准扩展指令集后，我们接下来看最后一部分内容 RISC-V C 指令集，该指令集重点面向嵌入式系统设计。针对片上资源紧缺的特点，设计人员将指令集裁减优化，形成了 RISC-V C。">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Why RISC-V ?">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/09/27/WHY-RISC-V-4.html">
+
+
+  <meta property="og:description" content="介绍完 RISC-V 的标准扩展指令集后，我们接下来看最后一部分内容 RISC-V C 指令集，该指令集重点面向嵌入式系统设计。针对片上资源紧缺的特点，设计人员将指令集裁减优化，形成了 RISC-V C。">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-09-27T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/09/27/WHY-RISC-V-4.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Why RISC-V ?
+
+        
+      </h1>
+      
+        <p class="page__lead">介绍完 RISC-V 的标准扩展指令集后，我们接下来看最后一部分内容 RISC-V C 指令集，该指令集重点面向嵌入式系统设计。针对片上资源紧缺的特点，设计人员将指令集裁减优化，形成了 RISC-V C。
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Why RISC-V ?">
+    <meta itemprop="description" content="介绍完 RISC-V 的标准扩展指令集后，我们接下来看最后一部分内容 RISC-V C 指令集，该指令集重点面向嵌入式系统设计。针对片上资源紧缺的特点，设计人员将指令集裁减优化，形成了 RISC-V C。">
+    <meta itemprop="datePublished" content="2020-09-27T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#why-risc-v-">Why RISC-V ?</a>
+    <ul>
+      <li><a href="#背景介绍">背景介绍</a></li>
+      <li><a href="#对基础-isa-的影响">对基础 ISA 的影响</a></li>
+      <li><a href="#rvc-设计理念">RVC 设计理念</a></li>
+      <li><a href="#rvc">RVC</a>
+        <ul>
+          <li><a href="#rvc-指令编码">RVC 指令编码</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="why-risc-v-">Why RISC-V ?</h1>
+
+<p>在讲完 RISC-V 的基础 ISA 和标准扩展后，我们把注意力集中到 <strong>RISC-V C</strong> 上，RISC-V Compressed 简称 <strong>RVC</strong> ，<u>它在基础 ISA 中引入了双长度指令，将最频繁的指令编码为更密集的格式来减少静态代码大小和动态取指令的流量</u>。因为更小的指令占用空间可以降低嵌入式系统的成本（指令存储在嵌入式系统中的成本非常可观），并提高了指令缓存的命中率，提升了缓存系统的性能。取指令消耗了大部分能量，因此从内存中取出更短的指令（意味着更少的字节），也可以显著减少能量消耗。</p>
+
+<h2 id="背景介绍">背景介绍</h2>
+
+<p>在嵌入式系统领域，有限的指令内存容量和带宽往往不利于 RISC 架构。为了扩大他们的市场，RISC 供应商给 MIPS 和 ARM 创造了他们的 ISAs 的变种，分别叫做 MIPS16 和 Thumb，它们可以被编码为更窄的 16 位固定宽度指令。这些指令中的大多数与基本 ISA 相似，但对寄存器访问模式和操作数大小有限制。虽然这些压缩的 RISC ISAs 大大降低了代码大小，但它们也有一些缺点。最重要的是，基础 ISAs 的设计者没有考虑到这些压缩指令集：没有充足的编码空间给压缩的指令，因此唯一方法是创建新的、不兼容的指令集。但这就无法与基础 ISAs 混合在一起执行。例如，在 MIPS16 中，ISAs 只能用特殊的跳转指令交换，因此 MIPS 和 MIPS16 代码只在过程调用时混合。</p>
+
+<p><u>不可与基本 ISA 指令混用对性能有显著的影响</u>。因为有些操作可以很容易地编码在一条 32 位的指令中，比如加载一个大的常量。<u>但现在就可能需要三条 16 位的指令，而且保存额外的中间结果会使压缩的 ISAs 的寄存器数量更加捉襟见肘，此外，用 16 位编码整个 ISA 意味着重要的功能，如浮点，必须被忽略</u>。后来压缩 RISC ISA 变体，如 microMIPS 和 Thumb-2，纠正了这个缺陷，设计了新的 32 位指令，并允许 16 位和 32 位的指令混用。然而因为 32 位指令仍然与基础 ISA 中的指令不一样，所以实现工程师被迫设计和验证两个指令译码器，增加了硬件成本，大大增加了软件生态系统的复杂性。</p>
+
+<h2 id="对基础-isa-的影响">对基础 ISA 的影响</h2>
+
+<p>有了前车之鉴，我们在设计 RISC-V 时在一开始就考虑了如何无缝地支持双长度的指令。当然至关重要的前提是，基本 ISA 和标准扩展只占其编码空间的一小部分，可以给压缩指令充足的编码空间。不像早期的 RISC ISAs 那样，密集地填充着 32 位的编码空间，比如 SPARC，花了 1/4 编码空间在 CALL 指令，<u>相比之下，RISC-V 的基本 ISA 编码消耗小于 1/4 的 32 位编码空间</u>。我们有意识地保留了 3/4 的空间，留给压缩 ISA 扩展指令。这样编码的另一个重要结果是，我们很容易检测一条指令的长度是 16 位还是 32 位：只需要检查两个操作码位。该方案极大地加快了超标量指令的译码速度，因为它要求对指令进行连续扫描以确定其边界。</p>
+
+<p>另外，<u>RISC-V 的基本控制流指令的最小寻址单位是 16 位，而不是 32 位。这样的设计也是为了压缩指令的扩展考虑的</u>——在支持压缩指令时，RISC-V 就不要新增分支和跳转指令。更进一步，我们发现支持任意字节对齐的指令也是很简单的。然而，我们发现 16 位指令就可以节省很多成本了， 8 位和 24 位指令带来的好处，与取指令单元中增加的硬件复杂性相比，可能是不太明智的。更重要的是，这将进一步减小分支和跳转的范围，从而增加了指令数，抵消了新指令宽度所带来的一些代码大小和性能改进。</p>
+
+<p>为了支持 RVC，<u>基础 ISA 唯一改变的是放松了指令的对齐限制，允许它们在任何 16 位对齐的地方开始</u>。显然，保持对齐限制会有一些好处，因为它可以简化指令获取硬件。但是这样做，我们被迫放弃很多代码密度的提升效果。虽然该影响可以通过代码调度在某种程度上减轻，但是对编译器进行这样的额外约束，会出现更多的数据冒险并降低性能，特别是对于静态调度的实现。</p>
+
+<h2 id="rvc-设计理念">RVC 设计理念</h2>
+
+<p>两个主要的设计理念引导着 RVC 的设计。<u>首先，RVC 程序不应该比对应的 RISC-V 程序使用更多的指令，并在性能上也至少如此</u>。这个目标很容易实现——保证基本 ISA 指令总是可用的就行。这种设计带来的结果是，RVC 不是一个独立的 ISA，因此宝贵的 RVC 编码空间可以不用花在基本但相对不频繁的操作上，比如用系统调用调用操作系统，而花在可以减小最常见代码序列的规模上。</p>
+
+<p><u>第二点，每个 RVC 指令必须可扩展为单个 RISC-V 指令</u>。提出这条的原因有两方面，最重要的是，它简化了 RVC 处理器的实现和验证：在指令译码期间，RVC 指令可以简单地扩展为对应的基础 ISA 指令，这样一来，处理器的后端就可以几乎不知道 RVC 指令的存在。此外，汇编程序员和编译器也不需要知道 RVC：代码压缩可以留给汇编器和链接器（当然，若编译器对 RVC 了解更多，也可以为代码压缩提供更多优化）。然而，这种约束确实阻止了一些重要的代码大小优化：比如 load-multiple 和 store-multiple 指令，这是其他压缩 RISC ISAs 的共同特性，不适合此模板。</p>
+
+<p>设定了这两个理念之后，RVC 的设计问题就被简化成了压缩率与译码成本的 tradeoff 的问题。在极端情况下，我们可以将每个可用的 RVC 编码映射到常见的 RISC-V 编码，甚至做出一个指令翻译“字典”。虽然这可以达到最大的压缩率，但有三个主要缺点：字典查找是昂贵的，抵消了取指令节省的能源；增加了指令解码的延迟，可能会降低性能并进一步抵消所节省的能源；最后，字典添加到架构中，会增加上下文切换时间和内存使用。</p>
+
+<p>幸好，RISC-V 指令流的四个属性使得上述方法没有必要：</p>
+
+<ul>
+  <li>
+    <p><em>指令中的寄存器有巨大的空间局部性</em>。RISC-V 提供了充足的寄存器数量，减少寄存器数量不足导致的溢出、内存交换等。但即使如此，多数访问仍集中在对少数寄存器。下图展示了在 SPEC CPU2006 benchmark 中寄存器的使用频率。</p>
+
+    <center>
+  <img src="/assets/img/reg_freq.png" />
+</center>
+  </li>
+  <li>
+    <p><em>指令只有很少的唯一操作数</em>。一些指令集，比如 Intel 80x86 ，只提供很多破坏性的操作形式：其中的一个源操作数会被结果覆盖。这实质上增加了一些程序的指令数量，因此 RISC-V 的指令都是寄存器——寄存器的非破坏性形式。但是，破坏性算术操作是常见的：SPEC CPU2006 中 47% 的静态算术指令与目标寄存器共享至少一个源操作数。但是，RISC-V 指令只需要通过一些小技巧就可以表达常见的用法。例如，当 ADDI 指令的一个源操作数是 <code class="language-plaintext highlighter-rouge">x0</code> 时，事实上就是将一个小常量装载到了目的寄存器中。</p>
+  </li>
+  <li>
+    <p><em>立即数和偏移量都往往很小</em>。大约一半的立即数可以用 5 位表示。静态的，分支和跳转的偏移量通常很大；然而，动态的，几乎 90% 的都在 8 位以内，反映了小循环的优势。此外，由于这些数据是从未压缩的 RISC-V 程序中收集的，因此分支和跳跃的偏移是 RVC 程序的两倍。实际上，对于 RVC 程序，CDFs 最多可以向左移 1 位。</p>
+  </li>
+  <li>
+    <p><em>一小部分独特的操作码占主导地位</em>。在 SPEC CPU2006（74%）中，绝大多数静态指令是整数装载、加法、存储或分支。如下表所示，20 种最常见的 RISC-V 操作码占静态结构的 91%，占动态指令的 76% 。最常见的指令 ADDI，静态地占指令的四分之一，动态地占七分之一。</p>
+
+    <center>
+  <img src="/assets/img/instr_freq.png" />
+</center>
+  </li>
+</ul>
+
+<p>根据这些观察结果，我们提出了一种 RVC 设计，它可以表达最常见指令的最常见形式，同时保留编码规则，从而简化实现。</p>
+
+<h2 id="rvc">RVC</h2>
+
+<p><u>在 RISC-V Compressed ISA 的扩展中，指令使用了 5 位进行编码，目前我们使用了 24 个操作码，占用了编码空间的 3/4 ，留下 11 位给操作数编码</u>。下表列出了主要 RVC 指令的编码格式；几种次要格式在立即数的编码上有所不同。CR、CI 和 CSS 格式可以访问所有的 32 个寄存器，通常为最常见的操作保留，比如复制寄存器或访问堆栈。</p>
+
+<center>
+  <img src="/assets/img/major_RVC_formats.png" />
+</center>
+
+<p>考虑到一些寄存器的访问频率远远高于其他寄存器，<u>为了节省编码位数，多数指令被限制为仅可以访问少数最常用的寄存器</u>。例如，CIW 和 CL 指令只能访问 8 个被称为 RVC 寄存器 <code class="language-plaintext highlighter-rouge">x8</code> - <code class="language-plaintext highlighter-rouge">x15</code>。在标准调用规范中，这些寄存器对应了两个被调用者保存（callee-saved）的寄存器 <code class="language-plaintext highlighter-rouge">s0</code> 和 <code class="language-plaintext highlighter-rouge">s1</code> ，和 6 个调用者保存（caller-saved）的寄存器 <code class="language-plaintext highlighter-rouge">a0</code> - <code class="language-plaintext highlighter-rouge">a5</code>。</p>
+
+<p><u>另外，还有些指令隐式地访问了 ABI 中具有特殊意义的寄存器</u>：零寄存器 <code class="language-plaintext highlighter-rouge">x0</code>、链接寄存器 <code class="language-plaintext highlighter-rouge">ra</code> 和堆栈指针 <code class="language-plaintext highlighter-rouge">sp</code> 。虽然此决策增加了译码的复杂性，但对于在有限的编码空间中捕获一些常见现象（如寄存器溢出）是必要的。事实上，译码电路增加的复杂性是有限的，因为上述几个寄存器的前 3 个 MSB 位都是一样的。</p>
+
+<p><u>大多数指令格式都包含一个立即数</u>。然而，对于不同指令而言，最常见的立即数值差别很大。例如，而一些 RISC-V 指令通常具有负立即数，其他指令很少这样。前一种情况的典型例子是向后分支等情况。另一方面，相对于堆栈的 loads 和 stores 就不会有负的偏移量，因为使用堆栈指针之下的空间是非法的。因此，不像在基本 ISA 中，它只有符号扩展的立即数，一些 RVC 指令有零扩展。如果我们仅对立即数进行符号扩展，则可压缩的 loads 和 stores 将减少 12%。</p>
+
+<p>类似地，几乎所有的 loads 和 stores 在 RISC-V 程序中都是对齐的，在这种情况下，它们的偏移量可以被字的大小整除。<u>考虑到这个属性，RVC 中的所有 loads 和 stores 偏移量都按字大小对齐</u>。如果我们不这样做，可压缩的 loads 和 stores 将减少 44%。如果我们对这些立即数进行符号扩展，损失将增加到 62% ——或减少 19% 的总压缩量。</p>
+
+<h3 id="rvc-指令编码">RVC 指令编码</h3>
+
+<p>下图表示了 RV32C 和 RV64C 指令的编码情况，以及对应的基础 ISA。ISAs 总共有 44 条指令，其中 RV64C 39 条，RV32C 32 条。</p>
+
+<center>
+  <img src="/assets/img/RV32C_RV64C.png" />
+</center>
+
+<p>整数算术运算是最常见的一类指令，占用了 19 个操作码。5 个 RVC 指令扩展到 ADDI ，这反映出其使用非常频繁：加法（C.ADDI）、累加堆栈指针（C.ADDI16SP）、生成堆栈相对地址 （C.ADDI4SPN）、立即数加载（C.LI）和 C.NOP。许多算术运算是破坏性的，只针对 RVC 寄存器；最常用的指令可以操作任何寄存器。</p>
+
+<p>loads 和 stores 是下一个最具代表性的指令类，占 16 个操作码。RV32C 可以移动 32 位整数和浮点数，以及 64 位浮点数；RV64C 支持 32 位和 64 位整数，但只支持 64 位浮点数（RV32C 32 位浮点加载和存储与 RV64C 64 位整数加载和存储占用相同的操作码空间）。对于每个数据类型，有两种寻址方式：基址加偏移量，基址从 RVC 寄存器中取得，以及相对于栈指针的寻址方式，该方式有一个更远的偏移量。在所有情况下，偏移量都是无符号的，并以数据类型的大小为基本单位。</p>
+
+<p>RVC 提供了条件分支，用于检测是否等于零（C.BEQZ 和 C.BNEZ）、无条件直接跳转（C.J）和寄存器—间接跳转（C.JR）。另外，后两者会链接到 <code class="language-plaintext highlighter-rouge">x1</code>，C.JAL 和 C.JALR 指令在标准调用规范下适合函数调用（由于操作码空间有限，RV64C 除去了 C.JAL）。C.EBREAK 是一个断点指令，简化了 RVC 程序的调试。</p>
+
+<p>下图详细地展示了 RV64C 的编码情况。其中 loads 和 stores 就占了 50% 的编码空间，在其余的空间中，算术指令占了 3/4 ，剩下的就是控制流指令。</p>
+
+<center>
+  <img src="/assets/img/RV64C.png" />
+</center>
+
+<p>这一编码方案的明显特征是有大量的立即数编码格式，这是压缩编码空间的结果。然而，就像在 base ISA 一样，立即数编码被打乱了，为的是能最小化产生的立即数的成本。在 12 个立即数选择中，18 个立即数位中的 8 个总是来自指令中相同的位；其中 5 位来自两个地方；4 个来自三个位置；一个来自四个位置。</p>
+
+<p>还有其他一些微妙之处值得注意。对于带有符号扩展的立即数的指令，符号位总是在相同的位置，第 12 位。此外，这些指令都位于不同的操作码空间中，与那些具有零扩展立即数的指令不同；因此，MSB 立即数位（即第 18 位及以上）可以由三个指令的位生成。</p>
+
+<p>对寄存器的译码其实也比你想象的要简单。除了某些指令会对隐式寄存器 <code class="language-plaintext highlighter-rouge">x0</code> <code class="language-plaintext highlighter-rouge">x1</code> <code class="language-plaintext highlighter-rouge">x2</code> 访问外，寄存器说明符至多来自三个位置，来计算在基本 ISA 中对应寄存器的编码位置，而译码也只需要检查三个操作码位。尽管如此，对寄存器说明符的译码对于许多实现来说都是至关重要的，尤其是超标量，它必须分析发射的指令集中的数据冒险。激进的实现可能需要额外的流水线阶段来处理增加的延迟，或者加上额外的交叉检查逻辑和寄存器映射表来推测地译码寄存器说明符的所有组合。</p>
+
+<p>或许你已经注意到，还有很多的编码空间被保留了起来。指令 <code class="language-plaintext highlighter-rouge">0x0000</code> 在其他情况下会映射到一个冗余指令中，并被永久保留，以提高捕获错误代码的几率。此外，尽管使用所有的编码空间可以最大限度地压缩代码，但我们将一个主要的操作码和几个次操作码保留了下来，以防 RVC 在将来的软件中无法捕获重要的模式。最后，除了规范的 no-op 外，所有不修改体系结构状态的指令形式（例如，将寄存器的值加 0）都被保留下来。若在某个实现上，上述这些目前还没有意义，那么它们也将正确地不执行任何操作，不产生额外的硬件成本。</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#rvc" class="page__taxonomy-item" rel="tag">RVC</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-09-27T00:00:00+08:00">September 27, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Why+RISC-V+%3F%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F27%2FWHY-RISC-V-4.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F27%2FWHY-RISC-V-4.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F27%2FWHY-RISC-V-4.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/09/19/WHY-RISC-V-3.html" class="pagination--pager" title="Why RISC-V ?
+">previous</a>
+    
+    
+      <a href="/apollo/2020/10/14/apollo-intro.html" class="pagination--pager" title="Apollo 软件系统概述
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/09/27/WHY-RISC-V-4.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/09/27/WHY RISC-V 4"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

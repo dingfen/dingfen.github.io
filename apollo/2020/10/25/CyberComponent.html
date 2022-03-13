@@ -1,0 +1,1088 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Apollo Cyber RT 组件 - 峰子的乐园</title>
+<meta name="description" content="为了解 Cyber RT 的数据通信情况，对组件进行深入的研究">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Apollo Cyber RT 组件">
+<meta property="og:url" content="http://localhost:4000/apollo/2020/10/25/CyberComponent.html">
+
+
+  <meta property="og:description" content="为了解 Cyber RT 的数据通信情况，对组件进行深入的研究">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-10-25T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/apollo/2020/10/25/CyberComponent.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Apollo Cyber RT 组件
+
+        
+      </h1>
+      
+        <p class="page__lead">为了解 Cyber RT 的数据通信情况，对组件进行深入的研究
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Apollo Cyber RT 组件">
+    <meta itemprop="description" content="为了解 Cyber RT 的数据通信情况，对组件进行深入的研究">
+    <meta itemprop="datePublished" content="2020-10-25T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#apollo-cyber-rt-组件">Apollo Cyber RT 组件</a>
+    <ul>
+      <li><a href="#前言">前言</a></li>
+      <li><a href="#组件-component">组件 Component</a>
+        <ul>
+          <li><a href="#用户自定义组件">用户自定义组件</a></li>
+        </ul>
+      </li>
+      <li><a href="#组件类">组件类</a>
+        <ul>
+          <li><a href="#node-节点">Node 节点</a></li>
+          <li><a href="#信道与配置信息">信道与配置信息</a></li>
+          <li><a href="#真实模式与模拟模式">真实模式与模拟模式</a></li>
+        </ul>
+      </li>
+      <li><a href="#定时组件类">定时组件类</a></li>
+      <li><a href="#总结">总结</a></li>
+      <li><a href="#参考">参考</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="apollo-cyber-rt-组件">Apollo Cyber RT 组件</h1>
+
+<h2 id="前言">前言</h2>
+
+<p>今天，我来给大家介绍一下 Apollo Cyber RT 中组件（Component）的相关知识。老规矩，在这之前，先回顾一下之前的内容。根据课题组的安排，我这段时间一直在研究 <a href="https://apollo.auto/">Apollo</a> 系统，它是百度开发的自动驾驶开源框架，具有高性能和高灵活性的特点，我主要介绍 <a href="https://github.com/ApolloAuto/apollo">Apollo 5.5</a> 版本。其中的 Apollo Cyber RT 是 Apollo 团队在注意到 ROS 无法满足自动驾驶系统的鲁棒性和性能要求后，专门为自动驾驶场景设计的开源、高性能<strong>运行时框架</strong>。在<a href="https://dingfen.github.io/apollo/2020/10/21/CyberTimer.html">之前的博客中</a>，我介绍了 Cyber RT 中定时器的相关知识，主要介绍了定时器的算法、实现以及定时器组件如何使用定时器。由此引发了我对组件实现的兴趣，那么这篇博客就详细地介绍一下组件吧。</p>
+
+<h2 id="组件-component">组件 Component</h2>
+
+<p>根据百度 Apollo 团队提供的 Cyber RT 文档<sup>1</sup>，<strong>组件</strong>（Component）是 Cyber RT 用于构建应用模块的基本类。每个特定的应用模块都可以继承 <code class="language-plaintext highlighter-rouge">Component</code> 类并定义自己的函数 <code class="language-plaintext highlighter-rouge">Init()</code> 和 <code class="language-plaintext highlighter-rouge">Proc()</code> ，之后，该模块就可以被装载入 Cyber RT 框架中。</p>
+
+<p>一般来说，用户有两种选择来使用 Cyber RT 框架：</p>
+
+<ul>
+  <li>基于二进制。应用被分别编译成二进制文件，并使用自己创建的 <code class="language-plaintext highlighter-rouge">Reader</code> 和 <code class="language-plaintext highlighter-rouge">Writer</code> 来与其他 Cyber RT 模块进行通信</li>
+  <li>基于组件。应用被编译成一个共享库（Shared library），通过继承 <code class="language-plaintext highlighter-rouge">Component</code> 类并写好相应的 dag 文件，Cyber RT 框架会自动装载并运行该应用</li>
+</ul>
+
+<p>不难看出，使用基于组件的方案有明显的优点：</p>
+
+<ul>
+  <li>组件可以被不同的进程装载，部署非常灵活</li>
+  <li>当需要改变接受信道的名字（或者其他属性），可以直接更改 dag 文件，不需要重新编译</li>
+  <li>组件支持接收多种类型的数据</li>
+  <li>组件支持提供多种混合策略</li>
+</ul>
+
+<h3 id="用户自定义组件">用户自定义组件</h3>
+
+<p>要创建并启动一个算法组件<sup>2</sup>，需要通过以下 4 个步骤：</p>
+
+<ul>
+  <li>初如化组件的文件结构</li>
+  <li>实现组件类</li>
+  <li>设置配置文件</li>
+  <li>启动组件</li>
+</ul>
+
+<p>官方文档介绍的很详细，在这里我就不啰嗦了。</p>
+
+<h2 id="组件类">组件类</h2>
+
+<p>在开始前，为更方便大家的理解，建议阅读 <a href="https://dingfen.github.io/apollo/2020/10/14/apollo-intro.html">Cyber RT 的术语解释</a> 和 <a href="https://cyber-rt.readthedocs.io/en/latest/CyberRT_Terms.html">Cyber RT Terms</a> ，因为我会反复提到其中的某些术语。</p>
+
+<p>从代码上看，组件基类 <code class="language-plaintext highlighter-rouge">ComponentBase</code> 是组件类 <code class="language-plaintext highlighter-rouge">Component</code> 和时间组件类 <code class="language-plaintext highlighter-rouge">TimerComponent</code> 的基类。仔细看下图（淡蓝色为背景表示它是 <code class="language-plaintext highlighter-rouge">private</code> 或 <code class="language-plaintext highlighter-rouge">protected</code> 的），有几点发现：</p>
+
+<center>
+<img src="/assets/img/Component.png" />
+</center>
+
+<ul>
+  <li>一个 <code class="language-plaintext highlighter-rouge">Component</code> 类只含有一个 <code class="language-plaintext highlighter-rouge">Node</code> ，但可以有多个 <code class="language-plaintext highlighter-rouge">Reader</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Init()</code> 和 <code class="language-plaintext highlighter-rouge">Proc()</code> 这两个用户自己定义的函数，都是不可以被直接调用的</li>
+  <li>用户只能使用 <code class="language-plaintext highlighter-rouge">Initialize()</code> 和 <code class="language-plaintext highlighter-rouge">Process()</code> 函数来调用自己写的 <code class="language-plaintext highlighter-rouge">Init()</code> 和 <code class="language-plaintext highlighter-rouge">Proc()</code></li>
+</ul>
+
+<p>根据代码，<code class="language-plaintext highlighter-rouge">Component</code> 类最多可以处理 4 个<strong>消息信道</strong>（ channels of messages），这些信道——即 <code class="language-plaintext highlighter-rouge">Reader</code> 对象，最后都会被放入到 <code class="language-plaintext highlighter-rouge">ComponentBase::readers_</code> 变量中，没错，这些所谓的信道在代码实现中就是 <strong>Reader</strong> ，Apollo 团队并没有设计出 <code class="language-plaintext highlighter-rouge">Channel</code> 这样的类🐶。</p>
+
+<p>先从简单的 <code class="language-plaintext highlighter-rouge">Process()</code> 函数抓起吧。<code class="language-plaintext highlighter-rouge">Process()</code> 非常好理解，就是先判断一下有没有关闭该 <code class="language-plaintext highlighter-rouge">Component</code> 类，再调用 <code class="language-plaintext highlighter-rouge">Proc()</code> 函数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M0</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M1</span><span class="p">&gt;</span>
+<span class="kt">bool</span> <span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="p">,</span> <span class="n">NullType</span><span class="p">,</span> <span class="n">NullType</span><span class="o">&gt;::</span><span class="n">Process</span><span class="p">(</span>
+    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">msg0</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;&amp;</span> <span class="n">msg1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">is_shutdown_</span><span class="p">.</span><span class="n">load</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">Proc</span><span class="p">(</span><span class="n">msg0</span><span class="p">,</span> <span class="n">msg1</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我最关心的就是 <code class="language-plaintext highlighter-rouge">Component</code> 类的初始化过程，即 <code class="language-plaintext highlighter-rouge">Initialize()</code> 函数，一旦搞清楚了这一点，那么我们就可以更好地理解其他 Cyber RT 部分在整个系统中的作用。经过对代码的详细了解后，我总结出了以下过程：</p>
+
+<ol>
+  <li>创建 <code class="language-plaintext highlighter-rouge">Node</code>  节点</li>
+  <li>读取配置文件</li>
+  <li>调用用户定义的函数 <code class="language-plaintext highlighter-rouge">Init()</code></li>
+  <li>创建信道对象，或者说读者 <code class="language-plaintext highlighter-rouge">Reader&lt;M&gt;&gt;</code>
+    <ol>
+      <li>根据配置文件的相关内容，填充信道的相关配置信息 <code class="language-plaintext highlighter-rouge">reader_cfg</code></li>
+      <li>创建消息收到时，就会触发的<strong>激活函数</strong> <code class="language-plaintext highlighter-rouge">invoke func</code></li>
+      <li>如果 <code class="language-plaintext highlighter-rouge">is_reality_mode</code> 为真 ，那么直接根据配置信息 <code class="language-plaintext highlighter-rouge">reader_cfg</code> 创建信道，不加入激活函数；若不是，需要再加入<code class="language-plaintext highlighter-rouge">invoke func</code> 创建信道</li>
+    </ol>
+  </li>
+  <li>当 <code class="language-plaintext highlighter-rouge">is_reality_mode</code> 为真，那么就需要创建数据访问类 <code class="language-plaintext highlighter-rouge">DataVisitor</code> 、 协程工厂、调度器，并创建调度任务。</li>
+</ol>
+
+<p>看完我的语言描述后，我觉得是时候上代码给你们看一下它的真面目了。为确保代码简单而又不失一般性，我选择了一个<strong>含有两个信道</strong>的 <code class="language-plaintext highlighter-rouge">Component</code> 类初始化函数。这部分代码非常重要，后文我们会反复使用。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M0</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M1</span><span class="p">&gt;</span>		<span class="c1">// 消息的类型 表示 这里有两个信道</span>
+<span class="kt">bool</span> <span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="p">,</span> <span class="n">NullType</span><span class="p">,</span> <span class="n">NullType</span><span class="o">&gt;::</span><span class="n">Initialize</span><span class="p">(</span><span class="k">const</span> <span class="n">ComponentConfig</span><span class="o">&amp;</span> <span class="n">config</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// 1. 创建 Node 节点</span>
+  <span class="n">node_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span> <span class="n">Node</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">name</span><span class="p">()));</span>
+  <span class="c1">// 2. 读取配置文件</span>
+  <span class="n">LoadConfigFiles</span><span class="p">(</span><span class="n">config</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">readers_size</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
+    	<span class="cm">/* 错误处理  */</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Init</span><span class="p">())</span>
+        <span class="cm">/* 错误处理  */</span>
+  <span class="kt">bool</span> <span class="n">is_reality_mode</span> <span class="o">=</span> <span class="n">GlobalData</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">IsRealityMode</span><span class="p">();</span>
+  <span class="c1">//  信道的配置信息</span>
+  <span class="n">ReaderConfig</span> <span class="n">reader_cfg</span><span class="p">;</span>
+  <span class="n">reader_cfg</span><span class="p">.</span><span class="n">channel_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">channel</span><span class="p">();</span>
+  <span class="n">reader_cfg</span><span class="p">.</span><span class="n">qos_profile</span><span class="p">.</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">qos_profile</span><span class="p">());</span>
+  <span class="n">reader_cfg</span><span class="p">.</span><span class="n">pending_queue_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">pending_queue_size</span><span class="p">();</span>
+  <span class="c1">// 第 1 个 读信道已经创建</span>
+  <span class="k">auto</span> <span class="n">reader1</span> <span class="o">=</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">M1</span><span class="p">&gt;(</span><span class="n">reader_cfg</span><span class="p">);</span>
+    
+  <span class="n">reader_cfg</span><span class="p">.</span><span class="n">channel_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">channel</span><span class="p">();</span>
+  <span class="n">reader_cfg</span><span class="p">.</span><span class="n">qos_profile</span><span class="p">.</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">qos_profile</span><span class="p">());</span>
+  <span class="n">reader_cfg</span><span class="p">.</span><span class="n">pending_queue_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">pending_queue_size</span><span class="p">();</span>
+  <span class="c1">// 第 0 个读信道要根据是否 is_reality_mode   来决定使用何种函数创建</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&gt;</span> <span class="n">reader0</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">cyber_likely</span><span class="p">(</span><span class="n">is_reality_mode</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">reader0</span> <span class="o">=</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">&gt;(</span><span class="n">reader_cfg</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">weak_ptr</span><span class="o">&lt;</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span> <span class="n">self</span> <span class="o">=</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">dynamic_pointer_cast</span><span class="o">&lt;</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span>
+
+    <span class="k">auto</span> <span class="n">blocker1</span> <span class="o">=</span> <span class="n">blocker</span><span class="o">::</span><span class="n">BlockerManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetBlocker</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">channel</span><span class="p">());</span>
+
+    <span class="k">auto</span> <span class="n">func</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span><span class="p">,</span> <span class="n">blocker1</span><span class="p">](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">msg0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">auto</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">blocker1</span><span class="o">-&gt;</span><span class="n">IsPublishedEmpty</span><span class="p">())</span> <span class="p">{</span>
+          <span class="k">auto</span> <span class="n">msg1</span> <span class="o">=</span> <span class="n">blocker1</span><span class="o">-&gt;</span><span class="n">GetLatestPublishedPtr</span><span class="p">();</span>
+          <span class="n">ptr</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">msg0</span><span class="p">,</span> <span class="n">msg1</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span> <span class="k">else</span>
+           <span class="cm">/*   错误处理   */</span>
+    <span class="p">};</span>
+    <span class="n">reader0</span> <span class="o">=</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">&gt;(</span><span class="n">reader_cfg</span><span class="p">,</span> <span class="n">func</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">reader0</span> <span class="o">==</span> <span class="nb">nullptr</span> <span class="o">||</span> <span class="n">reader1</span> <span class="o">==</span> <span class="nb">nullptr</span><span class="p">)</span>
+        <span class="cm">/*  错误处理  */</span>
+  <span class="c1">// 信道创建完毕，全部存入到 readers_ 数组中</span>
+  <span class="n">readers_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">reader0</span><span class="p">));</span>
+  <span class="n">readers_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">reader1</span><span class="p">));</span>
+    
+  <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">is_reality_mode</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// 创建 scheduler</span>
+  <span class="k">auto</span> <span class="n">sched</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">::</span><span class="n">Instance</span><span class="p">();</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">weak_ptr</span><span class="o">&lt;</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span> <span class="n">self</span> <span class="o">=</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">dynamic_pointer_cast</span><span class="o">&lt;</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span>
+  <span class="k">auto</span> <span class="n">func</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span><span class="p">](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">msg0</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;&amp;</span> <span class="n">msg1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">ptr</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">msg0</span><span class="p">,</span> <span class="n">msg1</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> 
+         <span class="cm">/*  错误处理  */</span>
+  <span class="p">};</span>
+  <span class="c1">// 创建 DataVisitor 和 RoutineFactory   最后创建任务</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">data</span><span class="o">::</span><span class="n">VisitorConfig</span><span class="o">&gt;</span> <span class="n">config_list</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">reader</span> <span class="o">:</span> <span class="n">readers_</span><span class="p">)</span>
+    <span class="n">config_list</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">reader</span><span class="o">-&gt;</span><span class="n">ChannelId</span><span class="p">(),</span> <span class="n">reader</span><span class="o">-&gt;</span><span class="n">PendingQueueSize</span><span class="p">());</span>
+  <span class="k">auto</span> <span class="n">dv</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">data</span><span class="o">::</span><span class="n">DataVisitor</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">config_list</span><span class="p">);</span>
+  <span class="n">croutine</span><span class="o">::</span><span class="n">RoutineFactory</span> <span class="n">factory</span> <span class="o">=</span> <span class="n">croutine</span><span class="o">::</span><span class="n">CreateRoutineFactory</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">dv</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">sched</span><span class="o">-&gt;</span><span class="n">CreateTask</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>不得不承认，初始化的过程复杂度超乎我的想象。看完代码，你应该明白之前的只言片语只是对这一复杂过程的笼统概括😅。接下来，我还需要对上述过程中提到的术语做一些解释。<strong>如果你不想看这些繁杂的细节，可以直接跳过</strong>。</p>
+
+<h3 id="node-节点">Node 节点</h3>
+
+<p>在 <code class="language-plaintext highlighter-rouge">Initialize()</code> 函数一开始，<code class="language-plaintext highlighter-rouge">Component</code> 类就创建了 <code class="language-plaintext highlighter-rouge">Node</code> 类对象。那么什么是 <code class="language-plaintext highlighter-rouge">Node</code> 类？根据官方文档给出的解释<sup>3</sup>，<code class="language-plaintext highlighter-rouge">Node</code> 节点类是 Cyber RT 的基本组成部分；每个 <code class="language-plaintext highlighter-rouge">Component</code> 对象都包含一个节点，可通过节点进行通信。通过定义节点中的 read/write 和/或 service/client，模块可以具有不同类型的通信模式。<code class="language-plaintext highlighter-rouge">Node</code> 对象负责创建 <code class="language-plaintext highlighter-rouge">Reader</code> 、<code class="language-plaintext highlighter-rouge">Writer</code> 、<code class="language-plaintext highlighter-rouge">Service</code> 、<code class="language-plaintext highlighter-rouge">Client</code> <strong>信道对象</strong>来帮该组件获取或传输信息。</p>
+
+<p>这么说好像有点抽象？那我们再来看一下上文的类继承图以及下面的代码块。从类成员的角度看，<code class="language-plaintext highlighter-rouge">Node</code> 对象有</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">std::string node_name_</code> 它的名字</li>
+  <li><code class="language-plaintext highlighter-rouge">std::string name_space_</code>命名空间</li>
+  <li><code class="language-plaintext highlighter-rouge">map&lt;string, ReaderBase&gt;</code> 类型的 <code class="language-plaintext highlighter-rouge">readers_</code> ，它其实就是一个表格，负责保存信道名字 <code class="language-plaintext highlighter-rouge">channel_name</code> 与对应的 <code class="language-plaintext highlighter-rouge">Reader</code> 读者对象</li>
+  <li>一个 <code class="language-plaintext highlighter-rouge">NodeChannelImpl</code> 指针。 <code class="language-plaintext highlighter-rouge">NodeChannelImpl</code> 类是 <code class="language-plaintext highlighter-rouge">Node</code> 用来创建与信道相关的 <code class="language-plaintext highlighter-rouge">Reader</code> 和 <code class="language-plaintext highlighter-rouge">Writer</code> 对象的类，在真实模式下（下文会介绍），创建的对象是 <code class="language-plaintext highlighter-rouge">Reader</code> 和 <code class="language-plaintext highlighter-rouge">Writer</code>，而在模拟模式下，创建的是 <code class="language-plaintext highlighter-rouge">IntraReader</code> 、<code class="language-plaintext highlighter-rouge">IntraWriter</code> 对象，创建后向通信拓扑注册当前节点</li>
+  <li>一个 <code class="language-plaintext highlighter-rouge">NodeServiceImpl</code> 指针。和<code class="language-plaintext highlighter-rouge">NodeChannelImpl</code>类似，只不过它创建的是 <code class="language-plaintext highlighter-rouge">Service</code> 和 <code class="language-plaintext highlighter-rouge">Client</code> 对象，创建后也会注册 <code class="language-plaintext highlighter-rouge">service</code></li>
+  <li>上面提到的两个指针，都指向创建之前提到的四种信道对象的<strong>创建器</strong></li>
+</ul>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Node</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">M0</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M1</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M2</span><span class="p">,</span> <span class="k">typename</span> <span class="nc">M3</span><span class="p">&gt;</span>
+    <span class="k">friend</span> <span class="k">class</span> <span class="nc">Component</span><span class="p">;</span>
+    <span class="k">friend</span> <span class="k">class</span> <span class="nc">TimerComponent</span><span class="p">;</span>
+ <span class="nl">private:</span>
+    <span class="k">explicit</span> <span class="n">Node</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">node_name</span><span class="p">,</span>
+                <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name_space</span> <span class="o">=</span> <span class="s">""</span><span class="p">);</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">node_name_</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name_space_</span><span class="p">;</span>
+    
+    <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">ReaderBase</span><span class="o">&gt;&gt;</span> <span class="n">readers_</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">NodeChannelImpl</span><span class="o">&gt;</span> <span class="n">node_channel_impl_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">NodeServiceImpl</span><span class="o">&gt;</span> <span class="n">node_service_impl_</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>回到 <code class="language-plaintext highlighter-rouge">Initialize()</code> 函数，<code class="language-plaintext highlighter-rouge">Node</code> 类创建完后，其主要任务就是创建读者信道：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">reader0</span> <span class="o">=</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">&gt;(</span><span class="n">reader_cfg</span><span class="p">,</span> <span class="n">func</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="信道与配置信息">信道与配置信息</h3>
+
+<p>接下来的两步，读取配置文件和调用 <code class="language-plaintext highlighter-rouge">Init()</code> 函数都非常直白，我们直接来看读者信息的配置，或者说，看它配置了哪些读者信息。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ReaderConfig</span> <span class="n">reader_cfg</span><span class="p">;</span>
+<span class="n">reader_cfg</span><span class="p">.</span><span class="n">channel_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">channel</span><span class="p">();</span>
+<span class="n">reader_cfg</span><span class="p">.</span><span class="n">qos_profile</span><span class="p">.</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">qos_profile</span><span class="p">());</span>
+<span class="n">reader_cfg</span><span class="p">.</span><span class="n">pending_queue_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">pending_queue_size</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>一共三个变量被赋值（事实上 <code class="language-plaintext highlighter-rouge">ReaderConfig</code> 也只有这三个变量）</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">string channel_name</code> 信道的名字。要求信道的名字不能重复</li>
+  <li><code class="language-plaintext highlighter-rouge">QosProfile qos_profile</code> <a href="https://baike.baidu.com/item/QoS">qos</a> 属性，通信的服务质量</li>
+  <li><code class="language-plaintext highlighter-rouge">uint32_t pending_queue_size</code> 信道缓冲区的长度，如果溢出了，会丢弃较早的消息</li>
+</ul>
+
+<p>在真实模式（下文会提到）中，会调用 <code class="language-plaintext highlighter-rouge">node_-&gt;template CreateReader&lt;M1&gt;(reader_cfg)</code> 创建一个 <code class="language-plaintext highlighter-rouge">Reader</code> 对象，不加入激活函数。而若要仔细检视如何创建 <code class="language-plaintext highlighter-rouge">Reader</code> 对象，需要看一下 <code class="language-plaintext highlighter-rouge">Node Channel Impl::CreateReader</code> 。这里简单说一下，主要步骤有：</p>
+
+<ol>
+  <li>设定 RoleAttribute 的相关信息，包括信道名字，qos_file ，host_id，node_id 等等</li>
+  <li>将新的属性（Attr），激活函数和缓冲区大小作为参数，构造出 <code class="language-plaintext highlighter-rouge">Reader&lt;MessageT&gt;</code> 的对象</li>
+</ol>
+
+<p>当然，这里面的故事还没有结束，如果有时间的话，可以进一步研究一下 Cyber RT 的通信模式。</p>
+
+<h3 id="真实模式与模拟模式">真实模式与模拟模式</h3>
+
+<p>接下来，解决一下 <code class="language-plaintext highlighter-rouge">is_reality_mode</code> 的问题。通过 <code class="language-plaintext highlighter-rouge">GlobalData::Instance()-&gt;IsRealityMode()</code> 猜测，它是一个全局数据，再进一步调查发现，它只有两个值：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">enum</span> <span class="n">RunMode</span> <span class="p">{</span>
+  <span class="n">MODE_REALITY</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">MODE_SIMULATION</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么，什么时候它是 reality，什么时候是 simulation 呢？一般来说，simulation 模式多用于测试，多出现在测试文件中。其默认值为 reality 模式，但如果在测试文件（_test.cc）中，调用了如下函数，就会切换为<strong>模拟模式</strong>(simulation 模式）。而 reality 模式，即<strong>真实模式</strong>，根据我的理解，可能就是在系统真实运作、控制自动驾驶系统时的运行模式。在真实模式下，初始化工作非常的明确：为每个信道创建一个 <code class="language-plaintext highlighter-rouge">Reader</code>，然后创建回调函数用于调用 <code class="language-plaintext highlighter-rouge">Process()</code>，最后创建出对应的协程，让 <code class="language-plaintext highlighter-rouge">Scheduler</code> 来运行管理。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">GlobalData</span><span class="o">::</span><span class="n">EnableSimulationMode</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">run_mode_</span> <span class="o">=</span> <span class="n">RunMode</span><span class="o">::</span><span class="n">MODE_SIMULATION</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>模拟模式与真实模式的最大差别就是，数据来源不是真实传感器实时获取的数据了。那么，模拟模式的数据从哪获得呢？在代码中，模拟模式的信道由 <code class="language-plaintext highlighter-rouge">IntraReader</code> 和 <code class="language-plaintext highlighter-rouge">IntraWriter</code> 类实现，这些类获取的数据也不是从协程中获得，而是通过 <code class="language-plaintext highlighter-rouge">Blocker</code> 类获得模拟数据（或历史数据）。为方便说明，把 <code class="language-plaintext highlighter-rouge">Component::Initialize()</code> 函数的模拟模式部分截取过来👇：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">is_reality_mode</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+	<span class="n">std</span><span class="o">::</span><span class="n">weak_ptr</span><span class="o">&lt;</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span> <span class="n">self</span> <span class="o">=</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">dynamic_pointer_cast</span><span class="o">&lt;</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span> <span class="n">M1</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span>
+    <span class="k">auto</span> <span class="n">blocker1</span> <span class="o">=</span> <span class="n">blocker</span><span class="o">::</span><span class="n">BlockerManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetBlocker</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">config</span><span class="p">.</span><span class="n">readers</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">channel</span><span class="p">());</span>
+    <span class="c1">// 特殊的回调函数</span>
+    <span class="k">auto</span> <span class="n">func</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span><span class="p">,</span> <span class="n">blocker1</span><span class="p">](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">msg0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">auto</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">blocker1</span><span class="o">-&gt;</span><span class="n">IsPublishedEmpty</span><span class="p">())</span> <span class="p">{</span>
+          <span class="k">auto</span> <span class="n">msg1</span> <span class="o">=</span> <span class="n">blocker1</span><span class="o">-&gt;</span><span class="n">GetLatestPublishedPtr</span><span class="p">();</span>
+          <span class="n">ptr</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">msg0</span><span class="p">,</span> <span class="n">msg1</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">AERROR</span> <span class="o">&lt;&lt;</span> <span class="s">"Component object has been destroyed."</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+    <span class="n">reader0</span> <span class="o">=</span> <span class="n">node_</span><span class="o">-&gt;</span><span class="k">template</span> <span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">&gt;(</span><span class="n">reader_cfg</span><span class="p">,</span> <span class="n">func</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">NodeChannelImpl</span><span class="o">::</span><span class="n">CreateReader</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// ....</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">is_reality_mode_</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">reader_ptr</span> <span class="o">=</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">blocker</span><span class="o">::</span><span class="n">IntraReader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">new_attr</span><span class="p">,</span> <span class="n">reader_func</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">// ...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到，<strong>在模拟模式下</strong>，如果有 n 个信道（这里 n = 2），初始化程序会先给后 n-1 个信道创建 <code class="language-plaintext highlighter-rouge">IntraReader</code> 对象（日后我们再讨论这些东西），然后对于 <code class="language-plaintext highlighter-rouge">Reader&lt;M0&gt;</code> 信道，它会创建一个特殊的回调函数，该回调函数的基本情况如下：</p>
+
+<ul>
+  <li>在信道 0 接收到消息时触发</li>
+  <li>触发时，函数会从其他 n-1 个信道的 <code class="language-plaintext highlighter-rouge">IntraReader</code> 的 <code class="language-plaintext highlighter-rouge">Blocker::published_msg_queue_</code> 队列中各拿出 1 个消息，并把这些消息一起交给 <code class="language-plaintext highlighter-rouge">Process()</code> 函数执行</li>
+  <li>该函数在创建 <code class="language-plaintext highlighter-rouge">IntraReader</code> 对象时，就被当成参数传入，并在<code class="language-plaintext highlighter-rouge">IntraReader::init()</code> 中被注册到该 <code class="language-plaintext highlighter-rouge">Blocker</code> 对象内的回调函数表中（日后讨论+1）</li>
+</ul>
+
+<p>接下来看看初始化函数的最后一部分，我们现在<strong>只考虑真实模式</strong>，因为此部分代码只有在真实模式下进行。首先，获取了调度器单例对象，并建立的 <code class="language-plaintext highlighter-rouge">func</code> ，而 <code class="language-plaintext highlighter-rouge">func</code> 内容也很简单，就是在线程安全的前提下直接调用 <code class="language-plaintext highlighter-rouge">Porcess()</code> ，<code class="language-plaintext highlighter-rouge">Process()</code> 会调用用户自己定义的函数 <code class="language-plaintext highlighter-rouge">Proc()</code>，进而处理组件接收到的所有消息。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">auto</span> <span class="n">func</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span><span class="p">](</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M0</span><span class="o">&gt;&amp;</span> <span class="n">msg0</span><span class="p">,</span>
+                     <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">M1</span><span class="o">&gt;&amp;</span> <span class="n">msg1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">ptr</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">msg0</span><span class="p">,</span> <span class="n">msg1</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">AERROR</span> <span class="o">&lt;&lt;</span> <span class="s">"Component object has been destroyed."</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">func</code> 会被当做参数传给 <code class="language-plaintext highlighter-rouge">CRoutine::CreateRoutineFactory</code> ，看这名字就知道，该函数用于创建协程工厂（<a href="https://www.runoob.com/design-pattern/factory-pattern.html">工厂模式</a>），此外该函数还涉及了消息融合，数据访问和数据分发等等，我们先略过不说。复杂的代码理解不了，还是看一个简单点的代码吧：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="nc">Function</span><span class="p">&gt;</span>
+<span class="n">RoutineFactory</span> <span class="nf">CreateRoutineFactory</span><span class="p">(</span><span class="n">Function</span><span class="o">&amp;&amp;</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">RoutineFactory</span> <span class="n">factory</span><span class="p">;</span>
+  <span class="n">factory</span><span class="p">.</span><span class="n">create_routine</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Function</span><span class="o">&amp;&amp;&gt;</span><span class="p">(</span><span class="n">f</span><span class="p">)]()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">f</span><span class="p">;</span> <span class="p">};</span>
+  <span class="k">return</span> <span class="n">factory</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>很简单的代码，只是设定了一下 <code class="language-plaintext highlighter-rouge">factory.create_routine</code>。在返回 <code class="language-plaintext highlighter-rouge">factory</code> 后，调用了 <code class="language-plaintext highlighter-rouge">Scheduler::CreateTask</code>。此后，又继续调用一个函数，注意：<code class="language-plaintext highlighter-rouge">CreateTask</code> 的第一个参数 <code class="language-plaintext highlighter-rouge">func</code> 就是在 <code class="language-plaintext highlighter-rouge">Component::Initialize()</code> 中创建的原函数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">Scheduler</span><span class="o">::</span><span class="n">CreateTask</span><span class="p">(</span><span class="k">const</span> <span class="n">RoutineFactory</span><span class="o">&amp;</span> <span class="n">factory</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">CreateTask</span><span class="p">(</span><span class="n">factory</span><span class="p">.</span><span class="n">create_routine</span><span class="p">(),</span> <span class="n">name</span><span class="p">,</span> <span class="n">factory</span><span class="p">.</span><span class="n">GetDataVisitor</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="kt">bool</span> <span class="n">Scheduler</span><span class="o">::</span><span class="n">CreateTask</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;&amp;&amp;</span> <span class="n">func</span><span class="p">,</span>
+                           <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span>
+                           <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">DataVisitorBase</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="n">stop_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span> <span class="p">{</span>
+      <span class="cm">/*  错误处理  */</span>
+  <span class="p">}</span>
+  <span class="k">auto</span> <span class="n">task_id</span> <span class="o">=</span> <span class="n">GlobalData</span><span class="o">::</span><span class="n">RegisterTaskName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+  <span class="k">auto</span> <span class="n">cr</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">CRoutine</span><span class="o">&gt;</span><span class="p">(</span><span class="n">func</span><span class="p">);</span>		<span class="c1">// 看这里！！！！</span>
+  <span class="n">cr</span><span class="o">-&gt;</span><span class="n">set_id</span><span class="p">(</span><span class="n">task_id</span><span class="p">);</span>
+  <span class="n">cr</span><span class="o">-&gt;</span><span class="n">set_name</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">DispatchTask</span><span class="p">(</span><span class="n">cr</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">visitor</span> <span class="o">!=</span> <span class="nb">nullptr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">visitor</span><span class="o">-&gt;</span><span class="n">RegisterNotifyCallback</span><span class="p">([</span><span class="k">this</span><span class="p">,</span> <span class="n">task_id</span><span class="p">]()</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="n">stop_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">NotifyProcessor</span><span class="p">(</span><span class="n">task_id</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>哇哈，终于抓住你了，看来 <code class="language-plaintext highlighter-rouge">Component::Initialize()</code> 中建立的 <code class="language-plaintext highlighter-rouge">func</code> ，最终会被 Cyber RT 用来创建一个协程。然后放入到 <code class="language-plaintext highlighter-rouge">Scheduler</code> 中，并根据我之前介绍的 <a href="https://dingfen.github.io/apollo/2020/10/17/Cyber-RT.html#processor">Cyber RT 调度策略</a>运行。在真实模式下，组件创建了一个特殊的回调函数，该函数对从信道接受来的消息进行处理。该函数最终会被封装为一个协程，并在 <code class="language-plaintext highlighter-rouge">Scheduler</code> 类的安排下执行。</p>
+
+<h2 id="定时组件类">定时组件类</h2>
+
+<p>定时组件类与组件类有所不同，它比组件类多了定时器，这部分内容我在 <a href="https://dingfen.github.io/apollo/2020/10/21/CyberTimer.html">Cyber RT 定时器</a>中已经提过，为了这篇博客的完整性，我再次强调一下。</p>
+
+<p><code class="language-plaintext highlighter-rouge">Process()</code> 函数和组件类一样，平平无奇。重点看一下 <code class="language-plaintext highlighter-rouge">Initialize()</code> 函数</p>
+
+<ol>
+  <li>创建 <code class="language-plaintext highlighter-rouge">Node</code> 类对象</li>
+  <li>读取配置文件</li>
+  <li>创建定时器对象，并开始计时</li>
+</ol>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">TimerComponent</span><span class="o">::</span><span class="n">Initialize</span><span class="p">(</span><span class="k">const</span> <span class="n">TimerComponentConfig</span><span class="o">&amp;</span> <span class="n">config</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">config</span><span class="p">.</span><span class="n">has_name</span><span class="p">()</span> <span class="o">||</span> <span class="o">!</span><span class="n">config</span><span class="p">.</span><span class="n">has_interval</span><span class="p">())</span> <span class="p">{</span>
+		<span class="cm">/* 错误处理 */</span>
+  <span class="p">}</span>
+  <span class="n">node_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span> <span class="n">Node</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">name</span><span class="p">()));</span>
+  <span class="n">LoadConfigFiles</span><span class="p">(</span><span class="n">config</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">Init</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">TimerComponent</span><span class="o">&gt;</span> <span class="n">self</span> <span class="o">=</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">dynamic_pointer_cast</span><span class="o">&lt;</span><span class="n">TimerComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span>
+  <span class="k">auto</span> <span class="n">func</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span><span class="p">]()</span> <span class="p">{</span> <span class="n">self</span><span class="o">-&gt;</span><span class="n">Proc</span><span class="p">();</span> <span class="p">};</span>
+  <span class="n">timer_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span> <span class="n">Timer</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">interval</span><span class="p">(),</span> <span class="n">func</span><span class="p">,</span> <span class="nb">false</span><span class="p">));</span>
+  <span class="n">timer_</span><span class="o">-&gt;</span><span class="n">Start</span><span class="p">();</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意到，与组件类不同，定时组件类在 <code class="language-plaintext highlighter-rouge">Initialize()</code> 中没有创建任何的 <code class="language-plaintext highlighter-rouge">Reader</code> 读者，也没有搞出调度器、协程工厂、创建任务等一系列复杂的操作。你可能有这样的疑问：既然定时组件类并没有创建出任务和协程，那么定时组件类的处理函数需要如何被调用呢？<a href="https://dingfen.github.io/apollo/2020/10/21/CyberTimer.html">Cyber RT 定时器</a>中其实已经有解答了🤪。简单来说，所有的定时器会把任务全部交给时间轮处理，过一段时间后，当时间轮发现需要执行某些定时任务时，就会把它们全部取出，然后调用 <code class="language-plaintext highlighter-rouge">cyber::Async</code> 异步地执行。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>今天我重点研究了组件类，分析了组件类的继承图关系以及它们的成员变量，并着重探究了组件类的初始化过程，进而对：信道与读者类、节点类与 <code class="language-plaintext highlighter-rouge">NodeChannelImpl</code> 类、调度器、数据访问类、协程、协程工厂函数等等有了一个大致的了解。</p>
+
+<p>在组件类中，最重要的两个可调用函数就是 <code class="language-plaintext highlighter-rouge">Process()</code> 和 <code class="language-plaintext highlighter-rouge">Initialize()</code> ，然而用户不可以对它们直接进行更改，必须通过重载 <code class="language-plaintext highlighter-rouge">Proc()</code> 和 <code class="language-plaintext highlighter-rouge">Init()</code> 才能操控组件。对于如何创建一个组件类，官方的解释非常详细<sup>2</sup>。在对 <code class="language-plaintext highlighter-rouge">Initialize()</code> 函数的进一步的研究中，我发现在真实模式下，初始化工作主要有：为每个信道创建一个 <code class="language-plaintext highlighter-rouge">Reader</code> 对象，然后创建回调函数用于调用 <code class="language-plaintext highlighter-rouge">Process()</code>，最后创建出对应的协程，让 <code class="language-plaintext highlighter-rouge">Scheduler</code> 来运行管理，而在模拟模式下，数据主要是从 <code class="language-plaintext highlighter-rouge">Blocker</code> 类中取得的历史数据，而非感知器获得的真实数据。</p>
+
+<p>我承认这篇博客很多地方没有解释很清楚，这一方面是因为篇幅限制，另一方面是因为我还未对 Cyber RT 理解透彻（尤其是通信部分），相信在课题组其他成员的帮助下，了解 Apollo 系统的真面目已经不远了。</p>
+
+<h2 id="参考">参考</h2>
+
+<p>[1] <a href="https://cyber-rt.readthedocs.io/en/latest/">Cyber RT Documents</a></p>
+
+<p>[2] <a href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber/CyberRT_Quick_Start_cn.md">如何使用 Cyber RT 来创建一个新的组件</a></p>
+
+<p>[3] <a href="https://cyber-rt.readthedocs.io/en/latest/CyberRT_Terms.html">Cyber RT Terms</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#cyber-rt" class="page__taxonomy-item" rel="tag">Cyber RT</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-10-25T00:00:00+08:00">October 25, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Apollo+Cyber+RT+%E7%BB%84%E4%BB%B6%20http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F25%2FCyberComponent.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F25%2FCyberComponent.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F25%2FCyberComponent.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/apollo/2020/10/21/CyberTimer.html" class="pagination--pager" title="Apollo Cyber RT 定时器
+">previous</a>
+    
+    
+      <a href="/apollo/2020/11/03/CyberCommu1.html" class="pagination--pager" title="Apollo Cyber RT 通信（上）
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/apollo/2020/10/25/CyberComponent.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/apollo/2020/10/25/CyberComponent"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

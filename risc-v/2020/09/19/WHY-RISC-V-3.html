@@ -1,0 +1,1050 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Why RISC-V ? - 峰子的乐园</title>
+<meta name="description" content="实现一个适用于几乎任何计算设备的 ISA 没有那么容易，在充分考虑、平衡各项因素之后，基础 ISA 已经设计完成，但事情远没有结束。本篇博客重点介绍 RISC-V 的标准指令集扩展。">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Why RISC-V ?">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/09/19/WHY-RISC-V-3.html">
+
+
+  <meta property="og:description" content="实现一个适用于几乎任何计算设备的 ISA 没有那么容易，在充分考虑、平衡各项因素之后，基础 ISA 已经设计完成，但事情远没有结束。本篇博客重点介绍 RISC-V 的标准指令集扩展。">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-09-19T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/09/19/WHY-RISC-V-3.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Why RISC-V ?
+
+        
+      </h1>
+      
+        <p class="page__lead">实现一个适用于几乎任何计算设备的 ISA 没有那么容易，在充分考虑、平衡各项因素之后，基础 ISA 已经设计完成，但事情远没有结束。本篇博客重点介绍 RISC-V 的标准指令集扩展。
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Why RISC-V ?">
+    <meta itemprop="description" content="实现一个适用于几乎任何计算设备的 ISA 没有那么容易，在充分考虑、平衡各项因素之后，基础 ISA 已经设计完成，但事情远没有结束。本篇博客重点介绍 RISC-V 的标准指令集扩展。">
+    <meta itemprop="datePublished" content="2020-09-19T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#why-risc-v">Why RISC-V</a>
+    <ul>
+      <li><a href="#整数乘除">整数乘除</a></li>
+      <li><a href="#多处理器同步">多处理器同步</a>
+        <ul>
+          <li><a href="#atomic-memory-operations">Atomic Memory Operations</a></li>
+          <li><a href="#rva-memory-model">RVA Memory Model</a></li>
+        </ul>
+      </li>
+      <li><a href="#单精度浮点运算">单精度浮点运算</a>
+        <ul>
+          <li><a href="#异常处理">异常处理</a></li>
+          <li><a href="#nan-的产生与传播">NaN 的产生与传播</a></li>
+          <li><a href="#浮点指令">浮点指令</a></li>
+        </ul>
+      </li>
+      <li><a href="#双精度浮点运算">双精度浮点运算</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="why-risc-v">Why RISC-V</h1>
+
+<p>读 <a href="https://people.eecs.berkeley.edu/~krste/papers/EECS-2016-1.pdf">Design of the RISC-V ISA</a> 论文后的总结与思考。这是本系列的第三部分，在认识了 RISC-V 的基本 ISA 后，接下来我们介绍 RISC-V 的标准扩展，进一步体会这样设计带来的好处。</p>
+
+<p>设计 RISC-V 时，我们定的一个目标就是使 RISC-V 能够既适用于资源紧张的低端实现，又能够适用于高性能计算实现。前者需要一个精简的 ISA ，后者要求一个高能效（意味着注定较为复杂的）ISA ，这就要求保留一些在嵌入式处理器或在任何通用处理器中非常重要的特性。RISC-V 用添加扩展的形式提供了很好的灵活性。RISC-V 目前有四种标准扩展——<strong>M</strong> 用于整数乘法和除法，<strong>A</strong> 用于原子内存操作，<strong>F</strong> 和 <strong>D</strong> 用于单精度和双精度浮点，它们一起构成了用于通用计算的强大 ISA。</p>
+
+<h2 id="整数乘除">整数乘除</h2>
+
+<p>在许多应用中，特别是那些有很多的定点计算的软件中，整数乘除法是常见的运算。虽然它们在计算操作中不占主导，但当软件运行时，就会发现它们仍可以占据很大一部分运行时间。因此，对于大多数应用程序来说，硬件加速这些操作是必须的。图中显示了 <strong>RISC-V M</strong> 的若干指令。</p>
+
+<center>
+    <img src="/assets/img/RV32M.png" />
+</center>
+
+<p>我们考虑将 <strong>M</strong> 扩展进一步分解为单独的乘法和除法扩展，但要明白一点，得出这两种扩展的需求的过程是紧密相关的。此外，若迭代乘法器在低端的 ASIC 上已实现，那么其实可以用较小的代价设计出迭代除法器。另一方面，对于许多 FPGA 来说，除法要比乘法困难得多，但由于乘法块的存在，处理器可以选择 trap 除法指令并在软件中模拟它们。</p>
+
+<p>与其他 RISC ISAs 为乘法和除法指令添加了特殊的结构寄存器不同，<strong>RISC-V  M</strong> 扩展中的指令直接在整数寄存器上操作。<u>这一设计消除了与特殊的结构寄存器来往发数据的步骤，减少了指令条数以及延迟；减少了线程转换时的上下文大小；让编译器更好地进行代码优化</u>。对于某些实现来说，写回部分的控制逻辑略有增加，但我们觉得这一微小的成本很容易被带来的好处抵消。对于使用寄存器重命名的实现，这一策略降低了复杂性，因为它消除一类为了提供性能而需要重命名的寄存器。</p>
+
+<p>RV32M 增加了 4 条计算 32×32 位的乘法指令：MUL，它返回乘积的低 32 位；以及 MULH 、MULHU 和 MULHSU<sup id="fnref:foot1" role="doc-noteref"><a href="#fn:foot1" class="footnote" rel="footnote">1</a></sup>，它们都返回乘积的高 32 位，但分别将乘数和被乘数当作有符号、无符号和有符号无符号的混合处理（当然，低 32 位的乘积不需要考虑符号）。<u>后三条指令对于定点计算是非常重要的，因为它们能够实现一个重要的优化：一个常数除法总是可以通过一个近似的倒数转化为乘法，再对乘积的高位部分进行修正（见下例）</u>。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">#</span> <span class="nf">compute</span> <span class="nv">unsigned</span> <span class="nb">di</span><span class="nv">vision</span> <span class="nv">of</span> <span class="nv">a0</span> <span class="nv">by</span> <span class="mi">3</span> <span class="nv">using</span> <span class="nv">multiplication</span>
+<span class="err">0:</span>  <span class="nf">aaaab2b7</span>	<span class="nv">lui</span>  <span class="nv">t0</span><span class="p">,</span> <span class="mh">0xaaaab</span>  <span class="err">#</span> <span class="nv">t0</span> <span class="err">=</span> <span class="mh">0xaaaaaaab</span>
+<span class="err">4:</span>  <span class="nf">aab28293</span>	<span class="nv">addi</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">t0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1365</span>  <span class="err">#</span>  <span class="err">=</span> <span class="o">~</span><span class="mi">2</span><span class="o">^</span><span class="mi">32</span> <span class="o">/</span><span class="mf">1.5</span>
+<span class="err">8:</span>  <span class="err">025535</span><span class="nf">b3</span>    <span class="nv">mulhu</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">t0</span>    <span class="err">#</span> <span class="nv">a1</span> <span class="err">=</span> <span class="o">~</span><span class="p">(</span><span class="nv">a0</span> <span class="o">/</span> <span class="mf">1.5</span><span class="p">)</span>
+<span class="nl">c:</span>	<span class="err">0015</span><span class="nf">d593</span>    <span class="nv">srli</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="mh">0x1</span>    <span class="err">#</span> <span class="nv">a1</span> <span class="err">=</span> <span class="p">(</span><span class="nv">a0</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>还有四条指令执行 32×32 位的除法：DIV 和 DIVU，它们用于有符号除法和无符号除法；还有 REM 和 REMU，用于求有符号余数和无符号余数。在 C99 之后，带符号的除法会向 0 取整，余数与被除数符号相同。<em>除零不会导致异常</em>（见下引用）；希望出现异常的编程语言可以<a href="https://stackoverflow.com/questions/48000665/risc-v-rv32m-spec-v2-0-why-not-zero-check-before-div">在启动除法操作后在除法后加上分支指令</a>。注意到，高度可预测的分支对性能的影响应该是很小。</p>
+
+<blockquote>
+  <p>The quotient of division by zero has all bits set, i.e. $2^{XLEN}−1$ for unsigned division or −1 for signed division. The remainder of division by zero equals the dividend. Signed division overflow occurs only when the most-negative integer, $−2^{XLEN}−1$ , is divided by −1. The quotient of signed division overflow is equal to the dividend, and the remainder is zero. Unsigned division overflow cannot occur.</p>
+</blockquote>
+
+<p>最后，RV64M 扩展了这些指令，以操作 64 位寄存器，还添加了 5 条以 W 结尾的指令，这些指令对 32 位数据进行运算得到 32 位结果后，再符号扩展到 64 位。</p>
+
+<h2 id="多处理器同步">多处理器同步</h2>
+
+<p>在 1962 年，Edsger Dijkstra 注意到一个由 Theodorus Dekker 设计的算法可以在仅使用常规的 loads 和 stores 下解决互斥锁问题。然而，Dekker 的算法在并发线程数量的扩展性上表现的很糟：在 n 个线程中获得一个共享锁需要 O(n) 个操作。因而，早期的并发单处理器和并行多处理器的架构师增加了硬件同步机制来加速互斥，比如 <em>test-and-set</em>，自动置位并返回旧值。</p>
+
+<p>互斥是一种完全通用的同步机制，且 <em>test-and-set</em> 很容易实现。然而，这种策略不能很好地用于高度并行的系统，因为它不足以构造无等待的同步原语，比如非阻塞的生产者——消费者队列。几个可选原语就足够了；其中，原子的 <em><a href="https://segmentfault.com/a/1190000015239603">compare-and-swap</a></em> (CAS) 是最主流的。CAS 比较寄存器和与另一个寄存器中内存地址指向的值，若比较数相等，就将第三个寄存器的值写入到该内存地址中，这是一条通用的同步原语，其他同步操作可以以它为基础来完成。</p>
+
+<p>考虑到并行计算的应用，我们设计的 RISC-V ，应当可被用于带有极多线程级并行度的系统。我们本打算让 <strong>RISC-V A</strong> 以只包含 CAS 的方式提供内存原子操作；的确，我们曾对这一选择深思熟虑。<u>但是 CAS 需要三个源操作数（内存地址、比较和交换值），这意味着需要一个新的整数指令类型，必然使得处理器微体系结构设计复杂化</u>，还需要增加附有额外数据字的内存系统命令形式。因此，我们参考了几个早期 RISC ISAs（包括 MIPS 和 Alpha ）的做法，提供了 <em>load-reserved</em>（LR）和 <em>store-conditional</em>（SC）指令。这些低级的原语将原子操作拆分为 load、compute 和 store 三个阶段。LR 执行正常的 load，但注册了一个在内存上的保留。如果时间过长，或者另一个处理器请求相同的地址，该保留会被取消。SC 尝试执行 store ，但只有在拿到保留时才会成功；此外，它将成功或失败的标志写入一个目的寄存器 <code class="language-plaintext highlighter-rouge">rd</code> ，以便程序可以根据结果进行分支。通常，LR/SC 序列形成循环体，循环直到 SC 成功为止。</p>
+
+<center>
+    <img src="/assets/img/RVA.png" />
+</center>
+
+<p>具体来说，LR 和 SC 保证了它们两条指令之间的操作的原子性。LR 读取一个内存字，存入到 <code class="language-plaintext highlighter-rouge">rd</code> 寄存器中，并留下这个字的保留记录。而如果 SC 的目标地址上存在保留记录，它就把字存入这个地址。如果存入成功，它向目标寄存器 <code class="language-plaintext highlighter-rouge">rd</code> 中写入 0；否则写入一个非 0 的错误代码。</p>
+
+<p>在成功执行的 SC 之后的 LR 是对修改后的内存字的原子操作。换句话说，没有线程可以观察到在这两者之间发生的另一个内存操作。类似地，在配对 LR 操作之前，不能认为 SC 已经发生。</p>
+
+<p>LR/SC 模式的主要优点是，<u>它既易于实现，又非常通用</u>：它可以用来构造任何单字原子操作，包括 CAS（见示例代码）。然而， LR/SC 的简单的实现会在多个处理器争用同一个数据时，遇到<a href="https://www.guru99.com/what-is-livelock-example.html">活锁</a>（livelock）的麻烦。<u>为了解决这个问题，我们要求 LR/SC 的代码序列长度必须有限制（16 条连续的静态指令），前提是它们只包含基本 ISA 指令，除了 load 、store 以及被 taken 的分支</u><sup id="fnref:foot2" role="doc-noteref"><a href="#fn:foot2" class="footnote" rel="footnote">2</a></sup>。这一规定允许实现通过在限定的时间内阻止缓存中指令的插入这一简单的做法来保证机器能够继续向前（不产生活锁）。当然，它也对微体系结构施加了一些限制。指令序列最终必须能放入 cache，即使它与保留的数据冲突；例如，统一指令/数据的缓存和 TLBs 至少必须是双向集关联的。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">retry:</span> <span class="nf">lr.w</span> <span class="nv">t0</span><span class="p">,</span> <span class="p">(</span><span class="nv">a0</span><span class="p">)</span> 		<span class="err">##</span> <span class="nv">atomically</span> <span class="err">{</span>
+       <span class="nf">bne</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">fail</span> 	<span class="err">##</span> <span class="nv">if</span> <span class="p">(</span><span class="nv">M</span><span class="p">[</span><span class="nv">a0</span><span class="p">]</span> <span class="err">==</span> <span class="nv">a1</span><span class="p">)</span>
+       <span class="nf">sc.w</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">a2</span><span class="p">,</span> <span class="p">(</span><span class="nv">a0</span><span class="p">)</span> 	<span class="err">##</span> <span class="nv">M</span><span class="p">[</span><span class="nv">a0</span><span class="p">]</span> <span class="err">=</span> <span class="nv">a2</span><span class="c1">;</span>
+       <span class="nf">bnez</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">retry</span> 		<span class="err">##</span> <span class="err">}</span>
+</code></pre></div></div>
+
+<p>LR/SC 相对于 CAS 的另一个好处是，它避免了所谓的 <a href="https://en.wikipedia.org/wiki/Compare-and-swap">ABA</a> 问题，即将内存位置从值 A 修改为值 B，然后再修改回值 A 的麻烦。由于 CAS 的成功执行取决于值是否相等，因此它无法检测到这种情况，从而使无等待数据结构的实现复杂化。一种常见的解决方法是提供双字 CAS 操作，其中的第二个字用作版本号。但是，这种方法使 ISA 和实现复杂化了：双字 CAS 有四个源寄存器和两个目标寄存器操作数，并修改两个内存字。幸好，LR/SC 没有遇到 ABA 问题，因为它检测任何插入的内存写入，不论最终是否保留了该值。</p>
+
+<h3 id="atomic-memory-operations">Atomic Memory Operations</h3>
+
+<p>虽然只提供 LR/SC 原语就足够了，但我们仍提供了几个原子内存操作指令（AMOs），AMO 指令执行多处理器的同步读-修改-写操作，并使用 R-type 格式进行编码。它们对一个内存字执行简单的算术和逻辑运算，并将目标寄存器设置为操作前的内存旧值。内存读写之间的过程不会被打断，内存值也不会被其它处理器修改。这些指令的功能有加法；有符号和无符号的求最小最大值；与、或、异或运算；以及交换。<u>这些 AMOs 为高并行系统提供了一个重要的优化：当一个内存字被竞争时，AMO 可以被发送到内存字，而不是获得对包含该字的高速缓存线的独占访问</u>。除了减少延迟、网络占用和<a href="https://en.wikipedia.org/wiki/Thrashing_(computer_science)">缓存震荡</a>外，该策略还改善了 Amdahl 法则的瓶颈。若没有 AMOs，那么由于 LR/SC 例程包含的是一般的指令序列，因此很难执行这样的优化。当然，有的架构师认为不需要浪费硬件资源来实现 AMOs ，也可以用 LR/SC 原语合成 AMOs， microcode 或者更高特权级的 software trap 都是可以的。</p>
+
+<p>我们有意识地忽略了在 sub-word 上的 AMOs，因为它们在大多数情况下很少见。最常见的 sub-word AMOs 是按位逻辑操作，然而该操作很容易由 word AMOs 实现（使用一些额外的指令来隐藏地址并转移数据）。LR/SC 序列也可以实现其他的 AMOs 。下面的代码显示了如何使用 LR/SC 实现 byte 大小的操作数的原子获取和加法操作。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="nf">andi</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="mi">3</span> <span class="err">#</span> <span class="nv">Shift</span>
+	<span class="nf">slli</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">t0</span><span class="p">,</span> <span class="mi">3</span> <span class="err">#</span> <span class="nv">addend</span>
+	<span class="nf">sll</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">t0</span> <span class="err">#</span> <span class="nv">into</span> <span class="nv">place.</span>
+	<span class="nf">addi</span> <span class="nv">t1</span><span class="p">,</span> <span class="nv">x0</span><span class="p">,</span> <span class="mi">255</span> <span class="err">#</span> <span class="nv">Generate</span>
+	<span class="nf">sll</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">t1</span><span class="p">,</span> <span class="nv">t0</span> <span class="err">#</span> <span class="nv">mask.</span>
+	<span class="nf">andi</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="o">~</span><span class="mi">3</span> <span class="err">#</span> <span class="nb">Cl</span><span class="nv">ear</span> <span class="nv">address</span> <span class="nv">LSBs.</span>
+<span class="nl">retry:</span> 
+	<span class="nf">lr.w</span> <span class="nv">t2</span><span class="p">,</span> <span class="p">(</span><span class="nv">a0</span><span class="p">)</span> <span class="err">#</span> <span class="nv">Load</span> <span class="nv">operand.</span>
+	<span class="nf">add</span> <span class="nv">t3</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">t2</span> <span class="err">#</span> <span class="nv">Perform</span>
+	<span class="nf">xor</span> <span class="nv">t4</span><span class="p">,</span> <span class="nv">t3</span><span class="p">,</span> <span class="nv">t2</span> <span class="err">#</span> <span class="nv">addition</span>
+	<span class="nf">and</span> <span class="nv">t1</span><span class="p">,</span> <span class="nv">t4</span><span class="p">,</span> <span class="nv">t0</span> <span class="err">#</span> <span class="nv">under</span>
+	<span class="nf">xor</span> <span class="nv">t2</span><span class="p">,</span> <span class="nv">t1</span><span class="p">,</span> <span class="nv">t2</span> <span class="err">#</span> <span class="nv">mask.</span>
+	<span class="nf">sc.w</span> <span class="nv">t2</span><span class="p">,</span> <span class="nv">t2</span><span class="p">,</span> <span class="p">(</span><span class="nv">a0</span><span class="p">)</span> <span class="err">#</span> <span class="nv">Attempt</span> <span class="nv">to</span> <span class="nv">store</span> <span class="nv">result.</span>
+	<span class="nf">bne</span> <span class="nv">t2</span><span class="p">,</span> <span class="nv">x0</span><span class="p">,</span> <span class="nv">retry</span> <span class="err">#</span> <span class="nv">Retry</span> <span class="nv">if</span> <span class="nv">store</span> <span class="nv">fails.</span>
+</code></pre></div></div>
+
+<h3 id="rva-memory-model">RVA Memory Model</h3>
+
+<p><a href="https://www.cs.utexas.edu/~bornholt/post/memory-models.html">内存模型</a>是一个非常难懂的课题，在之前的博文中，我们说过 RISC-V 采用了 relaxed memory model ，因此一个线程看到的另一个线程的内存访问可以是乱序的，除非执行一个 FENCE 指令以保证一个特定的顺序。这与 <a href="https://preshing.com/20120930/weak-vs-strong-memory-models/">顺序一致性（sequential consistency）有很大的区别</a>。 <strong>A</strong> 扩展中的指令可以有效地实现 release consistency (RC) 内存模型。RC 是一种宽松的一致性模型，它通过区分不同风格的同步操作，为每一种操作分配不同的、较弱的排序属性，从而允许很大程度的一致性。RC 已经成为 2011 年版本的 C 和 C++ 语言的标准内存模型，并且它一直兼容 Java 内存模型。</p>
+
+<p>在 RC 中，共享内存访问被分为了普通访问——乱序也不会导致竞争的 loads 和 stores，和特殊访问。RC 引入了两种重要的特殊访问：获取（acquire）和释放（release）。acquire 用于获得对共享变量的访问，而 release 操作释放了该变量的控制权。它们通常与获取互斥锁和释放互斥锁相关联。acquire 和 release 原语的语义是由 RC 模型中的内存顺序约束给出的，如图所示。在允许执行普通的加载和存储之前，必须执行所有的 acquires。同样地，在允许执行 release 之前，所有之前的普通加载和存储必须已经执行。最后，特殊访问必须是完全有序的。</p>
+
+<center>
+    <img src="/assets/img/releaseconsistency.png" />
+</center>
+
+<p>这一限制导致了更严格的 RC ，称之为 RCsc ，其特殊访问必须顺序一致性（sequential consistency）。这个关键的特性支持无数据竞争的编程模型，它是硬件和软件之间的一种契约，保证了它看上去像顺序一致的内存系统，前提是对所有特殊访问都进行了适当的注释。其结果是，对于一类重要的程序，RCsc 既提供了 relaxed model 的更大并发性，又提供了顺序一致性的更简单的编程模型。</p>
+
+<center>
+	<img src="/assets/img/LRSC.png" />
+	<img src="/assets/img/AMO.png" />
+</center>
+<p><u>**A** 扩展中的指令通过加上内存顺序注释来实现 RCsc 内存模型，在静态指令上的两位：aq 和 rl</u><sup id="fnref:foot3" role="doc-noteref"><a href="#fn:foot3" class="footnote" rel="footnote">3</a></sup> 。当 aq 位被设置在 LR 、SC 或 AMO 上时，该指令被当作 acquire 访问，在同一个线程中不会看到在该指令之前的任何内存访问。当 rl 位被设置时，指令被当作 release 访问，这样它就不会被认为是在任何内存访问之前执行的。当 aq 和 rl 都没有设定时，就没有特定的顺序保证，适于组合简化。当两者都被设置时，该访问就是相对于其他访问顺序一致。</p>
+
+<hr />
+
+<h2 id="单精度浮点运算">单精度浮点运算</h2>
+
+<p>浮点计算在一些应用领域是普遍存在的，甚至许多面向整数的程序使用足够的浮点来证明硬件支持。然而，基本 ISA 中排除了浮点指令，以支持不会使用它们的嵌入式实现，而且浮点运算最好是由附加的协处理器处理的处理。<strong>RISC-V F</strong> 扩展增加了对单精度浮点的支持，符合 IEEE 754 浮点运算标准。</p>
+
+<center>
+<img src="/assets/img/RVF.png" />
+</center>
+
+<p>在定义 F 扩展时，最有争议的决定就是：是否要将整数寄存器用于浮点计算？还是添加专用的浮点寄存器？前一种策略将简化 ISA，降低的实现成本，并减少上下文切换时间。尽管如此，我们最终还是选择添加了一组新的浮点寄存器，如上图所示，因为我们觉得优点大于缺点：</p>
+
+<ul>
+  <li>整数寄存器和浮点寄存器的位宽不一定相同，例如，RV32 机器可能具有双精度浮点运算</li>
+  <li>我们希望实现能更灵活地使用内部编码格式，例如，在硬件中加速对<a href="https://en.wikipedia.org/wiki/Denormal_number">非正规数</a>（subnormal numbers）的处理时，不在同一个寄存器中表示整数和浮点数可以简化这种设计</li>
+  <li>添加一组新的寄存器文件可将寄存器容量和带宽翻倍，因为操作码（浮点数与整数肯定不同）提供了一个隐式说明，所以不需要改变指令格式，但可以提高处理器的性能</li>
+  <li>添加一组新的寄存器文件，事实上很自然地提供了一个寄存器文件的分库策略，简化了超标量对寄存器文件端口的实现</li>
+  <li>通过向寄存器文件中添加由微架构管理的脏位，可以减轻上下文切换的成本</li>
+</ul>
+
+<p>为了支持内部编码格式，我们决定避免在浮点寄存器中表示整数。这与 SPARC 、Alpha 和 MIPS  不同，它们完全在浮点寄存器文件中进行定点的转换，<u>RISC-V 使用整数寄存器对这些指令进行操作</u>。这种选择缩短了混合格式下常用的指令序列——例如，在地址计算中使用整数转换的结果时。</p>
+
+<p>大多浮点运算的结果会进行四舍五入，但四舍五入方案因编程语言和算法而异。RISC-V 提供了五种四舍五入模式，其编码如下表所示：四舍五入到最接近的数字，并向偶数断开；舍入为零；向-∞舍入；向+∞舍入；四舍五入到最接近的数字，向零四舍五入。(IEEE 754-2008 只需要前四个，但根据我们的经验，第五个对于手工编写库例程很有用）。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rounding Mode</th>
+      <th>Mnemonic</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>000</td>
+      <td>RNE</td>
+      <td>Round to Nearest, ties to Even</td>
+    </tr>
+    <tr>
+      <td>001</td>
+      <td>RTZ</td>
+      <td>Round towards Zero</td>
+    </tr>
+    <tr>
+      <td>010</td>
+      <td>RDN</td>
+      <td>Round Down (towards −∞)</td>
+    </tr>
+    <tr>
+      <td>011</td>
+      <td>RUP</td>
+      <td>Round Up (towards +∞)</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>RMM</td>
+      <td>Round to Nearest, ties to Max Magnitude</td>
+    </tr>
+    <tr>
+      <td>111</td>
+      <td>DYN</td>
+      <td>Dynamic rounding, based on <strong><em>frm</em></strong> register</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>在大多数编程语言中，四舍五入的方向应动态指定。对此，<u>我们规定所有浮点指令都可以使用动态舍入模式，在浮点控制和状态寄存器的</u> <strong><em>frm</em></strong> <u>字段中设置</u>，其格式为下图所示。此外，一些操作，比如在 C 和 Java 中从浮点类型强制转换为整数类型，需要在特定方向上舍入。在不修改动态舍入模式的情况下支持这些操作是可取的，而且还有助于加速库例程的实现，比如先验函数。因此，我们为所有浮点运算提供了动态舍入模式或静态选择其中一种。这个额外的 3 位字段会使 F 扩展消耗了大量的编码空间，但我们认为通用性和提升的性能证明这些开销是合理的。</p>
+
+<h3 id="异常处理">异常处理</h3>
+
+<p>大多数浮点运算会产生 IEEE 754 标准下的异常：指示算术错误或不精确的运行时条件。一共有 5 种异常：无效运算（对 -1 开根号）；除零；上溢出；下溢出；不精确（指存在舍入）。IEEE 标准没有规定这些异常是否会导致陷阱。<u>在 RISC-V 中，我们选择不将这些异常变为陷阱，以方便非推测性的乱序完成浮点操作</u>。如果不这样做，顺序流水线的实现将不得不在不精确 trap 和顺序完成之间进行选择，前者暴露了实现细节并使系统软件复杂化，而后者要么使流水线变深，要么降低了性能。</p>
+
+<p>虽然我们不将这些异常变为陷阱，我们仍然有可能编写对浮点异常进行处理的软件。这五个异常放入到浮点状态寄存器后，软件可以检查这些寄存器，并根据它的值转移到用户级异常处理程序。由于触发应计异常标志是一种关联操作，因此应计异常寄存器仍然允许无序指令完成。直接操作异常标志的指令只需要互锁，直到所有未完成的指令完成，再接着处理异常就可以了。</p>
+
+<h3 id="nan-的产生与传播"><a href="https://en.wikipedia.org/wiki/NaN">NaN 的产生与传播</a></h3>
+
+<p>IEEE 754-1985 浮点标准使几个商业竞争对手达成妥协，共同寻求结束 Velvel Kahan 所描述的那种状态——浮点算术中的“无政府状态”（当然，对于有些人来说这一不那么无私的决定是为了防止 Intel 不遵守标准😓）。为了尽量减少各派之间的不满，标准给实现留下了一些细节，例如，应该在四舍五入之前还是之后检测下溢出，NaN 是如何生成和传播的，以及如何区分 signaling NAN 和 quiet NaN<sup id="fnref:foot4" role="doc-noteref"><a href="#fn:foot4" class="footnote" rel="footnote">4</a></sup>。</p>
+
+<p>然而，标准留下的回旋的余地却导致了一个惊人的分裂。看看下面的表格，不同的 ISAs 对 NaN 的编码几乎完全不同。MIPS 和 PA-RISC 选择用 quiet bit clear来表示 quiet NaN，这违反了 IEEE 754-2008 标准。其他的区别在于其余的尾数（也叫有效位数，Significand） 部分是 1 还是 0 ，以及比较惊讶的是，符号位是否设置了。至于 <a href="">RISC-V NaN</a>，我们选择将符号位清零，除 quiet bit 之外所有尾数位都清零的方案。即如果一个浮点运算的结果是 NaN，那么它就是 canonical NaN。canonical NaN 有一个正的符号位（即 0），除了 MSB （也叫做 quiet bit）之外，所有的符号都清零。在 RISC-V 中，对于单精度浮点数，canonical NaN 对应于 0x7fc00000 。这样做的原因有四：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ISA</th>
+      <th>Sign</th>
+      <th>Significand(23 bits)</th>
+      <th>QNaN Polarity<sup id="fnref:foot5" role="doc-noteref"><a href="#fn:foot5" class="footnote" rel="footnote">5</a></sup></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SPARC</td>
+      <td>0</td>
+      <td>11111111111111111111111</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>MIPS</td>
+      <td>0</td>
+      <td>01111111111111111111111</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>PA-RISC</td>
+      <td>0</td>
+      <td>01000000000000000000000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>x86</td>
+      <td>1</td>
+      <td>10000000000000000000000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>Alpha</td>
+      <td>1</td>
+      <td>10000000000000000000000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>ARM</td>
+      <td>0</td>
+      <td>10000000000000000000000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>RISC-V</td>
+      <td>0</td>
+      <td>10000000000000000000000</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+<ul>
+  <li>与至少一个其他 ISA (ARM) 相同的缺省 NaN，这样做不会加剧 IEEE 754 的分化</li>
+  <li>与 Java 编程语言的 canonical NaN 相同（大多数其他编程语言都没有定义）</li>
+  <li>根据 IEEE 754 标准以及 RISC-V 的 QNaN polarity ，quiet NaN 事实上有 $2^{22}$ 个，而signaling NaN 有 $2^{22}-1$个（因为尾数全 0 对应的是无穷大）。而恰巧 canonical NaN 是唯一的一个不能从 signaling NaN 转为 quiet NaN 的 quiet NaN 。 因此，对于可传播 NaN 的系统而言，刚生成的 NaN 可以与传播的 signaling NaN 相区别</li>
+  <li>清除 MSB 比设置 MSB 硬件成本更低。一些功能单元已经需要一个数据路径来提供尾数中的 0，但没有相应的数据路径来提供所有的 1</li>
+</ul>
+
+<p>IEEE 754 标准还提供了将 NaN 有效负载（即非 MSB 的尾数位）从 NaN 产生开始传播到输出操作的选项。该特性旨在保存诊断信息，例如 NaN 的起源。但出于三个原因，RISC-V 不提供这个特性：</p>
+
+<ul>
+  <li>NaN 有效负载太小，无法保存完整的内存地址，因此很难使用该特性对有意义的诊断信息进行编码</li>
+  <li>因为在标准中 NaN 有效负载传播是可选的，所以可移植软件大都不依赖该特性，因此该特性很少被使用</li>
+  <li>传播 NaN 有效负载会增加硬件成本</li>
+</ul>
+
+<p><u>相对于的，当一条计算指令发出 NaN 时，我们要求它是 canonical NaN 即可</u>。当然，实现可以自由地将 NaN 有效负载传播方案作为非标准的扩展提供，由非标准处理器模式位启用，不过我们的默认方案仍然是强制性的。</p>
+
+<h3 id="浮点指令">浮点指令</h3>
+
+<center>
+    <img src="/assets/img/RV32F.png" />
+</center>
+
+<p>上图列出了 30 条 <strong>RISC-V F</strong> 扩展的新指令。它们分为四类：数据移动指令，转换指令，比较指令和算术指令。数据移动指令中，有新的 loads 和 stores 指令，FLW 和 FSW ，它们负责数据在内存和浮点寄存器之间移动，还包括了数据在浮点寄存器和整数寄存器之间移动的指令，FMV.X.S 和 FMV.S.X 。有些 ISAs 比如 SPARC 和 最初的 Alpha ，省去了这些指令，用一个临时内存来代替实现这一功能。这种设计消除了流水线冒险，但却大大增加混合格式代码长度。下面的代码块就证明了这点。没有 FMV.X 等指令，就要多 60% 的指令，并可能会导致数据缓存未命中，降低性能。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">fmv.x.s</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">fa0</span> 					<span class="nv">addi</span> <span class="nb">sp</span><span class="p">,</span> <span class="nb">sp</span><span class="p">,</span> <span class="o">-</span><span class="mi">16</span>
+<span class="nf">srli</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="mi">23</span> 					<span class="nb">fs</span><span class="nv">w</span> <span class="nv">fa0</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+<span class="nf">andi</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="mh">0xff</span> 				<span class="nv">lw</span> <span class="nv">a0</span><span class="p">,</span> <span class="mi">0</span><span class="p">(</span><span class="nb">sp</span><span class="p">)</span>
+<span class="nf">addi</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="o">-</span><span class="mi">127</span> 				<span class="nv">srli</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="mi">23</span>
+<span class="nf">jalr</span> <span class="nv">x0</span><span class="p">,</span> <span class="nv">ra</span><span class="p">,</span> <span class="mi">0</span> 					<span class="nv">andi</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="mh">0xff</span>
+								<span class="nf">addi</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="o">-</span><span class="mi">127</span>
+								<span class="nf">addi</span> <span class="nb">sp</span><span class="p">,</span> <span class="nb">sp</span><span class="p">,</span> <span class="mi">16</span>
+								<span class="nf">jalr</span> <span class="nv">x0</span><span class="p">,</span> <span class="nv">ra</span><span class="p">,</span> <span class="mi">0</span>
+
+<span class="c1">;WITH FMV.X.S 					WITHOUT FMV.X.S</span>
+</code></pre></div></div>
+
+<p><strong>F</strong> 指令的一个新特点是符号注入指令（sign-injection instruction）。FSGNJ 、FSGNJN 和 FSGNJX 指令。它们会得到一个从 <code class="language-plaintext highlighter-rouge">rs1</code> 中取出的除符号位之外所有位的结果。对于 FSGNJ，结果的符号位为 <code class="language-plaintext highlighter-rouge">rs2</code> 的符号位；对于 FSGNJN，结果的符号位与 <code class="language-plaintext highlighter-rouge">rs2</code> 的符号位相反；FSGNJX 的符号位是 <code class="language-plaintext highlighter-rouge">rs1</code> 和 <code class="language-plaintext highlighter-rouge">rs2</code> 寄存器符号位的异或值。当两个源操作数相同时，这些指令可用于移动、取反或取绝对值。更通常的情况下，它们对于手工编写的浮点库例程很有用。</p>
+
+<p>转换指令负责完成整数与浮点数的转换。凡是要用到整数的地方都用整数寄存器，这可以提高混合形式代码的性能，因为这显式地减少了两组寄存器之间的移动。不在浮点寄存器中表示整数可以简化内部重编码浮点格式的实现。四条转换指令有：转换到有符号整数（FCVT.W.S 和 FCVT.S.W）和无符号整数（FCVT.WU.S 和 FCVT.S.WU），并支持任何舍入模式。</p>
+
+<p>比较指令会得到一个相等或不等测试的布尔结果，并将布尔值写入 <code class="language-plaintext highlighter-rouge">rd</code> 寄存器。FEQ.S 比较了两个浮点数是否相等；FLT.S 比较 <code class="language-plaintext highlighter-rouge">rs1</code> 是否小于 <code class="language-plaintext highlighter-rouge">rs2</code> ；FLE.S 比较 <code class="language-plaintext highlighter-rouge">rs1</code> 是否小于等于 <code class="language-plaintext highlighter-rouge">rs2</code> ；当其中一个源操作数为 NaN 时，结果总是 false 。FLT 和 FLE 在 quiet NaN 下会抛出了一个无效的异常，就像 C 中 &lt; 和 &lt;= ；FEQ 则没有，和 C 中 == 一样。若要在浮点比较的结果上进行分支，则需要 BEQ 或 BNE。</p>
+
+<p>另外两个比较指令是 FMIN.S 和 FMAX.S，分别计算两个浮点数的最小值和最大值。他们实现 IEEE 754 中规定的 <em>minNum</em> 和 <em>maxNum</em>，且不传播 NaN：若一个输入是 NaN，则返回另一个输入。 FMIN 的行为与 C 库的 fminf 相同。不过，它不符合常见的（a &lt; b ? a : b），因为如果 a 或 b 是 NaN ，它的值总是 a。</p>
+
+<p>最后介绍的浮点数比较指令是浮点分类指令，FCLASS.S 查看浮点数寄存器 <code class="language-plaintext highlighter-rouge">rs1</code> 的值，然后向整数寄存器 <code class="language-plaintext highlighter-rouge">rd</code> 写一个 10-bit 的掩码，用以区分该浮点数的类别。下表列出了对应位与相应类之间的关系。注意，掩码都是独热码（one-hot encode），所以使用一条 ANDI 指令就可以检测出多个类别</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>rd bit</th>
+      <th>Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is -∞</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is a negative normal number</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is a negative subnormal number</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is −0</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is +0</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is a positive subnormal number</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is a positive normal number.</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is +∞.</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is a signaling NaN.</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><code class="language-plaintext highlighter-rouge">rs1</code> is a quiet NaN</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>FCLASS 指令对于手工编写的库例程很有用，因为它们通常会在不寻常的输入上进行分支，比如 NaNs。而若不适用 FCLASS ，则将数字移动到整数寄存器中，并解析其组成字段的办法需要更多的指令。</p>
+
+<p>运算指令包含：加法、减法、乘法、除法、开根运算。为了合理高效地支持 IEEE 754-2008 ，<strong>RISC-V F</strong> 还提供了 4 条混合乘加的指令 FMA，用于计算 <code class="language-plaintext highlighter-rouge">±a×b±c</code> 四种操作中的任何一种，且不需要中间的乘积舍入。这个性质可以加快一些浮点库例程的实现，并且通常可以提高许多算法的性能和准确性。对于一些浮点加法和乘法出现次数特定的程序，与仅使用乘法和加法的体系结构相比，使用 FMA 指令能大大减少实现高吞吐量所必需的工作。例如，考虑存储在内存中的 4×4 矩阵的密集线性代数运算 <code class="language-plaintext highlighter-rouge">C += A×B</code> 。若没有 FMA，这个操作需要 192 条指令，包括 272 个浮点寄存器读和 176 个写。使用 FMA ，它需要 128 条指令，包括 208 个读和 112 个写——指令数量减少了 33%，操作数量减少了 29% 。</p>
+
+<h2 id="双精度浮点运算">双精度浮点运算</h2>
+
+<p>大多数通用系统都需要单精度和双精度浮点数，主要是因为单精度对于某些算法来说不够精确，还因为现代编程语言对双精度运算有偏见。<u>然而，我们认为最好还是将 **RISC-V F** 与 **RISC-V D** 分开，因为在有些嵌入式领域，单精度浮点数就足够了，双精度就太昂贵了</u>。主流的 ARM Cortex-M4 ，一个 32 位的微控制器，以及无数的数字信号处理器都体现了这点。</p>
+
+<center>
+<img src="/assets/img/RV64D.png" />
+</center>
+
+<p><strong>D</strong> 扩展的结构与 <strong>F</strong> 扩展非常相似，当然 <strong>F</strong> 扩展也有存在的必要。浮点寄存器的位宽变为了 64 位，且增加了对双精度数值进行操作的新指令。32 位和 64 位浮点数不能在计算指令中自由混合，但是在格式之间转换的指令（FCVT.D.S 和 FCVT.S.D），可以支持混合格式代码。</p>
+
+<p>我们曾设想了另一种设计：寄存器仍为 32 位宽，双精度值对齐地存储在寄存器对中，就像在 SPARC 和 MIPS 一样。然而，这种设计不太适合寄存器重命名的实现，因为寄存器重命名会导致值的两半可能在物理上不再相邻。更重要的是，这种设计将使可用于双精度程序的寄存器数量减半，会导致寄存器阻塞，并增加指令数量。扩大寄存器的位宽似乎是最好的选择，尽管会带来额外的硬件资源消耗。</p>
+
+<p>需要注意的是，在 RV32 中没有将双精度浮点数与整数寄存器文件来回移动的东西。事实上，我们曾考虑增加三条指令：FMVHI.X.D 和 FMVLO.X.D 分别用于拷贝高位/低位的浮点数值到整数寄存器，而 FMV.D.X 用于将两个整数寄存器中的数值转换为一个双精度浮点数，并将浮点数存入浮点寄存器。但是 FMV.D.X 是唯一具有两个整数源的浮点指令，所以我们认为最好完全放弃对这些操作的支持，而改用临时内存。但 RV32D 仍然支持更常见的整数数据类型转换。</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:foot1" role="doc-endnote">
+      <p>MULHSU 对于多字有符号乘法很有用，因为当乘数的最高有效字（包含符号位）与被乘数的较低有效字（无符号）相乘时，就需要用到它，这是多字有符号乘法的子步骤。 <a href="#fnref:foot1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:foot2" role="doc-endnote">
+      <p>为何规定长度必须在 16 条连续的静态指令内呢？其实这个约束有几个微妙之处。不能有 taken 分支限制了动态指令数量，16 条指令的限制意味着直接映射指令缓存的大小就足够了——只要它们可以保存至少 64 个连续的字节。 <a href="#fnref:foot2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:foot3" role="doc-endnote">
+      <p>所有的 RV32A 指令都有一个请求位（aq）和一个 释放位（rl）。aq 被置位的原子指令保证其它线程在随后的内存访问中看到顺序的 AMO 操作；rl 被置位的原子指令保证其它线程在此之前看到顺序的原子操作。想要了解更详细的有关知识，可以查看[Adve and Gharachorloo 1996]。 <a href="#fnref:foot3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:foot4" role="doc-endnote">
+      <p>分别有两者类型的 NaN，一个叫 <em>quiet NaNs</em> 另一个是 <em>signaling NaNs</em>. Quiet NaNs 被用作传播无效操作或值等错误。Signaling NaNs 可支持更加复杂的特性，比如混合数值和<a href="https://en.wikipedia.org/wiki/Computer_algebra">符号计算</a>或者其他基本的浮点数运算扩展。 <a href="#fnref:foot4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:foot5" role="doc-endnote">
+      <p>QNaN polarity refers to whether the most significant bit of the significand indicates that the NaN is quiet when set, or quiet when clear. <a href="#fnref:foot5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v-f" class="page__taxonomy-item" rel="tag">RISC-V F</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#risc-v-m" class="page__taxonomy-item" rel="tag">RISC-V M</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-09-19T00:00:00+08:00">September 19, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Why+RISC-V+%3F%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F19%2FWHY-RISC-V-3.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F19%2FWHY-RISC-V-3.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F19%2FWHY-RISC-V-3.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/09/17/WHY-RISC-V-2.html" class="pagination--pager" title="Why RISC-V ?
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/09/27/WHY-RISC-V-4.html" class="pagination--pager" title="Why RISC-V ?
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/09/19/WHY-RISC-V-3.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/09/19/WHY RISC-V 3"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

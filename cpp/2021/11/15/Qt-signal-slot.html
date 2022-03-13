@@ -1,0 +1,935 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>信号槽机制的简陋实现 - 峰子的乐园</title>
+<meta name="description" content="a small but pretty website for me">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="信号槽机制的简陋实现">
+<meta property="og:url" content="http://localhost:4000/cpp/2021/11/15/Qt-signal-slot.html">
+
+
+  <meta property="og:description" content="a small but pretty website for me">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-11-15T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/cpp/2021/11/15/Qt-signal-slot.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          信号槽机制的简陋实现
+
+        
+      </h1>
+      
+        <p class="page__lead">
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="信号槽机制的简陋实现">
+    <meta itemprop="description" content="">
+    <meta itemprop="datePublished" content="2021-11-15T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#qt-信号槽机制的简陋实现">Qt 信号槽机制的简陋实现</a>
+    <ul>
+      <li><a href="#问题需求">问题需求</a></li>
+      <li><a href="#naive-版本">naive 版本</a></li>
+      <li><a href="#逐步改进">逐步改进</a>
+        <ul>
+          <li><a href="#响应函数队列">响应函数队列</a></li>
+          <li><a href="#信号槽函数的抽象">信号槽函数的抽象</a></li>
+          <li><a href="#object-类">Object 类</a></li>
+          <li><a href="#带参数的信号槽">带参数的信号槽</a></li>
+        </ul>
+      </li>
+      <li><a href="#小结">小结</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="qt-信号槽机制的简陋实现">Qt 信号槽机制的简陋实现</h1>
+
+<p>最近科研中碰到了一个需要实现信号触发机制的场景。我第一时间想到了 Qt 的信号槽机制。但可惜服务器上没有 Qt 的相关环境，因此需要自己实现一个简陋的信号触发机制。</p>
+
+<h2 id="问题需求">问题需求</h2>
+
+<p>假设 A 类的对象 a 与 B 类的对象 b 需要信号连接。即 a 发出某个信号 S 给 b ，b 接收到该信号后，根据自己所处的状态，决定是否响应该信号，响应即调用成员函数 <code class="language-plaintext highlighter-rouge">slot()</code>，不响应即让信号进入等待队列。</p>
+
+<p>具体来说，在构造了对象 a 和 b 后，先使用 <code class="language-plaintext highlighter-rouge">connect()</code> 函数连接这两个对象。此后，在程序中任何位置中调用了 <code class="language-plaintext highlighter-rouge">a-&gt;signal()</code> 函数后，就视为对象 a 发出了信号 signal 给 b。此时，若 b 繁忙，那么该信号会暂时等待，直至空闲后 b 再调用成员函数 <code class="language-plaintext highlighter-rouge">slot()</code>，若 b 空闲，直接调用成员函数 <code class="language-plaintext highlighter-rouge">slot()</code>。与 Qt 机制相同，一个槽函数可以被多个信号相连接，一个信号也可以连接多个槽。</p>
+
+<h2 id="naive-版本">naive 版本</h2>
+
+<p>看到上述需求，我的第一反应是需要建立一个 Connection 类来帮助管理所有的连接。具体来说，在 <code class="language-plaintext highlighter-rouge">connect()</code> 函数中需要构造 Connection 类对象 c ，它一方面手握 b 的成员函数，另一方面与 a 的信号挂钩，从而实现信号触发机制。</p>
+
+<p><img src="/assets/img/connect.png" alt="Conection类中关于成员的探讨" /></p>
+
+<p>因此，Connection 类的定义有：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Connection</span> <span class="p">{</span>
+    <span class="c1">// callback func and itself</span>
+    <span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;</span> <span class="n">m</span><span class="p">;</span>
+    <span class="kt">void</span> <span class="n">callback</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="n">m</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="n">A</span><span class="o">::</span><span class="n">signal</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">-&gt;</span><span class="n">callback</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>对于 <code class="language-plaintext highlighter-rouge">connect()</code> 函数，过程就比较简单。构建Connection 类对象后，b 的成员函数传给Connection类中的“函数指针”，另一方面，需要将 a 发出的信号与该函数指针关联起来。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">connect</span><span class="p">(</span><span class="n">A</span><span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="n">B</span><span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="n">string</span> <span class="n">signal</span><span class="p">,</span> <span class="n">string</span> <span class="n">slot</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Connection</span> <span class="o">*</span><span class="n">c</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Connection</span><span class="p">();</span>
+    <span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;</span> <span class="n">f</span> <span class="o">=</span> <span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">B</span><span class="o">::</span><span class="n">slot</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+    <span class="n">c</span><span class="o">-&gt;</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span><span class="p">;</span>
+    <span class="n">a</span><span class="o">-&gt;</span><span class="n">c</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>关联的方案和 Qt 一样，选择使用字符串匹配的方式。即传入的参数使用宏定义包装，转为字符串。但这里的实现显然还<strong>没有用上函数后面的两个参数</strong>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define SIGNAL(x) "1"#x
+#define SLOT(x) "2"#x
+</span>
+<span class="n">A</span> <span class="o">*</span><span class="n">a</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">A</span><span class="p">();</span>
+<span class="n">B</span> <span class="o">*</span><span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">B</span><span class="p">();</span>
+<span class="n">connect</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">SIGNAL</span><span class="p">(</span><span class="n">signal1</span><span class="p">()),</span> <span class="n">SLOT</span><span class="p">(</span><span class="n">slot</span><span class="p">()))</span>
+</code></pre></div></div>
+
+<h2 id="逐步改进">逐步改进</h2>
+
+<h3 id="响应函数队列">响应函数队列</h3>
+
+<p>上述做法很简单，但缺点很多，先是没有使用 <code class="language-plaintext highlighter-rouge">connect()</code> 传入的信号和槽，然后是无法支持一个信号对应多个槽函数和多个信号，最后，槽函数的类型被限制为 <code class="language-plaintext highlighter-rouge">function&lt;void()&gt;</code> ，这也让人很难受。但总的来说，naive 版本起码说明了，这条路可行。</p>
+
+<p>要想做的更好，需要加上很多东西。首先，对于每个信号，都应该有一个信号槽函数的队列。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Connection</span> <span class="o">*&gt;&gt;</span> <span class="n">connect_map</span><span class="p">;</span>
+
+    <span class="c1">// for all slots connected with signal</span>
+    <span class="c1">// must callback at once</span>
+    <span class="kt">void</span> <span class="n">A</span><span class="o">::</span><span class="n">signal</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">conn</span> <span class="o">:</span> <span class="n">connect_map</span><span class="p">[</span><span class="n">SIGNAL</span><span class="p">(</span><span class="n">signal</span><span class="p">())])</span>
+            <span class="n">conn</span><span class="o">-&gt;</span><span class="n">callback</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="kt">void</span> <span class="n">A</span><span class="o">::</span><span class="n">setUp</span><span class="p">(</span><span class="n">string</span> <span class="n">signal</span><span class="p">,</span> <span class="n">Connection</span> <span class="o">*</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">connect_map</span><span class="p">[</span><span class="n">signal</span><span class="p">].</span><span class="n">push_back</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如此，当信号被调用后（发出后），所有与信号相连的槽函数都会被调用。</p>
+
+<h3 id="信号槽函数的抽象">信号槽函数的抽象</h3>
+
+<p>接下来解决下一个问题：如何使用 <code class="language-plaintext highlighter-rouge">connect()</code> 传来的槽函数，而不是硬编码到函数内部。有两个思路：一种是直接将 <code class="language-plaintext highlighter-rouge">connect()</code> 的参数类型改为函数指针，因为指针可以直接传入 Connection 类，可方便后续处理，但这会限制槽函数的类型。另一种是仍沿用字符串，但要求内部需要有一个对应表，存放字符串与槽函数的对应关系。参考 Qt 的信号槽机制，我选择使用第二种。</p>
+
+<p>为了让所有类型的函数都可以充当槽函数，又不更改 Connection 类中的变量类型，可以选择<strong>抽象包装法</strong>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">Slot</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">func_id</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">slot1</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="c1">// case 1:</span>
+        <span class="c1">// another slot()</span>
+        <span class="c1">// break;</span>
+    <span class="nl">default:</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>直接将上面的 <code class="language-plaintext highlighter-rouge">Slot()</code> 函数传给 Connection 类，然后，让对象内的变量通过字符串来确定到底该调用哪一个成员函数。相当于在所有槽函数之上都加了一层抽象。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">B</span> <span class="p">{</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">funcMap</span><span class="p">;</span>
+    <span class="n">B</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">funcMap</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">SLOT</span><span class="p">(</span><span class="n">slot1</span><span class="p">()),</span> <span class="mi">0</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">findFuncId</span><span class="p">(</span><span class="n">string</span> <span class="n">slot</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">funcMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">slot</span><span class="p">)</span> <span class="o">!=</span> <span class="n">funcMap</span><span class="p">.</span><span class="n">end</span><span class="p">())</span>
+            <span class="n">func_id</span> <span class="o">=</span> <span class="n">funcMap</span><span class="p">[</span><span class="n">slot</span><span class="p">];</span>
+        <span class="k">else</span> 
+            <span class="n">func_id</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">findFuncId()</code> 将字符串转为内部的函数编号，进而改变了 <code class="language-plaintext highlighter-rouge">Slot()</code> 函数要调用的槽函数，但需要我们提取把槽函数和编码都放到表中。为了统一，在信号发送端，我们也希望用整数取代字符串，来唯一编号信号函数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">A</span> <span class="p">{</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">sgMap</span><span class="p">;</span>
+    <span class="n">A</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">sgMap</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">SIGNAL</span><span class="p">(</span><span class="n">signal1</span><span class="p">()),</span> <span class="mi">0</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="kt">int</span> <span class="n">findSetId</span><span class="p">(</span><span class="n">string</span> <span class="n">slot</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">sgMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">slot</span><span class="p">)</span> <span class="o">!=</span> <span class="n">sgMap</span><span class="p">.</span><span class="n">end</span><span class="p">())</span>
+            <span class="n">signal_id</span> <span class="o">=</span> <span class="n">sgMap</span><span class="p">[</span><span class="n">slot</span><span class="p">];</span>
+        <span class="k">else</span> 
+            <span class="n">signal_id</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">signal_id</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>从上面的改进中，可以看出不论槽函数是什么样，在 Connection 类中的函数指针永远指向 <code class="language-plaintext highlighter-rouge">Slot()</code>。对于 Connection 类而言，只需要记住哪个信号发生后（即信号的编码），需要触发哪些对象的哪些槽函数（即对应对象的槽函数编号）就行了。</p>
+
+<p><img src="/assets/img/connect2.png" alt="" /></p>
+
+<h3 id="object-类">Object 类</h3>
+
+<p>不难看到，A 类和 B 类在有些地方有相似性，可将其抽象出来成为一个基类 Object。另一方面，Object 类也可以替代 Connection 类的功能。所以，需要在这个地方做一个非常大的改动。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Old Connection</span>
+<span class="k">class</span> <span class="nc">Connection</span> <span class="p">{</span>
+    <span class="c1">// callback func and itself</span>
+    <span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;</span> <span class="n">m</span><span class="p">;</span>
+    <span class="kt">void</span> <span class="n">callback</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="n">m</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// Now Connection</span>
+<span class="k">struct</span> <span class="nc">Connection</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">id</span><span class="p">;</span>
+    <span class="n">Object</span><span class="o">*</span> <span class="n">receiver</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>首先，将 Connection 类做了改变，因为只需要槽函数的编号和类的抽象包装函数即可。</p>
+
+<p>A 类和 B 类中，都有对信号/槽函数的编码表，那么编码表可以放在 Object 类中，取名为 <code class="language-plaintext highlighter-rouge">funcMap</code>，提供函数名字符串返回其编码。</p>
+
+<p>此外，将之前 A 类中的 <code class="language-plaintext highlighter-rouge">map&lt;string, vector&lt;Connection *&gt;&gt; connect_map</code> 信号与对应槽函数的对应表关系也放入 Object 类中。把 B 类的抽象槽函数 <code class="language-plaintext highlighter-rouge">Slot()</code> 也放进 Object 类。如此，只要继承了 Object 类，再稍加修改（后续介绍），就可以使用我们自己实现的信号槽机制，与 Qt 的非常类似。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Object</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">Connection</span><span class="o">&gt;&gt;</span> <span class="n">connect_map</span><span class="p">;</span>
+    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">funcMap</span><span class="p">;</span>
+    <span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">Slot_</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>最后，在 Object 类中添加之前的函数实现，包括 <code class="language-plaintext highlighter-rouge">connect()</code> 函数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Object</span> <span class="p">{</span>
+    <span class="kt">void</span> <span class="n">activate</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">for</span><span class="p">(</span><span class="k">auto</span> <span class="n">c</span> <span class="o">:</span> <span class="n">connect_map</span><span class="p">[</span><span class="n">id</span><span class="p">])</span>
+            <span class="n">c</span><span class="p">.</span><span class="n">receiver</span><span class="o">-&gt;</span><span class="n">Slot_</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">id</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="kt">int</span> <span class="n">findId</span><span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">func_id</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">funcMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">!=</span> <span class="n">funcMap</span><span class="p">.</span><span class="n">end</span><span class="p">())</span>
+            <span class="n">func_id</span> <span class="o">=</span> <span class="n">funcMap</span><span class="p">[</span><span class="n">s</span><span class="p">];</span>
+        <span class="k">return</span> <span class="n">func_id</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="kt">void</span> <span class="n">connect</span><span class="p">(</span><span class="n">Object</span> <span class="o">*</span><span class="n">sender</span><span class="p">,</span> <span class="n">Object</span> <span class="o">*</span><span class="n">receiver</span><span class="p">,</span>
+            <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">signal</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">slot</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">sid</span> <span class="o">=</span> <span class="n">sender</span><span class="o">-&gt;</span><span class="n">findId</span><span class="p">(</span><span class="n">signal</span><span class="p">);</span>
+        <span class="kt">int</span> <span class="n">rid</span> <span class="o">=</span> <span class="n">receiver</span><span class="o">-&gt;</span><span class="n">findId</span><span class="p">(</span><span class="n">slot</span><span class="p">);</span>
+        <span class="n">Connection</span> <span class="n">c</span><span class="p">(</span><span class="n">rid</span><span class="p">,</span> <span class="n">recevier</span><span class="p">);</span>
+        <span class="n">sender</span><span class="o">-&gt;</span><span class="n">connect_map</span><span class="p">[</span><span class="n">sid</span><span class="p">].</span><span class="n">push_back</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>A 类和 B 类都直接继承 Object 类。但这样做还不够，需要在各自的构造函数中把自己的信号/槽函数加入 <code class="language-plaintext highlighter-rouge">funcMap</code> 中，槽函数也需要被动态绑定：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">A</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Object</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">A</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">funcMap</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">SIGNAL</span><span class="p">(</span><span class="n">signal1</span><span class="p">()),</span> <span class="mi">0</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">B</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Object</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">B</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">Slot_</span> <span class="o">=</span> <span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">B</span><span class="o">::</span><span class="n">Slot</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span> <span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">);</span>
+        <span class="n">funcMap</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">SLOT</span><span class="p">(</span><span class="n">slot1</span><span class="p">()),</span> <span class="mi">0</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>这样改动的好处是，要添加一个槽函数，我们无需更改 Object 类的部分，只需要更改 B 类的构造函数和 <code class="language-plaintext highlighter-rouge">Slot()</code>。新添加一个信号也是如此。</p>
+
+<h3 id="带参数的信号槽">带参数的信号槽</h3>
+
+<p>最后的改动，以支持某一些简单的参数可以在信号中传递。首先，在 Object 类中的槽函数，添加一个 <code class="language-plaintext highlighter-rouge">void**</code> 的变量，用于传参。随之改动的，就是 <code class="language-plaintext highlighter-rouge">activate()</code> 。<code class="language-plaintext highlighter-rouge">void **</code> 相当于一个指向所有参数的指针数组。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Object</span> <span class="p">{</span>
+    <span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">void</span><span class="o">**</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">Slot_</span><span class="p">;</span>
+
+    <span class="kt">void</span> <span class="n">activate</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">,</span> <span class="kt">void</span> <span class="o">**</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">for</span><span class="p">(</span><span class="k">auto</span> <span class="n">c</span> <span class="o">:</span> <span class="n">connect_map</span><span class="p">[</span><span class="n">id</span><span class="p">])</span> <span class="p">{</span>
+            <span class="n">c</span><span class="p">.</span><span class="n">receiver</span><span class="o">-&gt;</span><span class="n">Slot_</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 A 类和 B 类中，为了与 Object 类一致，做如下修改：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">B</span> <span class="p">{</span>
+    <span class="n">B</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">Slot_</span> <span class="o">=</span> <span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">B</span><span class="o">::</span><span class="n">Slot</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span> <span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">,</span> <span class="n">placeholders</span><span class="o">::</span><span class="n">_2</span><span class="p">);</span>
+        <span class="c1">// ....</span>
+    <span class="p">}</span>
+    
+    <span class="kt">void</span> <span class="n">Slot</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">,</span> <span class="kt">void</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="n">id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">slot1</span><span class="p">(</span><span class="o">*</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">slot1</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Slot : "</span> <span class="o">&lt;&lt;</span> <span class="n">a</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// In Class A</span>
+    <span class="kt">void</span> <span class="nf">signal1</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="p">)};</span>
+        <span class="n">activate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">arg</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>信号函数中的多个参数，需要为它们一一构建好 <code class="language-plaintext highlighter-rouge">void*</code> 指针。在 <code class="language-plaintext highlighter-rouge">Slot()</code> 中，再将它们一一拆解开。</p>
+
+<h2 id="小结">小结</h2>
+
+<p>通过自己不断思考尝试，实现了 Qt 信号槽机制的简陋版。在失去了 MOC 机制后，编写自己的槽机制会有点丑陋，并且有很多地方需要改进，先勉强用上吧。</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#qt" class="page__taxonomy-item" rel="tag">Qt</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-11-15T00:00:00+08:00">November 15, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E4%BF%A1%E5%8F%B7%E6%A7%BD%E6%9C%BA%E5%88%B6%E7%9A%84%E7%AE%80%E9%99%8B%E5%AE%9E%E7%8E%B0%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F11%2F15%2FQt-signal-slot.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F11%2F15%2FQt-signal-slot.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F11%2F15%2FQt-signal-slot.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" class="pagination--pager" title="CUDA 中的矩阵乘
+">previous</a>
+    
+    
+      <a href="/cpp/2022/02/24/gem5-1.html" class="pagination--pager" title="深入理解 Gem5 之一
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/08/cuda-beginer.html" rel="permalink">CUDA 快速入门
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">代码驱动学习法
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/cpp/2021/11/15/Qt-signal-slot.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/cpp/2021/11/15/Qt-signal-slot"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,809 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>深入理解计算机系统之代码优化实验 - 峰子的乐园</title>
+<meta name="description" content="如何写出对缓存友好的代码">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="深入理解计算机系统之代码优化实验">
+<meta property="og:url" content="http://localhost:4000/csapp/2021/06/29/CSAPPLab04.html">
+
+
+  <meta property="og:description" content="如何写出对缓存友好的代码">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-06-29T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/csapp/2021/06/29/CSAPPLab04.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          深入理解计算机系统之代码优化实验
+
+        
+      </h1>
+      
+        <p class="page__lead">如何写出对缓存友好的代码
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  1 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="深入理解计算机系统之代码优化实验">
+    <meta itemprop="description" content="如何写出对缓存友好的代码">
+    <meta itemprop="datePublished" content="2021-06-29T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#深入理解计算机系统之代码优化">深入理解计算机系统之代码优化</a>
+    <ul>
+      <li><a href="#实验介绍">实验介绍</a></li>
+      <li><a href="#代码优化">代码优化</a>
+        <ul>
+          <li><a href="#数据结构体">数据结构体</a></li>
+          <li><a href="#旋转操作">旋转操作</a></li>
+          <li><a href="#平滑操作">平滑操作</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="深入理解计算机系统之代码优化">深入理解计算机系统之代码优化</h1>
+
+<h2 id="实验介绍">实验介绍</h2>
+
+<p>图像处理中存在很多函数，可以对这些函数进行优化。本实验主要关注两种图像处理操作</p>
+
+<ul>
+  <li>旋转：对图像逆时针旋转90度</li>
+  <li>平滑：对图像进行模糊操作</li>
+</ul>
+
+<p>若图像用二维矩阵 $M$ 表示，$M_{ij}$ 表示图像 $M$ 的第 $(i, j)$ 像素的值，像素值用红，绿，蓝表示。我们只会考虑方形图像。令N表示图像的行（或列）数，从0到N − 1编号。给定这种表示形式，旋转操作可以非常简单地实现为以下两个矩阵运算：</p>
+
+<ul>
+  <li>转置：对于每对 $(i, j)$，$M_{i , j}$ 和 $M_{j, i}$ 是互换的</li>
+  <li>交换行：第i行与第N-1 − i行交换。</li>
+</ul>
+
+<p><strong>旋转操作</strong>的具体步骤如下图所示：</p>
+
+<p><img src="/assets/img/CSAPP/lab4/rotate.png" alt="" /></p>
+
+<p><strong>平滑操作</strong>的目标是将每个像素值改为其周围像素值的平均值。参考以下公式：</p>
+
+\[M2[1][1]=\frac{\sum^2_{i=0}\sum^2_{j=0}M1[i][j]}{9}\]
+
+\[M2[N−1][N−1]=\frac{\sum^{N−1}_{i=N−2}\sum^{N−1}_{j=N−2}M1[i][j]}{4}\]
+
+<h2 id="代码优化">代码优化</h2>
+
+<p>本次实验中，我们需要修改唯一文件是 <code class="language-plaintext highlighter-rouge">kernels.c</code>。<code class="language-plaintext highlighter-rouge">driver.c</code> 是驱动程序，使我们修改的程序能运行，并对其进行评分。使用命令 <code class="language-plaintext highlighter-rouge">&gt; make driver</code> 生成驱动程序代码，并使用 <code class="language-plaintext highlighter-rouge">./driver</code> 命令运行它。</p>
+
+<h3 id="数据结构体">数据结构体</h3>
+
+<p>图像的核心数据是用结构体表示的。像素是一个结构，如下所示：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">red</span><span class="p">;</span> <span class="cm">/* R value */</span>
+    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">green</span><span class="p">;</span> <span class="cm">/* G value */</span>
+    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">blue</span><span class="p">;</span> <span class="cm">/* B value */</span>
+<span class="p">}</span> <span class="n">pixel</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>可以看出，RGB 是 16 位表示形式。图像 M 表示为一维像素阵列，那么在代码中，可以用<code class="language-plaintext highlighter-rouge">M[RIDX(i,j,n)]</code> 表示第$(i, j)$个像素。这里n是图像矩阵的维数，RIDX是定义如下的宏：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define RIDX(i,j,n) ((i)*(n)+(j))
+</span></code></pre></div></div>
+
+<h3 id="旋转操作">旋转操作</h3>
+
+<p>以下 C 函数计算将源图像旋转90°，并将结果存储在目标图像中。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">naive_rotate</span><span class="p">(</span><span class="kt">int</span> <span class="n">dim</span><span class="p">,</span> <span class="n">pixel</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span> <span class="n">pixel</span> <span class="o">*</span><span class="n">dst</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    	<span class="k">for</span><span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+    		<span class="n">dst</span><span class="p">[</span><span class="n">RIDX</span><span class="p">(</span><span class="n">dim</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">dim</span><span class="p">)]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">RIDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">dim</span><span class="p">)];</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>从下图可以看出，旋转操作必然会在一定程度上违反局部性原理。因此我首先想到的是，把循环分块，好让高速缓存能完全容纳一个小循环内所需要访问的数据，增强程序的局部性。</p>
+
+<p><img src="/assets/img/CSAPP/lab4/rotate1.png" alt="" /></p>
+
+<p>分别以8*8分块、16*16分块和32*32分块做测试，代码都很类似，仅将8*8代码放置下方。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">rotate_8x8</span><span class="p">(</span><span class="kt">int</span> <span class="n">dim</span><span class="p">,</span> <span class="n">pixel</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span> <span class="n">pixel</span> <span class="o">*</span><span class="n">dst</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">;</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i1</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">;</span> <span class="n">i1</span><span class="o">+=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j1</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">;</span> <span class="n">j1</span><span class="o">+=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="n">i1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">i1</span><span class="o">+</span><span class="mi">8</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+	    <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="n">j1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">j1</span><span class="o">+</span><span class="mi">8</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+	        <span class="n">dst</span><span class="p">[</span><span class="n">RIDX</span><span class="p">(</span><span class="n">dim</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">dim</span><span class="p">)]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">RIDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">dim</span><span class="p">)];</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>经过测试，得出的结果如下：</p>
+
+<p><img src="/assets/img/CSAPP/lab4/optrotate.png" alt="" /></p>
+
+<p>从结果看，8*8的分块获得的优化性能最好，而随着分块越大，性能就会变得越差。</p>
+
+<h3 id="平滑操作">平滑操作</h3>
+
+<p>简而言之，就是要对如下代码进行优化：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">naive_smooth</span><span class="p">(</span><span class="kt">int</span> <span class="n">dim</span><span class="p">,</span> <span class="n">pixel</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span> <span class="n">pixel</span> <span class="o">*</span><span class="n">dst</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">dst</span><span class="p">[</span><span class="n">RIDX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">dim</span><span class="p">)]</span> <span class="o">=</span> <span class="n">avg</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">src</span><span class="p">);</span> <span class="cm">/* Smooth the (i,j)th pixel */</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">pixel</span> <span class="nf">avg</span><span class="p">(</span><span class="kt">int</span> <span class="n">dim</span><span class="p">,</span> <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">int</span> <span class="n">j</span><span class="p">,</span> <span class="n">pixel</span> <span class="o">*</span><span class="n">src</span><span class="p">)</span> 
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">;</span>
+    <span class="n">pixel_sum</span> <span class="n">sum</span><span class="p">;</span>
+    <span class="n">pixel</span> <span class="n">current_pixel</span><span class="p">;</span>
+
+    <span class="n">initialize_pixel_sum</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sum</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">ii</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="n">ii</span> <span class="o">&lt;=</span> <span class="n">min</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="n">ii</span><span class="o">++</span><span class="p">)</span> 
+	<span class="k">for</span><span class="p">(</span><span class="n">jj</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="n">jj</span> <span class="o">&lt;=</span> <span class="n">min</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="n">jj</span><span class="o">++</span><span class="p">)</span> 
+	    <span class="n">accumulate_sum</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sum</span><span class="p">,</span> <span class="n">src</span><span class="p">[</span><span class="n">RIDX</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">,</span> <span class="n">dim</span><span class="p">)]);</span>
+
+    <span class="n">assign_sum_to_pixel</span><span class="p">(</span><span class="o">&amp;</span><span class="n">current_pixel</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">current_pixel</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>首先注意到，该循环中，<code class="language-plaintext highlighter-rouge">avg()</code> 函数调用的函数太多，严重影响了效率。因此，第一步就是消除一些不必要的函数调用。比如，</p>
+
+<ul>
+  <li>将 <code class="language-plaintext highlighter-rouge">initialize_pixel_sum()</code> 函数直接变为对 <code class="language-plaintext highlighter-rouge">sum</code> 变量的初始化</li>
+  <li>在循环中， <code class="language-plaintext highlighter-rouge">min</code> 函数和 <code class="language-plaintext highlighter-rouge">max</code> 函数会被多次调用，但事实上因为循环变量一直在增加，只需要进行一次取值比较</li>
+  <li><code class="language-plaintext highlighter-rouge">accumulate_sum</code> 函数和 <code class="language-plaintext highlighter-rouge">assign_sum_to_pixel</code> 函数也可以变为简单的几条语句。</li>
+</ul>
+
+<p>经过上述改进后，取得了一定的优化效果，但我认为还不够。在不考虑图像的边界情况时，中间的图像点在计算时取出的数据有相当部分是重合的。因此，可以先从0开始，在处理完边界情况后，对于中间的像素点做同时计算处理，从而充分利用高速缓存。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// dst中间主体部分处理</span>
+<span class="k">for</span><span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">dim2</span><span class="p">;</span><span class="n">j</span><span class="o">+=</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">{</span>        
+    <span class="c1">// 同时处理两个像素</span>
+    <span class="n">dst</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">=</span><span class="p">(</span><span class="n">P1</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="n">P2</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="n">P3</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">;</span>
+    <span class="n">dst</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">=</span><span class="p">(</span><span class="n">P1</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="n">P2</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="n">P3</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">;</span>
+    <span class="n">dst</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">=</span><span class="p">(</span><span class="n">P1</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="n">P2</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="n">P3</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">;</span>
+    <span class="n">dst1</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">=</span><span class="p">((</span><span class="n">P1</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">red</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">;</span>
+    <span class="n">dst1</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">=</span><span class="p">((</span><span class="n">P1</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">green</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">;</span>
+    <span class="n">dst1</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">=</span><span class="p">((</span><span class="n">P1</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P2</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="o">+</span><span class="p">(</span><span class="n">P3</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">blue</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">;</span>
+    <span class="n">dst</span><span class="o">+=</span><span class="mi">2</span><span class="p">;</span>
+    <span class="n">dst1</span><span class="o">+=</span><span class="mi">2</span><span class="p">;</span>
+    <span class="n">P1</span><span class="o">+=</span><span class="mi">2</span><span class="p">;</span>
+    <span class="n">P2</span><span class="o">+=</span><span class="mi">2</span><span class="p">;</span>
+    <span class="n">P3</span><span class="o">+=</span><span class="mi">2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>总而言之，将代码充分展开，并优先考虑编写对缓存友好的代码，可以获得更好的效果。</p>
+
+<p>经过测试，得出的结构如下：</p>
+
+<p><img src="/assets/img/CSAPP/lab4/optsmooth.png" alt="" /></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#csapp" class="page__taxonomy-item" rel="tag">CSAPP</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#csapp" class="page__taxonomy-item" rel="tag">CSAPP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-06-29T00:00:00+08:00">June 29, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B9%8B%E4%BB%A3%E7%A0%81%E4%BC%98%E5%8C%96%E5%AE%9E%E9%AA%8C%20http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F06%2F29%2FCSAPPLab04.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F06%2F29%2FCSAPPLab04.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F06%2F29%2FCSAPPLab04.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/csapp/2021/05/27/CSAPPLab03.html" class="pagination--pager" title="深入理解计算机系统之缓冲区溢出炸弹实验
+">previous</a>
+    
+    
+      <a href="/csapp/2021/07/05/CSAPPLab05.html" class="pagination--pager" title="深入理解计算机系统之动态存储分配器实现
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/csapp/2021/06/29/CSAPPLab04.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/csapp/2021/06/29/CSAPPLab04"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

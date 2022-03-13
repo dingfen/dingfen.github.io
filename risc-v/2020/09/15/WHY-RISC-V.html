@@ -1,0 +1,810 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Why RISC-V ? - 峰子的乐园</title>
+<meta name="description" content="在人们吸取了几十年来体系结构设计发展，尤其是 ISA 设计发展的教训后，经过科研人员的不懈努力， RISC-V 横空出世。本篇博客重点在于关注若干个主流的 ISA ，讨论并分析其中的优缺点，吸取经验教训，为以后理解 RISC-V 的设计意图打下基础">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Why RISC-V ?">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/09/15/WHY-RISC-V.html">
+
+
+  <meta property="og:description" content="在人们吸取了几十年来体系结构设计发展，尤其是 ISA 设计发展的教训后，经过科研人员的不懈努力， RISC-V 横空出世。本篇博客重点在于关注若干个主流的 ISA ，讨论并分析其中的优缺点，吸取经验教训，为以后理解 RISC-V 的设计意图打下基础">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-09-15T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/09/15/WHY-RISC-V.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Why RISC-V ?
+
+        
+      </h1>
+      
+        <p class="page__lead">在人们吸取了几十年来体系结构设计发展，尤其是 ISA 设计发展的教训后，经过科研人员的不懈努力， RISC-V 横空出世。本篇博客重点在于关注若干个主流的 ISA ，讨论并分析其中的优缺点，吸取经验教训，为以后理解 RISC-V 的设计意图打下基础
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Why RISC-V ?">
+    <meta itemprop="description" content="在人们吸取了几十年来体系结构设计发展，尤其是 ISA 设计发展的教训后，经过科研人员的不懈努力， RISC-V 横空出世。本篇博客重点在于关注若干个主流的 ISA ，讨论并分析其中的优缺点，吸取经验教训，为以后理解 RISC-V 的设计意图打下基础">
+    <meta itemprop="datePublished" content="2020-09-15T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#why-risc-v-">WHY RISC-V ?</a>
+    <ul>
+      <li><a href="#introduction">Introduction</a></li>
+      <li><a href="#why-develop-a-new-instruction-set-">Why Develop a New Instruction Set ?</a>
+        <ul>
+          <li><a href="#mips">MIPS</a></li>
+          <li><a href="#sparc">SPARC</a></li>
+          <li><a href="#alpha">Alpha</a></li>
+          <li><a href="#armv7">ARMv7</a></li>
+          <li><a href="#armv8">ARMv8</a></li>
+          <li><a href="#openrisc">OpenRISC</a></li>
+          <li><a href="#80x86">80x86</a></li>
+        </ul>
+      </li>
+      <li><a href="#总结">总结</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="why-risc-v-">WHY RISC-V ?</h1>
+
+<p>读 <a href="https://people.eecs.berkeley.edu/~krste/papers/EECS-2016-1.pdf">Design of the RISC-V ISA</a> 论文后的总结与思考</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>软硬件接口，作为指令集架构 (ISA) 的重要组成部分，一直以来都是计算机系统中最重要的接口之一。然而相对于其他计算机系统中的接口，所有流行的 ISAs 都是商业且私有的 (Spring 2016)。在这篇论文中，作者 Andrew Shell Waterman 等人详细介绍了 RISC-V 体系结构。RISC-V 是一个免费且开放的 ISA。设计人员回顾三十几年来体系结构的发展，充分吸取经验教训，在原始的精简指令集计算机（RISC）体系结构上进行了构建和改进，从而构造为具有各种可选扩展的小型基础 ISA，并将其统一称之为 RISC-V。RISC-V 基本的 ISA 非常简单，因此很适合于研究和教育，但又足够完整，足以成为便宜的低功耗嵌入式设备的 ISA，而可选扩展对其的补充，使得 RISC-V 可用于通用和高性能计算。</p>
+
+<p>在 RISC-V 还未问世之前，所有流行的 ISAs 都是专有标准。当然，这些国际标准化组织用知识产权来保护自己是无可厚非的，但保持标准的封闭会阻碍创新，并人为地抬高微处理器的成本。因此在 2010 年，Yunsup Lee 和  David Patterson 等人设计了一种完全自由开放的、基于 RISC 体系结构的指令集体系结构 RISC-V 。起初，RISC-V 是用于教学与研究，且在设计中主要参考了 SPARC 和 MIPS 这两个 ISA 。</p>
+
+<p>为何当初 David Patterson 等人不怕麻烦，要动手设计一个全新的 ISA 呢？RISC-V 与其他的 ISA 相比，其优点到底在哪里呢？</p>
+
+<h2 id="why-develop-a-new-instruction-set-">Why Develop a New Instruction Set ?</h2>
+
+<p>这个问题是设计人员在设计 RISC-V 时被经常问到的。为什么要设计一个新的 ISA 呢？毕竟很多的商业 ISAs 非常受欢迎，充分利用好其中的一个都会减少很多“不必要”的劳动。对于设计人员来说，他们有两个主要的考量：</p>
+
+<ul>
+  <li><strong>商业专利问题</strong>。所有流行的商业 ISA 都是专营的。其供应商销售 ISA 的实现——比如以 IP 核的形式等的利润非常可观。虽然他们并没有禁止使用 ISA 来进行学术活动，但的确，这行为阻止了科研人员对 ISA 的完全 RTL 实现与共享，也为成功的研究想法商业化设置了障碍。</li>
+  <li><strong>过于复杂的 ISA</strong> 。经过若干年的发展，流行的商业 ISA 都变得非常复杂，难以全部在硬件上实现。当然，我们可以实现其子集，但是，由于没有完全对整个 ISA 进行实现，未修改的软件就不能在上面运行，也破坏了 ISA 的完整性。</li>
+</ul>
+
+<p>即使如此，作者他们仍然仔细考虑了可能的 ISA 选项，但最终全部否决了它们 ┑(￣Д ￣)┍。鉴于篇幅原因和本人水平有限（仅熟悉 RISC-V 、MIPS 和 80x86 ）因此先翻译整理一下这两者的劣势。</p>
+
+<h3 id="mips">MIPS</h3>
+
+<p><a href="https://en.wikipedia.org/wiki/MIPS_architecture">MIPS</a> 指令集架构是一个典型的RISC ISA 。MIPS 的设计思想受到了 IBM 801 微机的深刻影响。MIPS 采用了通用寄存器下的 load-store 架构，且内存只允许被从寄存器中读出/写入的指令访问，算术运算只允许在寄存器上完成。这些设计有效地减少了硬件、流水线等设计的复杂度。</p>
+
+<p>在原先的设计中，MIPS 的用户级指令集只有 58 条，可以非常简单地设计出一个单发射、顺序的流水线。然而经过 30 年的发展，它已经进化成了一个非常庞大的 ISA ，有约 400 条指令。虽然 MIPS-I 的简单微架构可以被学术架构者轻松掌握，ISA 有几个技术缺陷，使其对高性能实现不太有吸引力：</p>
+
+<ul>
+  <li><strong>对五阶段流水、单发射、顺序流水线的过度优化</strong>。例如，Branch 和 jump 指令被延时了一周期，导致了超标量和超流水线设计复杂化。delayed branch 指令增加了代码数量，当空出的延时槽无法适当填充时，还会浪费了指令发射带宽。况且，即使对于经典的五阶段流水线，删除延迟槽并添加一个小的branch target buffer (BTB) 通常会带来更好的绝对性能和单位面积性能。但考虑到保持向后兼容性，分支延迟槽已经不太可能被删除了。</li>
+  <li><strong>对 PIC (position-independent code) 支持不足</strong>，因此动态链接也很不行。MIPS 的直接跳转指令是伪指令，且跳转偏移量不是相对于 PC 的，而是绝对值，因此在 PIC 中没有任何用处。在 PIC 中，MIPS 只能使用间接跳转指令，这有很大的开销——不论是代码数量还是性能损失 (The 2014 revision of MIPS has improved PC-relative addressing, but PC-relative function calls still generally take more than one instruction) 。</li>
+  <li><strong>16-bit wide 的立即数消耗大量的编码地址空间</strong>，只留下一小部分操作码空间用于ISA扩展。当 MIPS 架构师试图通过压缩指令编码来减少代码数量时，他们别无选择，只能创建第二种指令编码，并启用模式开关，因为他们无法将新指令放到原始编码空间中。</li>
+  <li><strong>乘法和除法运算使用了特殊的寄存器 lo 和 hi</strong>，这增加了上下文大小，代码数量和微体系结构的复杂度。</li>
+  <li><strong>MIPS 预先假设浮点处理单元是一个与主处理器分离的协处理器。</strong>在整型寄存器和浮点寄存器文件之间移动时，会有一个 software-exposed 的延迟槽，这会影响性能。</li>
+  <li>在标准 ABI 层，<strong>2 个整型寄存器被保留给内核程序</strong> ($k0 和 $k1)，减少了用户程序可使用的寄存器数量。</li>
+  <li><strong>需要处理不对齐的 load/store 指令</strong>，消耗大量的操作码空间并且使实现复杂化。</li>
+  <li><strong>MIPS 架构缺失了整数的 compare&amp;branch 指令</strong>。受限于时代发展，设计师对时钟速率和 CPI 进行折中处理，在分支预测的出现和向静态CMOS逻辑迁移的今天看来，就不是很合适。</li>
+</ul>
+
+<p>抛开技术问题不提，MIPS 不适合用于许多场合，因为它是一个专有指令集。历史上，MIPS 的技术专利对非对齐的 load-store 指令已经阻止其他人完全实现 ISA 。虽然该专利已经过期，但没有他们的许可，对 MIPS 的兼容性可不能随便声称😓。</p>
+
+<h3 id="sparc">SPARC</h3>
+
+<h3 id="alpha">Alpha</h3>
+
+<h3 id="armv7">ARMv7</h3>
+
+<h3 id="armv8">ARMv8</h3>
+
+<h3 id="openrisc">OpenRISC</h3>
+
+<h3 id="80x86">80x86</h3>
+
+<p>Intel 的 8086 体系架构已经有四十多年的历史了，它是笔记本、台式机、服务器等领域最受欢迎的体系架构了。在嵌入式领域之外，几乎所有流行的软件都已经移植到 x86 ，或干脆为 x86 开发。相信这也是大家接触最多、学得最多的 ISA 了。80x86 的成功原因非常复杂：</p>
+
+<ul>
+  <li>在 IBM PC 诞生之初，这种架构的偶然发现的可用性</li>
+  <li>Intel 执着地专注于二进制兼容性</li>
+  <li>Intel 大胆的微架构实现</li>
+  <li>Intel 的尖端制造技术</li>
+</ul>
+
+<p>然而，ISA 的设计质量可不在其中之一🙂。在 1994 年，AMD 80x86 架构师 Mike Johnson 说过一句著名的话，“ x86 其实并没有那么复杂，它只是在很多地方不太讲道理”。现在看来，这句话看起来有点黑色幽默—— x86 已经变得既复杂又不讲道理了。x86 现有 (2015) 1300 条指令，无数的寻址模式，几十个专用寄存器，和多个地址转换方案。所以，不应该感到奇怪的是，AMD 的 K5 微体系结构中所有的 Intel 乱序执行引擎已经动态地将 x86 指令转换为一种更类似于 RISC 风格的内部格式。简单地来说，在 80x86 下又套了一层 RISC 指令。</p>
+
+<p>再来看看它多么不讲道理：</p>
+
+<ul>
+  <li>
+    <p><strong>ISA 不是典型的可虚拟化的</strong>。因为一些特权指令会在用户模式下 sliently fail ，而不是被 trapped 。VMware 的工程师们用复杂的动态二进制翻译软件解决了这个缺陷，这可是出了名的。</p>
+
+    <p>ISA 的指令长度是可变的，最长的指令有 15 个字节，然而数量较少的短操作码（可以明显降低代码规模的）已经被随意地使用了。例如，Intel 的 IA-32 作为 80x86 的 32 位化身，256 个 8 位操作码中有 6 个加速了二进制编码十进制数的操作——这些操作非常深奥，以至于 GNU 编译器甚至不发出这些指令😓。好在 x86-64 放弃了这个特别糟糕的东西，但对 8 位操作码空间的大量浪费仍然存在，包括检查已弃用的 x87 浮点单元中挂起的浮点异常的指令。</p>
+  </li>
+  <li>
+    <p><strong>ISA 的寄存器过少</strong>。32-bit 架构的 IA-32 只有 8 个 整数寄存器 (eax ebx ecx edx esi edi ebp esp) 。这导致堆栈溢出非常常见。为了减少流水线占用和数据缓存流量，最近 Intel 微体系结构使用了一个特殊功能单元来管理栈指针的值，并缓存堆栈的前几个字。</p>
+
+    <p>在认识到这一缺陷后，AMD 的 64-bit x86-64 将整数寄存器的数量增加了一倍，达到 16 个。即便如此，许多程序——尤其是那些从循环展开和软件流水等编译器优化中受益的程序，仍然面临着寄存器数量不足的压力。</p>
+  </li>
+  <li>
+    <p><strong>大多数寄存器在 ISA 中有特殊功能</strong>，这让寄存器数量不足的问题雪上加霜。例如，整数除法的两个源操作寄存器必须是 DX 和 AX 寄存器；移位运算中的移位量必须来自 CX 寄存器，当然 CX 寄存器还要用作字符串操作的循环变量；ESI 用作 load 寻址时的增量偏移，EDI 用作 store 寻址时的增量偏移。博主对这点深有体会，在本科学习微机原理写 x86 汇编语言时真是令人吐血。</p>
+  </li>
+  <li>
+    <p>更加糟糕的是，<strong>x86 的大多数指令是破坏性的</strong>——得出的结果往往会覆盖一个源寄存器。通常，为保存这一运算结果或者源操作数，往往需要加一个额外的移动指令。</p>
+  </li>
+  <li>
+    <p><strong>有些 ISA 的特性使得设计复杂</strong>，并且，这些复杂的设计并不能带来多少性能的提高，因为它们的考虑不周，导致编译器不敢做 aggressive 的优化。例如，x86 提供了一个有条件的 load 指令，但如果无条件的 load 会出现异常，却由<u>实现</u>来决定是否有条件版本也会出现异常。</p>
+
+    <p>认识到条件操作的低效率后，Intel 最近在一定程度上将比较指令和分支指令融合到内部 compare &amp; branch 操作中。</p>
+  </li>
+</ul>
+
+<p>这些 ISA 设计对静态代码的大小有很大的影响，这使得原本非常密集的指令编码完全消失：IA-32 只比固定宽度的 32-bit ARMv7 编码稍微密集一些，而 x86-64 则比 ARMv8 少一些。</p>
+
+<p>撇开这些缺陷不谈，x86 编码的程序通常比 RISC 架构使用更少的<strong>动态指令</strong>（指程序实际运行时执行的指令数），因为 x86 可以将多个原始操作编码在一起。例如，C 语言中的表达式 <code class="language-plaintext highlighter-rouge">x[2] += 13</code> 在 MIPS 中需要:</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">lw</span>    <span class="nv">r5</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="nv">r4</span><span class="p">)</span><span class="c1">;</span>
+<span class="nf">addiu</span> <span class="nv">r5</span><span class="p">,</span> <span class="nv">r5</span><span class="p">,</span> <span class="mi">13</span><span class="c1">;</span>
+<span class="nf">sw</span>    <span class="nv">r5</span><span class="p">,</span> <span class="mi">8</span><span class="p">(</span><span class="nv">r4</span><span class="p">)</span><span class="c1">;</span>
+</code></pre></div></div>
+
+<p>然而在 IA-32 中只需要 <code class="language-plaintext highlighter-rouge">addl 13, 8(eax)</code> 。这样的动态指令密度有其优点：减少了取指能量消耗。但增加了实现的复杂性。在本例中，常规流水线会出现两种结构冒险 (structural hazards)，因为指令会执行两次内存访问和两次加法。</p>
+
+<p>最后，80x86 是一种专用指令集，敢于尝试实现 x86 微处理器与 Intel 竞争的架构师们可能会面临法律障碍：Intel 一直以来都是好打官司的，即使他们自己也面临着反垄断危险。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>下图总结了之前提到的 ISA 中支持的特性。这些特性都是我们认为现代 ISA 应该重点关注的。所有 ISA 都至少缺少两个重要的技术特征。表现最好的 ARMv8 是一个私有标准😓。开放的 ISA —— SPARC 和 OpenRISC 缺少了太多重要的架构特性。除了有争议的 DEC Alpha 之外，所有 ISAs 都有可能极大增加实现复杂性，特别是对于高性能实现的复杂性的属性。</p>
+
+<p><img src="/assets/img/ISA.jpg" alt="" /></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#mips" class="page__taxonomy-item" rel="tag">MIPS</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#x86" class="page__taxonomy-item" rel="tag">x86</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-09-15T00:00:00+08:00">September 15, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Why+RISC-V+%3F%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F15%2FWHY-RISC-V.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F15%2FWHY-RISC-V.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F09%2F15%2FWHY-RISC-V.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/08/29/riscv-from-scratch-7.html" class="pagination--pager" title="RISC-V from Scratch 7
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/09/17/WHY-RISC-V-2.html" class="pagination--pager" title="Why RISC-V ?
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/09/15/WHY-RISC-V.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/09/15/WHY RISC-V"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

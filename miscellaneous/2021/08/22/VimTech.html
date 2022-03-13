@@ -1,0 +1,858 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>熟练使用 Vim - 峰子的乐园</title>
+<meta name="description" content="让手指跟上思维的步伐">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="熟练使用 Vim">
+<meta property="og:url" content="http://localhost:4000/miscellaneous/2021/08/22/VimTech.html">
+
+
+  <meta property="og:description" content="让手指跟上思维的步伐">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-08-22T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/miscellaneous/2021/08/22/VimTech.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          熟练使用 Vim
+
+        
+      </h1>
+      
+        <p class="page__lead">让手指跟上思维的步伐
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="熟练使用 Vim">
+    <meta itemprop="description" content="让手指跟上思维的步伐">
+    <meta itemprop="datePublished" content="2021-08-22T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#vim-小技巧">Vim 小技巧</a>
+    <ul>
+      <li><a href="#情景一自动写入文件头">情景一：自动写入文件头</a>
+        <ul>
+          <li><a href="#autocmd">autocmd</a></li>
+          <li><a href="#关于函数">关于函数</a></li>
+          <li><a href="#关于变量">关于变量</a></li>
+          <li><a href="#总结">总结</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="vim-小技巧">Vim 小技巧</h1>
+
+<h2 id="情景一自动写入文件头">情景一：自动写入文件头</h2>
+
+<p>在编写 C++ 程序时，总有一些东西会在每个头文件中出现，比如：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#ifndef &lt;_File_Name_MACRO_&gt;
+#define &lt;_File_Name_MACRO_&gt;
+</span><span class="c1">// ...</span>
+<span class="cp">#endif // &lt;_File_Name_MACRO_&gt;
+</span></code></pre></div></div>
+
+<p>每次键入这些信息会非常枯燥。但只要熟练使用 Vim ，就可以逃避这些烦人的操作。<em>如有需要，直接拉到最后复制粘贴</em>。</p>
+
+<h3 id="autocmd">autocmd</h3>
+
+<p>vim 中自带的自动命令，会在<strong>指定事件发生时</strong>自动执行。巧妙地利用自动命令就可以迅速完成上面场景的要求，将重复的操作自动化，提高编辑效率并减少人为操作的差错。</p>
+
+<p>举例来说，先定义以下函数，用于在文件中插入当前日期：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:function DateInsert<span class="o">()</span>
+:    <span class="nv">$read</span> <span class="o">!</span><span class="nb">date</span>
+:endfunction
+</code></pre></div></div>
+
+<p>使用以下命令，可以手动调用此函数：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:call DateInsert<span class="o">()</span>
+</code></pre></div></div>
+
+<p>而若使用自动命令，则可以在保存文件时自动执行函数，其中 <code class="language-plaintext highlighter-rouge">FileWritePre</code> 是 vim 中的内置事件：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:autocmd FileWritePre <span class="k">*</span> :call DateInsert<span class="o">()</span>
+</code></pre></div></div>
+
+<p>也可以用简写 <code class="language-plaintext highlighter-rouge">:au</code> 代替 <code class="language-plaintext highlighter-rouge">:autocmd</code>。内置事件有很多种，参考<a href="https://zhuanlan.zhihu.com/p/98360630">知乎专栏</a>罗列在此，官方文档可见 <a href="http://vimdoc.sourceforge.net/htmldoc/autocmd.html">Vim Doc</a>：</p>
+
+<p><img src="/assets/img/vim_event.jpg" alt="" /></p>
+
+<hr />
+
+<p>再回到情景一的问题中，如果要想在创建新的 <code class="language-plaintext highlighter-rouge">.hpp</code> 文件后，让 vim 自动添加文件头，应当在 <code class="language-plaintext highlighter-rouge">vimrc</code> 中添加：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 自定义命令，发生在编辑新的文件时，且文件名后缀为hpp，需要执行"call AddHPPHeader"</span>
+autocmd BufNewFile <span class="k">*</span>.hpp <span class="nb">exec</span> <span class="s2">":call AddHPPHeader()"</span>
+</code></pre></div></div>
+
+<h3 id="关于函数">关于函数</h3>
+
+<p>那么，<code class="language-plaintext highlighter-rouge">AddHPPHeader</code> 函数应该怎么写呢？首先，在 <code class="language-plaintext highlighter-rouge">vimrc</code> 中，需要定义函数 <code class="language-plaintext highlighter-rouge">AddHPPHeader</code> ：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>func AddHPPHeader<span class="o">()</span>
+	<span class="c"># ...</span>
+endfunc
+</code></pre></div></div>
+
+<p>函数内，第一步就是判断文件类型是否真的为 <code class="language-plaintext highlighter-rouge">.hpp</code>。使用 <code class="language-plaintext highlighter-rouge">expand()</code> 内置函数可以对当前文件进行分类。<code class="language-plaintext highlighter-rouge">expand("%:e")</code> 中，<code class="language-plaintext highlighter-rouge">%</code> 表示当前文件名，而 <code class="language-plaintext highlighter-rouge">:e</code> 表示只有扩展名，于是该函数返回的是当前文件名的扩展名。如果文件是 <code class="language-plaintext highlighter-rouge">hpp</code>，就添加文件头：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if </span><span class="nb">expand</span><span class="o">(</span><span class="s2">"%:e"</span><span class="o">)</span> <span class="o">==</span> <span class="s1">'hpp'</span>
+	<span class="c"># 先限定在文件的第一行</span>
+	call setline<span class="o">(</span>1, <span class="s2">"/** "</span><span class="o">)</span>
+	<span class="c"># 再一行一行地添加内容</span>
+</code></pre></div></div>
+
+<p>添加文件头内容时，有很多办法，最简单的就是使用 <code class="language-plaintext highlighter-rouge">setline</code> 函数一行一行地写：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+1, <span class="s2">"#ifndef XXXX"</span><span class="o">)</span>
+call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+2, <span class="s2">"#define XXXX"</span><span class="o">)</span>
+call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+5, <span class="s2">"#endif // XXXX"</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>最简单的方法往往不够灵活，试想若换一个文件，宏定义的具体内容必然需要改变，那岂不是又要修改 <code class="language-plaintext highlighter-rouge">vimrc</code> 了？</p>
+
+<p>使用变量才能保证宏定义可以随着文件名等条件变化。</p>
+
+<h3 id="关于变量">关于变量</h3>
+
+<p>vim 中，变量使用 <code class="language-plaintext highlighter-rouge">let</code> 进行<strong>赋值</strong>，通过 <code class="language-plaintext highlighter-rouge">unlet</code> <strong>销毁变量</strong> ，可用 <code class="language-plaintext highlighter-rouge">echo</code> 打印变量的值。对于 Vim 选项还可用 <code class="language-plaintext highlighter-rouge">set</code> 来更方便地操作，比如 <code class="language-plaintext highlighter-rouge">set {option}</code>, <code class="language-plaintext highlighter-rouge">set no{option}</code>, <code class="language-plaintext highlighter-rouge">set {option}?</code>。</p>
+
+<p>与 bash 中的变量类似，普通变量可以直接引用，环境变量要加前缀 <code class="language-plaintext highlighter-rouge">$</code>、寄存器变量要加前缀 <code class="language-plaintext highlighter-rouge">@</code>、Vim 选项要加前缀 <code class="language-plaintext highlighter-rouge">&amp;</code>。如，在正常模式下：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:let str <span class="o">=</span> <span class="s2">"Hello World"</span>
+:echo str
+:let <span class="nv">$PATH</span> .<span class="o">=</span> <span class="s1">':/foo:/bar'</span>
+:echo <span class="nv">$PATH</span>
+<span class="c"># 打印当前文件名</span>
+<span class="nb">echo</span> @%
+<span class="c"># 把刚才拷贝的内容放到 a 寄存器中</span>
+<span class="nb">let</span> @a <span class="o">=</span> @<span class="s2">"
+</span></code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">.=</code> 运算符在 Vim 中用来做字符串拼接并赋值。</p>
+
+<p>Vim 选项是控制着 Vim 编辑器行为的一些变量，比如是否显示行号，使用哪种剪切板。 引用选项变量时需要添加 <code class="language-plaintext highlighter-rouge">&amp;</code> 前缀。例如：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 显示行号</span>
+:let &amp;number <span class="o">=</span> 1
+<span class="c"># 不显示行号</span>
+:let &amp;number <span class="o">=</span> 1
+</code></pre></div></div>
+
+<p>Vim 提供了 <code class="language-plaintext highlighter-rouge">set</code> 命令来更方便地操作选项变量，网上相关内容很多，这里不再赘述。</p>
+
+<p>变量作用域值得一提，变量默认作用域取决于定义的位置，函数内则为函数作用域，外部则为全局变量。 赋值和引用变量时可以使用 <code class="language-plaintext highlighter-rouge">b:</code>,<code class="language-plaintext highlighter-rouge">g:</code>,<code class="language-plaintext highlighter-rouge">l:</code>,<code class="language-plaintext highlighter-rouge">t:</code> 等前缀来指定要操作哪个作用域的变量。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>变量作用域</th>
+      <th>简写</th>
+      <th>描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>buffer-var</td>
+      <td>b:</td>
+      <td>Local to the current buffer</td>
+    </tr>
+    <tr>
+      <td>window-var</td>
+      <td>w:</td>
+      <td>Local to the current window</td>
+    </tr>
+    <tr>
+      <td>tabpage-var</td>
+      <td>t:</td>
+      <td>Local to the current tab page</td>
+    </tr>
+    <tr>
+      <td>global-var</td>
+      <td>g:</td>
+      <td>Global variable</td>
+    </tr>
+    <tr>
+      <td>local-var</td>
+      <td>l:</td>
+      <td>Local to a function</td>
+    </tr>
+    <tr>
+      <td>vim-var</td>
+      <td>v:</td>
+      <td>Global, predefined by Vim</td>
+    </tr>
+    <tr>
+      <td>function-arg</td>
+      <td>a:</td>
+      <td>Function argument (only inside function)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>回到我们要解决的问题上来，先定义一个 Vim 变量，通常宏定义都是大写，因此需要用到 <code class="language-plaintext highlighter-rouge">toupper</code> 函数将小写的文件名变为大写。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">let </span>str <span class="o">=</span> <span class="s2">"Hello, Vim"</span>
+<span class="nb">echo </span>toupper<span class="o">(</span>str<span class="o">)</span>
+<span class="c"># 输出为 HELLO, VIM</span>
+</code></pre></div></div>
+
+<p>考虑到，文件名路径通常包含 <code class="language-plaintext highlighter-rouge">/</code> 和 <code class="language-plaintext highlighter-rouge">.</code> 等符号，这对宏定义来说是非法的。要使用 <code class="language-plaintext highlighter-rouge">substitute</code> 将非法符号替换为 <code class="language-plaintext highlighter-rouge">_</code> 。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>substitute<span class="o">(</span><span class="nb">expand</span><span class="o">(</span><span class="s1">'%'</span><span class="o">)</span>, <span class="s2">"[/.]"</span>, <span class="s2">"_"</span>, <span class="s2">"g"</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>第一个参数是要修改的字符串，第二个是 pattern，第三个是替换的子串，第四个是替换的 flags，上面这句话将文件名路径中的 <code class="language-plaintext highlighter-rouge">/</code> 和 <code class="language-plaintext highlighter-rouge">.</code> 都替换为 <code class="language-plaintext highlighter-rouge">_</code> 。</p>
+
+<p>综合以上几点，可以如下定义 Vim 变量：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">let </span><span class="nv">macro</span><span class="o">=</span> <span class="s2">"_DF_"</span>.toupper<span class="o">(</span>substitute<span class="o">(</span><span class="nb">expand</span><span class="o">(</span><span class="s2">"%"</span><span class="o">)</span>, <span class="s2">"[/.]"</span>, <span class="s2">"_"</span>, <span class="s2">"g"</span><span class="o">))</span>.<span class="s2">"_"</span>
+</code></pre></div></div>
+
+<p>其中，<code class="language-plaintext highlighter-rouge">.</code> 在 Vim 中充当字符串连接符。如果当前文件名为 <code class="language-plaintext highlighter-rouge">process.hpp</code> ，那么 <code class="language-plaintext highlighter-rouge">macro</code> 变量的值为 <code class="language-plaintext highlighter-rouge">_DF_PROCESS_HPP_</code>。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>最后，我们得到了一个简短有用的 Vim 自动化脚本，可以有效地解决情景一提出的问题。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>autocmd BufNewFile <span class="k">*</span>.hpp <span class="nb">exec</span> <span class="s2">":call AddHPPHeader()"</span>
+
+func AddHPPHeader<span class="o">()</span>
+	<span class="k">if </span><span class="nb">expand</span><span class="o">(</span><span class="s2">"%:e"</span><span class="o">)</span> <span class="o">==</span> <span class="s1">'hpp'</span>
+        <span class="c"># 先限定在文件的第一行</span>
+        call setline<span class="o">(</span>1, <span class="s2">"/** "</span><span class="o">)</span>
+        <span class="c"># 再一行一行地添加内容</span>
+        <span class="nb">let </span><span class="nv">macro</span><span class="o">=</span> <span class="s2">"_DF_"</span><span class="nb">.</span>
+        	toupper<span class="o">(</span>substitute<span class="o">(</span><span class="nb">expand</span><span class="o">(</span><span class="s2">"%"</span><span class="o">)</span>, <span class="s2">"[/.]"</span>, <span class="s2">"_"</span>, <span class="s2">"g"</span><span class="o">))</span>.<span class="s2">"_"</span>
+        normal o
+        call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>, <span class="s2">"#ifndef "</span>.macro<span class="o">)</span>
+        call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+1, <span class="s2">"#define "</span>.macro<span class="o">)</span>
+        call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+4, <span class="s2">"#endif // "</span>.macro<span class="o">)</span>
+endfunc
+</code></pre></div></div>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#vim" class="page__taxonomy-item" rel="tag">Vim</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#miscellaneous" class="page__taxonomy-item" rel="tag">Miscellaneous</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-08-22T00:00:00+08:00">August 22, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E7%86%9F%E7%BB%83%E4%BD%BF%E7%94%A8+Vim%20http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/csapp/2021/07/05/CSAPPLab05.html" class="pagination--pager" title="深入理解计算机系统之动态存储分配器实现
+">previous</a>
+    
+    
+      <a href="/cpp/2021/08/23/non-trivial-thing-in-C.html" class="pagination--pager" title="C语言中容易忽视的小知识
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/miscellaneous/2021/08/22/VimTech.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/miscellaneous/2021/08/22/VimTech"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

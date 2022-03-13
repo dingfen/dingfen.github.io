@@ -1,0 +1,981 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>深入理解 Gem5 之二 - 峰子的乐园</title>
+<meta name="description" content="关于gem5中序列化等实现">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="深入理解 Gem5 之二">
+<meta property="og:url" content="http://localhost:4000/cpp/2022/03/08/gem5-2.html">
+
+
+  <meta property="og:description" content="关于gem5中序列化等实现">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2022-03-08T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/cpp/2022/03/08/gem5-2.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          深入理解 Gem5 之二
+
+        
+      </h1>
+      
+        <p class="page__lead">关于gem5中序列化等实现
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="深入理解 Gem5 之二">
+    <meta itemprop="description" content="关于gem5中序列化等实现">
+    <meta itemprop="datePublished" content="2022-03-08T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#深入理解-gem5-之二">深入理解 Gem5 之二</a>
+    <ul>
+      <li><a href="#drain">Drain</a>
+        <ul>
+          <li><a href="#drainstate">DrainState</a></li>
+          <li><a href="#drain-的工作流程">drain 的工作流程</a></li>
+          <li><a href="#drainmanager">DrainManager</a></li>
+          <li><a href="#drainable">Drainable</a></li>
+        </ul>
+      </li>
+      <li><a href="#serialization">Serialization</a>
+        <ul>
+          <li><a href="#检查点创建与使用">检查点创建与使用</a></li>
+          <li><a href="#checkpointin">CheckPointIn</a></li>
+          <li><a href="#serializable">Serializable</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="深入理解-gem5-之二">深入理解 Gem5 之二</h1>
+
+<h2 id="drain">Drain</h2>
+
+<h3 id="drainstate">DrainState</h3>
+
+<p>之前的博文详细解释了事件在 gem5 的作用以及其实现机制。本文开始介绍 gem5 中其他比较重要的机制。</p>
+
+<p>当 gem5 正常运行时，模拟器中的对象在一开始时都处于 <code class="language-plaintext highlighter-rouge">DrainState::Running</code> 状态，并用事件驱动模拟器的运行，这会导致很多对象在运行时处于似是而非的状态——部分信号正在传递，部分程序正在运行，缓冲区还待处理等。然而，模拟器总要在某些时刻有所停顿——准备快照（snapshot）、准备移交 CPU 等。这时候就需要引入 drain 的概念，将这些中间态清除。<strong>drain 指系统清空 SimObject 对象中内部状态的过程</strong>。通常，drain 会在序列化、创建检查点、切换 CPU 模型或 timing 模型前使用。对象会调用 <code class="language-plaintext highlighter-rouge">drain()</code> 函数将对象转移到 draining 或 drained 状态。然后进入 drained 状态。下面的代码介绍了四种 drain 状态。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">enum</span> <span class="k">class</span> <span class="nc">DrainState</span> <span class="p">{</span>
+    <span class="n">Running</span><span class="p">,</span>  <span class="cm">/**&lt; Running normally */</span>
+    <span class="n">Draining</span><span class="p">,</span> <span class="cm">/**&lt; Draining buffers pending serialization/handover */</span>
+    <span class="n">Drained</span><span class="p">,</span>  <span class="cm">/**&lt; Buffers drained, ready for serialization/handover */</span>
+    <span class="n">Resuming</span><span class="p">,</span> <span class="cm">/**&lt; Transient state while the simulator is resuming */</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>当某一个对象进入 drained 状态（<code class="language-plaintext highlighter-rouge">drain::drain()</code> 返回 <code class="language-plaintext highlighter-rouge">DrainState::drained</code> 时表示该对象已经 drain 干净了）后，模拟仍会继续，直到所有对象都进入 drained 状态。如果该对象需要更多的时间来处理，那么它返回 <code class="language-plaintext highlighter-rouge">DrainState::draining</code> 状态。注意：一个对象的 drain 状态可能会被其他状态干扰，因此模拟器需要不停地重复 drain 来保证所有对象已经进入 <code class="language-plaintext highlighter-rouge">DrainState::drained</code> 状态。当系统不再需要所有对象维持在 drained 状态时，会调用 <code class="language-plaintext highlighter-rouge">resume()</code> 函数，它将让所有对象调用 <code class="language-plaintext highlighter-rouge">drainResume()</code> 返回到正常 <code class="language-plaintext highlighter-rouge">DrainState::Running</code> 的状态。注意，在恢复过程中可能会创建新的 Drainable 对象。在这种情况下，新对象将在 Resuming 状态下创建，然后再恢复到正常。</p>
+
+<h3 id="drain-的工作流程">drain 的工作流程</h3>
+
+<p>根据 gem5 的文档以及源文件中的注释，总结一下 drain 工作的主要流程：</p>
+
+<ol>
+  <li>调用 <code class="language-plaintext highlighter-rouge">DrainManager::tryDrain()</code> 函数，该函数会让每个对象调用 <code class="language-plaintext highlighter-rouge">Drainable::drain()</code> 函数。如果它们全部返回 true，则 drain 已经完成。否则，DrainManager 将跟踪仍在 draining 的对象。</li>
+  <li>模拟器会继续仿真。当一个对象完成 drain 时，它会调用 <code class="language-plaintext highlighter-rouge">DrainManager::signalDrainDone()</code> 函数，向 DrainManager 报告 drain 已完成。</li>
+  <li>检查是否有对象仍然需要 drain（<code class="language-plaintext highlighter-rouge">DrainManager::tryDrain()</code>），如果是，重复上面的过程。</li>
+  <li>一旦模拟器中的所有对象的内部状态被清空，这些对象就被序列化到磁盘上，或者发生配置更改：切换CPU模型或更改 timing 模型，总之做一些只能在 drained 后做的事情。</li>
+  <li>完成后，调用 <code class="language-plaintext highlighter-rouge">DrainManager::resume()</code> 函数，该函数会让所有对象调用 <code class="language-plaintext highlighter-rouge">Drainable::drainResume()</code>，返回到正常运行的状态。</li>
+</ol>
+
+<p>接下来，我们随着代码逐步分析上面的工作流程：</p>
+
+<h3 id="drainmanager">DrainManager</h3>
+
+<p>DrainManager 类负责管理全局对象的 drain 工作，显然它必须是个单例。它内部维护了一个包含全局的可 Drainable 的对象数组 _allDrainable，以方便管理所有对象的 drain 工作，并用一个状态变量 _state 指示模拟器的状态。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DrainManager</span> <span class="p">{</span>
+  <span class="nl">public:</span>
+    <span class="cm">/** singleton DrainManager instance */</span>
+    <span class="k">static</span> <span class="n">DrainManager</span> <span class="o">&amp;</span><span class="n">instance</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_instance</span><span class="p">;</span> <span class="p">}</span>
+  <span class="nl">private:</span>
+    <span class="cm">/** Global simulator drain state */</span>
+    <span class="n">DrainState</span> <span class="n">_state</span><span class="p">;</span>
+    <span class="cm">/** Lock protecting the set of drainable objects */</span>
+    <span class="k">mutable</span> <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">globalLock</span><span class="p">;</span>
+    <span class="cm">/** Set of all drainable objects */</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Drainable</span> <span class="o">*&gt;</span> <span class="n">_allDrainable</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>从代码上看，第一步中的 <code class="language-plaintext highlighter-rouge">tryDrain()</code> 函数实现其实很简单，就是通过 for 循环让每个对象调用 <code class="language-plaintext highlighter-rouge">Drainable::drain()</code> 函数，记录并输出 drain 失败的对象（若存在的话），统计其个数，必要时需请求下一轮 drain。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// in DrainManager:  </span>
+  <span class="k">public</span><span class="o">:</span>
+    <span class="kt">bool</span> <span class="nf">tryDrain</span><span class="p">()</span> <span class="p">{</span>
+      <span class="c1">// 1. change simulator state to Draining</span>
+      <span class="n">_state</span> <span class="o">=</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Draining</span><span class="p">;</span>
+      <span class="c1">// 2. let all Drainable objects to drain, call dmDrain()</span>
+      <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="o">*</span><span class="n">obj</span> <span class="o">:</span> <span class="n">_allDrainable</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">DrainState</span> <span class="n">status</span> <span class="o">=</span> <span class="n">obj</span><span class="o">-&gt;</span><span class="n">dmDrain</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">debug</span><span class="o">::</span><span class="n">Drain</span> <span class="o">&amp;&amp;</span> <span class="n">status</span> <span class="o">!=</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Drained</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">Named</span> <span class="o">*</span><span class="n">temp</span> <span class="o">=</span> <span class="k">dynamic_cast</span><span class="o">&lt;</span><span class="n">Named</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+                <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Drain</span><span class="p">,</span> <span class="s">"Failed to drain %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">temp</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">());</span>
+        <span class="p">}</span>
+        <span class="n">_count</span> <span class="o">+=</span> <span class="n">status</span> <span class="o">==</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Drained</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Drain done.</span>
+        <span class="n">_state</span> <span class="o">=</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Drained</span><span class="p">;</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Drain</span><span class="p">,</span> <span class="s">"Need another drain cycle. %u/%u objects not ready.</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+                <span class="n">_count</span><span class="p">,</span> <span class="n">drainableCount</span><span class="p">());</span>
+        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>题外话，Named 类为 SimObject 对象提供了名字，所有 SimObject 对象都继承了该类。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/** Interface for things with names. */</span>
+<span class="k">class</span> <span class="nc">Named</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">_name</span><span class="p">;</span>
+  <span class="nl">public:</span>
+    <span class="n">Named</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">name_</span><span class="p">)</span> <span class="o">:</span> <span class="n">_name</span><span class="p">(</span><span class="n">name_</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+    <span class="k">virtual</span> <span class="o">~</span><span class="n">Named</span><span class="p">()</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+    <span class="k">virtual</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">name</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_name</span><span class="p">;</span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>此外，在创建一个可 Drainable 的类对象时，DrainManager 类通过注册机制来管理这些对象：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">DrainManager</span><span class="o">::</span><span class="n">registerDrainable</span><span class="p">(</span><span class="n">Drainable</span> <span class="o">*</span><span class="n">obj</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">globalLock</span><span class="p">);</span>
+  <span class="n">_allDrainable</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">DrainManager</span><span class="o">::</span><span class="n">unregisterDrainable</span><span class="p">(</span><span class="n">Drainable</span> <span class="o">*</span><span class="n">obj</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">globalLock</span><span class="p">);</span>
+  <span class="k">auto</span> <span class="n">o</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">find</span><span class="p">(</span><span class="n">_allDrainable</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">_allDrainable</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">obj</span><span class="p">);</span>
+  <span class="n">_allDrainable</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span><span class="n">o</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="drainable">Drainable</h3>
+
+<p>至于 Drainable 类，它是 SimObject 类中的一个基类。Drainable 的所有派生类都是可 Drain 的，<code class="language-plaintext highlighter-rouge">drain()</code> 函数要求所有派生类都必须实现，<code class="language-plaintext highlighter-rouge">dmDrain()</code> 函数是为 DrainManager 类方便调用 <code class="language-plaintext highlighter-rouge">drain()</code> 而实现的。Drainable 类包括了一个指示状态的变量以及指向全局 DrainManager 类的指针（引用）。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Drainable</span> <span class="p">{</span>
+  <span class="k">friend</span> <span class="k">class</span> <span class="nc">DrainManager</span><span class="p">;</span>
+  <span class="nl">protected:</span>
+    <span class="k">virtual</span> <span class="n">DrainState</span> <span class="n">drain</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">virtual</span> <span class="kt">void</span> <span class="n">drainResume</span><span class="p">()</span> <span class="p">{};</span>
+  <span class="nl">private:</span>
+    <span class="cm">/** interface for DrainManager */</span>
+    <span class="n">DrainState</span> <span class="n">dmDrain</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="n">dmDrainResume</span><span class="p">();</span>
+    <span class="cm">/** Convenience reference to the global DrainManager */</span>
+    <span class="n">DrainManager</span> <span class="o">&amp;</span><span class="n">_drainManager</span><span class="p">;</span>
+    <span class="cm">/**
+     * Current drain state of the object. Needs to be mutable since
+     * objects need to be able to signal that they have transitioned
+     * into a Drained state even if the calling method is const.
+     */</span>
+    <span class="k">mutable</span> <span class="n">DrainState</span> <span class="n">_drainState</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>当一个对象完成 drain 后，调用 <code class="language-plaintext highlighter-rouge">signalDrainDone()</code> 函数，该函数会通知 DrainManager 其 drain 工作已完成。若 <code class="language-plaintext highlighter-rouge">tryDrain()</code> 函数返回值为 false，那么就需要不停地调用 <code class="language-plaintext highlighter-rouge">tryDrain()</code> ，此时模拟仍将继续。直到所有对象完成 drain。此时，DrainManager 会退出模拟循环（<code class="language-plaintext highlighter-rouge">exitSimLoop()</code>），开始进行第四步中所说的其他操作。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">signalDrainDone</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">_drainState</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Running</span><span class="p">:</span>
+    <span class="k">case</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Drained</span><span class="p">:</span>
+    <span class="k">case</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Resuming</span><span class="p">:</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Draining</span><span class="p">:</span>
+      <span class="n">_drainState</span> <span class="o">=</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Drained</span><span class="p">;</span>
+      <span class="n">_drainManager</span><span class="p">.</span><span class="n">signalDrainDone</span><span class="p">();</span>
+   <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="err">}</span>
+
+<span class="kt">void</span> <span class="n">DrainManager</span><span class="o">::</span><span class="n">signalDrainDone</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">--</span><span class="n">_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Drain</span><span class="p">,</span> <span class="s">"All %u objects drained..</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">drainableCount</span><span class="p">());</span>
+    <span class="n">exitSimLoop</span><span class="p">(</span><span class="s">"Finished drain"</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>第五步中，要让系统返回正常运行状态。DrainManager 类要使用 <code class="language-plaintext highlighter-rouge">DrainManager::resume()</code> 函数，将 drained 系统返回到正常状态：for 循环中让每个对象调用 <code class="language-plaintext highlighter-rouge">dmDrainResume()</code> 函数。<code class="language-plaintext highlighter-rouge">dmDrainResume()</code> 就是对 <code class="language-plaintext highlighter-rouge">drainResume()</code> 的包装。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/** Resume normal simulation in a Drained system. */</span>
+<span class="kt">void</span> <span class="n">DrainManager</span><span class="o">::</span><span class="n">resume</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// New objects (i.e., objects created while resuming) will</span>
+  <span class="c1">// inherit the Resuming state from the DrainManager.</span>
+  <span class="n">_state</span> <span class="o">=</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Resuming</span><span class="p">;</span>
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="o">*</span><span class="n">obj</span> <span class="o">:</span> <span class="n">_allDrainable</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">obj</span><span class="o">-&gt;</span><span class="n">drainState</span><span class="p">()</span> <span class="o">!=</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Running</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">assert</span><span class="p">(</span><span class="n">obj</span><span class="o">-&gt;</span><span class="n">drainState</span><span class="p">()</span> <span class="o">==</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Drained</span> <span class="o">||</span>
+           <span class="n">obj</span><span class="o">-&gt;</span><span class="n">drainState</span><span class="p">()</span> <span class="o">==</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Resuming</span><span class="p">);</span>
+        <span class="n">obj</span><span class="o">-&gt;</span><span class="n">dmDrainResume</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">allInState</span><span class="p">(</span><span class="n">DrainState</span><span class="o">::</span><span class="n">Running</span><span class="p">));</span>
+  <span class="n">_state</span> <span class="o">=</span> <span class="n">DrainState</span><span class="o">::</span><span class="n">Running</span><span class="p">;</span>   
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="serialization">Serialization</h2>
+
+<p><strong>Serialization（序列化）指将对象转换成二进制</strong>，以方便长期保存、网络传递等。而 deserialization（反序列化）就是将二进制转换成对象。当前文提到的 drain 操作完成后，通常会跟上对象的序列化操作，将对象转换成二进制，用作快照（snapshot）保存或切换模型。在 gem5 中，Serializable 类为 SimObject 类提供序列化支持。Serializable 类通常用于创建检查点（Checkpoints）。<strong>所谓检查点其本质上是模拟的快照</strong>。当模拟需要非常长的时间时（几乎总是如此），用户可以使用检查点，在自己感兴趣的时间处加上检查点，以便稍后使用 DerivO3CPU 从该检查点恢复。</p>
+
+<h3 id="检查点创建与使用"><a href="https://www.gem5.org/documentation/general_docs/checkpoints/">检查点创建与使用</a></h3>
+
+<p>通常，检查点会保存在新的文件夹目录 cpt.TICKNUMBER，其中 TICKNUMBER 指 要插入的检查点的 tick 时间值。要创建新的检查点，有以下几种方法：</p>
+
+<ul>
+  <li>启动 gem5 模拟器后，执行 m5 的命令插入检查点。</li>
+  <li>一个伪指令可以用来创建检查点。例如，可以在应用程序中包含这个pseduo指令，以便当应用程序达到某种状态时创建检查点</li>
+  <li>使用 –take-checkpoints 可以周期性的输出检查点，–checkpoint-at-end 用于在模拟后创建检查点</li>
+</ul>
+
+<p>使用Ruby内存模型创建检查点时，必须使用MOESI锤协议。这是因为检查指向正确的内存状态要求缓存刷新到内存中。这种刷新操作目前仅支持MOESI锤协议。</p>
+
+<p>从检查点恢复通常可以很容易地从命令行完成:</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>build/&lt;ISA&gt;/gem5.debug configs/example/fs.py <span class="nt">-r</span> N
+OR
+build/&lt;ISA&gt;/gem5.debug configs/example/fs.py <span class="nt">--checkpoint-restore</span><span class="o">=</span>N
+</code></pre></div></div>
+
+<p>整数N表示检查点编号，通常从1开始递增。</p>
+
+<h3 id="checkpointin">CheckPointIn</h3>
+
+<p>深入理解序列化的实现离不开对 CheckpointIn 类的剖析。该类主要负责完成检查点的创建与恢复工作。_cptDir 就是检查点保存的目录位置，db 表示 ini 文件。<a href="https://en.wikipedia.org/wiki/INI_file">ini 文件</a>就是由很多 section 组成的初始化文件，其中每个 section 包含有若干 key-value 的 entry。通过 ini 文件以及 IniFile 类，检查点将模拟时的对象保存在了磁盘中，这便是序列化。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CheckpointIn</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="n">IniFile</span> <span class="n">db</span><span class="p">;</span>
+    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">_cptDir</span><span class="p">;</span>
+    <span class="c1">// current directory we're serializing into.</span>
+    <span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">currentDirectory</span><span class="p">;</span>
+    <span class="c1">// Filename for base checkpoint file within directory.</span>
+    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">baseFilename</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>IniFile 类详细实现了 ini 文件的读写，section 的查询、访问等，这不是本博客的主题，不在详述。</p>
+
+<h3 id="serializable">Serializable</h3>
+
+<p>任何继承并实现此接口的对象都可以包含在 gem5 的检查点系统中。所有支持序列化的对象都应该继承该类。继承该类对象可大致分为两类：1）真正的 SimObjects（继承了 SimObject 类，SimObject 类继承了 Serializable 类）和 2）未继承 SimObject 类，仅继承 Serializable 类的普通对象。</p>
+
+<p>SimObjects 可通过 <code class="language-plaintext highlighter-rouge">SimObject::serializeAll()</code> 函数自动完成序列化，写入到自己的 sections 中。前文提到，SimObjects 也可以包含其他未继承 SimObject 类的可序列化对象。然而，这些“普通”的可序列化成员不会自动序列化，因为它们没有 <code class="language-plaintext highlighter-rouge">SimObject::serializeAll()</code> 函数。因此有这些对象的类在实现时需要主动调用其序列化/反序列化函数，以完成序列化。</p>
+
+<p>其中，首选方法是使用 <code class="language-plaintext highlighter-rouge">serializeSection()</code> 函数，这会将序列化对象放入当前 section（此section 就是 ini 文件中的section） 中的新 subsection。另一种选择是直接调用 <code class="language-plaintext highlighter-rouge">serialize()</code> ，它将对象序列化到当前 section，但不推荐使用后者，因为这会导致可能存在的命名冲突。下面代码给出了 Serializable 类中最重要的函数。<code class="language-plaintext highlighter-rouge">serialize()</code> 和 <code class="language-plaintext highlighter-rouge">unserializa()</code> 函数都需要子类实现。<code class="language-plaintext highlighter-rouge">serializeAll()</code> 函数，从后往前（why?）遍历所有的对象，调用 <code class="language-plaintext highlighter-rouge">serializeSection()</code> 函数将它们序列化。因此，不应在其他任何地方对 SimObject 对象调用序列化函数；否则，这些对象将被不必要地序列化多次。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* In class SimObject
+* Create a checkpoint by serializing all SimObjects in the system.*/</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">serializeAll</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">cpt_dir</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">ofstream</span> <span class="n">cp</span><span class="p">;</span>
+  <span class="n">Serializable</span><span class="o">::</span><span class="n">generateCheckpointOut</span><span class="p">(</span><span class="n">cpt_dir</span><span class="p">,</span> <span class="n">cp</span><span class="p">);</span>
+  <span class="n">SimObjectList</span><span class="o">::</span><span class="n">reverse_iterator</span> <span class="n">ri</span> <span class="o">=</span> <span class="n">simObjectList</span><span class="p">.</span><span class="n">rbegin</span><span class="p">();</span>
+  <span class="n">SimObjectList</span><span class="o">::</span><span class="n">reverse_iterator</span> <span class="n">rend</span> <span class="o">=</span> <span class="n">simObjectList</span><span class="p">.</span><span class="n">rend</span><span class="p">();</span>
+  <span class="k">for</span> <span class="p">(;</span> <span class="n">ri</span> <span class="o">!=</span> <span class="n">rend</span><span class="p">;</span> <span class="o">++</span><span class="n">ri</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">SimObject</span> <span class="o">*</span><span class="n">obj</span> <span class="o">=</span> <span class="o">*</span><span class="n">ri</span><span class="p">;</span>
+    <span class="c1">// This works despite name() returning a fully qualified name</span>
+    <span class="c1">// since we are at the top level.</span>
+    <span class="n">obj</span><span class="o">-&gt;</span><span class="n">serializeSection</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">obj</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">());</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">Serializable</span> <span class="p">{</span>
+  <span class="cm">/* Serialize an object
+   * Output an object's state into the current checkpoint section. */</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">serialize</span><span class="p">(</span><span class="n">CheckpointOut</span> <span class="o">&amp;</span><span class="n">cp</span><span class="p">)</span> <span class="k">const</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    
+  <span class="cm">/* Unserialize an object
+   * Read an object's state from the current checkpoint section. */</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">unserialize</span><span class="p">(</span><span class="n">CheckpointIn</span> <span class="o">&amp;</span><span class="n">cp</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  
+  <span class="cm">/* Serialize an object into a new section in a checkpoint 
+   * and calls serialize() to serialize the current object into
+   * the new section. */</span>
+  <span class="kt">void</span> <span class="n">serializeSection</span><span class="p">(</span><span class="n">CheckpointOut</span> <span class="o">&amp;</span><span class="n">cp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="nl">private:</span>
+    <span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">stack</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">path</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意到 Serializable 类中仅维护了一个路径堆栈 path，实时记录对象所在的位置。下面代码可以看出，当新的 section 被创建后，其名字会被压栈进入到 path 中。ScopedCheckpointSection 类是为命名 section 时更加方便：section 名字便是该对象所在的系统位置。例如，Section1.Section2.Section3 表示对象从内到外处于Section3 Section2 Section1 中。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Serializable</span><span class="o">::</span><span class="n">ScopedCheckpointSection</span><span class="p">(</span><span class="n">CP</span> <span class="o">&amp;</span><span class="n">cp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">pushName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+  <span class="n">nameOut</span><span class="p">(</span><span class="n">cp</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">Serializable</span><span class="o">::</span><span class="n">ScopedCheckpointSection</span><span class="o">::</span><span class="n">pushName</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">obj_name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">path</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+    <span class="n">path</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">obj_name</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">path</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">csprintf</span><span class="p">(</span><span class="s">"%s.%s"</span><span class="p">,</span> <span class="n">path</span><span class="p">.</span><span class="n">top</span><span class="p">(),</span> <span class="n">obj_name</span><span class="p">));</span>
+  <span class="p">}</span>
+  <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Checkpoint</span><span class="p">,</span> <span class="s">"ScopedCheckpointSection::pushName: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">obj_name</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+<span class="kt">void</span> <span class="n">Serializable</span><span class="o">::</span><span class="n">ScopedCheckpointSection</span><span class="o">::</span><span class="n">nameOut</span><span class="p">(</span><span class="n">CheckpointOut</span> <span class="o">&amp;</span><span class="n">cp</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Checkpoint</span><span class="p">,</span> <span class="s">"ScopedCheckpointSection::nameOut: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+          <span class="n">Serializable</span><span class="o">::</span><span class="n">currentSection</span><span class="p">());</span>
+  <span class="n">cp</span> <span class="o">&lt;&lt;</span> <span class="s">"</span><span class="se">\n</span><span class="s">["</span> <span class="o">&lt;&lt;</span> <span class="n">Serializable</span><span class="o">::</span><span class="n">currentSection</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">"]</span><span class="se">\n</span><span class="s">"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Serializable</span><span class="o">::</span><span class="n">ScopedCheckpointSection</span><span class="o">::~</span><span class="n">ScopedCheckpointSection</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Checkpoint</span><span class="p">,</span> <span class="s">"Popping: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">path</span><span class="p">.</span><span class="n">top</span><span class="p">());</span>
+    <span class="n">path</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>下面给出创建检查点的函数。给定了文件目录名后，创建文件夹和 ini 文件，然后输出检查点即可。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">Serializable</span><span class="o">::</span><span class="n">generateCheckpointOut</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">cpt_dir</span><span class="p">,</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">ofstream</span> <span class="o">&amp;</span><span class="n">outstream</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">dir</span> <span class="o">=</span> <span class="n">CheckpointIn</span><span class="o">::</span><span class="n">setDir</span><span class="p">(</span><span class="n">cpt_dir</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">mkdir</span><span class="p">(</span><span class="n">dir</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="mo">0775</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EEXIST</span><span class="p">)</span>
+    <span class="n">fatal</span><span class="p">(</span><span class="s">"couldn't mkdir %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">dir</span><span class="p">);</span>
+
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">cpt_file</span> <span class="o">=</span> <span class="n">dir</span> <span class="o">+</span> <span class="n">CheckpointIn</span><span class="o">::</span><span class="n">baseFilename</span><span class="p">;</span>
+  <span class="n">outstream</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">ofstream</span><span class="p">(</span><span class="n">cpt_file</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+  <span class="kt">time_t</span> <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">outstream</span><span class="p">)</span>
+    <span class="n">fatal</span><span class="p">(</span><span class="s">"Unable to open file %s for writing</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">cpt_file</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+  <span class="n">outstream</span> <span class="o">&lt;&lt;</span> <span class="s">"## checkpoint generated: "</span> <span class="o">&lt;&lt;</span> <span class="n">ctime</span><span class="p">(</span><span class="o">&amp;</span><span class="n">t</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#gem5" class="page__taxonomy-item" rel="tag">gem5</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2022-03-08T00:00:00+08:00">March 8, 2022</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3+Gem5+%E4%B9%8B%E4%BA%8C%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F03%2F08%2Fgem5-2.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F03%2F08%2Fgem5-2.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F03%2F08%2Fgem5-2.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cpp/2022/02/24/gem5-1.html" class="pagination--pager" title="深入理解 Gem5 之一
+">previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  9 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/08/cuda-beginer.html" rel="permalink">CUDA 快速入门
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">代码驱动学习法
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/cpp/2022/03/08/gem5-2.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/cpp/2022/03/08/gem5-2"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

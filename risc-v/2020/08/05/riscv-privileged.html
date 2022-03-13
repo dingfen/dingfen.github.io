@@ -1,0 +1,1172 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>RISC-V 特权架构 - 峰子的乐园</title>
+<meta name="description" content="RISC-V 特权架构">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="RISC-V 特权架构">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/08/05/riscv-privileged.html">
+
+
+  <meta property="og:description" content="RISC-V 特权架构">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-08-05T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/08/05/riscv-privileged.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          RISC-V 特权架构
+
+        
+      </h1>
+      
+        <p class="page__lead">RISC-V 特权架构
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="RISC-V 特权架构">
+    <meta itemprop="description" content="RISC-V 特权架构">
+    <meta itemprop="datePublished" content="2020-08-05T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#risc-v-特权架构">RISC-V 特权架构</a></li>
+  <li><a href="#机器模式">机器模式</a>
+    <ul>
+      <li><a href="#中断与异常">中断与异常</a></li>
+      <li><a href="#csr-寄存器">CSR 寄存器</a>
+        <ul>
+          <li><a href="#mstatus-寄存器">mstatus 寄存器</a></li>
+          <li><a href="#mip-寄存器">mip 寄存器</a></li>
+          <li><a href="#mie-寄存器">mie 寄存器</a></li>
+          <li><a href="#mcause-寄存器">mcause 寄存器</a></li>
+          <li><a href="#mtvec-寄存器">mtvec 寄存器</a></li>
+        </ul>
+      </li>
+      <li><a href="#中断嵌套">中断嵌套</a></li>
+      <li><a href="#物理内存保护">物理内存保护</a></li>
+    </ul>
+  </li>
+  <li><a href="#监管者模式">监管者模式</a>
+    <ul>
+      <li><a href="#satp-寄存器">SATP 寄存器</a></li>
+      <li><a href="#内存分页">内存分页</a></li>
+      <li><a href="#sfencevma-与同步">SFENCE.VMA 与同步</a></li>
+      <li><a href="#中断与异常委托">中断与异常委托</a></li>
+    </ul>
+  </li>
+  <li><a href="#附录">附录</a></li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h2 id="risc-v-特权架构">RISC-V 特权架构</h2>
+
+<p>之前我在科大学习过 RISC-V ，但内容基本集中于用户模式下的一般指令的应用，因此本人对特权指令几乎一无所知。但是若要实现一个 RISC-V 内核，那么必然要对这些东西烂熟于心，因此今天，我们就来学习一下 RISC-V 特权指令集吧。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">模式</th>
+      <th>缩写</th>
+      <th>编码</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">机器模式</td>
+      <td>M</td>
+      <td>11</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Hypervisor</td>
+      <td>H</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">监管者模式</td>
+      <td>S</td>
+      <td>01</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">用户模式</td>
+      <td>U</td>
+      <td>00</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>注：每一个特权级都有一组核心的特权 ISA 扩展，以及可选扩展和变种。支持的特权模式组合：<strong>M</strong> (Embedded without Protection)，<strong>M+U</strong> (Embedded with Protection)，<strong>M+S+U (Unix-like OS capable)</strong>, <strong>M+H+S+U</strong></p>
+
+<h2 id="机器模式">机器模式</h2>
+
+<p>机器模式是 RISC-V 中 <strong>hart (hardware thread 硬件线程)</strong> 可以执行的最高权限模式。在该模式下，hart 对内存、I/O 等所有必要的底层系统有着完全的使用权限。在几乎所有的基于 RISC-V 的嵌入式系统中，都对该模式进行了必要的实现与支持。</p>
+
+<h3 id="中断与异常">中断与异常</h3>
+
+<p>以下内容参考了 <a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册第十章</a> 和 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a>。</p>
+
+<p>机器模式中，最重要的工作就是处理异常与中断。有以下几类异常、中断需要考虑：</p>
+
+<ul>
+  <li>访问错误异常 访问了无效或者没有权限访问的内存地址</li>
+  <li>断点中断 执行 <code class="language-plaintext highlighter-rouge">ebreak</code> 指令，或者地址、数据与调试触发器设置的断点匹配</li>
+  <li>环境调用中断 执行 <code class="language-plaintext highlighter-rouge">ecall</code> 指令</li>
+  <li>非法指令异常 译码阶段发现了无效的指令</li>
+  <li>非对齐指令异常 在有效地址不能被访问大小整除时发生</li>
+</ul>
+
+<p>关于中断，有三种标准的中断源：<strong>软件、时钟和外部来源</strong>。</p>
+
+<ul>
+  <li>
+    <p>软件中断通过向内存映射寄存器中存数来触发，并通常用于由一个 hart 中断另一个 hart（在其他架构中称为处理器间中断机制）。</p>
+  </li>
+  <li>
+    <p>时钟中断：当实时计数器 <code class="language-plaintext highlighter-rouge">mtime</code> 大于 <code class="language-plaintext highlighter-rouge">hart</code> 的时间比较器（一个名为 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 的内存映射寄存器）时，会触发。RISC-V 规定，在机器模式下，只有当 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 寄存器被重新写入后，<code class="language-plaintext highlighter-rouge">mip</code> 寄存器中的时钟中断标志位才会被清除。因此，每次处理时钟中断，都不能忘记更新 <code class="language-plaintext highlighter-rouge">mtimecmp</code> 。</p>
+  </li>
+</ul>
+
+<blockquote>
+  <p>Platforms provide a real-time counter, exposed as a <strong>memory-mapped machine-mode</strong> read-write register, <strong>mtime</strong>. <strong>mtime</strong> must run at constant frequency, and the platform must provide a mechanism for determining the timebase of mtime.</p>
+
+  <p>Platforms provide a 64-bit <strong>memory-mapped machine-mode</strong> timer compare register (<strong>mtimecmp</strong>), which causes a timer interrupt to be posted when the <strong>mtime</strong> register contains a value greater than or equal to the value in the <strong>mtimecmp</strong> register.</p>
+</blockquote>
+
+<ul>
+  <li>外部中断由平台级中断控制器（大多数外部设备连接到这个中断控制器）引发。不同的硬件平台具有不同的内存映射并且需要中断控制器的不同特性，因此用于发出和消除这些中断的机制因平台而异。所有 RISC-V 系统的共同问题是如何处理异常和屏蔽中断。</li>
+</ul>
+
+<p>RISC-V 的机器模式还提供了各种令人眼花缭乱的 CSR 寄存器：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>寄存器</th>
+      <th>简写</th>
+      <th>描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Machine ISA Reg</td>
+      <td>misa</td>
+      <td>用于报告 hart 支持的 ISA 类型 <br />具体内容见 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a></td>
+    </tr>
+    <tr>
+      <td>Machine Vendor ID Reg</td>
+      <td>mvendorid</td>
+      <td>用于提供实现该系统的制作商供应商等信息</td>
+    </tr>
+    <tr>
+      <td>Machine Architecture ID Reg</td>
+      <td>marchid</td>
+      <td>指示了编码 hart 的基本微体系结构</td>
+    </tr>
+    <tr>
+      <td>Machine Implementation ID Reg</td>
+      <td>mimpid</td>
+      <td>提供了处理器实现版本的唯一编码。</td>
+    </tr>
+    <tr>
+      <td>Hart ID Reg</td>
+      <td>mhartid</td>
+      <td>指示了正在运行代码的硬件线程 ID</td>
+    </tr>
+    <tr>
+      <td>Machine Status Reg</td>
+      <td>mstatus</td>
+      <td>跟踪并控制 hart 当前的状态</td>
+    </tr>
+    <tr>
+      <td>Machine Trap-Vector <br />Base-Address Reg</td>
+      <td>mtvec</td>
+      <td>存放了发生异常时处理器需要跳转到的地址，<br />即中断向量表，还有向量模式</td>
+    </tr>
+    <tr>
+      <td>Machine Trap Delegation Reg</td>
+      <td>medeleg<br />mideleg</td>
+      <td>为提高性能，在 medeleg 和 mideleg 中提供单独的读/写位<br />以指示应由低特权级直接处理某些异常和中断。</td>
+    </tr>
+    <tr>
+      <td>Machine Interrupt Reg</td>
+      <td>mip<br />mie</td>
+      <td>mip 指示了正在提交的中断<br />mie 包含了处理器能处理的和忽略的中断</td>
+    </tr>
+    <tr>
+      <td>Machine Timer Reg</td>
+      <td>mtime<br />mtimecmp</td>
+      <td>内存映射寄存器 mtime 用于记录流逝的时间<br />mtimecmp 则用于时间的比较</td>
+    </tr>
+    <tr>
+      <td>Counter-Enable Reg</td>
+      <td>mcounteren</td>
+      <td>控制了对低层特权级的硬件性能监视器的可用性</td>
+    </tr>
+    <tr>
+      <td>Machine Scratch Reg</td>
+      <td>mscratch</td>
+      <td>暂时存放一个字大小的数据</td>
+    </tr>
+    <tr>
+      <td>Machine Exception PC</td>
+      <td>mepc</td>
+      <td>指向发生异常的指令</td>
+    </tr>
+    <tr>
+      <td>Machine Cause Reg</td>
+      <td>mcause</td>
+      <td>指示发生异常的种类</td>
+    </tr>
+    <tr>
+      <td>Machine Trap Value Reg</td>
+      <td>mtval</td>
+      <td>保存了 trap 的附加信息:出错的地址、<br />非法指令本身，对于其他异常，其值为0。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>幸好，我们需要重点关注的只有8个寄存器，如下：</p>
+
+<ul>
+  <li>mtvec (Machine Trap Vector)</li>
+  <li>mepc (Machine Exception PC)</li>
+  <li>mcause (Machine Exception Cause)</li>
+  <li>mie (Machine Interrupt Enable)</li>
+  <li>mip (Machine Interrupt Pending)</li>
+  <li>mtval (Machine Trap Value)</li>
+  <li>mscratch (Machine Scratch)</li>
+  <li>mstatus (Machine Status)</li>
+</ul>
+
+<h3 id="csr-寄存器">CSR 寄存器</h3>
+
+<h4 id="mstatus-寄存器"><code class="language-plaintext highlighter-rouge">mstatus</code> 寄存器</h4>
+
+<p>该寄存器在处理中断时会经常用到，且较为复杂，位域包含的信息较多，特在此专门介绍：</p>
+
+<center>
+<img src="/assets/img/mstatus.png" />
+<div style="font-weight:bold">注:  WPRI: Write Preserve values, Reads Ignore values. 保留值<br />xIE: Interrupt Enable in  x mode 中断使能<br />xPIE: Previous Interrupt Enable in x mode 之前的中断使能<br />xPP: Previous Privilege mode up to x mode 之前的特权级别</div>
+</center>
+
+<p>在中断使能方面，<code class="language-plaintext highlighter-rouge">MIE</code> 、<code class="language-plaintext highlighter-rouge">SIE</code> 、<code class="language-plaintext highlighter-rouge">UIE</code> 分别提供了 machine mode 、supervisor mode 、user mode 的全局中断使能位，若一个 hart 运行在特权级别 <code class="language-plaintext highlighter-rouge">x</code> 下，当 <code class="language-plaintext highlighter-rouge">xIE = 1</code> 时中断全局打开，反之则关闭。在 hart 于 <code class="language-plaintext highlighter-rouge">x</code> 运行时，无论 <code class="language-plaintext highlighter-rouge">wIE</code> 为何值，低权限中断 <code class="language-plaintext highlighter-rouge">w &lt; x</code> 总是无效的，而无论 <code class="language-plaintext highlighter-rouge">yIE</code> 为何值，高权限中断 <code class="language-plaintext highlighter-rouge">y &gt; x</code> 总是有效。</p>
+
+<p><code class="language-plaintext highlighter-rouge">MPIE</code> 和 <code class="language-plaintext highlighter-rouge">MPP</code> 分别存储了中断发生前的中断使能位和特权级别位。</p>
+
+<p>类比于 <code class="language-plaintext highlighter-rouge">mstatus</code> 寄存器，较低权限的 <code class="language-plaintext highlighter-rouge">sstatus</code> 和 <code class="language-plaintext highlighter-rouge">ustatus</code> 寄存器也几乎同理，只不过少了一些东西而已。</p>
+
+<h4 id="mip-寄存器"><code class="language-plaintext highlighter-rouge">mip</code> 寄存器</h4>
+
+<p><code class="language-plaintext highlighter-rouge">mip</code> 寄存器指示了何种类型的中断正在传入 (pending)，与它相同功能的寄存器有 <code class="language-plaintext highlighter-rouge">sip</code> 和 <code class="language-plaintext highlighter-rouge">uip</code> 。</p>
+
+<p>在该寄存器中，只有低特权级别的软件中断位 (USIP, SSIP)、时钟中断 (UTIP, STIP) 、外部中断 (UEIP, SEIP) 是可以通过 CSR 指令写入的，其他都是只读的。若有中断委托给了权限级别 <code class="language-plaintext highlighter-rouge">x</code> ，被委托的中断所对应的位（在 <code class="language-plaintext highlighter-rouge">xie</code> 和 <code class="language-plaintext highlighter-rouge">xip</code> 寄存器中）就可以使用了，否则，相应的位接地变 0 。</p>
+
+<p><span id="mip"></span></p>
+
+<center>
+<img src="/assets/img/mip.png" />
+<div>xTIP: timer interrupt-pending bit in x mode 时钟中断<br />xSIP: software interrupts in x mode 软件中断<br />xEIP: external interrupt 外部中断</div>
+</center>
+<p>因为今后工作的需要，请注意，<code class="language-plaintext highlighter-rouge">MTIP</code> 、<code class="language-plaintext highlighter-rouge">STIP</code> 、<code class="language-plaintext highlighter-rouge">UTIP</code> 位分别对应机器模式、监管者模式、用户模式的时钟中断信号。<code class="language-plaintext highlighter-rouge">MTIP</code> 位是只读的，而 <code class="language-plaintext highlighter-rouge">UTIP</code> 和 <code class="language-plaintext highlighter-rouge">STIP</code> 位在机器模式下可以写入，这就是将时钟中断处理下放给低级权限的方式。</p>
+
+<h4 id="mie-寄存器"><code class="language-plaintext highlighter-rouge">mie</code> 寄存器</h4>
+
+<p><code class="language-plaintext highlighter-rouge">mie</code> 寄存器包含了相应的中断使能位，<code class="language-plaintext highlighter-rouge">sie</code> 和 <code class="language-plaintext highlighter-rouge">uie</code> 功能相似。注意观察 <a href="#mcause_code"><code class="language-plaintext highlighter-rouge">mcause</code> 寄存器编码</a>，可以发现，<strong>若 bit <code class="language-plaintext highlighter-rouge">i</code> 在 <code class="language-plaintext highlighter-rouge">mie</code> 和 <code class="language-plaintext highlighter-rouge">mip</code> 寄存器都置位，且全局中断位打开，那么中断 <code class="language-plaintext highlighter-rouge">i</code> 就会视作发生，并被处理。</strong>一般情况下，在低权限运行时，机器模式的中断一直有效。</p>
+
+<p><span id="mie"></span></p>
+
+<center>
+<img src="/assets/img/mie.png" />
+<div>xTIE: timer interrupt-enable bit in x mode 时钟中断使能位<br />xSIE: software interrupt-enable in x mode 软件中断使能位<br />xEIE: external interrupt-enable in x mode 外部中断使能位</div>
+</center>
+
+<h4 id="mcause-寄存器"><code class="language-plaintext highlighter-rouge">mcause</code> 寄存器</h4>
+
+<p><code class="language-plaintext highlighter-rouge">mcause</code> 寄存器的作用是记录中断/异常事件的类型/起因。在当 trap 进入机器模式后，将异常/中断事件产生的起因（或者称之为谁导致了异常/中断事件）写入到该寄存器中。</p>
+
+<p><span id="mcause_code"></span></p>
+
+<center>
+<img src="/assets/img/mcause.png" />
+<div>mcause 寄存器编码形式，首位为 1 时是中断，0 时为异常</div>
+</center>
+<p><span id="mcause"></span></p>
+
+<center>
+<img src="/assets/img/mcause_table.png" />
+<div>mcause 寄存器对应事件表</div>
+</center>
+
+<p>上表详细记录了各个中断/异常事件的代码编号，我们以后会经常用到。大家仔细观察 <a href="#mcause">mcause 寄存器对应事件表</a>和<a href="#mie"> mie 寄存器位编码图</a> 、<a href="#mip">mip 寄存器位编码图</a>，会发现 <code class="language-plaintext highlighter-rouge">mcause</code> 中编码的事件号的数字，正巧就等于 <code class="language-plaintext highlighter-rouge">mie</code> 、<code class="language-plaintext highlighter-rouge">mip</code>中对应事件的位偏移量。这一巧妙的设计在今后可能会带来意想不到的方便！</p>
+
+<p>还有一点就是，当一个指令遇到了多个异常时（这条指令是多么的不幸啊），那么处理异常的优先级也是不一样的，下表很详细的列出了它们的优先级关系：</p>
+
+<center>
+<img src="/assets/img/sync_exception_priority.png" />
+</center>
+<h4 id="mtvec-寄存器"><code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器</h4>
+
+<p>该寄存器全名 Machine Trap-Vector Base-Address Register，它存放了 trap vector 的信息，包括了基地址和模式 Mode 。基地址要求必须 4 字节对齐，即确保末两位为 0 。当中断/异常发生时，PC 值肯定需要跳转到中断/异常处理程序，该寄存器就保存了这些处理程序的地址。该寄存器有两种使用方法，直接寻址和间接寻址。</p>
+
+<center>
+<img src="/assets/img/mtvec.png" />
+</center>
+
+<p>直接寻址时，Mode = 0 ，所有转到机器模式下的 traps 都会将基地址值赋给 PC ；间接寻址时，Mode = 1 ，所有转到机器模式的<strong>同步异常</strong>会把基地址传给 PC，而遇到中断时，会根据中断的编号形成特定的偏移量，加上基地址后再赋给 PC ，事实上，中断程序的处理程序地址就是以数组的形式存放在 <code class="language-plaintext highlighter-rouge">mtvec</code> 部分了。例如，如果一个机器模式的时钟中断产生了，那么 PC 会被设置为 BASE + 7 * 4 = BASE + 0x1c 。</p>
+
+<hr />
+
+<p>好，了解了 <code class="language-plaintext highlighter-rouge">mstatus</code> 以及 <code class="language-plaintext highlighter-rouge">mip</code> 、<code class="language-plaintext highlighter-rouge">mie</code> 、<code class="language-plaintext highlighter-rouge">mcause</code> 后，我们明白：</p>
+
+<ul>
+  <li>处理器在机器模式下运行，在全局中断使能位 <code class="language-plaintext highlighter-rouge">mstatus.MIE</code> 置 1 时才会产生中断。</li>
+  <li>每个中断在控制状态寄存器 <code class="language-plaintext highlighter-rouge">mie</code> 以及 <code class="language-plaintext highlighter-rouge">mip</code> 中都有自己的使能位。</li>
+</ul>
+
+<p>例如，将所有三个控制状态寄存器合在一起考虑，如果 <code class="language-plaintext highlighter-rouge">mstatus.MIE=1</code>，<code class="language-plaintext highlighter-rouge">mie[7]=1</code>，且 <code class="language-plaintext highlighter-rouge">mip[7]=1</code>，则 CPU 就会开始处理机器模式的时钟中断。</p>
+
+<p>一般来说，发生中断/异常时，机器会：</p>
+
+<ul>
+  <li>对于中断，将目前的 PC 保存到 <code class="language-plaintext highlighter-rouge">mepc</code> 中，新 PC 从 <code class="language-plaintext highlighter-rouge">mtvec</code> 中取出。对于异常，<code class="language-plaintext highlighter-rouge">mepc</code> 保存了指向异常的指令</li>
+  <li>根据异常的类型及来源，设置 <code class="language-plaintext highlighter-rouge">mcause</code> ，并对 mtval 进行相应设置</li>
+  <li><code class="language-plaintext highlighter-rouge">mstatus</code> 中的 <code class="language-plaintext highlighter-rouge">MIE</code> 位置 0 ，禁止中断，并把先前的 <code class="language-plaintext highlighter-rouge">MIE</code> 值保存到 <code class="language-plaintext highlighter-rouge">MPIE</code> (Machine Previous Interrupt Enable) 中。</li>
+  <li>发生异常之前的权限模式保存在 <code class="language-plaintext highlighter-rouge">mstatus</code> 的 <code class="language-plaintext highlighter-rouge">MPP</code> 域中，再把权限模式改为 M</li>
+</ul>
+
+<h3 id="中断嵌套">中断嵌套</h3>
+
+<p>有时需要在处理 异常/中断 的过程中，会需要转到处理更高优先级的中断。然而任何体系结构都不可能有这么多资源去满足近乎无限的中断嵌套。 <code class="language-plaintext highlighter-rouge">mepc</code> <code class="language-plaintext highlighter-rouge">mcause</code>，<code class="language-plaintext highlighter-rouge">mtval</code> 和 <code class="language-plaintext highlighter-rouge">mstatus</code> 这些控制寄存器都只有一个，因此，如果第二个中断到来，就需要软件的帮助，否则这些寄存器中的旧值会被破坏，导致数据丢失。<strong>可抢占的中断处理程序可以在启用中断之前把这些寄存器保存到内存中的栈，然后在退出之前,禁用中断并从栈中恢复寄存器。</strong></p>
+
+<p>除了上面介绍的 <code class="language-plaintext highlighter-rouge">mret</code> 指令之外，机器模式还提供了另外一条指令：wfi (Wait For Interrupt)。wfi 通知处理器目前没有任何有用的工作，所以它应该进入低功耗模式，直到任何使能有效的中断等待处理，即 <code class="language-plaintext highlighter-rouge">mie&amp;mip ≠ 0</code>时。对该指令的实现，RISC-V 处理器有多种方式：中断待处理之前都停止时钟；有的时候只把这条指令当作 <code class="language-plaintext highlighter-rouge">nop</code> 来执
+行。因此，wfi 通常在循环内使用。</p>
+
+<h3 id="物理内存保护">物理内存保护</h3>
+
+<p>在机器模式下，我们可以自由地访问各种硬件平台。然而，一旦我们将这些艰巨的任务转给用户，他们可能会毁了一切。我们需要一种可靠的机制，保护系统免受不可信代码的危害，为不受信任的进程提供隔离保护。以下内容参考了 <a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册第十章</a> 和 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a>。</p>
+
+<p>在硬件设计里，PMP (Phsical Memory Protection) 是可选项，但在大部分地方我们都可以见到它的身影。PMP 检查一般用于 hart 在监管者模式或用户模式下的所有访问；或者在 <code class="language-plaintext highlighter-rouge">mstatus.MPRV = 1</code> 时的 load 和 store 等情况。一旦触发 PMP 保护，RISC-V 要求产生精确中断并处理。</p>
+
+<p>PMP 允许机器模式指定用户模式下可以访问的内存地址。PMP entry 由一个 8-bit 的 PMP 配置寄存器和一个 32/64 位长的 PMP 地址寄存器组成。整个 PMP 包括若干个（通常为 8 到 16 组）PMP entry 。配置寄存器可以配置读、写和执行权限，地址寄存器用来划定界限。</p>
+
+<p>下两图显示了 PMP 地址寄存器和配置寄存器的布局。pmpxxcfg 表示了 PMP 配置寄存器，pmpxxaddr 表示了 PMP 地址寄存器。</p>
+
+<p><img src="/assets/img/pmpcfg.png" alt="" /></p>
+
+<p><img src="/assets/img/pmpaddr.png" alt="" /></p>
+
+<p>当处于用户模式的处理器尝试 load 或 store 操作时，将地址和所有的 PMP 地址寄存器比较。如果地
+址大于等于 PMP 地址 i，但小于 PMP 地址 i+1，则 PMP i+1 的配置寄存器决定该访问是否可以继续，如果不能将会引发访问异常。</p>
+
+<p>R，W，X 位分别指示了 PMP 入口允许读、写、执行权限。A 域解释了 PMP 寄存器的编码情况。</p>
+
+<p><img src="/assets/img/pmpcfg_mode.png" alt="" /></p>
+
+<center>
+<img src="/assets/img/pmpcfg_A.png" />
+
+</center>
+
+<h2 id="监管者模式">监管者模式</h2>
+
+<p>前文所述，<code class="language-plaintext highlighter-rouge">mstatus</code> 、<code class="language-plaintext highlighter-rouge">mie</code> 、<code class="language-plaintext highlighter-rouge">mip</code> 、<code class="language-plaintext highlighter-rouge">mtvec</code> 等寄存器在监管者模式 (Supervisor mode) 下都有与之名字几乎一样的、功能也相似的寄存器，方便了我们举一反三，这就体现出 RISC-V 体系结构的优越性了。在这里先挖个坑，有时间我会专门介绍一下 RISC-V 体系结构的优越性。</p>
+
+<p>相比于机器模式的最高权限和强制手段，监管者模式没有这么高的权限。一般来说，监管者模式就是为对标现代操作系统而生的。监管者模式通常存在于复杂的 RISC-V 系统上，其核心功能就是支持内存分页、内存保护、中断/异常处理等。当然，监管者模式还是有些地方与机器模式不同，接下来我会重点介绍。</p>
+
+<h3 id="satp-寄存器">SATP 寄存器</h3>
+
+<p>顾名思义，satp (Supervisor Address Translation and Protection Register) 寄存器的作用是在监管者模式下，控制地址转换与保护的。寄存器内位分布如下图：</p>
+
+<center>
+<img src="/assets/img/satp.png" />
+<div>注：PPN: Physical Page Number of the root page table.<br />ASID: Address Space Identifier<br /></div>
+</center>
+
+<p>ASID (地址空间标识符) 域是可选的，它用于帮助地址空间的转换，降低上下文切换的开销。PPN 存储了根页表的物理页号，以 4 KiB 页面大小为单位，它在内存分页中起了十分重要的作用。MODE 位用于选择地址转换的方式，详见 <code class="language-plaintext highlighter-rouge">SFENCE.VMA</code> 指令。</p>
+
+<p>MODE 位的功能见下表：</p>
+
+<p><span id="mode"></span></p>
+
+<center>
+<img src="/assets/img/satp_mode.png" />
+</center>
+<h3 id="内存分页">内存分页</h3>
+
+<p>在稍微复杂的 RISC-V 处理器中，仅仅依靠 PMP 模块来提供内存保护是不够的。因为 PMP 不够灵活：仅支持固定数量的内存区域；很多复杂的应用程序要求在物理存储中连续，会产生存储碎片；PMP 又无法有效支持分页。</p>
+
+<p>因此，设计人员在监管者模式中又发明了基于页面的虚拟内存机制（分页机制），可以说，分页机制是操作系统的核心问题了，对于分页机制，详细介绍请见<a href="https://www.jianshu.com/p/3558942fe14f">分页机制</a>，这里做简单说明，RISC-V 中监管者模式提供了一种传统的虚拟内存系统，它将内存划分为<strong>固定大小的页</strong>，以此为基础进行地址转换，并提供对内存内容的保护。启用分页的时候，监管者模式和用户模式下的地址（包括 load 和 store 的有效地址和 PC 中的地址）都是<strong>虚拟地址</strong>，要访问物理内存,它们必须被转换为真正的<strong>物理地址</strong>。</p>
+
+<p>参照 <a href="#mode"><code class="language-plaintext highlighter-rouge">satp</code> 寄存器的MODE 功能表</a>，在 MODE = bare 时，没有分页机制，此时虚拟地址就等于物理地址，此时也就没有额外的内存保护功能了。RV32 只支持 Sv32 分页模式，RV64 支持 Sv39、Sv48、<em>Sv57、Sv64</em> 分页，粗略看一下 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a>，RV64 居然已经在为四级分页作准备了！</p>
+
+<p>当 satp 启动分页时，在监管者模式或用户模式下，虚拟地址 (VA) 会将 satp 寄存器中根页表地址作为基址 (base)，以及自身的页号作偏移 (VPN[1])，在页表中通过计算偏移位置 (base + VPN[1] * 4) 找到<strong>页表项 (Page Table Entry PTE)</strong>。如果该 PTE 不是叶 PTE（什么是页 PTE 下面会解释），那么再将刚刚找到的 PTE 作为基址，用虚拟地址携带的第二个页号作偏移，继续算出第二个页表项，直到获得物理地址 (PA)，更加详细的虚拟地址转换过程见<a href="#VA">附录</a>。</p>
+
+<p><span id="VA2PA"></span></p>
+
+<center>
+<img src="/assets/img/VA2PA.png" />
+</center>
+
+<p>再来看看虚拟地址和物理地址的二进制格式。我们以 Sv32 分页模式为例，虚拟地址、物理地址的编码都是将页号放在 MSB 处，而将偏移量放在 LSB 处。Sv32 分页支持两级分页。从偏移量位长可以看出，Sv32 页表含有 1024 个 PTEs，每个页表项占 4 字节，总共 4 KiB 。</p>
+
+<center>
+<img src="/assets/img/VA_PA.png" />
+</center>
+
+<p>最后看一下页表项。<strong>V</strong>alid 位指示该 PTE 是否有效；<strong>R</strong>eadable，<strong>W</strong>riteable，e<strong>X</strong>ecutable 指示了该页是否可读、可写、可运行，当这三位都是 0 时，表明该 PTE 指向了下一层页表，其为<strong>非叶 PTE</strong> ，否则就是<strong>叶 PTE</strong>；<strong>U</strong>ser 位指示了该页是否可以被用户模式访问；<strong>G</strong>lobal 指示了全局映射，存在于所有的地址空间中；<strong>A</strong>ccess 位指示了该页最近是否被读、写、取；<strong>D</strong>irty 位指示了虚拟页最近是否被写过。对于非叶 PTE，<strong>D</strong>，<strong>A</strong>，<strong>U</strong> 位被保留，并被清零。RSW 是保留的，用于操作系统软件。</p>
+
+<p><span id="RWX"></span></p>
+
+<center>
+    <img src="/assets/img/pte.png" />
+    <img src="/assets/img/pte_field.png" />
+</center>
+<hr />
+
+<p><strong>分页</strong>指的就是用<u>地址管理器或者地址翻译器</u>（下统称 MMU）将系统中的物理地址转换/翻译为虚拟地址。我们已经详细地介绍了<a href="#VA2PA">翻译过程</a>，该过程使用 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器对虚拟地址进行一系列的访问计算，得到物理地址。接下来，我们讨论一下页表与<strong>页错误 (page fault)</strong>。</p>
+
+<p>考虑在 Sv32 分页模式下，一个页表最多需要 <code class="language-plaintext highlighter-rouge">1024 * 4 bytes = 4 KiB</code> ，而二级分页需要 1024 个页表，此外页表的页表（页目录）也需要 4 KiB，因此，整个页表就需要 4 MiB 大小。而在 Sv39 等三级分页甚至四级分页中，页表需要的空间会更多，因此毫无疑问的，页表不能存在于一级 Cache 中。我们可以将页表放在内存中的任何位置，并以 4 KiB 对齐。</p>
+
+<p>RISC-V 设计分页机制时充分了解并吸取了早期体系结构的设计教训。<a href="https://wiki.osdev.org/Paging">x86-64 分页</a>中上层页表控制了下层页表，如果上层页表是只读的，那么被该页表控制的下层页表就不能被写入了，这可不是什么聪明的做法。而 x86-64 可以做到<a href="https://www.sandpile.org/x86/paging.htm">粗粒度控制与细粒度控制的转换</a>，却是一个巧妙的做法。 RISC-V 设计人员引入了叶 PTE 与非叶 PTE 的概念，并使用 <a href="#RWX">R W X 这三个位域来定义</a>，从而将<u>页表的层级 (level) 和它是指向页表还是仅包含物理地址区分</u>开来，使得每个层级的 PTE 都可以是叶 PTE，既实现了粗细粒度控制，又可以防止上层页表控制下层页表。例如，在 Sv39 中，若第二级页表就是叶 PTE，那么就会形成一个大小为 2 M 的<strong>超级页</strong>，相比于 4 KB 更粗粒度。</p>
+
+<p>MMU 会在以下几种情况下发出页错误信号：</p>
+
+<ul>
+  <li>在取指令时，发现指令所在的页没有运行权限 X，或者该页无效 V，此时异常代码为 12 。</li>
+  <li>取数据时，发现数据所在的页没有读权限 R，或在该页无效 V，此时异常代码为 13 。</li>
+  <li>存储数据时，发现数据所在的页没有写权限 W，或在该页无效 V，此时异常代码为 15 。</li>
+</ul>
+
+<p>在多数操作系统中，他们认为的正确应对方式是杀掉出现问题的进程（解决提出问题的人🐶），但如果使用了 <code class="language-plaintext highlighter-rouge">copy-on-write</code> 技术，那么这可能是个 feature（不是 bug 是个 feature 🐶）。</p>
+
+<h3 id="sfencevma-与同步"><code class="language-plaintext highlighter-rouge">SFENCE.VMA</code> 与同步</h3>
+
+<p>在内存分页中，我们看到为了从虚拟地址得到一个物理地址，我们经过了相当复杂的计算过程。考虑到页表都是存放在内存或者高级 Cache 里，多次访问页表会导致访问性能大大降低。从本科的操作系统课程中可以了解到，解决这一问题的通常作法是引入 TLB（Translation Lookaside Buffer 地址转换缓存），而这又会到来页表相不一致的问题。在 RISC-V 中，解决方法就是增加一条指令，用于刷新 TLB，进行显式同步。</p>
+
+<p>该指令叫内存管理栅栏指令 (fence instruction) <code class="language-plaintext highlighter-rouge">SFENCE.VMA</code> 。它的作用是<strong>同步</strong>。该指令更新在内存中的“内存管理数据结构”（嗨，其实就是页表），确保在这条指令之前的存储操作都是有序的。该指令也可以用于刷新一些与地址转换相关的局部 cache（就是 TLB）。</p>
+
+<p>该指令需要两个可选的参数 <code class="language-plaintext highlighter-rouge">rs1</code> 和 <code class="language-plaintext highlighter-rouge">rs2</code> ，这样可以缩小缓存刷新的范围。<code class="language-plaintext highlighter-rouge">rs1</code> 针对页表，指示了页表哪个虚址对应的转换被修改了；<code class="language-plaintext highlighter-rouge">rs2</code> 给出了被修改页表的进程的地址空间标识符 (ASID)。如果两者都是 <code class="language-plaintext highlighter-rouge">x0</code>，便会刷新整个 TLB。</p>
+
+<p>说了这么多，我们到底要在什么场合用到它呢？<a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a> 给出了如下五个场景，这里仅做简单介绍。</p>
+
+<ul>
+  <li>当一个软件要回收再利用一个 ASID（与另一个页表关联）</li>
+  <li>若具体实现没有提供 ASID，或者软件选择 ASID = 0，那么 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器每次被写入后，就应当使用 <code class="language-plaintext highlighter-rouge">SFENCE.VMA with rs1=x0</code> 指令。</li>
+  <li>若软件修改了非叶 PTE ，应该执行 <code class="language-plaintext highlighter-rouge">SFENCE.VMA with rs1=x0</code> 。</li>
+  <li>若软件修改了叶 PTE，应该执行 <code class="language-plaintext highlighter-rouge">SFENCE.VMA with rs1=VA within the page</code> 。</li>
+  <li>特殊情况如给叶 PTE 增加权限、将无效 PTE 变为有效等，软件可能会选择执行 <code class="language-plaintext highlighter-rouge">SFENCE.VMA</code> 。</li>
+</ul>
+
+<h3 id="中断与异常委托">中断与异常委托</h3>
+
+<p>一般情况下，在系统发生异常时，控制权都会被移交到<strong>机器模式</strong>下的 trap 处理程序中。然而，Unix 等系统的大多数 trap 处理程序都<strong>应该在监管者模式下</strong>运行。一个简单的解决方案是，让机器模式下的处理程序指向监管者模式的处理程序。但这样的坏处显而易见：速度过慢，明明可以一步到位地转向监管者模式，非要绕道机器模式然后再到监管者模式。因此，RISC-V 提供了一种委托机制，将一些中断/异常处理程序委托给监管者模式。</p>
+
+<p>CSR 寄存器 <code class="language-plaintext highlighter-rouge">mideleg</code> (Machine Interrupt Delegation，机器中断委托) 指示哪些<strong>中断</strong>将委托给监管者模式。与 <code class="language-plaintext highlighter-rouge">mip</code> 和 <code class="language-plaintext highlighter-rouge">mie</code> 一样，被委托的中断位域位置与该中断在 <a href="#mcause">mcause 寄存器的事件编码图</a>的代码号一致。</p>
+
+<p>例如，<code class="language-plaintext highlighter-rouge">mideleg[5]</code> 对应于监管者模式的时钟中断，如果把它为 1 ，即 <code class="language-plaintext highlighter-rouge">li a0, 1 &lt;&lt; 5 ; csrw mideleg a0</code>， 监管者模式的时钟中断将由该模式下的异常处理程序，而不是机器模式的异常处理程序处理。当然，委托意味着对中断的一种负责，因此委托给监管者模式的任何中断都会受到监管者模式下 CSR 寄存器（主要是 <code class="language-plaintext highlighter-rouge">sie</code>、<code class="language-plaintext highlighter-rouge">sip</code> ）的控制，而没有被委托的中断对应位是无效的。</p>
+
+<p>相应地，<code class="language-plaintext highlighter-rouge">medeleg</code> 寄存器处理的是<strong>同步异常</strong>委托，其用法与 <code class="language-plaintext highlighter-rouge">mideleg</code> 寄存器相通，被委托的异常位域位置与该异常在 <a href="#mcause">mcause 寄存器的事件编码图</a>的代码号一致。例如，当 <code class="language-plaintext highlighter-rouge">medeleg[15]</code> 设置为 1 时，那么 store 过程中的页错误 (page fault) 就会委托给监管者模式。</p>
+
+<p>在 hart 运行的权限级别低于或等于被委托的级别时，此时若 bit <code class="language-plaintext highlighter-rouge">i</code> 在 <code class="language-plaintext highlighter-rouge">mideleg</code> 置位，且 <code class="language-plaintext highlighter-rouge">mstatus.SIE</code> 或 <code class="language-plaintext highlighter-rouge">mstatus.UIE</code> 中断有效时，中断会被认为是全局有效的。</p>
+
+<hr />
+
+<p>可能有人会问，那么，委托这种情况只会发生在监管者模式下么？<strong>当然不会</strong>。如果这个系统支持在用户模式下处理 trap ，那么监管者模式的 <code class="language-plaintext highlighter-rouge">sedeleg</code> 和 <code class="language-plaintext highlighter-rouge">sideleg</code> 寄存器就会开始委托机制：若产生的 trap 可以被委托给用户模式，那么该 trap 会转移给用户模式下的处理程序，而不是监管者模式下的处理程序。</p>
+
+<blockquote>
+  <p>If U-mode traps are supported, S-mode may in turn set corresponding bits in the sedeleg and sideleg registers to delegate traps that occur in U-mode to the U-mode trap handler.</p>
+</blockquote>
+
+<hr />
+
+<p>中断委托的具体过程如何？</p>
+
+<ul>
+  <li>某个 trap 被委托给了模式 <code class="language-plaintext highlighter-rouge">x</code>，并且在执行过程中触发</li>
+  <li><code class="language-plaintext highlighter-rouge">xcause</code> 寄存器更新，写入 trap 的起因</li>
+  <li><code class="language-plaintext highlighter-rouge">xepc</code> 寄存器更新，写入 trap 发生时指令的地址（虚拟地址）</li>
+  <li><code class="language-plaintext highlighter-rouge">xtval</code> 寄存器更新，写入 trap 对应的处理程序位置</li>
+  <li><code class="language-plaintext highlighter-rouge">mstatus.xPP</code> 写入在发生 trap 时的特权级别</li>
+  <li><code class="language-plaintext highlighter-rouge">mstatus.xPIE</code> 写入 <code class="language-plaintext highlighter-rouge">xIE</code> 的值，而 <code class="language-plaintext highlighter-rouge">xIE</code> 的值被清除</li>
+  <li><strong>注意：<code class="language-plaintext highlighter-rouge">mcause</code> 和 <code class="language-plaintext highlighter-rouge">mepc</code> 以及 MPP MPIE 域不会更新</strong></li>
+</ul>
+
+<p>trap 永远不会从特权较高的模式过渡到特权较低的模式。例如，如果机器模式下，非法指令异常已经被委托给监管者模式，而此时在机器模式下，软件执行了一条非法指令，则 trap 将采用机器模式的处理程序，而不是委派给监管者模式。然而，还是上面的例子，如果监管者模式下，软件遇到了非法指令异常，trap 由监管者模式的异常处理程序处理。</p>
+
+<hr />
+
+<p>有些异常无法被权限较低的模式处理，此时相应的委托寄存器的位域就必须接地。</p>
+
+<blockquote>
+  <p>Some exceptions cannot occur at less privileged modes, and corresponding x edeleg bits should be hardwired to zero. In particular, medeleg[11] and sedeleg[11:9] are all hardwired to zero.</p>
+</blockquote>
+
+<p><span id="VA"></span></p>
+
+<h2 id="附录">附录</h2>
+
+<p>为了给以后的工作打下坚实的基础，这里详细翻译一下 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged ISA Specification</a> 中 4.3.2 节，关于虚拟地址的翻译/转换过程：</p>
+
+<ol>
+  <li>定义 <code class="language-plaintext highlighter-rouge">a</code> = satp.<em>ppn</em> × PAGESIZE ，且定义 <code class="language-plaintext highlighter-rouge">i</code> = LEVELS − 1 。</li>
+  <li>定义 <code class="language-plaintext highlighter-rouge">pte</code> 指向地址为 <code class="language-plaintext highlighter-rouge">a</code> +va.<em>vpn</em>[<code class="language-plaintext highlighter-rouge">i</code>]×PTESIZE 的 PTE 的指针，并访问。若访问 <code class="language-plaintext highlighter-rouge">pte</code> 违反了 PMP (Physical Memory Protection) 或 PMA (Physical Memory Attributes) ，相应的访问异常会产生。</li>
+  <li>如果 <code class="language-plaintext highlighter-rouge">pte.v = 0</code>, or <code class="language-plaintext highlighter-rouge">pte.r = 0</code> and <code class="language-plaintext highlighter-rouge">pte.w = 1</code>，停止并产生相应的页错误。</li>
+  <li>否则，PTE 有效，若 <code class="language-plaintext highlighter-rouge">pte.r = 1</code> or <code class="language-plaintext highlighter-rouge">pte.x = 1</code> 跳转到第 5 步。否则，该 PTE 就是指向另一个页表的 PTE，令 <code class="language-plaintext highlighter-rouge">i</code> = <code class="language-plaintext highlighter-rouge">i</code> -1 。若 <code class="language-plaintext highlighter-rouge">i &lt; 0</code> ，停止并产生页错误。否则，令 <code class="language-plaintext highlighter-rouge">a</code> = pte.<em>ppn</em> × PAGESIZE ，跳转到第 2 步。</li>
+  <li>叶 PTE 找到了，根据 <code class="language-plaintext highlighter-rouge">pte.r</code> 、<code class="language-plaintext highlighter-rouge">pte.w</code>、<code class="language-plaintext highlighter-rouge">pte.x</code>、<code class="language-plaintext highlighter-rouge">pte.u</code> 位的值，确定它是否有权限，若没有，那么停止并产生相应的页错误。</li>
+  <li>若 <code class="language-plaintext highlighter-rouge">i &gt; 0</code> 且 <code class="language-plaintext highlighter-rouge">pte.pnn[i-1:0] != 0</code> ，这是一个非对齐的超级页；停止并产生相应的页错误。</li>
+  <li>若 <code class="language-plaintext highlighter-rouge">pte.a = 0</code> ，或者内存访问为 store 且 <code class="language-plaintext highlighter-rouge">pte.d = 0</code> ，要么产生页错误，要么
+    <ul>
+      <li>置 <code class="language-plaintext highlighter-rouge">pte.a = 1</code> ，如果内存访问为 store ，那么也置 <code class="language-plaintext highlighter-rouge">pte.d = 1</code></li>
+      <li>若访问违反了 PMA 或 PMP 检查，产生相应的错误。</li>
+      <li>该更新以及第 2 步的访问必须是原子的。</li>
+    </ul>
+  </li>
+  <li>此时转换成功，生成物理地址：
+    <ul>
+      <li>pa.pgoff = va.pgoff</li>
+      <li>若 <code class="language-plaintext highlighter-rouge">i &gt; 0</code> ，那么就是超级页的转换，此时 `pa.ppn[i-1:0] = va.vpn[i-1:0]</li>
+      <li>pa.ppn[LEVELS-1:i] = pte.ppn[LEVELS-1:i]</li>
+    </ul>
+  </li>
+</ol>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-08-05T00:00:00+08:00">August 5, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=RISC-V+%E7%89%B9%E6%9D%83%E6%9E%B6%E6%9E%84%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F05%2Friscv-privileged.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F05%2Friscv-privileged.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F05%2Friscv-privileged.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/08/01/riscv-from-scratch-4.html" class="pagination--pager" title="RISC-V from Scratch 4
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/08/06/riscv-from-scratch-5.html" class="pagination--pager" title="RISC-V from Scratch 5
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/08/05/riscv-privileged.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/08/05/riscv-privileged"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

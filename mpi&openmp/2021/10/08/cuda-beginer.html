@@ -1,0 +1,965 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>CUDA 快速入门 - 峰子的乐园</title>
+<meta name="description" content="代码驱动学习法">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="CUDA 快速入门">
+<meta property="og:url" content="http://localhost:4000/mpi&openmp/2021/10/08/cuda-beginer.html">
+
+
+  <meta property="og:description" content="代码驱动学习法">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser3.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-10-08T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/mpi&openmp/2021/10/08/cuda-beginer.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser3.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          CUDA 快速入门
+
+        
+      </h1>
+      
+        <p class="page__lead">代码驱动学习法
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="CUDA 快速入门">
+    <meta itemprop="description" content="代码驱动学习法">
+    <meta itemprop="datePublished" content="2021-10-08T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#cuda-快速入门">CUDA 快速入门</a>
+    <ul>
+      <li><a href="#cuda-与-gpu-编程">CUDA 与 GPU 编程</a></li>
+      <li><a href="#核函数">核函数</a></li>
+      <li><a href="#内存管理">内存管理</a>
+        <ul>
+          <li><a href="#内存分配与回收">内存分配与回收</a></li>
+          <li><a href="#内存数据传输">内存数据传输</a></li>
+          <li><a href="#错误处理">错误处理</a></li>
+        </ul>
+      </li>
+      <li><a href="#内置变量与函数">内置变量与函数</a></li>
+      <li><a href="#实践">实践</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="cuda-快速入门">CUDA 快速入门</h1>
+
+<p>欢迎来到 CUDA 的世界。本文集中讲述了最基本的 CUDA 知识，供自己以及各位速查。</p>
+
+<h2 id="cuda-与-gpu-编程">CUDA 与 GPU 编程</h2>
+
+<p>近年来，AI、比特币的发展对计算能力提出了无尽的需求。而在这之前，人们就已经发现，用于渲染、加载图形的 GPU 有着不俗的计算能力，为了能更好地利用 GPU 的计算能力，使得 GPU 不仅仅局限于做图形渲染，NVIDIA 率先推出了可编程的 GPU 芯片以及相应的软件框架：CUDA。让显卡可以用于图像计算以外的目的。</p>
+
+<p>在使用 CUDA 进行编程时，往往需要区分哪些数据在 GPU 上计算，哪些数据在 CPU 上计算，还需要考虑数据之间的迁移、传输和存储等。一般地，用<strong>主机</strong>一词指代 CPU 及其系统内存，而用<strong>设备</strong>一词指代 GPU 及其片上、板上内存。很多情况下，CUDA 程序里既包含运行在主机上的程序，又包含运行在设备上的程序，且主机与设备之间存在数据传输，在编程时要格外注意这点。</p>
+
+<center>
+<img src="/assets/img/PP/gpudevotes.png" />
+<br />
+<div style="color:orange; border-bottom: 1px solid #d9d9d9;
+    display: inline-block;
+    color: #999;
+    padding: 2px;">GPU 的计算资源比 CPU 多得多</div>
+</center>
+
+<p>在开始前，先来简单了解 NVIDIA GPU 的并行计算的工作流程，从代码上看，分为两步：</p>
+
+<ol>
+  <li>CPU 调用一种称为<strong>核函数</strong>的函数，该函数由 GPU 执行。</li>
+  <li>GPU 根据给定的并行量，并行执行该函数。</li>
+</ol>
+
+<p>CUDA 中，执行核函数的一个基本单位被称为线程（thread）。若干个 thread 组合成线程块（block），而一次调用中所有的线程块组成了一个网格（grid）。</p>
+
+<center>
+<img src="/assets/img/PP/grid-of-thread-blocks.png" />
+<br />
+<div style="color:orange; border-bottom: 1px solid #d9d9d9;
+    display: inline-block;
+    color: #999;
+    padding: 2px;">CUDA 线程层次</div>
+</center>
+
+<p>通常，CPU 调用核函数的同时，会指定执行该核函数的线程块数量和每个线程块中线程的数量。这也就意味着，核函数中的内容会被并行地执行线程块的数量 $\times$ 每个线程块内的线程数量次！</p>
+
+<h2 id="核函数">核函数</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">__global__</code> 是 CUDA C/C++ 的函数修饰符，表示该函数为核函数</li>
+  <li>核函数会在 GPU 上执行，但由主机代码调用</li>
+  <li>返回类型必须为 <code class="language-plaintext highlighter-rouge">void</code></li>
+  <li>在调用kernel函数时，函数名后的<code class="language-plaintext highlighter-rouge">&lt;&lt;&lt;b, t&gt;&gt;&gt;</code>：b代表线程块的数目，t代表每个线程块的线程数目。</li>
+</ul>
+
+<p>CUDA 的核函数指的是需要运行在 GPU 上的函数。CUDA C 在标准 C 的基础上，增加了一些修饰符，是为了更好地区分和编译 GPU 程序。我们接触的第一个修饰符就是 <code class="language-plaintext highlighter-rouge">__global__</code>。该修饰符告诉编译器：被修饰的函数应当运行在 GPU 上，因此不能使用通用的 C 编译器对其编译，而是要使用 CUDA 提供的编译器（nvcc）。此外，核函数的输入和输出只能通过指针传递，因此返回类型都为 <code class="language-plaintext highlighter-rouge">void</code> ，且只能由主机调用。另一个修饰符 <code class="language-plaintext highlighter-rouge">__device__</code> 表示函数在 GPU 上运行，且不能被主机调用，只能由其他 <code class="language-plaintext highlighter-rouge">__global__</code> 修饰的函数调用。相对应地，<code class="language-plaintext highlighter-rouge">__host__</code> 修饰的函数应运行在 CPU 上，每次调用运行一次，且只能被主机调用。该描述符使用较少，因为所有未显式标明函数前置修饰符的函数均默认为主机函数。</p>
+
+<p>调用核函数时，除了传递函数参数外，还需要指定线程块的数量和每个线程块的线程数量，用 <code class="language-plaintext highlighter-rouge">&lt;&lt;&lt;&gt;&gt;&gt;</code> 修饰。例如：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">myKernel</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Hello world</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="k">const</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">myKernel</span><span class="o">&lt;&lt;&lt;</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="o">&gt;&gt;&gt;</span><span class="p">();</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上例表示有4个线程块，每个线程块有2个线程，参与执行了该核函数。因此会输出8个 <code class="language-plaintext highlighter-rouge">Hello world\n</code>。而通过 CUDA 中的内置变量 <code class="language-plaintext highlighter-rouge">threadIdx</code>、<code class="language-plaintext highlighter-rouge">blockIdx</code> 和 <code class="language-plaintext highlighter-rouge">blockDim</code> 等，不仅可以在核函数内区分不同的线程块、线程，也能获得线程块、线程的维度信息，使程序员能更精细地控制线程执行，关于内置变量我会在之后详细介绍。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">addWithCuda</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">);</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// ...</span>
+  <span class="n">addWithCuda</span><span class="o">&lt;&lt;&lt;</span><span class="n">grids</span><span class="p">,</span> <span class="n">blocks</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">dev_c</span><span class="p">,</span> <span class="n">dev_a</span><span class="p">,</span> <span class="n">dev_b</span><span class="p">);</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="内存管理">内存管理</h2>
+
+<h3 id="内存分配与回收">内存分配与回收</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cudaMalloc</code> 分配设备上的内存</li>
+  <li><code class="language-plaintext highlighter-rouge">cudaMemcpy</code> 将不同内存段的数据进行拷贝</li>
+  <li><code class="language-plaintext highlighter-rouge">cudaFree</code> 释放先前在设备上申请的内存空间</li>
+</ul>
+
+<p>CUDA C 本身十分贴近 C 语言，这对我们学习 CUDA 非常友好。但也有一些需要我们注意的地方，CUDA 对内存资源做了简单的分类。将 CPU 以及系统的内存称为主机内存（host memory），而将 GPU 及其内存称为设备内存（device memory）。它们的空间分配、数据迁移、回收等都需要程序员通过调用 cuda API 函数显式地控制。</p>
+
+<p>在主机内存中分配、回收空间非常简单，使用 C 语言中的 <code class="language-plaintext highlighter-rouge">malloc()</code> 和 <code class="language-plaintext highlighter-rouge">free()</code> 函数就可以了，但要在设备内存分配空间，以便 GPU 进行计算，就需要用到 CUDA C 提供的函数了。以下两个函数用于分配、回收设备内存空间最为常用：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cudaMalloc</code> 该函数用来分配设备上的内存，需要被主机调用（即在 CPU 执行的代码中调用）。其返回值为 <code class="language-plaintext highlighter-rouge">cudaError_t</code> 的枚举类型，该类型枚举了所有可能出现错误的情况。而如果函数调用成功，则返回 <code class="language-plaintext highlighter-rouge">cudaSuccess</code>。第一个参数类型为 <code class="language-plaintext highlighter-rouge">void **</code>，指向分配后得到的内存首地址。第二个参数类型为 <code class="language-plaintext highlighter-rouge">size_t</code>，指定了需要分配的内存大小，单位是字节。
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="c1">// 在设备上分配内存</span>
+  <span class="n">cudaError_t</span> <span class="n">cudaMalloc</span><span class="p">(</span><span class="kt">void</span><span class="o">**</span> <span class="n">devPtr</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">cudaFree</code> 该函数用来释放先前在设备上申请的内存空间，但不能释放通过 <code class="language-plaintext highlighter-rouge">malloc</code> 申请的内存。返回类型仍为 <code class="language-plaintext highlighter-rouge">cudaError_t</code>。函数参数是指向需要释放的设备内存首地址。
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="c1">// 释放设备上的内存</span>
+  <span class="n">cudaError_t</span> <span class="n">cudaFree</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">devPtr</span><span class="p">)</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p>这两个函数与 C 语言中的内存分配、回收函数区别不是很大，由此不难猜到这两个函数的作用。</p>
+
+<p>但容易犯的错误就是，将指向设备内存的指针错误地在主机内存中解引用（dereference），这是不允许的，因为该指针内的值可是设备内存的地址，不是主机内存的地址。</p>
+<blockquote>
+  <p>CUDA C 的简单性及其强大的功能在很大程度上都是来源于它淡化了主机代码和设备代码之间的差异。虽然<strong>主机代码可以将这个指针作为参数传递，对其执行算术运算，甚至可以将其转换为另一种不同的类型</strong>。但是，绝对不可以使用这个指针来读取或者写入内存。因此，程序员一定<strong>不能在主机代码中对 cudaMalloc() 返回的指针进行解引用</strong>。—— «GPU高性能编程CUDA实战»</p>
+</blockquote>
+
+<h3 id="内存数据传输">内存数据传输</h3>
+
+<p>完成主机内存与设备内存之间的数据传输，需要使用 <code class="language-plaintext highlighter-rouge">cudaMemcpy</code> 函数：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// src 中的数据拷贝到 dst 中，需要指定数据传输方向</span>
+<span class="n">cudaError_t</span> <span class="n">cudaMemcpy</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">dst</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">src</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">count</span><span class="p">,</span> <span class="n">cudaMemcpyKind</span> <span class="n">kind</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>其用法与 C 语言中 <code class="language-plaintext highlighter-rouge">memcpy</code> 非常相似，想必对熟悉 C 语言的大家没有难度。唯一区别在于多了个参数来指示内存传递的方向。<a href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g18fa99055ee694244a270e4d5101e95b"><code class="language-plaintext highlighter-rouge">cudaMemcpyKind</code></a> 指示了数据的传输方向，有以下几种选择：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">cudaMemcpyHostToHost</code></li>
+  <li><code class="language-plaintext highlighter-rouge">cudaMemcpyHostToDevice</code></li>
+  <li><code class="language-plaintext highlighter-rouge">cudaMemcpyDeviceToHost</code></li>
+  <li><code class="language-plaintext highlighter-rouge">cudaMemcpyDeviceToDevice</code></li>
+</ul>
+
+<p>无须更多的解释，相信各位已经知道了上述常量的含义。</p>
+
+<h3 id="错误处理">错误处理</h3>
+
+<p>从前面的例子不难发现，几乎每个CUDA API函数都会返回 <code class="language-plaintext highlighter-rouge">cudaError_t</code> 类型的值，用来指示此次函数调用是否成功。当返回值为 <code class="language-plaintext highlighter-rouge">cudaSuccess</code> 时，函数调用成功。若失败，返回值会标记失败的具体代码，程序员可通过 <code class="language-plaintext highlighter-rouge">cudaGetErrorString</code> 函数获得具体的报错信息。为增强程序的鲁棒性，同时又不失代码美观，方便纠错，我推荐使用如下宏函数：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define GPUAssert(ans) { gpuAssert((ans), __FILE__, __LINE__)
+</span>
+<span class="kr">inline</span> <span class="kt">void</span> <span class="nf">gpuAssert</span><span class="p">(</span><span class="n">cudaError_t</span> <span class="n">code</span> <span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">int</span> <span class="n">line</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">abort</span> <span class="o">=</span> <span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">code</span> <span class="o">!=</span> <span class="n">cudaSuccess</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"GPU assert: %s %s %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">cudaGetErrorString</span><span class="p">(</span><span class="n">code</span><span class="p">),</span> <span class="n">file</span><span class="p">,</span> <span class="n">line</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">abort</span><span class="p">)</span>
+          <span class="n">exit</span><span class="p">(</span><span class="n">code</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>调用 CUDA API 时，就可以用该宏函数将其包裹起来：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dev_a</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+</code></pre></div></div>
+
+<h2 id="内置变量与函数">内置变量与函数</h2>
+
+<ul>
+  <li>线程编号的变量为 <code class="language-plaintext highlighter-rouge">threadIdx</code>，类型为 <code class="language-plaintext highlighter-rouge">uint3</code>，由三个描述不同方向上编号的整数组成，使用 <code class="language-plaintext highlighter-rouge">x</code>、<code class="language-plaintext highlighter-rouge">y</code>、<code class="language-plaintext highlighter-rouge">z</code> 和 <code class="language-plaintext highlighter-rouge">w</code> 依次访问
+    <ul>
+      <li>threadIdx.x：线程块内在 x 方向上的该线程的 ID</li>
+      <li>threadIdx.y：线程块内在 y 方向上的该线程的 ID</li>
+    </ul>
+  </li>
+  <li>线程块编号的变量为 <code class="language-plaintext highlighter-rouge">blockIdx</code>，类型为 <code class="language-plaintext highlighter-rouge">uint3</code>
+    <ul>
+      <li>blockIdx.x：网格内在 x 方向上的该线程块的 ID</li>
+      <li>blockIdx.y：网格内在 y 方向上的该线程块的 ID</li>
+    </ul>
+  </li>
+  <li>线程块的线程数量使用 <code class="language-plaintext highlighter-rouge">blockDim</code> 变量描述
+    <ul>
+      <li>blockDim.x：该线程块 x 方向上的线程总数</li>
+      <li>blockDim.y：该线程块 y 方向上的线程总数</li>
+    </ul>
+  </li>
+  <li>网格中线程块的数量使用 <code class="language-plaintext highlighter-rouge">gridDim</code> 变量描述
+    <ul>
+      <li>gridDim.x：网格中 x 方向上的线程块总数</li>
+      <li>gridDim.y：网格中 y 方向上的线程块总数</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">__syncthreads()</code> 是 CUDA 的内置命令。通常用于线程块内部的线程同步。当线程执行至 <code class="language-plaintext highlighter-rouge">__syncthreads()</code> 处时，会等待全部的线程执行完毕后再继续执行。</li>
+</ul>
+
+<p>结合前文的 CUDA 线程层次图，可以发现，使用三维向量（二维向量）来描述一个编号，可以极大方便图形变换、模型生成的编程和调试工作。因为在实际编程时，程序员可以将 GPU 的线程网格抽象成一个矩形或立方体，将它循环映射到要计算的资源上，而不再纠结于复杂的索引计算中。</p>
+
+<p>来看一个简单向量加法的例子：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">add</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">b</span><span class="p">);</span> <span class="p">{</span>
+  <span class="c1">// use built-in variable</span>
+  <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">c</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
+    <span class="n">index</span> <span class="o">+=</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果线程块大小为 256，每个线程块有 256 个线程，GPU 中的线程层级结构如下图：</p>
+
+<p><img src="/assets/img/PP/index.jpg" alt="" /></p>
+
+<p>可见，计算一个线程的唯一全局编号，还是比较复杂的，但也很常用。在这几行代码中，每个线程都得到了它在线程块中的索引以及这个线程块在网格中的索引，并且这两个索引是二维的，要转为一维的，还需要将 y 方向乘以 x 方向的总数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>作为对前面知识的巩固，再来看一下部分 <code class="language-plaintext highlighter-rouge">main()</code> 函数的书写。主机程序先分配三块用于存贮向量的设备内存，在完成初始化后，将数据移动到设备端。主机调用核函数，并等待 GPU 执行完成，再将数据从设备移动到主机上，最后从中读取计算结果，并回收设备内存。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// malloc for device memory</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="kt">void</span><span class="o">**</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">dev_a</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="nf">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="kt">void</span><span class="o">**</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">dev_b</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="nf">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="kt">void</span><span class="o">**</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">dev_c</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="nf">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+
+<span class="c1">// initilization</span>
+<span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+  <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">;</span>
+  <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">dim3</span> <span class="nf">blocks</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+<span class="n">dim3</span> <span class="nf">threads</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">);</span>
+<span class="c1">// memcpy to device</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">dev_a</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="nf">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">dev_b</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="nf">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+
+<span class="c1">// call add kernel func</span>
+<span class="n">add</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocks</span><span class="p">,</span><span class="n">threads</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">dev_a</span><span class="p">,</span> <span class="n">dev_b</span><span class="p">,</span> <span class="n">dev_c</span><span class="p">);</span>
+<span class="c1">// wait untill all finished</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+
+<span class="c1">// memcpy to host</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">dev_c</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="nf">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="n">cudaMemcpyDeviceToHost</span><span class="p">));</span>
+
+<span class="c1">// print result</span>
+<span class="k">for</span><span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"%5d + %5d = %5d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="p">}</span>
+
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">dev_a</span><span class="p">));</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">dev_b</span><span class="p">));</span>
+<span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaFree</span><span class="p">(</span><span class="n">dev_c</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>这其中，<code class="language-plaintext highlighter-rouge">cudaDeviceSynchronize()</code> 函数会将程序一直阻塞，直到前面所有请求的 GPU 任务全部执行完毕。因为主机在调用了核函数后，往往不会等待设备端任务完成就往下执行了，所以如果不加这一函数，可能会出现结果还未计算完成就被移动到主机的情况。</p>
+
+<h2 id="实践">实践</h2>
+
+<p>学完了这些以后，就可以写一些简单的 CUDA 小程序了，动手体验一下 GPU 的计算能力吧！之前我们已经给出了向量加法的部分代码。现在考虑一下数组求和问题。</p>
+
+<p>随机生成一个数组，需要求出该数组所有元素的和。在<a href="https://dingfen.github.io/mpi&amp;openmp/2020/12/17/PP02.html#%E4%BA%8C%E5%8F%89%E6%A0%91%E6%B1%82%E5%92%8C%E5%AE%9E%E7%8E%B0">之前的文章中</a>，介绍过二叉树求和的基本算法。这里可用 CUDA 再实现一次。</p>
+
+<p>略不同于之前文章的求和步骤，为了方便编程，不要求线程必须将相邻数组的元素相加，而是将步长一致的元素相加。在一开始时，规定步长为线程块大小的一半。
+每次循环线程计算 <code class="language-plaintext highlighter-rouge">v[t] += v[t+n]</code> 的值，也就是将步长一致的累加起来。循环一次后，数组元素的部分和就出现在数组的前半部分。然后将步长缩小一半，那么下一次循环会将部分和集中到数组前半部分。如此往复，直到数组的和集中到了第0号元素上。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define N 256
+</span>
+<span class="n">__global__</span> <span class="kt">void</span> <span class="nf">psum</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span> <span class="n">v</span><span class="p">)</span>
+<span class="p">{</span> 
+    <span class="c1">// Thread index.</span>
+    <span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span> 
+    <span class="c1">// Should be half the length of v.</span>
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span> 
+
+    <span class="k">while</span> <span class="p">(</span><span class="n">n</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">v</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+=</span> <span class="n">v</span><span class="p">[</span><span class="n">t</span> <span class="o">+</span> <span class="n">n</span><span class="p">];</span>  
+        <span class="n">__syncthreads</span><span class="p">();</span>    
+        <span class="n">n</span> <span class="o">/=</span> <span class="mi">2</span><span class="p">;</span> 
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意循环中的 <code class="language-plaintext highlighter-rouge">__syncthreads()</code>，该句保证了上一循环全部结束后，下一轮循环才会开始。否则，线程之间步调不统一会得出错误的结果。很明显看出，算法每经过一轮循环，可执行的线程就会少一半，这显然浪费了不少计算资源。</p>
+
+<p>随后就是主机部分的代码。同样的步骤，先分配设备内存，然后将数据喂给设备，随后调用核函数计算，最后将计算结果返回，并回收内存。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span> 
+  <span class="kt">float</span> <span class="o">*</span><span class="n">v_h</span><span class="p">,</span> <span class="o">*</span><span class="n">v_d</span><span class="p">;</span>
+  <span class="c1">// malloc for host and device</span>
+  <span class="n">v_h</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">v_h</span><span class="p">));</span> 
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">((</span><span class="kt">float</span><span class="o">**</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">v_d</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">v_d</span><span class="p">)));</span>
+  <span class="c1">// initilization</span>
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rand</span><span class="p">()</span> <span class="o">/</span> <span class="n">RAND_MAX</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// memcpy to device</span>
+  <span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">v_d</span><span class="p">,</span> <span class="n">v_h</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">);</span>
+  <span class="n">psum</span><span class="o">&lt;&lt;&lt;</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">v_d</span><span class="p">);</span>
+  <span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">v_h</span><span class="p">,</span> <span class="n">v_d</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span> <span class="n">cudaMemcpyDeviceToHost</span><span class="p">);</span>
+  <span class="c1">// memcpy for result</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Pairwise sum = %7.3f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">v_h</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+  <span class="c1">// free</span>
+  <span class="n">free</span><span class="p">(</span><span class="n">v_h</span><span class="p">);</span>
+  <span class="n">cudaFree</span><span class="p">(</span><span class="n">v_d</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cuda" class="page__taxonomy-item" rel="tag">CUDA</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#mpi-openmp" class="page__taxonomy-item" rel="tag">MPI&OpenMP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-10-08T00:00:00+08:00">October 8, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=CUDA+%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8%20http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F08%2Fcuda-beginer.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F08%2Fcuda-beginer.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F08%2Fcuda-beginer.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/mpi&openmp/2021/10/03/cuda-with-dotproduct.html" class="pagination--pager" title="CUDA 中的向量内积
+">previous</a>
+    
+    
+      <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" class="pagination--pager" title="CUDA 中的矩阵乘
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/mpi&openmp/2021/10/08/cuda-beginer.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/mpi&openmp/2021/10/08/cuda-beginer"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

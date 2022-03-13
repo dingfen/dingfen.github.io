@@ -1,0 +1,726 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>RI5CY 介绍 - 峰子的乐园</title>
+<meta name="description" content="深度探究 RI5CY 的前世今生">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="RI5CY 介绍">
+<meta property="og:url" content="http://localhost:4000/risc-v/verilog/2020/07/16/RI5CY.html">
+
+
+  <meta property="og:description" content="深度探究 RI5CY 的前世今生">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-07-16T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/verilog/2020/07/16/RI5CY.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          RI5CY 介绍
+
+        
+      </h1>
+      
+        <p class="page__lead">深度探究 RI5CY 的前世今生
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  1 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="RI5CY 介绍">
+    <meta itemprop="description" content="深度探究 RI5CY 的前世今生">
+    <meta itemprop="datePublished" content="2020-07-16T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#introduction-of-ri5cycv32e40p">Introduction of RI5CY(CV32E40P)</a>
+    <ul>
+      <li><a href="#什么是-ri5cy">什么是 RI5CY</a></li>
+      <li><a href="#openhw-group-是什么来头">OpenHW Group 是什么来头</a></li>
+      <li><a href="#从-ri5cy-到-cv32e40p">从 RI5CY 到 CV32E40P</a></li>
+      <li><a href="#ri5cy-的特点">RI5CY 的特点</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="introduction-of-ri5cycv32e40p">Introduction of RI5CY(CV32E40P)</h1>
+
+<h2 id="什么是-ri5cy">什么是 RI5CY</h2>
+
+<ul>
+  <li>4阶段流水线，顺序的 32-bit 的 RISC-V 处理核，后改名为 CV32E40P，但为方便叙述，以下均称之为 RI5CY。</li>
+  <li>RI5CY 支持的最基础的 RISC-V 指令集版本（最新）的是 <a href="https://github.com/riscv/riscv-isa-manual/releases/tag/archive">RV32I Base Integer Instruction Set version 2.1</a>。除此之外，它还支持以下 RISC-V 指令集：
+    <ul>
+      <li>C : Standard Extension for Compressed Instructions 2.0</li>
+      <li>M : Standard Extension for Integer Multiplication and Division 2.0</li>
+      <li>Zicsr : Control and Status Register Instructions 2.0</li>
+      <li>Zifencei : Instruction-Fetch Fence 2.0</li>
+      <li>F : Single-Precision Floating-Point 2.2</li>
+    </ul>
+  </li>
+  <li>它的 ISA 不仅支持最基本的 RISC-V 指令集，还增添了如下指令：
+    <ul>
+      <li>乘加指令 (multiple additional instructions)</li>
+      <li>硬件循环 (hardware loops)</li>
+      <li>后累加装载指令 (post-increment load-store instructions)</li>
+      <li>额外的 ALU 运算指令</li>
+    </ul>
+  </li>
+  <li>由 OpenHW Group 开发，这里是它的<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/">用户手册</a>，会有更多详细的介绍，以及它的<a href="https://github.com/openhwgroup/cv32e40p">源代码</a>。</li>
+</ul>
+
+<h2 id="openhw-group-是什么来头">OpenHW Group 是什么来头</h2>
+
+<p><a href="https://www.openhwgroup.org/">OpenHw</a> 是一个非盈利的国际组织。该组织的软硬件开发人员在开源核 (open-source core)，相关IP (related IP)，工具和软件等开发方面进行协作。OpenHW 提供了一个基础架构，用于托管符合行业最佳实践的高质量开源硬件开发。</p>
+
+<p>OpenHW 组织属于 CORE-V Family。CORE-V 是一系列基于RISC-V，以及为电子系统设计师提供相关的处理器子系统 IP，工具和软件的开源核项目。CORE-V Family 在硅片和 FPGA 优化实现中提供符合行业的高质量核心 IP。</p>
+
+<p>OpenHW 组织的<a href="https://www.openhwgroup.org/working-groups/">主要技术负责人</a>都在国内外非常有名的研究机构或企业任职。该组织的<a href="https://www.openhwgroup.org/about-us/">董事会</a>主席 Rob同时还是 RISC-V International 董事会成员。 Rob也是IEEE的高级成员，兼任 Southern Methodist University 和 the University of Texas 的兼职教授。</p>
+
+<h2 id="从-ri5cy-到-cv32e40p">从 RI5CY 到 CV32E40P</h2>
+
+<p>从官方<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/intro.html">用户手册</a>上可以了解到，CV32E40P 最初是基于 OpenRISC ISA 的 OR10N CPU 核的分支。在去年我开始了解该处理核的这个时候，其正式名字还是 RI5CY，到了今年就更名为 CV32E40P，项目更名一定程度上伴随着组织关系的变化。之前 RI5CY 的项目主要是由 <a href="https://pulp-platform.org/">PULP Platform</a> 负责。</p>
+
+<p>PULP Platform 的全称为 Parallel Ultra Low Power Platform。该组织的主要工作是开发开源的、可扩展的软硬件研究开发平台，以突破毫瓦功率级别的能效墙，并满足需要灵活处理数据流的 loT 应用的计算需求，例如加速度计，低分辨率摄像头，麦克风阵列和生命体征监视器。</p>
+
+<p>在 OpenHW Group 成立之初，PULP加入了这个组织，并将一些有关 RISC-V 核的实现工程转移到了 OpenHW Group 组织之下，其中 RI5CY 便是其中之一。</p>
+
+<h2 id="ri5cy-的特点">RI5CY 的特点</h2>
+
+<p>之前提到，RI5CY 是一个顺序的4阶段流水线 32-bit 的 RISC-V 处理核。它的流水线设计图如下：</p>
+
+<p><img src="/assets/img/RISC-V_core.png" alt="Block Diagram of CV32E40P(RI5CY) core" /></p>
+
+<p>RI5CY 是一个非常好的自定义处理核的起点，这也是它在科研圈较受欢迎的原因之一。当然这相当程度上归功于 1）开发组人员对它的良好维护，2）非常清晰明确的源代码，3）能被综合或仿真工具实例化，4）有 <a href="https://www.veripool.org/wiki/verilator">Verilator</a> 模型的测试平台，5）可在 FPGA 和 ASIC 上高效实例化。</p>
+
+<p>在最初开发 RI5CY 的过程中 <a href="https://pulp-platform.org/">PULP Platform</a> 就制定了一个设计目标，追求高能效的信号处理。为此，它们添加了乘加指令 (multiple additional instructions)、硬件循环 (hardware loops)、后累加装载指令 (post-increment load-store instructions)和额外的 ALU 运算指令(min, max, absolute value)。这样一来，可以减少要处理的指令，减少能耗。</p>
+
+<p>除了在 ISA 上做增添外，设计人员加入了<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/exceptions_interrupts.html">中断 (Interrupts)、异常 (Exceptions)</a>、<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/sleep.html">事件 (Events)</a>、<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/debug.html">调试 (Debug)</a>、<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/perf_counters.html">性能 (Performance Counters)</a> 等多个功能。</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#ri5cy" class="page__taxonomy-item" rel="tag">RI5CY</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#verilog" class="page__taxonomy-item" rel="tag">Verilog</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/categories/#verilog" class="page__taxonomy-item" rel="tag">Verilog</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-07-16T00:00:00+08:00">July 16, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=RI5CY+%E4%BB%8B%E7%BB%8D%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2Fverilog%2F2020%2F07%2F16%2FRI5CY.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2Fverilog%2F2020%2F07%2F16%2FRI5CY.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2Fverilog%2F2020%2F07%2F16%2FRI5CY.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/2020/07/02/first-blog.html" class="pagination--pager" title="我的第一篇 blog
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/07/23/RISC-V_on_QEMU.html" class="pagination--pager" title="QEMU 上运行 RISC-V Linux 内核
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/verilog/2020/07/16/RI5CY.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/verilog/2020/07/16/RI5CY"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,1132 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>RISC-V from Scratch 5 - 峰子的乐园</title>
+<meta name="description" content="RISC-V from Scratch 5：机器模式">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="RISC-V from Scratch 5">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/08/06/riscv-from-scratch-5.html">
+
+
+  <meta property="og:description" content="RISC-V from Scratch 5：机器模式">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-08-06T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/08/06/riscv-from-scratch-5.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          RISC-V from Scratch 5
+
+        
+      </h1>
+      
+        <p class="page__lead">RISC-V from Scratch 5：机器模式
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="RISC-V from Scratch 5">
+    <meta itemprop="description" content="RISC-V from Scratch 5：机器模式">
+    <meta itemprop="datePublished" content="2020-08-06T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#risc-v-from-scratch-5">RISC-V from scratch 5</a>
+    <ul>
+      <li><a href="#简介">简介</a></li>
+      <li><a href="#搭建环境">搭建环境</a></li>
+      <li><a href="#往期回顾">往期回顾</a></li>
+      <li><a href="#再回链接器脚本">再回链接器脚本</a></li>
+      <li><a href="#机器模式">机器模式</a>
+        <ul>
+          <li><a href="#mhartid-寄存器">mhartid 寄存器</a></li>
+          <li><a href="#satp-寄存器">satp 寄存器</a></li>
+          <li><a href="#mstatus-寄存器">mstatus 寄存器</a></li>
+          <li><a href="#初始化-bss-数据段">初始化 BSS 数据段</a></li>
+          <li><a href="#mie-寄存器">mie 寄存器</a></li>
+          <li><a href="#mtvec-寄存器">mtvec 寄存器</a></li>
+          <li><a href="#转到-main">转到 main</a></li>
+        </ul>
+      </li>
+      <li><a href="#接下来">接下来</a></li>
+      <li><a href="#附数据的分布">附：数据的分布</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="risc-v-from-scratch-5">RISC-V from scratch 5</h1>
+
+<p>接上一篇<a href="https://dingfen.github.io/risc-v/2020/08/01/riscv-from-scratch-4.html">博客</a>，我今天继续写 <em>RISC-V from scratch</em> 系列博客。原本我打算将该<a href="https://github.com/twilco/riscv-from-scratch">英文系列</a>全部翻译成中文，但原作者貌似没有把这一系列完成就咕咕了，<strong>因此本文的内容是我自己实践的内容，以及一些自己的想法，放在这里同大家探讨，算是狗尾续貂，弥补遗憾</strong>。</p>
+
+<h2 id="简介">简介</h2>
+
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，我们之前已经探索了很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。具体来说，在上一篇文章中，我们完成了一个简陋的 <strong>UART</strong> 驱动程序，并利用该驱动程序完成了打印字符的任务，今天，我们紧接着上一篇的实验内容，继续深入探讨 RISC-V，完善咱们的小内核。</p>
+
+<p>本篇博客中，我们将会：</p>
+
+<ul>
+  <li>写一个自己的链接器脚本</li>
+  <li>使用 RISC-V 提供的机器模式特权寄存器</li>
+  <li>初始化 bss 数据段</li>
+</ul>
+
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+
+<p>如果你还未看本系列博客的第一部分，没有安装 <code class="language-plaintext highlighter-rouge">riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+
+<h2 id="往期回顾">往期回顾</h2>
+
+<p>在 <em>RISC-V from scratch 4</em> 中，我们实现了一个简单的 UART 驱动程序和一个简单的 C 运行时 <code class="language-plaintext highlighter-rouge">crt0.s</code>，并达到了预期效果，见下图：</p>
+
+<p><img src="/assets/img/uarthi.png" alt="" /></p>
+
+<p>考虑到 <code class="language-plaintext highlighter-rouge">crt0.s</code> 的实现已经是第二章的事情了，比较久远，因此在这里贴出代码，也是为了方便下一步的讨论。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">.section</span> <span class="nv">.init</span><span class="p">,</span> <span class="s">"ax"</span>
+<span class="nf">.global</span> <span class="nv">_start</span>
+<span class="nl">_start:</span>
+    <span class="nf">.cfi_startproc</span>
+    <span class="nf">.cfi_undefined</span> <span class="nv">ra</span>
+    <span class="nf">.option</span> <span class="nv">push</span>
+    <span class="nf">.option</span> <span class="nv">norelax</span>
+    <span class="nf">la</span> <span class="nv">gp</span><span class="p">,</span> <span class="nv">__global_pointer$</span>
+    <span class="nf">.option</span> <span class="nv">pop</span>
+    <span class="nf">la</span> <span class="nb">sp</span><span class="p">,</span> <span class="nv">__stack_top</span>
+    <span class="nf">add</span> <span class="nv">s0</span><span class="p">,</span> <span class="nb">sp</span><span class="p">,</span> <span class="nv">zero</span>
+    <span class="nf">jal</span> <span class="nv">zero</span><span class="p">,</span> <span class="nv">main</span>
+    <span class="nf">.cfi_endproc</span>
+    <span class="nf">.end</span>
+</code></pre></div></div>
+
+<p>然而，我们为了打出字符串 “hi” ，将主程序写成了这样：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="n">p</span> <span class="o">=</span> <span class="sc">'h'</span><span class="p">;</span>
+    <span class="n">uartinit</span><span class="p">();</span>
+    <span class="n">uartputc</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+    <span class="n">p</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">uartputc</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>难道不能把它放入一个字符串，循环打印出来么？</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="n">p</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"hello"</span><span class="p">;</span>
+    <span class="n">uartinit</span><span class="p">();</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">uartputc</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>你会发现，这样的尝试失败了，你会得到一个很奇怪的链接错误：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>relocation truncated to fit: R_RISCV_HI20 against <span class="sb">`</span>p<span class="s1">'
+</span></code></pre></div></div>
+
+<p>这是为什么呢？在本系列的第二篇<a href="https://dingfen.github.io/risc-v/2020/07/26/riscv-from-scratch-2.html#链接起来">博客中</a>，我们使用如下方法得到了一个链接器脚本：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># In the `riscv-from-scratch/work` directory...</span>
+<span class="c"># Copy the default linker script into riscv64-virt.ld</span>
+riscv64-unknown-elf-ld <span class="nt">--verbose</span> <span class="o">&gt;</span> riscv64-virt.ld
+</code></pre></div></div>
+
+<p>该脚本中的内容非常复杂，说实话，大部分内容我至今都没有看懂，但这并不妨碍我们以后的实验，我们只需要知道，这个舶来品现在水土不服了。</p>
+
+<h2 id="再回链接器脚本">再回链接器脚本</h2>
+
+<p>什么是链接器脚本，具体来说，链接器控制了各个程序中 section 的合并以及摆放位置，在一般情况下，我们写程序时完全不需要关心程序放在内存的哪个位置，因为我们平时写的代码都是 PIC (Position-Independent Code)，它们可以运行在内存中的任意位置。但现在，我们要完成一个 RISC-V 内核，程序摆放的位置就值得考究了，要是你随意摆放的话，那机器怎么知道你要把代码放在哪里，从哪里开始运行呢？</p>
+
+<p>为了编写一个自定义的链接器脚本，我们必然要先学它的基本语法。这里我推荐一个博主的教程 <a href="http://bravegnu.org/gnu-eprog/lds.html">Linker Script File</a>，里面介绍了非常基础的语法知识，非常适合初学者。在这里我就不详细解释链接器脚本的语法了。</p>
+
+<p>学好链接器脚本的语法后，就可以动手写了！</p>
+
+<p>首先，创建文件 <code class="language-plaintext highlighter-rouge">my-virt.ld</code> ，加入入口 <code class="language-plaintext highlighter-rouge">_start</code> 以及第二章中我们已经加的 MEMORY 指令。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ENTRY<span class="o">(</span>_start<span class="o">)</span>
+MEMORY
+<span class="o">{</span>
+   /<span class="k">*</span> qemu-system-riscv64 virt machine <span class="k">*</span>/
+   RAM <span class="o">(</span>rwx<span class="o">)</span> : ORIGIN <span class="o">=</span> 0x80000000, LENGTH <span class="o">=</span> 128M
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>然后就是 SECTION 语句：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SECTION 
+{
+    PROVIDE(__stack_top = 0x88000000);
+    PROVIDE(__uart_base_addr = 0x10000000);
+    
+    . = 0x80000000;
+    .text : {
+    	* (.text);
+    }
+    
+    .data : {
+        __global_pointer$ = .;
+    	* (.data);
+    }
+}
+</code></pre></div></div>
+
+<p>将代码 text 放到了内存起始点，数据段紧跟其后。那么问题来了，<code class="language-plaintext highlighter-rouge">__global_pointer$</code> 这个值，该指向哪里呢？指向数据段的中部？尾部？顶部？常量静态数据在前在后？全局数据与局部静态数据又如何？那么大家问问自己的直觉，<code class="language-plaintext highlighter-rouge">__global_pointer$</code> 最有可能在哪里？顶部？没错，博主本人在做实验时就放在了顶部，还就真的对了（当然博主讲话是负责任的，证据在后面）。</p>
+
+<p>那么现在问题解决了么？还没有！因为我们还没有确定 <code class="language-plaintext highlighter-rouge">.init</code> section 的位置，往前翻翻，注意到 <code class="language-plaintext highlighter-rouge">crt0.s</code> 里面的代码，可是放在 <code class="language-plaintext highlighter-rouge">.init</code> section 里面的（没错，就是因为这个，我才把它贴在这里）。在本系列的第二篇<a href="https://dingfen.github.io/risc-v/2020/07/26/riscv-from-scratch-2.html">博客中</a>，我们已经详细说明了 C Runtime 的重要性，不把它放在 <code class="language-plaintext highlighter-rouge">0x80000000</code> ，程序一定跑不了。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SECTION 
+{
+    PROVIDE(__stack_top = 0x88000000);
+    PROVIDE(__uart_base_addr = 0x10000000);
+    
+    . = 0x80000000;
+    .init : {
+    	* (.init);
+    }
+    .text : {
+    	* (.text);
+    }
+    
+    .data : {
+        __global_pointer$ = .;
+    	* (.data);
+    }
+    .rodata : {
+    	* (.rodata);
+    }
+    
+    __bss_start = .;
+    .bss : {
+    	* (.bss);
+    }
+    __bss_end = .;
+}
+</code></pre></div></div>
+
+<p>为了节省篇幅，把后面的东西都加了进来，事实上也没啥，就是 <code class="language-plaintext highlighter-rouge">.rodata</code> 和 <code class="language-plaintext highlighter-rouge">.bss</code> 段，分别存放只读数据（常量数据）和未初始化数据，如果不太清楚这些段名的作用，可以参考 <a href="https://blog.csdn.net/jxm_csdn/article/details/39829535">C 语言内存分布</a>。</p>
+
+<p>那么到此为止，能不能实现我们预期的结果呢？按一下方式编译运行程序，若不出意外，就可以看到字符串 “hello” 了。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> riscv64-unknown-elf-gcc <span class="nt">-c</span> kernel/main.c <span class="nt">-o</span> build/main.o
+<span class="o">&gt;</span> riscv64-unknown-elf-gcc <span class="nt">-c</span> kernel/ns16550a.c <span class="nt">-o</span> build/ns16550a.o
+<span class="o">&gt;</span> riscv64-unknown-elf-as kernel/crt0.s <span class="nt">-o</span> build/crt0.o
+
+<span class="o">&gt;</span> riscv64-unknown-elf-ld build/crt0.o build/main.o build/ns16550a.o <span class="nt">-T</span> kernel/my-virt.ld
+<span class="o">&gt;</span> qemu-system-riscv64 <span class="nt">-machine</span> virt <span class="nt">-m</span> 128M <span class="nt">-kernel</span> a.out <span class="nt">-bios</span> none <span class="nt">-nographic</span>
+</code></pre></div></div>
+
+<div class="language-makefile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">CC</span><span class="o">=</span>riscv64-unknown-elf-gcc
+<span class="nv">AS</span><span class="o">=</span>riscv64-unknown-elf-as
+<span class="nv">LD</span><span class="o">=</span>riscv64-unknown-elf-ld
+
+<span class="nv">TARGET</span><span class="o">=</span>build/a.out
+<span class="nv">CFLAG</span><span class="o">=</span> <span class="nt">-c</span>
+<span class="nv">VIRTLD</span><span class="o">=</span><span class="nt">-T</span> <span class="o">[</span>your-src-directory]/my-virt.ld
+
+<span class="nl">all</span><span class="o">:</span> <span class="nf">build/crt0.o build/main.o build/ns16550a.o</span>
+	<span class="nv">$(LD)</span> <span class="nv">$(VIRTLD)</span> <span class="nv">$^</span> <span class="nt">-o</span> <span class="nv">$(TARGET)</span>
+
+<span class="nl">build/%.o</span><span class="o">:</span> <span class="nf">[your-src-directory]/%.s</span>
+	<span class="nv">$(AS)</span> <span class="nt">-g</span> <span class="nv">$^</span> <span class="nt">-o</span> <span class="nv">$@</span>
+
+<span class="nl">build/%.o</span><span class="o">:</span> <span class="nf">[your-src-directory]/%.c</span>
+	<span class="nv">$(CC)</span> <span class="nv">$(CFLAG)</span> <span class="nv">$^</span> <span class="nt">-o</span> <span class="nv">$@</span>
+</code></pre></div></div>
+
+<p>如果大家看过<a href="https://dingfen.github.io/risc-v/2020/08/01/riscv-from-scratch-4.html">第四章博客</a>，一定对 <code class="language-plaintext highlighter-rouge">Makefile</code> 的简洁方便印象深刻，所以我也提供了 <code class="language-plaintext highlighter-rouge">Makefile</code> 的编写，也会发现我们这次编译程序的方式不太相同（两次编译都能过）。如果你不喜欢这种方式，可以尝试一下这个 <code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-gcc -g -ffreestanding -O0 -Wl,--gc-sections -nostartfiles -nostdlib -nodefaultlibs -Wl,-T,my-virt.ld crt0.s ns16550a.c main.c</code> 冗长繁杂的命令😅。</p>
+
+<h2 id="机器模式">机器模式</h2>
+
+<p>我们要想实现一个可以工作的内核，<code class="language-plaintext highlighter-rouge">crt0.s</code> 中那几行简短的代码肯定是不够的，因为 <code class="language-plaintext highlighter-rouge">crt0.s</code> 中只是建立的栈，找到了数据段位置，然后就跳转到 <code class="language-plaintext highlighter-rouge">main</code> 函数了。然而一个可以工作的内核需要处理中断控制、中断处理、状态指示、权限设置甚至多 CPU 处理等多方面问题。考虑到 <code class="language-plaintext highlighter-rouge">crt0.s</code> 是机器启动后，最先开始执行的代码，一定处在机器模式——权限最高的模式，那我们必然要给它塞一些更加繁重的任务。</p>
+
+<p>可能有些读者对 RISC-V 的特权架构不是很熟，建议看一下 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a> 和 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged manual</a> 。由于篇幅关系，我就不在这里展开介绍了。</p>
+
+<p>首先，我们要给 <code class="language-plaintext highlighter-rouge">crt0.s</code> 文件正式升级，将它改名为 <code class="language-plaintext highlighter-rouge">boot.s</code> ，或者随便什么你喜欢的名字（<code class="language-plaintext highlighter-rouge">start.s</code> 、<code class="language-plaintext highlighter-rouge">entry.s</code> 、<code class="language-plaintext highlighter-rouge">head.S</code> 之类的）。</p>
+
+<h3 id="mhartid-寄存器">mhartid 寄存器</h3>
+
+<p>考虑到 <code class="language-plaintext highlighter-rouge">QEMU</code> <code class="language-plaintext highlighter-rouge">virt</code> 机器可以使用多个处理器，那么我们就需要防止多个 hart 执行 <code class="language-plaintext highlighter-rouge">boot.s</code> ，在机器刚开始运行（以及我们刚开始编写代码时），一哄而上可不是什么好的选择。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nl">_start:</span>
+    <span class="err">#</span> <span class="nf">read</span> <span class="nv">our</span> <span class="nv">hart</span> <span class="nv">identifier</span> <span class="nv">into</span> <span class="nv">t0</span>
+    <span class="err">#</span> <span class="nf">see</span> <span class="nv">if</span> <span class="nv">it</span> <span class="nv">is</span> <span class="mi">0</span><span class="p">,</span> <span class="nv">if</span> <span class="nv">not</span> <span class="nv">to</span> <span class="nv">busy</span> <span class="nv">loop</span>
+    <span class="nf">csrr</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">mhartid</span>
+    <span class="nf">bnez</span> <span class="nv">t0</span><span class="p">,</span> <span class="mi">4</span><span class="nv">f</span>
+    <span class="nf">...</span>
+<span class="err">4:</span>
+    <span class="nf">wfi</span>
+    <span class="nf">j</span> <span class="mi">4</span><span class="nv">b</span>
+</code></pre></div></div>
+
+<p>因此这里我们首先使用 mhartid 寄存器获取 hart 的 ID ，<code class="language-plaintext highlighter-rouge">csrr</code> 是一个伪指令，它读取一个 CSR 寄存器。让非 0 的 hart 全部跳转到死循环里，并将它们 stall 住，死循环中 <code class="language-plaintext highlighter-rouge">wfi</code> 指令在这方面是专家：</p>
+
+<blockquote>
+  <p>The Wait for Interrupt instruction (WFI) provides a hint to the implementation that the current hart can be stalled until an interrupt might need servicing.</p>
+</blockquote>
+
+<h3 id="satp-寄存器">satp 寄存器</h3>
+
+<p>现在，我们就要开始设置一些寄存器了以及一些初始化任务。</p>
+
+<p>我们需要取消内存分页机制，这样我们就可以完全控制 MMU (Memory Management Unit) ，只不过控制的方式就是让 virtual memory = physical memory 。参考 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a>，使用 csrw 语句，向 satp 寄存器写 0 即可。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="err">#</span> <span class="nf">SATP</span> <span class="nv">should</span> <span class="nv">be</span> <span class="mi">0</span> 
+    <span class="err">#</span> <span class="nf">Supervisor</span> <span class="nv">Address</span> <span class="nv">Translation</span> <span class="nv">and</span> <span class="nv">Protection</span>
+    <span class="nf">csrw</span> <span class="nv">satp</span><span class="p">,</span> <span class="nv">zero</span>
+</code></pre></div></div>
+
+<h3 id="mstatus-寄存器">mstatus 寄存器</h3>
+
+<p>刚开始执行代码一定是机器模式，但是我们总不能一直让 hart 在机器模式下运行；此外，全局中断使能位也需要我们控制。这些都可以在 <code class="language-plaintext highlighter-rouge">mstatus</code> 寄存器上找到，关于 <code class="language-plaintext highlighter-rouge">mstatus</code> 寄存器，<a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a>上都有详细介绍。在此就略写几句。</p>
+
+<p>当进入 <code class="language-plaintext highlighter-rouge">main</code> 函数时，hart 最好要进入监管者模式。因为 <code class="language-plaintext highlighter-rouge">main</code> 函数事实上是我们操作系统内核最主要的函数之一，此外，我们也希望中断能被打开。对照 <a href="#mstatus"><code class="language-plaintext highlighter-rouge">mstatus</code> 寄存器</a>的位图，我们可以在对应位域置 1 ，来打开中断或者记录信息等。</p>
+
+<p><span id="mstatus">
+<img src="/assets/img/mstatus.png" alt="" /></span></p>
+
+<p>比如，我们想先打开机器模式的中断使能，那么我们需要：</p>
+
+<ul>
+  <li>将 <code class="language-plaintext highlighter-rouge">mstatus.MIE</code> 位置为 1 ，因为它代表机器模式全局下的中断使能</li>
+  <li>将 <code class="language-plaintext highlighter-rouge">mstatus.MPIE</code> 位置为 1 ，它代表了在中断/异常发生前，机器模式全局下的中断使能（我们肯定不想在中断/异常发生一次后，使能就失效了吧）</li>
+</ul>
+
+<p>我们还要将 <code class="language-plaintext highlighter-rouge">mstatus.MPP</code> 位置为 01，它代表了中断/异常发生前，代码运行的模式。之所以置为 01（监管者模式），是为了在执行 <code class="language-plaintext highlighter-rouge">mret</code> 的时候进入监管者模式。结合之前所说的，写下如下代码：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nf">li</span>   <span class="nv">t0</span><span class="p">,</span> <span class="p">(</span><span class="mb">0b</span><span class="mi">01</span> <span class="o">&lt;&lt;</span> <span class="mi">11</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="nf">csrw</span> <span class="nv">mstatus</span><span class="p">,</span> <span class="nv">t0</span>
+</code></pre></div></div>
+
+<h3 id="初始化-bss-数据段">初始化 BSS 数据段</h3>
+
+<p>如果你了解了 <a href="https://blog.csdn.net/jxm_csdn/article/details/39829535">C 语言内存分布</a>，你就会知道全局未初始化变量都会放在 BSS 段中，即我们在链接器文件里描述的 <code class="language-plaintext highlighter-rouge">.bss</code> section 。这里不得不说一句，写 C/C++ 未在定义时初始化是非常危险的😅，因为这会导致不确定行为。那么，作为操作系统的开发人员，初始化 BSS 数据段的责任就担在我们身上了。</p>
+
+<p>还记得我们之前定义的 <code class="language-plaintext highlighter-rouge">__bss_start</code> 和 <code class="language-plaintext highlighter-rouge">__bss_end</code> 吧，它们一个在 <code class="language-plaintext highlighter-rouge">.bss</code> 数据段前面，一个在后面，这两个符号是为方便数据初始化而设定的，那么目前，我们先把 <code class="language-plaintext highlighter-rouge">.bss</code> 段全部初始化为 0 。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nf">la</span>  <span class="nv">a0</span><span class="p">,</span> <span class="nv">__bss_start</span>
+    <span class="nf">la</span>  <span class="nv">a1</span><span class="p">,</span> <span class="nv">__bss_end</span>
+    <span class="nf">bgeu</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="mi">2</span><span class="nv">f</span>
+<span class="nl">l1:</span>
+    <span class="nf">sd</span>   <span class="nv">zero</span><span class="p">,</span> <span class="p">(</span><span class="nv">a0</span><span class="p">)</span>
+    <span class="nf">addi</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="mi">8</span>
+    <span class="nf">bltu</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="nv">l1</span>
+</code></pre></div></div>
+
+<p>只要你熟悉了 RISC-V 汇编语言，你肯定不难看懂上面的代码。它的作用就是从 <code class="language-plaintext highlighter-rouge">__bss_start</code> 开始循环，每次将 0 存放到目标地址，直到 <code class="language-plaintext highlighter-rouge">__bss_end</code> 为止。</p>
+
+<h3 id="mie-寄存器">mie 寄存器</h3>
+
+<p><code class="language-plaintext highlighter-rouge">mie</code> 寄存器包含了中断使能位，用于控制中断是否有效。其位域如下图：</p>
+
+<p><span id="mie"></span></p>
+
+<p><img src="/assets/img/mie.png" alt="" /></p>
+
+<p>我们除了要打开机器模式下的全局中断使能，还需要打开软件、时钟、外部这三部分子中断使能，参照 <a href="#mie"><code class="language-plaintext highlighter-rouge">mie</code> 寄存器的位域图</a>，我们可以写出下面的代码，打开所有机器模式下的中断使能。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nf">li</span>   <span class="nv">t3</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">11</span><span class="p">)</span>
+    <span class="nf">csrw</span> <span class="nv">mie</span><span class="p">,</span> <span class="nv">t3</span>
+</code></pre></div></div>
+
+<h3 id="mtvec-寄存器">mtvec 寄存器</h3>
+
+<p><code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器又是什么？该寄存器全名 Machine Trap-Vector Base-Address Register，它存放了 trap vector 信息，包括了基地址和模式位。换句话说，当中断/异常发生时，PC 值肯定需要跳转到中断/异常处理程序，该寄存器就保存了这些处理程序的地址。对 <code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器的详细介绍，还是要参考 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a> 和 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged manual</a> 资料。</p>
+
+<p>我们先不考虑中断/异常处理程序，先定义一个符号 <code class="language-plaintext highlighter-rouge">mtrap_vector</code> ，把它当作处理程序的开始点，然后，把它放入到 <code class="language-plaintext highlighter-rouge">mtvec</code> 寄存器中。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">la</span>   <span class="nv">t2</span><span class="p">,</span> <span class="nv">mtrap_vector</span>
+<span class="nf">csrw</span> <span class="nv">mtvec</span><span class="p">,</span> <span class="nv">t2</span>
+</code></pre></div></div>
+
+<h3 id="转到-main">转到 main</h3>
+
+<p>看起来我们快要写完了。到这时候，大家可能会变得不耐烦且急躁。于是，写出了最后一句指令 <code class="language-plaintext highlighter-rouge">mret</code> 。</p>
+
+<p>哦不，等等，<code class="language-plaintext highlighter-rouge">mret</code>  指令会把我们带到哪里？回顾一下 <code class="language-plaintext highlighter-rouge">crt0.s</code> ，在快结束的时候，我们使用指令 <code class="language-plaintext highlighter-rouge">jal zero, main</code> 跳转到了 <code class="language-plaintext highlighter-rouge">main</code> 函数里，我们的 <code class="language-plaintext highlighter-rouge">boot.s</code> 当然也需要跳转到 <code class="language-plaintext highlighter-rouge">main</code> 函数。但是，我们还可以用 <code class="language-plaintext highlighter-rouge">jal zero, main</code> 指令跳转吗？不行。这样跳转的话，我们仍在机器模式下。为了使 hart 跑在监管者模式下，我们必须使用 <code class="language-plaintext highlighter-rouge">mret</code> 。</p>
+
+<p>所以，<code class="language-plaintext highlighter-rouge">mret</code>  指令会把我们带到哪里？参考 RISC-V 的相关资料，在处理 <code class="language-plaintext highlighter-rouge">mret</code> 指令时，PC 值会从 <code class="language-plaintext highlighter-rouge">mepc</code> 寄存器取得。因此，我们必须将 <code class="language-plaintext highlighter-rouge">main</code> 函数的地址存入 <code class="language-plaintext highlighter-rouge">mepc</code> 寄存器。</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">la</span>   <span class="nv">t1</span><span class="p">,</span> <span class="nv">main</span>
+<span class="nf">csrw</span> <span class="nv">mepc</span><span class="p">,</span> <span class="nv">t1</span>
+<span class="nf">...</span>
+<span class="nf">mret</span>
+</code></pre></div></div>
+
+<p>我们把 <code class="language-plaintext highlighter-rouge">main</code> 函数的地址写入到了 <code class="language-plaintext highlighter-rouge">mepc</code> 寄存器中，回想一下 <code class="language-plaintext highlighter-rouge">mepc</code> 寄存器，它是用来存放中断处理完后的恢复执行的地址。那么在执行了 <code class="language-plaintext highlighter-rouge">mret</code> 之后， PC 值会被置为 <code class="language-plaintext highlighter-rouge">mepc</code> 寄存器中的数值，程序就会自己跳转到 <code class="language-plaintext highlighter-rouge">main</code> 函数里面了。</p>
+
+<h2 id="接下来">接下来</h2>
+
+<p>今天，我们一口气介绍了好多寄存器以及中断相关的内容！这可能相当令人烦躁，但也请静下心来，多多尝试，仔细理解每一步。由于这次我将代码进行了拆分介绍，虽然每个地方更加清楚，但缺乏整体观念，因此，在这里将完整代码列出：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">#</span> <span class="nf">boot.s</span>
+
+<span class="nf">.section</span> <span class="nv">.init</span><span class="p">,</span><span class="s">"ax"</span>
+<span class="nf">.global</span> <span class="nv">_start</span>
+<span class="nl">_start:</span>
+    <span class="err">#</span> <span class="nf">read</span> <span class="nv">our</span> <span class="nv">hart</span> <span class="nv">identifier</span> <span class="nv">into</span> <span class="nv">t0</span>
+    <span class="err">#</span> <span class="nf">see</span> <span class="nv">if</span> <span class="nv">it</span> <span class="nv">is</span> <span class="mi">0</span> <span class="nv">if</span> <span class="nv">not</span> <span class="nv">to</span> <span class="nv">busy</span> <span class="nv">loop</span>
+    <span class="nf">csrr</span> <span class="nv">t0</span><span class="p">,</span> <span class="nv">mhartid</span>
+    <span class="nf">bnez</span> <span class="nv">t0</span><span class="p">,</span> <span class="mi">4</span><span class="nv">f</span>
+
+    <span class="err">#</span> <span class="nf">SATP</span> <span class="nv">should</span> <span class="nv">be</span> <span class="mi">0</span> <span class="nv">Supervisor</span> <span class="nv">Address</span> <span class="nv">Translation</span> <span class="nv">and</span> <span class="nv">Protection</span>
+    <span class="nf">csrw</span> <span class="nv">satp</span><span class="p">,</span> <span class="nv">zero</span>
+    <span class="nf">.option</span> <span class="nv">push</span>
+    <span class="nf">.option</span> <span class="nv">norelax</span>
+    <span class="nf">la</span>   <span class="nv">gp</span><span class="p">,</span> <span class="nv">__global_pointer$</span>
+    <span class="nf">.option</span> <span class="nv">pop</span>
+
+    <span class="err">#</span> <span class="nf">BSS</span> <span class="nv">section</span> <span class="nv">expected</span> <span class="nv">to</span> <span class="nv">be</span> <span class="mi">0</span>
+    <span class="nf">la</span>  <span class="nv">a0</span><span class="p">,</span> <span class="nv">__bss_start</span>
+    <span class="nf">la</span>  <span class="nv">a1</span><span class="p">,</span> <span class="nv">__bss_end</span>
+    <span class="nf">bgeu</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="mi">2</span><span class="nv">f</span>
+<span class="err">1:</span>
+    <span class="nf">sd</span>   <span class="nv">zero</span><span class="p">,</span> <span class="p">(</span><span class="nv">a0</span><span class="p">)</span>
+    <span class="nf">addi</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a0</span><span class="p">,</span> <span class="mi">8</span>
+    <span class="nf">bltu</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">a1</span><span class="p">,</span> <span class="mb">1b</span>
+<span class="err">2:</span>
+    <span class="nf">la</span>   <span class="nb">sp</span><span class="p">,</span> <span class="nv">__stack_top</span>
+    <span class="nf">li</span>   <span class="nv">t0</span><span class="p">,</span> <span class="p">(</span><span class="mb">0b</span><span class="mi">01</span> <span class="o">&lt;&lt;</span> <span class="mi">11</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="nf">csrw</span> <span class="nv">mstatus</span><span class="p">,</span> <span class="nv">t0</span>
+    <span class="nf">la</span>   <span class="nv">t1</span><span class="p">,</span> <span class="nv">main</span>
+    <span class="nf">csrw</span> <span class="nv">mepc</span><span class="p">,</span> <span class="nv">t1</span>
+    <span class="nf">la</span>   <span class="nv">t2</span><span class="p">,</span> <span class="nv">mtrap_vector</span>
+    <span class="nf">csrw</span> <span class="nv">mtvec</span><span class="p">,</span> <span class="nv">t2</span>
+    <span class="nf">li</span>   <span class="nv">t3</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">7</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">11</span><span class="p">)</span>
+    <span class="nf">csrw</span> <span class="nv">mie</span><span class="p">,</span> <span class="nv">t3</span>
+    <span class="nf">la</span>   <span class="nv">ra</span><span class="p">,</span> <span class="mi">4</span><span class="nv">f</span>
+    <span class="nf">mret</span>
+<span class="err">4:</span>
+    <span class="nf">wfi</span>
+    <span class="nf">j</span> <span class="mi">4</span><span class="nv">b</span>
+</code></pre></div></div>
+
+<p>在本篇博客，我们重点讲述了 <code class="language-plaintext highlighter-rouge">boot.s</code> 的代码的功能，并详尽地介绍了 RISC-V 特权模式以及一部分寄存器的功能。这全是在为之后的工作铺路，接下来我们就要实现时钟中断了，时钟中断十分重要，没有它，我们就无法切换进程，实现进程间的调度。</p>
+
+<h2 id="附数据的分布">附：数据的分布</h2>
+
+<p>为了理清 RISC-V 中数据到底如何分布，特做以下实验，一方面是为了验证自己的理论知识，另一方面，也是为了检查程序是否有 bug 。话不多说，直接开始实验。</p>
+
+<p>该实验只需要 <code class="language-plaintext highlighter-rouge">crt0.s</code> 和 <code class="language-plaintext highlighter-rouge">main.c</code> 文件即可，本章中的内容可以不用增加到 <code class="language-plaintext highlighter-rouge">crt0.s</code> 文件中。而 <code class="language-plaintext highlighter-rouge">main.c</code> 文件，我增加了不少内容：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kt">char</span> <span class="n">sg</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"hello world!"</span><span class="p">;</span>
+<span class="kt">char</span> <span class="n">g</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"hi RISC-V"</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">ga</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">102</span><span class="p">;</span>
+    <span class="k">static</span> <span class="kt">int</span> <span class="n">sl</span> <span class="o">=</span> <span class="mi">105</span><span class="p">;</span>
+    <span class="n">uartinit</span><span class="p">();</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">12</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">uartputc</span><span class="p">(</span><span class="n">sg</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="n">uartputc</span><span class="p">(</span><span class="n">l</span><span class="p">);</span>
+    <span class="n">uartputc</span><span class="p">(</span><span class="n">sl</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">9</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">uartputc</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ga</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">uartputc</span><span class="p">(</span><span class="sc">'g'</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>先来看看各种类型的数据：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">sg</code> 静态全局已初始化</li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">g</code> 全局已初始化</p>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">ga</code> 全局未初始化</li>
+  <li><code class="language-plaintext highlighter-rouge">l</code>局部已初始化</li>
+  <li><code class="language-plaintext highlighter-rouge">sl</code> 静态局部已初始化</li>
+</ul>
+
+<p>然后，我们可以按照之前给过的 <code class="language-plaintext highlighter-rouge">Makefile</code> 文件编译生成 <code class="language-plaintext highlighter-rouge">a.out</code>，我们首先看看运行结果：</p>
+
+<p><img src="/assets/img/run_5.png" alt="" /></p>
+
+<p>令人欣慰的是，我们的程序没啥错误（至少到目前为止是这样），为了更好地明确各个数据的位置，我们需要用到 <code class="language-plaintext highlighter-rouge">objdump</code> 工具，反编译生成的文件 <code class="language-plaintext highlighter-rouge">a.out</code>。在 shell 中输入：<code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-objdump -d a.out</code>，就可以得到反编译生成的 RISC-V 汇编语言。为了方便大家看得更加清楚，我单独将 <code class="language-plaintext highlighter-rouge">main</code> 的部分取出，并省略了一些对我们不重要的代码：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">0000000080000018</span> <span class="err">&lt;</span><span class="nf">main</span><span class="o">&gt;</span><span class="p">:</span>
+     <span class="err">#</span> <span class="nf">allocate</span> <span class="nv">stack</span> <span class="nb">sp</span><span class="nv">ace</span>
+     <span class="err">#</span> <span class="nf">...</span>
+    <span class="err">80000020:</span>	<span class="err">06600793</span>          	<span class="nf">li</span>	<span class="nv">a5</span><span class="p">,</span><span class="mi">102</span>							<span class="err">#</span> <span class="err">局部变量</span> <span class="mi">102</span> <span class="err">直接当作立即数</span>
+    <span class="err">80000024:</span>	<span class="nf">fef42223</span>          	<span class="nv">sw</span>	<span class="nv">a5</span><span class="p">,</span><span class="o">-</span><span class="mi">28</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span>						<span class="err">#</span> <span class="err">存入到</span> <span class="o">-</span><span class="mi">28</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span>
+    <span class="err">80000028:</span>	<span class="err">180000</span><span class="nf">ef</span>          	<span class="nv">jal</span>	<span class="nv">ra</span><span class="p">,</span><span class="mi">800001</span><span class="nv">a8</span> <span class="o">&lt;</span><span class="nv">uartinit</span><span class="o">&gt;</span>
+    <span class="err">8000002</span><span class="nl">c:</span>	<span class="nf">fe042623</span>          	<span class="nv">sw</span>	<span class="nv">zero</span><span class="p">,</span><span class="o">-</span><span class="mi">20</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span>
+    <span class="err">80000030:</span>	<span class="nf">a00d</span>                	<span class="nv">j</span>	<span class="mi">80000052</span> <span class="o">&lt;</span><span class="nv">main</span><span class="o">+</span><span class="mh">0x3a</span><span class="o">&gt;</span>
+    <span class="err">80000032:</span>	<span class="err">00018713</span>          	<span class="nf">mv</span>	<span class="nv">a4</span><span class="p">,</span><span class="nv">gp</span>							<span class="err">#</span> <span class="err">会发现</span> <span class="nv">a4</span> <span class="err">就在</span> <span class="nv">gp</span> <span class="err">上</span>
+    <span class="err">80000036:</span>	<span class="nf">fec42783</span>          	<span class="nv">lw</span>	<span class="nv">a5</span><span class="p">,</span><span class="o">-</span><span class="mi">20</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span>						<span class="err">#</span> <span class="err">即</span> <span class="nv">gp</span> <span class="err">就是数据段的开头</span>
+    <span class="err">8000003</span><span class="nl">a:</span>	<span class="err">97</span><span class="nf">ba</span>                	<span class="nv">add</span>	<span class="nv">a5</span><span class="p">,</span><span class="nv">a5</span><span class="p">,</span><span class="nv">a4</span>					<span class="err">#</span> <span class="err">从</span> <span class="nv">gp</span> <span class="err">中取出数据</span> <span class="nv">sg</span>
+    <span class="err">8000003</span><span class="nl">c:</span>	<span class="err">0007</span><span class="nf">c783</span>          	<span class="nv">lbu</span>	<span class="nv">a5</span><span class="p">,</span><span class="mi">0</span><span class="p">(</span><span class="nv">a5</span><span class="p">)</span>
+    <span class="err">80000040:</span>	<span class="err">2781</span>                	<span class="nf">sext.w</span>	<span class="nv">a5</span><span class="p">,</span><span class="nv">a5</span>
+    <span class="err">80000042:</span>	<span class="err">853</span><span class="nf">e</span>                	<span class="nv">mv</span>	<span class="nv">a0</span><span class="p">,</span><span class="nv">a5</span>						<span class="err">#</span> <span class="err">全局静态变量</span> <span class="nv">sg</span>
+    <span class="err">80000044:</span>	<span class="err">1</span><span class="nf">b8000ef</span>          	<span class="nv">jal</span>	<span class="nv">ra</span><span class="p">,</span><span class="mi">800001</span><span class="nv">fc</span> <span class="o">&lt;</span><span class="nv">uartputc</span><span class="o">&gt;</span>
+    <span class="err">#</span> <span class="nf">loop</span> <span class="nv">var</span> <span class="nv">increasement</span>
+    <span class="err">#</span> <span class="nf">...</span>
+    <span class="err">80000060:</span>	<span class="nf">fe442783</span>          	<span class="nv">lw</span>	<span class="nv">a5</span><span class="p">,</span><span class="o">-</span><span class="mi">28</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span>
+    <span class="err">80000064:</span>	<span class="err">853</span><span class="nf">e</span>                	<span class="nv">mv</span>	<span class="nv">a0</span><span class="p">,</span><span class="nv">a5</span>					<span class="err">#</span> <span class="err">从</span> <span class="o">-</span><span class="mi">28</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span> <span class="err">中取出</span> <span class="err">是局部变量</span> <span class="mi">102</span>
+    <span class="err">80000066:</span>	<span class="err">196000</span><span class="nf">ef</span>          	<span class="nv">jal</span>	<span class="nv">ra</span><span class="p">,</span><span class="mi">800001</span><span class="nv">fc</span> <span class="o">&lt;</span><span class="nv">uartputc</span><span class="o">&gt;</span>
+    <span class="err">8000006</span><span class="nl">a:</span>	<span class="err">01</span><span class="nf">c1a783</span>          	<span class="nv">lw</span>	<span class="nv">a5</span><span class="p">,</span><span class="mi">28</span><span class="p">(</span><span class="nv">gp</span><span class="p">)</span> <span class="err">#</span> <span class="mi">8000101</span><span class="nv">c</span> <span class="o">&lt;</span><span class="nv">sl.1504</span><span class="o">&gt;</span>  <span class="err">#</span> <span class="err">静态变量</span> <span class="nv">sl</span>  <span class="err">从</span> <span class="nv">gp</span> <span class="err">中取出</span>
+    <span class="err">8000006</span><span class="nl">e:</span>	<span class="err">853</span><span class="nf">e</span>                	<span class="nv">mv</span>	<span class="nv">a0</span><span class="p">,</span><span class="nv">a5</span>
+    <span class="err">80000070:</span>	<span class="err">18</span><span class="nf">c000ef</span>          	<span class="nv">jal</span>	<span class="nv">ra</span><span class="p">,</span><span class="mi">800001</span><span class="nv">fc</span> <span class="o">&lt;</span><span class="nv">uartputc</span><span class="o">&gt;</span>
+    <span class="err">80000074:</span>	<span class="nf">fe042423</span>          	<span class="nv">sw</span>	<span class="nv">zero</span><span class="p">,</span><span class="o">-</span><span class="mi">24</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span>
+    <span class="err">80000078:</span>	<span class="nf">a00d</span>                	<span class="nv">j</span>	<span class="mi">8000009</span><span class="nv">a</span> <span class="o">&lt;</span><span class="nv">main</span><span class="o">+</span><span class="mh">0x82</span><span class="o">&gt;</span>
+    <span class="err">8000007</span><span class="nl">a:</span>	<span class="err">01018713</span>          	<span class="nf">addi</span>	<span class="nv">a4</span><span class="p">,</span><span class="nv">gp</span><span class="p">,</span><span class="mi">16</span> <span class="err">#</span> <span class="mi">80001010</span> <span class="o">&lt;</span><span class="nv">g</span><span class="o">&gt;</span>
+    <span class="err">8000007</span><span class="nl">e:</span>	<span class="nf">fe842783</span>          	<span class="nv">lw</span>	<span class="nv">a5</span><span class="p">,</span><span class="o">-</span><span class="mi">24</span><span class="p">(</span><span class="nv">s0</span><span class="p">)</span>
+    <span class="err">80000082:</span>	<span class="err">97</span><span class="nf">ba</span>                	<span class="nv">add</span>	<span class="nv">a5</span><span class="p">,</span><span class="nv">a5</span><span class="p">,</span><span class="nv">a4</span>					<span class="err">#</span> <span class="err">从</span> <span class="nv">gp</span> <span class="err">中取出</span> <span class="err">全局变量</span> <span class="nv">g</span>
+    <span class="err">80000084:</span>	<span class="err">0007</span><span class="nf">c783</span>          	<span class="nv">lbu</span>	<span class="nv">a5</span><span class="p">,</span><span class="mi">0</span><span class="p">(</span><span class="nv">a5</span><span class="p">)</span>
+    <span class="err">80000088:</span>	<span class="err">2781</span>                	<span class="nf">sext.w</span>	<span class="nv">a5</span><span class="p">,</span><span class="nv">a5</span>
+    <span class="err">8000008</span><span class="nl">a:</span>	<span class="err">853</span><span class="nf">e</span>                	<span class="nv">mv</span>	<span class="nv">a0</span><span class="p">,</span><span class="nv">a5</span>
+    <span class="err">8000008</span><span class="nl">c:</span>	<span class="err">170000</span><span class="nf">ef</span>          	<span class="nv">jal</span>	<span class="nv">ra</span><span class="p">,</span><span class="mi">800001</span><span class="nv">fc</span> <span class="o">&lt;</span><span class="nv">uartputc</span><span class="o">&gt;</span>
+    <span class="err">#</span>  <span class="nf">loop</span> <span class="nv">var</span> <span class="nv">increasement</span>
+    <span class="err">#</span>  <span class="nf">...</span>
+    <span class="err">800000</span><span class="nl">a8:</span>	<span class="err">05</span><span class="nf">c1a783</span>          	<span class="nv">lw</span>	<span class="nv">a5</span><span class="p">,</span><span class="mi">92</span><span class="p">(</span><span class="nv">gp</span><span class="p">)</span> <span class="err">#</span> <span class="mi">8000105</span><span class="nv">c</span> <span class="o">&lt;</span><span class="nv">ga</span><span class="o">&gt;</span>     <span class="err">#</span> <span class="err">从</span> <span class="nv">gp</span> <span class="err">中取出</span> <span class="err">未初始化的全局变量</span> <span class="nv">ga</span> 
+    <span class="err">800000</span><span class="nl">ac:</span>	<span class="nf">e789</span>                	<span class="nv">bnez</span>	<span class="nv">a5</span><span class="p">,</span><span class="mi">800000</span><span class="nv">b6</span> <span class="o">&lt;</span><span class="nv">main</span><span class="o">+</span><span class="mh">0x9e</span><span class="o">&gt;</span>
+    <span class="err">800000</span><span class="nl">ae:</span>	<span class="err">06700513</span>          	<span class="nf">li</span>	<span class="nv">a0</span><span class="p">,</span><span class="mi">103</span>
+    <span class="err">800000</span><span class="nl">b2:</span>	<span class="err">14</span><span class="nf">a000ef</span>          	<span class="nv">jal</span>	<span class="nv">ra</span><span class="p">,</span><span class="mi">800001</span><span class="nv">fc</span> <span class="o">&lt;</span><span class="nv">uartputc</span><span class="o">&gt;</span>
+	<span class="err">#</span> <span class="nf">deallocate</span> <span class="nv">stack</span> <span class="nb">sp</span><span class="nv">ace</span> <span class="nv">and</span> <span class="nv">return</span> 
+	<span class="err">#</span> <span class="nf">...</span>
+    <span class="err">800000</span><span class="nl">c0:</span>	<span class="err">8082</span>                	<span class="nf">ret</span>
+
+</code></pre></div></div>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-08-06T00:00:00+08:00">August 6, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=RISC-V+from+Scratch+5%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F06%2Friscv-from-scratch-5.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F06%2Friscv-from-scratch-5.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F06%2Friscv-from-scratch-5.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/08/05/riscv-privileged.html" class="pagination--pager" title="RISC-V 特权架构
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/08/17/riscv-from-scratch-6.html" class="pagination--pager" title="RISC-V from Scratch 6
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/08/06/riscv-from-scratch-5.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/08/06/riscv-from-scratch-5"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

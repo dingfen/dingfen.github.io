@@ -1,0 +1,1150 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Apollo Cyber RT 调度系统 - 峰子的乐园</title>
+<meta name="description" content="Cyber RT ——构建于 ROS 之上的运行时框架。本篇博客重点研究了它的调度系统。">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Apollo Cyber RT 调度系统">
+<meta property="og:url" content="http://localhost:4000/apollo/2020/10/17/Cyber-RT.html">
+
+
+  <meta property="og:description" content="Cyber RT ——构建于 ROS 之上的运行时框架。本篇博客重点研究了它的调度系统。">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-10-17T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/apollo/2020/10/17/Cyber-RT.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Apollo Cyber RT 调度系统
+
+        
+      </h1>
+      
+        <p class="page__lead">Cyber RT ——构建于 ROS 之上的运行时框架。本篇博客重点研究了它的调度系统。
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Apollo Cyber RT 调度系统">
+    <meta itemprop="description" content="Cyber RT ——构建于 ROS 之上的运行时框架。本篇博客重点研究了它的调度系统。">
+    <meta itemprop="datePublished" content="2020-10-17T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#apollo-cyber-rt-%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F%E8%A7%A3%E6%9E%90">Apollo Cyber RT 调度系统解析</a>
+    <ul>
+      <li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+      <li>
+<a href="#cyber%E4%B8%AD%E7%9A%84%E8%B0%83%E5%BA%A6">Cyber中的调度</a>
+        <ul>
+          <li><a href="#conf-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6">conf 配置文件</a></li>
+          <li><a href="#%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5">调度策略</a></li>
+          <li>
+<a href="#schedulerprocessor--context">Scheduler、Processor &amp; Context</a>
+            <ul>
+              <li><a href="#scheduler">Scheduler</a></li>
+              <li><a href="#processor">Processor</a></li>
+              <li><a href="#context">Context</a></li>
+            </ul>
+          </li>
+          <li><a href="#%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84">整体结构</a></li>
+        </ul>
+      </li>
+      <li><a href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE">参考文献</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="apollo-cyber-rt-调度系统解析">Apollo Cyber RT 调度系统解析</h1>
+
+<h2 id="前言">前言</h2>
+
+<p><a href="https://dingfen.github.io/apollo/2020/10/14/apollo-intro.html">上篇博客中</a>，我简要地给大家介绍了 Apollo 系统，以及它的代码文件结构，并说明了一下 Cyber RT 在 Apollo 系统中的地位（是的，我调整了一下博客的内容，使之变得更加均衡合理）。Cyber RT 在系统的任务调度方面有重要的作用，又和实时系统要求密切相关。因此，我打算将调度系统作为一个切入点，在本篇博客中，我将会给大家介绍一下 Cyber RT 的调度系统。</p>
+
+<h2 id="cyber中的调度">Cyber中的调度</h2>
+
+<p>自动驾驶系统的有三大流程：<strong>感知、决策、执行</strong>。例如，车上的传感器感知到障碍物，判断其类型、运动轨迹等，再做出决策，最后再到刹车、油门和方向的控制，这会经过一系列模块的计算。这些模块在计算过程中会产生数据依赖，如果用箭头将模块间的数据依赖表示出来，就会形成图的拓扑结构。</p>
+
+<p>在 Apollo 项目中，通常使用 DAG file 来描述<strong>计算图</strong>的拓扑结构。由于自动驾驶系统牵扯到很多的步骤，有很复杂的流程，相应的，这些计算图也十分庞大。因此，如何调度整个计算图使系统能满足各种时间约束，达到系统的实时性和确定性，是个巨大的挑战。</p>
+
+<p>接下来，我们就详细地剖析一下 Cyber RT 的调度系统💪！</p>
+
+<h3 id="conf-配置文件">conf 配置文件</h3>
+
+<p>Cyber 调度的配置文件在 <code class="language-plaintext highlighter-rouge">cyber/conf </code> 文件夹中，配置文件详细说明了线程名、线程的 CPU 亲和性、调度策略，对于协程，还有分组情况、协程的优先级等等。</p>
+
+<p>方便起见，我从<a href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber/CyberRT_Scheduler_cn.md">官方文档</a>中举例，文档对每项设置的说明都非常具体：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>scheduler_conf {
+    // 1. 设置调度器策略
+    policy: "classic"
+    // 2. 设置cpu set
+    process_level_cpuset: "0-7,16-23" # all threads in the process are on the cpuset
+    // 3. 设置线程的cpuset，调度策略和优先级
+    threads: [
+        {
+            name: "async_log"
+            cpuset: "1"
+            policy: "SCHED_OTHER"   # policy: SCHED_OTHER,SCHED_RR,SCHED_FIFO
+            prio: 0
+        }, {
+            name: "shm"
+            cpuset: "2"
+            policy: "SCHED_FIFO"
+            prio: 10
+        }
+    ]
+    classic_conf {
+        // 4. 设置分组，线程组的cpuset，cpu亲和性，调度策略和优先级
+        // 设置调度器创建"processor"对象的个数，以及协程的优先级。  
+        groups: [
+            {
+                name: "group1"
+                processor_num: 16
+                affinity: "range"
+                cpuset: "0-7,16-23"
+                processor_policy: "SCHED_OTHER"
+         // policy: 
+         // SCHED_OTHER  默认策略 分时调度策略
+         // SCHED_RR	 实时调度策略 时间片轮转
+         // SCHED_FIFO   队列 先到先服务策略
+                processor_prio: 0
+                tasks: [
+                    {
+                        name: "E"
+                        prio: 0
+                    }
+                ]
+            },{
+                name: "group2"
+                processor_num: 16
+                affinity: "1to1"
+                cpuset: "8-15,24-31"
+                processor_policy: "SCHED_OTHER"
+                processor_prio: 0
+                tasks: [
+                    {
+                        name: "A"
+                        prio: 0
+                    },{
+                        name: "B"
+                        prio: 1
+                    },{
+                        name: "C"
+                        prio: 2
+                    },{
+                        name: "D"
+                        prio: 3
+                    }
+                ]
+            }
+        ]
+    }
+}
+</code></pre></div></div>
+
+<p>那么上面的 <code class="language-plaintext highlighter-rouge">conf</code> 文档描述了怎么样的调度策略呢？</p>
+
+<p>还是参考<a href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber/CyberRT_Scheduler_cn.md">官方文档</a>，对于配置文件中已经编排好的任务，其拓扑结构就依据优先级确定了。我们根据上面的 <code class="language-plaintext highlighter-rouge">conf</code> 文档，可以简单画出任务的<strong>优先级拓扑</strong>情况，如下图，A、B、C、D 任务在第一个 group 中执行，E在第二个 group 中执行，对于没有出现在配置中的任务，比如F默认会放到第一个 group 中执行（下文会提到哦）。 而且配置中我们对于任务进行了优先级设置，A、B、C、D 的任务优先级依次增大，正好对应下图的拓扑依赖关系，在链路中越靠后的任务优先级越高。其实，数据也是这样在任务拓扑图中传递，数据走到最后，执行的任务优先级越高，这是为保证整个流程可以快速走完，不被其他流程的任务打断。</p>
+
+<center>
+<img src="/assets/img/topo_sched.png" style="zoom:50%;">
+</center>
+<p><span id="1"></span></p>
+
+<h3 id="调度策略">调度策略</h3>
+
+<p>Apollo 提供了两种调度策略，一种是 classic 策略，在代码中，用 <code class="language-plaintext highlighter-rouge">SchedulerClassic</code> 类实现；另一种是 Choreography 策略，代码中用 <code class="language-plaintext highlighter-rouge">SchedulerChoreography</code> 类实现。对于这两个策略，我们先给一个大致的描述，好让大家理解之间的差异，稍后在代码分析中，会详细解释这些实现 <img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20"> 。</p>
+
+<ul>
+  <li>classic 策略
+    <ul>
+      <li>较为通用的调度策略</li>
+      <li>如果对当前自动驾驶车辆上的 DAG 结构不清楚，建议使用此策略</li>
+      <li>相关协程任务以组为单位与线程作绑定</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">SchedulerClassic</code> 采用了<a href="https://studygolang.com/articles/15477">协程池</a>的概念，协程不会绑定到具体的 <code class="language-plaintext highlighter-rouge">Processor</code>，而是放在全局的优先级队列中。<code class="language-plaintext highlighter-rouge">Processor</code> 运行时，每次从最高优先级的任务开始调度执行。</li>
+    </ul>
+  </li>
+  <li>choreography 策略
+    <ul>
+      <li>需要对车上的任务、结构足够熟悉</li>
+      <li>根据任务的执行依赖关系、任务的执行时长、任务 CPU 消耗情况、消息频率等，对某些任务进行编排</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">SchedulerChoreography</code> 类采用了本地队列和全局队列相结合的方式。他将<strong>主链路</strong>（choreography开头的配置）进行编排；而对非主链路的任务放到线程池中使用 classic 策略执行。</li>
+    </ul>
+  </li>
+</ul>
+
+<p>当使用 choreography 策略时，具体该怎么办？Well，根据任务优先级、执行时长、频率与调度之间的关系，任务编排有如下几个依据（经验）：</p>
+
+<ul>
+  <li>在同一个路径上的任务尽量编排在同一个 <code class="language-plaintext highlighter-rouge">Processor</code> 中，如果 <code class="language-plaintext highlighter-rouge">Processor</code> 负载过高，可考虑将部分任务拆分到其他 <code class="language-plaintext highlighter-rouge">Processor</code>
+</li>
+  <li>为防止优先级倒挂，同一个路径上的任务从开始到结束，优先级应逐级升高</li>
+  <li>不同路径上的任务尽量<strong>不</strong>混排</li>
+  <li>高频且短耗时任务尽量编排在同一个 <code class="language-plaintext highlighter-rouge">Processor</code> 上</li>
+</ul>
+
+<p>另：据 <a href="https://github.com/daohu527/Dig-into-Apollo/tree/master/cyber/source">Dig-into-Apollo</a>中的说法，该调度策略与 Go 语言中的 <a href="https://learnku.com/articles/41728">GPM 模型</a>相似。</p>
+
+<h3 id="schedulerprocessor--context">Scheduler、Processor &amp; Context</h3>
+
+<p>我从参考文献<sup>1</sup>中找到一张不错的类关系图，可以很好地帮我说明一下这些类的关系：</p>
+
+<center>
+<img src="/assets/img/class.png">
+</center>
+
+<h4 id="scheduler">Scheduler</h4>
+
+<p><code class="language-plaintext highlighter-rouge">Scheduler</code> 类使用<a href="https://www.runoob.com/design-pattern/singleton-pattern.html">单例模式</a>，<code class="language-plaintext highlighter-rouge">Instance()</code> 方法被第一次调用时会加载 <code class="language-plaintext highlighter-rouge">conf</code> 文件，此时会根据配置文件中指定的类型创建 <code class="language-plaintext highlighter-rouge">SchedulerClassic</code> 或者 <code class="language-plaintext highlighter-rouge">SchedulerChoreography</code> 对象。</p>
+
+<p>这就涉及到 <code class="language-plaintext highlighter-rouge">Scheduler</code> 类的构造函数，在这里，我不想展示具体代码的任何细节，因为这只会把原本就复杂的事物越搞越乱（如果你真的想仔细了解，还是亲自下场看一下代码吧），我经过总结，认为其步骤：</p>
+
+<ol>
+  <li>读取 conf 配置文件，如果读取配置文件失败，会设置默认值</li>
+  <li>将内部线程信息保存到查询表中，并设置线程的亲和性和优先级等属性</li>
+  <li>将所有的任务按照配置文件的要求分为 group ，设置进程级别的cpuset</li>
+  <li>根据配置文件要求创建线程，并包装为 <code class="language-plaintext highlighter-rouge">Processor</code>（执行器），绑定上下文。</li>
+</ol>
+
+<p>这边我要多提一句，对于 choreography 策略，在创建线程时会比较特殊，它依照配置文件的要求，把所有线程分为两个部分（就如你在本篇博客最末尾看到的那样），其中一部分线程与 <code class="language-plaintext highlighter-rouge">ClassicContext</code> 绑定，另一部分与 <code class="language-plaintext highlighter-rouge">Choreography</code> 绑定，这意味着 choreography 策略负责编排一部分任务：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">SchedulerChoreography</span><span class="o">::</span><span class="n">CreateProcessor</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">proc_num_</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">proc</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">Processor</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ChoreographyContext</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="n">proc</span><span class="o">-&gt;</span><span class="n">BindContext</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+    <span class="n">SetSchedAffinity</span><span class="p">(</span><span class="n">proc</span><span class="o">-&gt;</span><span class="n">Thread</span><span class="p">(),</span> <span class="n">choreography_cpuset_</span><span class="p">,</span>
+                     <span class="n">choreography_affinity_</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+    <span class="n">SetSchedPolicy</span><span class="p">(</span><span class="n">proc</span><span class="o">-&gt;</span><span class="n">Thread</span><span class="p">(),</span> <span class="n">choreography_processor_policy_</span><span class="p">,</span>
+                   <span class="n">choreography_processor_prio_</span><span class="p">,</span> <span class="n">proc</span><span class="o">-&gt;</span><span class="n">Tid</span><span class="p">());</span>
+    <span class="n">pctxs_</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+    <span class="n">processors_</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">proc</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">task_pool_size_</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">proc</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">Processor</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ClassicContext</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="n">proc</span><span class="o">-&gt;</span><span class="n">BindContext</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+    <span class="n">SetSchedAffinity</span><span class="p">(</span><span class="n">proc</span><span class="o">-&gt;</span><span class="n">Thread</span><span class="p">(),</span> <span class="n">pool_cpuset_</span><span class="p">,</span> <span class="n">pool_affinity_</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+    <span class="n">SetSchedPolicy</span><span class="p">(</span><span class="n">proc</span><span class="o">-&gt;</span><span class="n">Thread</span><span class="p">(),</span> <span class="n">pool_processor_policy_</span><span class="p">,</span> <span class="n">pool_processor_prio_</span><span class="p">,</span>
+                   <span class="n">proc</span><span class="o">-&gt;</span><span class="n">Tid</span><span class="p">());</span>
+    <span class="n">pctxs_</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+    <span class="n">processors_</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">proc</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>除了构造函数之外，<code class="language-plaintext highlighter-rouge">Scheduler</code> 还负责分发、移除任务，也可以唤醒（Notify）某个任务。</p>
+
+<p><strong>Update at 11.00 29th Oct in 2020.</strong></p>
+
+<hr>
+
+<p>一开始写这篇博客时，并没有把<code class="language-plaintext highlighter-rouge">Scheduler</code> 类的创建、分发、唤醒、移除任务讲清楚，那么今天我来把这个坑补上。</p>
+
+<p>首先是创建任务，在 <a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html">Cyber RT 组件</a>中，我说过 <code class="language-plaintext highlighter-rouge">Component::Initialize()</code> 中创建的处理消息函数，会被首先用于创建协程工厂，然后 <code class="language-plaintext highlighter-rouge">Scheduler</code> 会使用 <code class="language-plaintext highlighter-rouge">CreateTask()</code> 函数创建协程。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">Scheduler</span><span class="o">::</span><span class="n">CreateTask</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;&amp;&amp;</span> <span class="n">func</span><span class="p">,</span>
+                           <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span>
+                           <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">DataVisitorBase</span><span class="o">&gt;</span> <span class="n">visitor</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="n">stop_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span> <span class="p">{</span>
+		<span class="cm">/*  错误处理  */</span>
+  <span class="p">}</span>
+  <span class="c1">// 登记任务名字，获得id  </span>
+  <span class="c1">// GlobalData 中有一个 id 与 name 一一对应的表格</span>
+  <span class="c1">// 比起直译map这个单词 我更喜欢用表 因为这更容易让人理解</span>
+  <span class="k">auto</span> <span class="n">task_id</span> <span class="o">=</span> <span class="n">GlobalData</span><span class="o">::</span><span class="n">RegisterTaskName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+  <span class="c1">// 创建协程</span>
+  <span class="k">auto</span> <span class="n">cr</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">CRoutine</span><span class="o">&gt;</span><span class="p">(</span><span class="n">func</span><span class="p">);</span>
+  <span class="n">cr</span><span class="o">-&gt;</span><span class="n">set_id</span><span class="p">(</span><span class="n">task_id</span><span class="p">);</span>
+  <span class="n">cr</span><span class="o">-&gt;</span><span class="n">set_name</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+  <span class="c1">// 分配任务</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">DispatchTask</span><span class="p">(</span><span class="n">cr</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="c1">// 数据访问者 登记回调函数</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">visitor</span> <span class="o">!=</span> <span class="nb">nullptr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">visitor</span><span class="o">-&gt;</span><span class="n">RegisterNotifyCallback</span><span class="p">([</span><span class="k">this</span><span class="p">,</span> <span class="n">task_id</span><span class="p">]()</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="n">stop_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="c1">// 唤醒 Processor  让它开始处理任务</span>
+      <span class="k">this</span><span class="o">-&gt;</span><span class="n">NotifyProcessor</span><span class="p">(</span><span class="n">task_id</span><span class="p">);</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在上面的代码中，可以看到协程创建完毕后，还会被分配任务，那么分配任务具体做什么呢？在 <code class="language-plaintext highlighter-rouge">SchedulerClassic</code> 类中，<code class="language-plaintext highlighter-rouge">DispatchTask()</code> 首先把协程 id 和其指针一一对应起来，放入到 <code class="language-plaintext highlighter-rouge">id_cr_</code> 表中（下图），然后根据配置文件设置这个协程的优先级和协程组，<strong>如果配置文件中没有提到该协程，默认放入组 0 中</strong>，最后将该协程根据其优先级，放入到<strong>队列</strong>（下图就有）中，最后唤醒所在组的上下文；对于 <code class="language-plaintext highlighter-rouge">SchedulerChoreography</code> 类，还需要多一步来判断协程对应的 <code class="language-plaintext highlighter-rouge">Processor</code> 类。那么相似的道理，移除任务就是先将协程停止，从表中、队列中移除。</p>
+
+<center>
+<img src="/assets/img/classic.png">
+</center>
+
+<p>最后 <code class="language-plaintext highlighter-rouge">Scheduler::NotifyProcessor()</code> 会唤醒 <code class="language-plaintext highlighter-rouge">Processor</code> ，它首先检查传入 id 对应的协程的状态，然后就调用了上下文的 <code class="language-plaintext highlighter-rouge">Notify()</code> 函数，让控制线程的<a href="http://www.cplusplus.com/reference/condition_variable/condition_variable/">条件变量</a>唤醒一个线程（<code class="language-plaintext highlighter-rouge">Processor</code> 类）。那么等待一个线程呢？也是控制这个条件变量就行了😂，使用 <code class="language-plaintext highlighter-rouge">Wait_for</code> 函数就可以满足要求。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">ClassicContext</span><span class="o">::</span><span class="n">Notify</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">group_name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="p">(</span><span class="o">&amp;</span><span class="n">mtx_wq_</span><span class="p">[</span><span class="n">group_name</span><span class="p">])</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">().</span><span class="n">lock</span><span class="p">();</span>
+  <span class="n">notify_grp_</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">(</span><span class="o">&amp;</span><span class="n">mtx_wq_</span><span class="p">[</span><span class="n">group_name</span><span class="p">])</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">().</span><span class="n">unlock</span><span class="p">();</span>
+  <span class="n">cv_wq_</span><span class="p">[</span><span class="n">group_name</span><span class="p">].</span><span class="n">Cv</span><span class="p">().</span><span class="n">notify_one</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">ClassicContext</span><span class="o">::</span><span class="n">Wait</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mtx_wrapper_</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">());</span>
+  <span class="n">cw_</span><span class="o">-&gt;</span><span class="n">Cv</span><span class="p">().</span><span class="n">wait_for</span><span class="p">(</span><span class="n">lk</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span>
+                     <span class="p">[</span><span class="o">&amp;</span><span class="p">]()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">notify_grp_</span><span class="p">[</span><span class="n">current_grp</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span> <span class="p">});</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">notify_grp_</span><span class="p">[</span><span class="n">current_grp</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> 
+    <span class="n">notify_grp_</span><span class="p">[</span><span class="n">current_grp</span><span class="p">]</span><span class="o">--</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<hr>
+
+<h4 id="processor">Processor</h4>
+
+<p>前面说到，调度器中会创建线程，并包装为 <code class="language-plaintext highlighter-rouge">Processor</code>。<code class="language-plaintext highlighter-rouge">Scheduler</code> 根据 <code class="language-plaintext highlighter-rouge">conf</code> 文件初始化线程，并创建若干个 <code class="language-plaintext highlighter-rouge">Processor</code>。注意，我再此强调 <code class="language-plaintext highlighter-rouge">Processor</code> 并不是物理上的处理器，本质就是一个线程而已。为了加强印象，也为了后续方便理解，我在这里给出 <code class="language-plaintext highlighter-rouge">Processor</code> 的定义代码：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Processor</span> <span class="p">{</span>
+    <span class="nl">public:</span>
+    	<span class="c1">//...</span>
+    <span class="nl">private:</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">ProcessorContext</span><span class="o">&gt;</span> <span class="n">context_</span><span class="p">;</span>	<span class="c1">// 上下文</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">condition_variable</span> <span class="n">cv_ctx_</span><span class="p">;</span>				<span class="c1">// 条件变量</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">once_flag</span> <span class="n">thread_flag_</span><span class="p">;</span>					<span class="c1">// 线程 flag</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">mtx_ctx_</span><span class="p">;</span>							<span class="c1">// 互斥锁</span>
+      <span class="n">std</span><span class="o">::</span><span class="kr">thread</span> <span class="n">thread_</span><span class="p">;</span>							<span class="c1">// 线程</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">tid_</span><span class="p">{</span><span class="o">-</span><span class="mi">1</span><span class="p">};</span>					<span class="c1">// 线程id</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span> <span class="n">running_</span><span class="p">{</span><span class="nb">false</span><span class="p">};</span>			<span class="c1">// 是否运行</span>
+</code></pre></div></div>
+
+<p>好了，<code class="language-plaintext highlighter-rouge">Processor</code> 最重要的部分还是它如何运行。重要到什么程度？额嗯，我甚至可以花大篇幅把这部分代码完整地列出来。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">Processor</span><span class="o">::</span><span class="n">Run</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// 1. 获取线程的PID，系统内唯一</span>
+  <span class="n">tid_</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">syscall</span><span class="p">(</span><span class="n">SYS_gettid</span><span class="p">)));</span>
+  <span class="n">snap_shot_</span><span class="o">-&gt;</span><span class="n">processor_id</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">tid_</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="n">cyber_likely</span><span class="p">(</span><span class="n">running_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cyber_likely</span><span class="p">(</span><span class="n">context_</span> <span class="o">!=</span> <span class="nb">nullptr</span><span class="p">))</span> <span class="p">{</span>
+      <span class="c1">// 2. 获取优先级最高并且准备就绪的协程</span>
+      <span class="k">auto</span> <span class="n">croutine</span> <span class="o">=</span> <span class="n">context_</span><span class="o">-&gt;</span><span class="n">NextRoutine</span><span class="p">();</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">croutine</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">snap_shot_</span><span class="o">-&gt;</span><span class="n">execute_start_time</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">::</span><span class="n">Now</span><span class="p">().</span><span class="n">ToNanosecond</span><span class="p">());</span>
+        <span class="n">snap_shot_</span><span class="o">-&gt;</span><span class="n">routine_name</span> <span class="o">=</span> <span class="n">croutine</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">();</span>
+        <span class="c1">// 3. 执行协程任务，完成后释放协程</span>
+        <span class="n">croutine</span><span class="o">-&gt;</span><span class="n">Resume</span><span class="p">();</span>
+        <span class="n">croutine</span><span class="o">-&gt;</span><span class="n">Release</span><span class="p">();</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">snap_shot_</span><span class="o">-&gt;</span><span class="n">execute_start_time</span><span class="p">.</span><span class="n">store</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+        <span class="c1">// 4. 如果协程组中没有空闲的协程，则等待</span>
+        <span class="n">context_</span><span class="o">-&gt;</span><span class="n">Wait</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="c1">// 5. 如果上下文为空，则线程阻塞10毫秒</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mtx_ctx_</span><span class="p">);</span>
+      <span class="n">cv_ctx_</span><span class="p">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">lk</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>其实 <code class="language-plaintext highlighter-rouge">Processor::Run()</code> 的逻辑很简单，就是不断地调用 <code class="language-plaintext highlighter-rouge">ProcessorContext::NextRoutine()</code> 函数，取得下一个协程（任务）。如果没取到，就调用 <code class="language-plaintext highlighter-rouge">ProcessorContext::Wait()</code> 等待。如果取到了，就调用 <code class="language-plaintext highlighter-rouge">CRoutine::Resume()</code> ，让任务继续运行。</p>
+
+<p>看起来关键是 <code class="language-plaintext highlighter-rouge">NextRoutine()</code> 是如何挑选下一个任务的。参考上图，<code class="language-plaintext highlighter-rouge">ProcessorContext</code> 有两个派生类 <code class="language-plaintext highlighter-rouge">ClassicContext</code> 和 <code class="language-plaintext highlighter-rouge">ChoreographyContext</code> 。它们的实现因调度策略不同而不同。前者是按优先级从高到低从所在 group 对应的任务队列中取任务，取到后，需要判断其状态是否为 READY；后者也是按优先级从高到低的顺序，会将主链路上的任务与非主链路的任务分开列队，并且会为主链路上的任务提供指定的 <code class="language-plaintext highlighter-rouge">Processor</code> 。具体的内容很快我们就会在下一小节看到😀。</p>
+
+<h4 id="context">Context</h4>
+
+<p><code class="language-plaintext highlighter-rouge">ProcessorContext</code> 类是一个抽象基类，它的实现非常简单，你甚至不用怀疑你的第一直觉，没错，<code class="language-plaintext highlighter-rouge">NextRoutine()</code> 和 <code class="language-plaintext highlighter-rouge">Wait()</code> 函数就是它最重要的部分。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ProcessorContext</span> <span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">Shutdown</span><span class="p">();</span>
+  <span class="k">virtual</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">CRoutine</span><span class="o">&gt;</span> <span class="n">NextRoutine</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">Wait</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+ <span class="nl">protected:</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span> <span class="n">stop_</span><span class="p">{</span><span class="nb">false</span><span class="p">};</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>我们重点关注 <code class="language-plaintext highlighter-rouge">ClassicContext</code> 和 <code class="language-plaintext highlighter-rouge">ChoreographyContext</code> 。首先，看一下最关键的 <code class="language-plaintext highlighter-rouge">ProcessorContext::NextRoutine()</code> 的代码：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//  classic 调度策略的 NextRoutine()</span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">CRoutine</span><span class="o">&gt;</span> <span class="n">ClassicContext</span><span class="o">::</span><span class="n">NextRoutine</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="n">stop_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="nb">nullptr</span><span class="p">;</span>
+   <span class="c1">// 1. 从优先级最高的队列开始遍历</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">MAX_PRIO</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+   <span class="c1">// 2. 获取当前优先级队列的锁</span>
+    <span class="n">ReadLockGuard</span><span class="o">&lt;</span><span class="n">AtomicRWLock</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">lq_</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">cr</span> <span class="o">:</span> <span class="n">multi_pri_rq_</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cr</span><span class="o">-&gt;</span><span class="n">Acquire</span><span class="p">())</span>
+        <span class="k">continue</span><span class="p">;</span>
+    <span class="c1">// 3. 返回状态就绪的协程</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">cr</span><span class="o">-&gt;</span><span class="n">UpdateState</span><span class="p">()</span> <span class="o">==</span> <span class="n">RoutineState</span><span class="o">::</span><span class="n">READY</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cr</span><span class="p">;</span>
+      <span class="n">cr</span><span class="o">-&gt;</span><span class="n">Release</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">nullptr</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="c1">// Choreography 的调度策略的 NextRoutine() </span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">CRoutine</span><span class="o">&gt;</span> <span class="n">ChoreographyContext</span><span class="o">::</span><span class="n">NextRoutine</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="n">stop_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">ReadLockGuard</span><span class="o">&lt;</span><span class="n">AtomicRWLock</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="n">rq_lk_</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">it</span> <span class="o">:</span> <span class="n">cr_queue_</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">cr</span> <span class="o">=</span> <span class="n">it</span><span class="p">.</span><span class="n">second</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cr</span><span class="o">-&gt;</span><span class="n">Acquire</span><span class="p">())</span>
+      <span class="k">continue</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cr</span><span class="o">-&gt;</span><span class="n">UpdateState</span><span class="p">()</span> <span class="o">==</span> <span class="n">RoutineState</span><span class="o">::</span><span class="n">READY</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">cr</span><span class="p">;</span>
+    <span class="n">cr</span><span class="o">-&gt;</span><span class="n">Release</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">nullptr</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>我们仔细比较一下上文的两个函数，emm……乍一看似乎没什么区别，确实，但细节往往隐藏了海量信息。注意到，<code class="language-plaintext highlighter-rouge">ClassicContext</code> 使用的队列是 <code class="language-plaintext highlighter-rouge">multi_pri_rq_</code>，<code class="language-plaintext highlighter-rouge">ChoreographyContext</code> 使用的队列是 <code class="language-plaintext highlighter-rouge">cr_queue_</code> ，两者类型如下：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="n">CROUTINE_QUEUE</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">CRoutine</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">MULTI_PRIO_QUEUE</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="n">CROUTINE_QUEUE</span><span class="p">,</span> <span class="mi">20</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">CR_GROUP</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">MULTI_PRIO_QUEUE</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="n">MULTI_PRIO_QUEUE</span> <span class="o">*</span><span class="n">multi_pri_rq_</span><span class="p">;</span>	<span class="c1">// 这是 ClassicContext 内的一个私有成员</span>
+<span class="n">std</span><span class="o">::</span><span class="n">multimap</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">CRoutine</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">greater</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;&gt;</span> <span class="n">cr_queue_</span><span class="p">;</span>
+<span class="k">alignas</span><span class="p">(</span><span class="n">CACHELINE_SIZE</span><span class="p">)</span> <span class="k">static</span> <span class="n">CR_GROUP</span>  <span class="n">cr_group_</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>看清楚了吧，事实上 <code class="language-plaintext highlighter-rouge">ClassicContext</code> 使用了多个优先级队列，而<code class="language-plaintext highlighter-rouge">ChoreographyContext</code> 用的“队列”只是了一个表（对于 <code class="language-plaintext highlighter-rouge">multimap</code> 和 <code class="language-plaintext highlighter-rouge">map</code> ，我更喜欢用表格称呼它们）。如果你想进一步了解 <code class="language-plaintext highlighter-rouge">multi_pri_rq_</code>，那么可以仔细看一下下面这张图。再结合上面的代码，可以得出两点结论：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">CR_GROUP</code> 相当于组名与优先级队列的表格，是一个全局变量，有序地存放了系统中所有的协程。所以说，在 Classic 策略中，“协程是放在全局的优先级队列中处理的”。</li>
+  <li>每一个协程组与一个 <code class="language-plaintext highlighter-rouge">ClassicContext</code> 对象对应，一个 <code class="language-plaintext highlighter-rouge">ClassicContext</code> 也与一个 <code class="language-plaintext highlighter-rouge">Processor</code> 绑定，即与一个线程绑定。这就是我前文所说的“相关协程以组为单位与线程做绑定”的直接证据。</li>
+</ul>
+
+<center>
+<img src="/assets/img/scheduler_data.png" style="zoom:50%;">
+</center>
+<p>而反观 Choreography 策略，<code class="language-plaintext highlighter-rouge">ChoreographyContext</code> 只管理那些<strong>主链路</strong>上的协程（任务），不会对协程进行分组。而对于非主链路上的任务，Choreography 策略会把它们扔给 <code class="language-plaintext highlighter-rouge">ClassicContext</code> 上下文处理。</p>
+
+<p>说完这个，我们再看看 <code class="language-plaintext highlighter-rouge">Processor</code> 的线程阻塞和唤醒是怎么操作的：没错，通过上下文的 <code class="language-plaintext highlighter-rouge">Wait()</code> 和 <code class="language-plaintext highlighter-rouge">Notify()</code> 函数 <img class="emoji" title=":man_shrugging:" alt=":man_shrugging:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f937-2642.png" height="20" width="20">。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">ClassicContext</span><span class="o">::</span><span class="n">Wait</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// 1. 获取锁</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lk</span><span class="p">(</span><span class="n">mtx_wrapper_</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">());</span>
+  <span class="c1">// 2. 等待条件大于0</span>
+  <span class="n">cw_</span><span class="o">-&gt;</span><span class="n">Cv</span><span class="p">().</span><span class="n">wait_for</span><span class="p">(</span><span class="n">lk</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span>
+                     <span class="p">[</span><span class="o">&amp;</span><span class="p">]()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">notify_grp_</span><span class="p">[</span><span class="n">current_grp</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span> <span class="p">});</span>
+  <span class="c1">// 3. 对应协程组的唤醒条件减1</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">notify_grp_</span><span class="p">[</span><span class="n">current_grp</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">notify_grp_</span><span class="p">[</span><span class="n">current_grp</span><span class="p">]</span><span class="o">--</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">ClassicContext</span><span class="o">::</span><span class="n">Notify</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">group_name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// 1. 加锁</span>
+  <span class="p">(</span><span class="o">&amp;</span><span class="n">mtx_wq_</span><span class="p">[</span><span class="n">group_name</span><span class="p">])</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">().</span><span class="n">lock</span><span class="p">();</span>
+  <span class="c1">// 2. 协程唤醒条件加1</span>
+  <span class="n">notify_grp_</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">(</span><span class="o">&amp;</span><span class="n">mtx_wq_</span><span class="p">[</span><span class="n">group_name</span><span class="p">])</span><span class="o">-&gt;</span><span class="n">Mutex</span><span class="p">().</span><span class="n">unlock</span><span class="p">();</span>
+  <span class="c1">// 3. 唤醒线程</span>
+  <span class="n">cv_wq_</span><span class="p">[</span><span class="n">group_name</span><span class="p">].</span><span class="n">Cv</span><span class="p">().</span><span class="n">notify_one</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>看来唤醒和等待都是通过上下文的条件变量 <code class="language-plaintext highlighter-rouge">cw_</code> 实现的，对于 Choreography 策略来说，实现也是类似的。</p>
+
+<h3 id="整体结构">整体结构</h3>
+
+<p>现在，我们跳出这些恼人的代码，俯视整个调度结构。幸运的是，参考文献 [1] 已经提供了两张非常好的图片：我在这里也不厌其烦地重复说一下吧😓</p>
+
+<ul>
+  <li>调度系统中，<code class="language-plaintext highlighter-rouge">Scheduler</code> 类统管了所有资源，很显然，它必然是单例。</li>
+  <li>每个 <code class="language-plaintext highlighter-rouge">Processor</code> 封装了一个 <code class="language-plaintext highlighter-rouge">std::thread</code> ，并于一个 <code class="language-plaintext highlighter-rouge">ProcessorContext</code> 对象绑定。</li>
+  <li>切换协程（任务）由上下文完成，过程几乎都是优先级从高到底遍历，选中已经就绪的协程开始运行。</li>
+  <li>在一个完整的动作流程中，任务的优先级几乎都是从低到高的。</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">Choreography</code> 调度策略，主要是针对主链路上的任务进行编排，这些任务会被分配到程序员指定的 <code class="language-plaintext highlighter-rouge">Processor</code> 上，且执行先后关系明确，需要对系统有足够深入的了解。</li>
+</ul>
+
+<center>
+<img src="/assets/img/classic.png">
+</center>
+
+<center>
+<img src="/assets/img/choreograph.png">
+</center>
+
+<h2 id="参考文献">参考文献</h2>
+
+<p>[1] <a href="https://blog.csdn.net/jinzhuojun/article/details/104087518">自动驾驶平台Apollo 5.5阅读手记：Cyber RT中的任务调度</a></p>
+
+<p>[2] <a href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber">百度 Apollo Cyber Docs</a></p>
+
+<p>[3] <a href="https://github.com/daohu527/Dig-into-Apollo">Dig-into-Apollo</a></p>
+
+<p>[4] <a href="https://learnku.com/articles/41728">Golang 中的协程</a></p>
+
+<p>[5] <a href="https://blog.csdn.net/jinzhuojun/article/details/86760743">自动驾驶平台Apollo 3.5阅读手记：Cyber RT中的协程</a></p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#cyber-rt" class="page__taxonomy-item" rel="tag">Cyber RT</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#apollo" class="page__taxonomy-item" rel="tag">Apollo</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-10-17T00:00:00+08:00">October 17, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Apollo+Cyber+RT+%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F%20http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F17%2FCyber-RT.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F17%2FCyber-RT.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Flocalhost%3A4000%2Fapollo%2F2020%2F10%2F17%2FCyber-RT.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/apollo/2020/10/14/apollo-intro.html" class="pagination--pager" title="Apollo 软件系统概述
+">previous</a>
+    
+    
+      <a href="/cpp/2020/10/20/EffectiveCpp1.html" class="pagination--pager" title="Effective C++ 内容提要（上）
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/apollo/2020/10/17/Cyber-RT.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/apollo/2020/10/17/Cyber RT"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

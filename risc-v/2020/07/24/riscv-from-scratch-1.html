@@ -1,0 +1,765 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>RISC-V from Scratch 1 - 峰子的乐园</title>
+<meta name="description" content="RISC-V from Scratch 1：简介，搭建工具链以及hello world!">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="RISC-V from Scratch 1">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/07/24/riscv-from-scratch-1.html">
+
+
+  <meta property="og:description" content="RISC-V from Scratch 1：简介，搭建工具链以及hello world!">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-07-24T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/07/24/riscv-from-scratch-1.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          RISC-V from Scratch 1
+
+        
+      </h1>
+      
+        <p class="page__lead">RISC-V from Scratch 1：简介，搭建工具链以及hello world!
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  1 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="RISC-V from Scratch 1">
+    <meta itemprop="description" content="RISC-V from Scratch 1：简介，搭建工具链以及hello world!">
+    <meta itemprop="datePublished" content="2020-07-24T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#risc-v-from-scratch-1">RISC-V from Scratch 1</a>
+    <ul>
+      <li><a href="#简介">简介</a></li>
+      <li><a href="#什么是-risc-v">什么是 RISC-V</a></li>
+      <li><a href="#qemu-and-risc-v-toolchain-setup">QEMU and RISC-V toolchain setup</a></li>
+      <li><a href="#hello-risc-v">Hello, RISC-V!</a></li>
+      <li><a href="#下一步">下一步</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="risc-v-from-scratch-1">RISC-V from Scratch 1</h1>
+
+<p>译自：<a href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html">RISC-V from scratch 1: Introduction, toolchain setup, and hello world!</a></p>
+
+<p>最近在尝试完成一个 RISC-V 内核，在搜索资料的时不经感叹 RISC-V 的中文相关内容少且不精，而当我读完这系列英文博客后感觉受益匪浅，故将其翻译为中文，既方便接下来的研究，也方便更多朋友学习。<a href="https://github.com/twilco/riscv-from-scratch">这是</a>系列 github 库。</p>
+
+<h2 id="简介">简介</h2>
+
+<p>通过 <em>RISC-V from scratch</em>，我会给你介绍一些很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。</p>
+
+<p>在第一篇博文中，我将简短的讨论一下 RISC-V 以及为什么它很重要，并搭建起 RISC-V 的工具链，最后在 RISC-V 模拟器中构建并运行一个简单的 C 程序。</p>
+
+<h2 id="什么是-risc-v">什么是 RISC-V</h2>
+
+<p>RISC-V 是一个开源免费的 ISA，始于2010年在 UC-Berkeley 的一个项目。不得不承认，免费使用对其成功起到了重要作用，也使之与其他体系结构形成了鲜明的对比。以 ARM 为例——为创作一个兼容 ARM 的处理器，你必须支付<a href="https://www.anandtech.com/show/7112/the-arm-diaries-part-1-how-arms-business-model-works/2">100万美元至1000万美元的前期费用，以及每片0.5％-2％的特许权使用费</a>。这种免费、开放的模型使 RISC-V 对许多人来说都是有吸引力的，这是因为很多硬件初创公司无力负担许可处理器，以及学术机构、开源社区的费用。</p>
+
+<p>RISC-V 的迅速崛起在当时并没有引起人们的注意。ARM 推出了一个现在被淘汰的网站，该网站试图（但没有成功）强调 ARM 相对于 RISC-V 的假定优势。现如今 RISC-V 得到了包括 Google，Nvidia 和Western Digital 在内的众多主要公司的支持。</p>
+
+<h2 id="qemu-and-risc-v-toolchain-setup">QEMU and RISC-V toolchain setup</h2>
+
+<p>除非我们有一个适合的环境，否则我们肯定无法在 RISC-V 处理器上跑任何代码。当然，在 <a href="https://www.qemu.org/">qemu</a> 的帮助下，我们也不需要真的买一个 RISC-V 的处理器来完成这个实验。在 Mac 下，安装 <code class="language-plaintext highlighter-rouge">qemu</code>是非常简单的（其余操作系统看<a href="https://www.qemu.org/download">这里</a>)：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew <span class="nb">install </span>qemu
+</code></pre></div></div>
+
+<p>我们刚刚安装的<code class="language-plaintext highlighter-rouge"> qemu </code> 内有若干台的机器（可通过 <code class="language-plaintext highlighter-rouge">qemu-system-riscv32 -machine </code>选项指定），这非常方便。</p>
+
+<p>接下来，让我们安装 <a href="http://openocd.org/">OpenOCD</a> 的 RISC-V 兼容副本和 RISC-V 工具链。</p>
+
+<ol>
+  <li>
+    <p>从此处下载 RISC-V OpenOCD 和 RISC-V 工具链的预构建版本：</p>
+  </li>
+  <li>
+    <p>将这些文件移动并解压缩到某个目录中。我为这个和其他 RISC-V 工具链 QEMU 等创建一个名为<code class="language-plaintext highlighter-rouge">~/usys/riscv</code> 的文件夹。请记住你选择的目录，因为我们将在本文和下一篇文章中使用它。</p>
+
+    <div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir</span> <span class="nt">-p</span> ~/usys/riscv
+<span class="nb">cd</span> ~/Downloads
+<span class="nb">cp </span>openocd-&lt;<span class="nb">date</span><span class="o">&gt;</span>-&lt;platform&gt;.tar.gz ~/usys/riscv
+<span class="nb">cp </span>riscv64-unknown-elf-gcc-&lt;<span class="nb">date</span><span class="o">&gt;</span>-&lt;platform&gt;.tar.gz ~/usys/riscv
+<span class="nb">cd</span> ~/usys/riscv
+<span class="nb">tar</span> <span class="nt">-xvf</span> openocd-&lt;<span class="nb">date</span><span class="o">&gt;</span>-&lt;platform&gt;.tar.gz
+<span class="nb">tar</span> <span class="nt">-xvf</span> riscv64-unknown-elf-gcc-&lt;<span class="nb">date</span><span class="o">&gt;</span>-&lt;platform&gt;.tar.gz
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>设置环境变量：<code class="language-plaintext highlighter-rouge">RSICV_OPENOCD_PATH</code> 和 <code class="language-plaintext highlighter-rouge">RISCV_PATH</code> ，方便其他程序找到我们的工具链。在不同操作系统下，该操作会明显不同，在 Mac 上，可以这样做：</p>
+
+    <div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># I put these two exports directly in my ~/.zshenv file</span>
+<span class="c"># If you use a different shell or OS you may have to do something else.</span>
+<span class="nb">export </span><span class="nv">RISCV_OPENOCD_PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/usys/riscv/openocd-&lt;date&gt;-&lt;version&gt;"</span>
+<span class="nb">export </span><span class="nv">RISCV_PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/usys/riscv/riscv64-unknown-elf-gcc-&lt;date&gt;-&lt;version&gt;"</span>
+<span class="c"># Reload .zshenv with our new environment variables.  </span>
+<span class="c"># Restarting your shell will have a similar effect.</span>
+<span class="nb">source</span> ~/.zshenv
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>接下来，我们要给这些可执行文件创建一个软链接到 <code class="language-plaintext highlighter-rouge">/usr/local/bin</code> ，这样我们就可以不必每次都把完整的路径打出来了。</p>
+
+    <div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Symbolically link our gcc executable into /usr/local/bin.  </span>
+<span class="c"># Repeat this process for any other executables you want to quickly access.</span>
+<span class="nb">ln</span> <span class="nt">-s</span> ~/usys/riscv/riscv64-unknown-elf-gcc-8.2.0-&lt;<span class="nb">date</span><span class="o">&gt;</span>-&lt;version&gt;/bin/riscv64-unknown-elf-gcc /usr/local/bin
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<p>好啦，我们已经装好了 RISC-V 工具链。这些可执行文件（例如 <code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-gcc</code>, <code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-gdb</code>, <code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-ld</code> 等都放在 <code class="language-plaintext highlighter-rouge">~/usys/riscv/riscv64-unknown-elf-gcc-&lt;date&gt;-&lt;version&gt;/bin/</code>。</p>
+
+<h2 id="hello-risc-v">Hello, RISC-V!</h2>
+
+<p><strong>于2019年5月26日更新</strong></p>
+
+<p>很不幸的是，因为 RISC-V QEMU 出现了一个 bug ，导致在 QEMU 上运行 <a href="https://github.com/sifive/freedom-e-sdk">freedom-e-sdk</a> “hello world” 程序无法跑通。补丁已经加上，但接下来的部分你们是无法跑通的，不过，你不必担心，因为接下来的部分可以跳过，不会影响后续的实验结果。</p>
+
+<p>更多信息，请看这里: <a href="https://github.com/sifive/freedom-e-sdk/issues/260#issuecomment-496037827">https://github.com/sifive/freedom-e-sdk/issues/260#issuecomment-496037827</a></p>
+
+<hr />
+
+<p>现在我们已经有了工具链，让我们运行一个示例 RISC-V 程序。之前，我链接了一个名为 <a href="https://github.com/sifive/freedom-e-sdk">freedom-e-sdk</a> 的 SiFive 库，该库提供了我们可以尝试的各种程序。首先以递归方式 clone 此库：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> ~/wherever/you/want/to/clone/this
+git clone <span class="nt">--recursive</span> https://github.com/sifive/freedom-e-sdk.git
+<span class="nb">cd </span>freedom-e-sdk
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/a/12785204">传统技能</a>，运行一个 freedom-e-sdk 提供的 hello world 程序吧！首先，使用 <code class="language-plaintext highlighter-rouge">Makefile</code>来编译他们提供的程序，并指定编译后的目标。</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make <span class="nv">PROGRAM</span><span class="o">=</span>hello <span class="nv">TARGET</span><span class="o">=</span>sifive-hifive1 <span class="nv">CONFIGURATION</span><span class="o">=</span>debug software
+</code></pre></div></div>
+
+<p>然后，在 QEMU 上运行：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>qemu-system-riscv32 <span class="nt">-nographic</span> <span class="nt">-machine</span> sifive_e <span class="nt">-kernel</span> software/hello/debug/hello.elf
+Hello, World!
+</code></pre></div></div>
+
+<h2 id="下一步">下一步</h2>
+
+<p>这是一个很好的开始，但是我的目标是 <a href="https://seths.blog/2005/03/dont_shave_that/">shave the yak</a>，尽管已经确认我们有一个行之有效的工具链，但<code class="language-plaintext highlighter-rouge">freedom-e-sdk</code> 示例却隐藏了很多有趣的细节。请注意，我们不必设置任何链接器文件或启动代码——SiFive 提供板级支持的链接器脚本，各种<code class="language-plaintext highlighter-rouge">Makefile</code>和 <a href="https://github.com/sifive/freedom-metal">freedom-metal library</a> 为我们解决这些问题。</p>
+
+<p>在本系列的第二部分中，我们将摆脱<code class="language-plaintext highlighter-rouge">freedom-e-sdk</code>的束缚，走自己的路。我们将使用<code class="language-plaintext highlighter-rouge"> dtc </code>检查 <code class="language-plaintext highlighter-rouge">qemu </code>虚拟机的硬件布局，设计并检查链接器脚本，创建基本运行时以设置我们的堆栈，了解一些基本的 RISC-V 装配，等等。</p>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-07-24T00:00:00+08:00">July 24, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=RISC-V+from+Scratch+1%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F07%2F24%2Friscv-from-scratch-1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F07%2F24%2Friscv-from-scratch-1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F07%2F24%2Friscv-from-scratch-1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/07/23/RISC-V_on_QEMU.html" class="pagination--pager" title="QEMU 上运行 RISC-V Linux 内核
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/07/26/riscv-from-scratch-2.html" class="pagination--pager" title="RISC-V from Scratch 2
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/07/24/riscv-from-scratch-1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/07/24/riscv-from-scratch-1"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

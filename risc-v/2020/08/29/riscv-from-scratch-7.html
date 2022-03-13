@@ -1,0 +1,1020 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>RISC-V from Scratch 7 - 峰子的乐园</title>
+<meta name="description" content="RISC-V from Scratch 7：内存分页">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="RISC-V from Scratch 7">
+<meta property="og:url" content="http://localhost:4000/risc-v/2020/08/29/riscv-from-scratch-7.html">
+
+
+  <meta property="og:description" content="RISC-V from Scratch 7：内存分页">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-08-29T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/risc-v/2020/08/29/riscv-from-scratch-7.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          RISC-V from Scratch 7
+
+        
+      </h1>
+      
+        <p class="page__lead">RISC-V from Scratch 7：内存分页
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  5 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="RISC-V from Scratch 7">
+    <meta itemprop="description" content="RISC-V from Scratch 7：内存分页">
+    <meta itemprop="datePublished" content="2020-08-29T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#risc-v-from-scratch-7内存分页">RISC-V from scratch 7：内存分页</a>
+    <ul>
+      <li><a href="#往期回顾">往期回顾</a></li>
+      <li><a href="#搭建环境">搭建环境</a></li>
+      <li><a href="#内存管理的预备知识">内存管理的预备知识</a>
+        <ul>
+          <li><a href="#分页">分页</a></li>
+          <li><a href="#sv39">Sv39</a></li>
+          <li><a href="#到底要做什么">到底要做什么</a></li>
+        </ul>
+      </li>
+      <li><a href="#数据结构设计">数据结构设计</a>
+        <ul>
+          <li><a href="#空闲页块的管理">空闲页块的管理</a></li>
+          <li><a href="#页的分配与回收">页的分配与回收</a></li>
+          <li><a href="#虚拟地址与物理地址">虚拟地址与物理地址</a></li>
+          <li><a href="#等值映射">等值映射</a></li>
+        </ul>
+      </li>
+      <li><a href="#最后的实现">最后的实现</a></li>
+      <li><a href="#一些疑问">一些疑问</a></li>
+      <li><a href="#接下来">接下来</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="risc-v-from-scratch-7内存分页">RISC-V from scratch 7：内存分页</h1>
+
+<p>接上一篇<a href="https://dingfen.github.io/risc-v/2020/08/17/riscv-from-scratch-6.html">博客</a>，今天我们继续写 <em>RISC-V from scratch</em> 系列博客。原本我打算将该<a href="https://github.com/twilco/riscv-from-scratch">英文系列</a>全部翻译成中文，但原作者貌似没有把这一系列完成就咕咕了。为了将工作继续下去，最终完成一个基于 RISC-V 的迷你小内核。我将这些实验继续做下去，并将自己的实践内容和想法写在这里，与大家分享探讨。</p>
+
+<h2 id="往期回顾">往期回顾</h2>
+
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，为实现时钟中断，我费了很大的力气学习了 RISC-V 机器模式，又简单了解了中断的概念，我们还在 UART 驱动程序的基础上实现了 <code class="language-plaintext highlighter-rouge">printf</code> 等工具函数，在机器模式、监管者模式下实现了时钟中断，最终我们得到的实验效果是，我们的小内核可以定时地跟我们说  hello 。</p>
+
+<p>当然，实现时钟中断的最终目的不是让它定时地和我们说你好，而是为了进程调度——时间片。这是我在第六章结尾挖下的坑，然而在后续实验中我发现这一想法太过激进，一下子难以实现。在实现进程之前，我们总得把内存进行分页，好让各个进程的内存相互独立，然后才能有多个进程，才会有进程调度吧😅。</p>
+
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+
+<p>如果你还未看本系列博客的第一部分，没有安装 <code class="language-plaintext highlighter-rouge">riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+
+<h2 id="内存管理的预备知识">内存管理的预备知识</h2>
+
+<p>不得不承认内存分页与管理是一门很大的学问。博主学习了 <a href="https://riscv.org/specifications/privileged-isa/">RISC-V 下的分页机制</a>，也细读了 <a href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a>，又参考了两篇优质的英文博客 <a href="https://osblog.stephenmarz.com/ch3.html">RISC-V OS using Rust chapter 3.1</a> 和 <a href="https://osblog.stephenmarz.com/ch3.2.html">RISC-V OS using Rust chapter 3.2</a> 。再加上自己总结梳理的 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>，对整体的理论知识做了个梳理，才算是懂个大概😅。</p>
+
+<p>当我们启动小内核时，代码和数据等所有东西都会被装载到 <code class="language-plaintext highlighter-rouge">virt</code> 机器的内存中，我们可以使用 <code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-nm</code> 来查看我们程序中定义的符号、函数等位置。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>riscv64-unknown-elf-nm build/a.out
+0000000080000d78 B __bss_end
+0000000080000d68 R __bss_start
+000000008000013c t flushTLB
+00000000800002f2 T get_pagenum
+0000000080000d40 R __global_pointer<span class="err">$</span>
+...
+</code></pre></div></div>
+
+<p>小内核严格遵循我们的要求（确切地说是链接器脚本地要求）将代码放在数据段前面。这样的安排在刚开始时确实没啥问题，但如果有多个进程开始执行任务，而数据全部存放在一起的话，那么稍有不慎就会影响其他进程的运行方式。为了让我们的小内核支持类 Unix 操作系统，也为了更好的内存保护，保证进程运行空间的独立性，我们需要良好的内存管理。</p>
+
+<h3 id="分页">分页</h3>
+
+<p>如果各位不太明白什么是内存分页，那么<a href="https://www.jianshu.com/p/3558942fe14f">分页机制图文详解</a>会给你一个详细的入门介绍，只不过是 x86-64 架构的。而关于 RISC-V 的内存分页机制，以及 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器在其中所起的重要作用，我在 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>介绍的非常多了，当然也有很多不足甚至错误的地方，也恳请指出。</p>
+
+<p>总的来说，内存分页就是将内存划分为固定大小的页，在低特权模式下，地址（包括 load 和 store 的有效地址和 PC 中的地址）都是虚拟地址，访问内存时必须被转换为真正的物理地址，具体转换方式是通过遍历页表实现的。因而内存分页制度的关键，在于设计并管理虚拟页和物理页的对应关系，即页表的设计。</p>
+
+<h3 id="sv39">Sv39</h3>
+
+<p>RISC-V 的分页方案以 SvX 的模式命名，其中 X 是以位为单位的虚拟地址的长度，Sv39 指的就是虚拟地址长度为 39 位。我们的内核是基于 RV64 的，简单起见，我打算使用 <strong>Sv39</strong> 分页模式，因此我先重点介绍一下 Sv39 分页模式。事实上，Sv39 与 在 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>介绍的 Sv32 样式基本没变，因此我就简单说一下哈。</p>
+
+<p>为了方便解释，我画了如下示意图：</p>
+
+<p><span id="Sv39"></span></p>
+
+<center>
+<img src="/assets/img/Sv39.png" />
+</center>
+
+<ol>
+  <li>
+    <p>从 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器中取出 44-bit 的根目录地址，乘以 PAGESIZE (4 KiB) 后，得到 3 级页表地址。</p>
+  </li>
+  <li>
+    <p>取出相对应的 VPN[i]，根据 VPN[i] 的值决定 PPN[i] 的页表偏移位置。</p>
+  </li>
+  <li>
+    <p>将得到的 56-bit 的 PPN[i] 取出，乘以 PAGESIZE (4 KiB) 后，得到 2 级页表地址，如此往复，直到遇到了叶 PTE。</p>
+  </li>
+  <li>
+    <p>物理地址的偏移量应等于虚拟地址的偏移量。</p>
+
+    <p>注意到：PPN[2] 的长度有 26 位，而整个物理地址的总长度不是 64 位，而是 56 位，使用零扩展了多余的位空间。</p>
+  </li>
+</ol>
+
+<p>上面的这张示意图非常重要，代码实现时可不能没有它；我们提到的 4 点在代码实现时也需要注意。</p>
+
+<h3 id="到底要做什么">到底要做什么</h3>
+
+<p>在介绍完分页和 RISC-V 的 Sv39 分页机制后，内存分页的理论知识其实就差不多学完了。然而，就如同大学的课程一样，就算认真学完了，你还是不知道具体该怎么做🐶。其中很大的原因，其实是我们不知道该做什么。因此，我先梳理一下在内存分页中，我们的小内核应该：</p>
+
+<ul>
+  <li>决定何时启动内存分页</li>
+  <li>决定使用何种内存分页机制</li>
+  <li>决定如何管理页块</li>
+  <li>决定页表、进程（用户态、内核态）的内存分布</li>
+  <li>决定某些特殊的物理地址的虚拟地址</li>
+  <li>决定如何处理页错误</li>
+</ul>
+
+<p>我们的小内核不应该做：</p>
+
+<ul>
+  <li>访问虚拟地址时转换为物理地址</li>
+  <li>快表 (TLB) 的管理</li>
+</ul>
+
+<h2 id="数据结构设计">数据结构设计</h2>
+
+<p>好了，终于准备完成。万事俱备，只欠东风，我们只差代码实现了。</p>
+
+<h3 id="空闲页块的管理">空闲页块的管理</h3>
+
+<p>内存+基于页的分配，意味着分配内存就是以页为单位。俗话说万事开头难，有时候我们必须把自己当作机器才能取得突破。假设你是一个机器，你被受命去拿出一个页的内存给某个进程，你的第一反应是什么？Well，当然是找一个空的页块丢给那个进程。</p>
+
+<p>那么哪里有空的页块呢？哪些块已经被使用了，哪些块用完以后又被进程还回来了呢？我们需要一个空闲页块管理！许多操作系统都会使用链表来帮助它们管理空闲页块，这里也不例外。</p>
+
+<p>链表的头指针指向第一个空闲的页块，然后第一个空闲的页块拿出 8 字节来指向第二个页块，然后第二个页块指向第三个……</p>
+
+<p><span id="freelist"></span></p>
+
+<center>
+    <img src="/assets/img/freelist.png" />
+</center>
+
+<p>这是一个非常棒的做法，我们不需要额外空间（确切的说只要一个指针）就可以源源不断地从链表头部获得空闲块；而遇到回收的情况，也只需要将回收块放到链表头部，而它的代码表示也非常简洁：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="n">FreePages</span> <span class="p">{</span>
+	<span class="k">struct</span> <span class="n">FreePages</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">FreePage_t</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h3 id="页的分配与回收">页的分配与回收</h3>
+
+<p>定义了上面的数据结构后，接下来就要考虑一下页的分配与回收问题了。根据<a href="#freelist">链表图示</a>，我们只需要从链表头部取出一个空闲页块，然后将链表头指针后移动就可以了。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="nf">kalloc</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">FreePage_t</span> <span class="o">*</span><span class="n">pt</span> <span class="o">=</span> <span class="n">kmem</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">kmem</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">kmem</span> <span class="o">=</span> <span class="n">kmem</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span><span class="n">pt</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>回收的动作也相似，将要回收的块放到链表头部，再让链表头指针前移。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">kfree</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">FreePage_t</span> <span class="o">*</span><span class="n">pt</span> <span class="o">=</span> <span class="p">(</span><span class="n">FreePage_t</span> <span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">;</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PAGESIZE</span><span class="p">);</span>
+    <span class="n">pt</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">kmem</span><span class="p">;</span>
+    <span class="n">kmem</span> <span class="o">=</span> <span class="n">pt</span><span class="p">;</span>
+<span class="p">}</span> 
+</code></pre></div></div>
+
+<p><span id="VAPA"></span></p>
+
+<h3 id="虚拟地址与物理地址">虚拟地址与物理地址</h3>
+
+<p>我们还有一个问题没有解决，那就是页表！其实页表自身没有那么深奥，说到底就是一个数组而已。而且在 Sv39 下其长度不会超过 512 。既然是个数组，那么就定义一个指向 64 字节的指针吧🤣。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="n">uint64</span> <span class="o">*</span><span class="n">PageTable_t</span><span class="p">;</span>
+<span class="c1">// 定义一个全局的页表</span>
+<span class="n">PageTable_t</span> <span class="n">kernel_pagetable</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>我们之前刚刚实现完页的分配，那么我们就给 <code class="language-plaintext highlighter-rouge">kernel_pagetable</code> 页表分配一个页块吧。哦，在这之前，我们必须把空闲块全部用链表串起来。之所以倒序循环，是为了让第一个被分配的页的地址排在前面，不然感觉怪怪的。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FreePage_t</span> <span class="o">*</span><span class="n">pt</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">KERNEND</span><span class="p">;</span> <span class="n">p</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">KERNBASE</span><span class="p">;</span> <span class="n">p</span> <span class="o">-=</span> <span class="n">PAGESIZE</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">pt</span> <span class="o">=</span> <span class="p">(</span><span class="n">FreePage_t</span> <span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">;</span>
+    <span class="n">pt</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">kmem</span><span class="p">;</span>
+    <span class="n">kmem</span> <span class="o">=</span> <span class="n">pt</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">kernel_pagatable</span> <span class="o">=</span> <span class="p">(</span><span class="n">PageTable_t</span><span class="p">)</span><span class="n">kalloc</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>现在，就要对照着 <a href="#Sv39">Sv39 示意图</a>，开始慢慢实现虚拟地址映射到物理地址的代码了。<u>在给定虚拟地址 VA 和物理地址 PA ，要把它们映射起来，使得访问虚拟地址 VA 就是访问物理地址 PA 。</u></p>
+
+<p>第 1 步，要将 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器中的 PPN 转换为页表首地址，这需要我们将特定的值写入到 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器中。参考下图，</p>
+
+<center>
+    <img src="/assets/img/satp.png" />
+    <img src="/assets/img/satp_mode.png" />
+</center>
+<p>RV64 中的 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器末 44 位都是 PPN，而首 4 位确定 MODE 位。如之前所说，我使用 Sv39 分页机制，因此 MODE = 8，ASID 位我先暂时不处理，全部用 0 填充。那么问题来了，PPN 位应该是什么呢？我也不清楚，要不就先给个定值糊弄过去🤪？就让页表起始地址是 <code class="language-plaintext highlighter-rouge">KERNBASE = 0x80101000</code> 吧。</p>
+
+<p>在清楚地知道 <code class="language-plaintext highlighter-rouge">satp</code> 寄存器和 <code class="language-plaintext highlighter-rouge">SFENCE.VMA</code> 的用法后，写出以下汇编代码。<u>特别注意到，当程序运行完下段汇编代码后，分页就会开启，之后的地址全都是虚拟地址了。因此，这些汇编代码必须在所有准备工作完成后才能执行。</u></p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">csrw</span> <span class="nv">satp</span><span class="p">,</span> <span class="p">(</span><span class="mi">8</span><span class="nv">L</span> <span class="o">&lt;&lt;</span> <span class="mi">60</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nv">KERNBASE</span> <span class="o">&gt;&gt;</span> <span class="mi">12</span><span class="p">)</span>
+<span class="nf">sfence.vma</span> <span class="nv">zero</span><span class="p">,</span> <span class="nv">zero</span>
+</code></pre></div></div>
+
+<p>第 2 步，从虚拟地址中提取出 VPN[i] ，当虚拟地址为 VA 时，对其进行相应的移位操作，就可以得到偏移量了。具体的函数实现如下：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">get_pagenum</span><span class="p">(</span><span class="kt">int</span> <span class="n">level</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">va</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">shift</span> <span class="o">=</span> <span class="n">PAGEOFF</span> <span class="o">+</span> <span class="n">level</span> <span class="o">*</span> <span class="mi">9</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">mask</span> <span class="o">=</span> <span class="mh">0x1ff</span><span class="p">;</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">va</span> <span class="o">&gt;&gt;</span> <span class="n">shift</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">mask</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>第 3 步，在访问页表并得到对应的 PTE 后，首先要判断：1）是否有效。2）是否为叶 PTE。3）是否有权限访问。然后根据  <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>和 <a href="https://github.com/riscv/riscv-isa-manual/releases/download/draft-20200825-bb55379/riscv-privileged.pdf">RISC-V privileged ISA manual</a> 的具体要求，<a href="[https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html#%E9%99%84%E5%BD%95](https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html#附录)">要么产生页错误，要么进行下一级别的页表访问，要么继续得到物理地址等</a>。哦，天哪这可太复杂了，我必须进行简化：</p>
+
+<ul>
+  <li>忽略页错误</li>
+  <li>不要超级页，默认最后一级的 PTE 就是叶 PTE，其他的都是非叶 PTE</li>
+</ul>
+
+<p>这样的话，我们的代码复杂度会降低很多（当然我们以后会加上），我们先解决一下 PTE 转为页表起始地址的问题：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">uint64</span> <span class="nf">PTE2PA</span><span class="p">(</span><span class="n">uint64</span> <span class="n">pte</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">pte</span> <span class="o">&gt;&gt;</span> <span class="mi">10</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">PAGEOFF</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后再来解决一下遇到的 PTE 无效的问题，可能你会觉得遇到无效的 PTE 直接产生页错误不就好了的错觉。emmm……我们以后确实会这么干，但如果在建立内存分页的过程中也这么干的话，就有点灰色幽默了：你要建立一片内存的分页，首先要创建一个页表（PTE），还未创建的 PTE 当然是无效的（内存全 0 ），如果此时产生页错误，会让我们永远都无法建立这个新页表！我们应当：分配一个空闲页块，置相关的位域，记录其起始地址并将地址回填到相关的 PTE 中。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">((</span><span class="n">table</span> <span class="o">=</span> <span class="p">(</span><span class="n">PageTable_t</span><span class="p">)</span><span class="n">kalloc</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="n">memset</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PAGESIZE</span><span class="p">);</span>
+<span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="n">PA2PTE</span><span class="p">((</span><span class="n">uint64</span><span class="p">)</span><span class="n">table</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_V</span><span class="p">;</span>
+
+<span class="n">uint64</span> <span class="nf">PA2PTE</span><span class="p">(</span><span class="n">uint64</span> <span class="n">pa</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">pa</span> <span class="o">&gt;&gt;</span> <span class="n">PAGEOFF</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">10</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>第 4 步，得到了叶 PTE 后就非常轻松了，只要把 PA 存到 PTE 就行了，页偏移量我们不需要手动赋值。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PTE_t</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">get_virtaddr4physaddr</span><span class="p">(</span><span class="n">VA</span><span class="p">,</span> <span class="n">PA</span><span class="p">);</span>				<span class="c1">// 获得到虚拟地址 VA 相应的 PTE</span>
+<span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="p">((</span><span class="n">pa</span> <span class="o">&gt;&gt;</span> <span class="n">PAGEOFF</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">10</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_V</span> <span class="o">|</span> <span class="n">PTE_X</span> <span class="o">|</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">;</span>	<span class="c1">// 把物理地址 PA 的地址经偏移后放入 PTE，然后写入一些位</span>
+</code></pre></div></div>
+
+<h3 id="等值映射">等值映射</h3>
+
+<p>为什么我们要实现对给定虚拟地址 VA 和物理地址 PA 建立映射关系，因为对某些特殊的物理地址，我们要求其虚拟地址的值与物理地址相同。这被称为等值映射。</p>
+
+<p>等值映射就是虚拟地址的值与物理地址的值相同的情况。为什么要强调等值映射？如果大家还记得 UART 驱动程序的内容，那么应该不会忘记 <code class="language-plaintext highlighter-rouge">0x10000000</code> 开始就是 UART 的内存映射寄存器的位置了。在未分页时，我们访问的地址都是物理地址，然而分页后，监管者模式和用户模式下访问的地址就是虚拟地址了，如果没有等值映射，会导致最终访问的物理地址不再是 <code class="language-plaintext highlighter-rouge">0x10000000</code> ，程序也就无法运行下去了。那么，哪些地址需要等值映射呢？先不管那么多，要不就让所有用到的内存地址都等值映射吧。</p>
+
+<h2 id="最后的实现">最后的实现</h2>
+
+<p>好了说了这么多零零散散的内容，我们把所有的东西整合起来看一下吧。</p>
+
+<p>首先是空闲页块链表，在使用前，必须先初始化，把空闲页块全部串起来：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">initmm</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">KERNEND</span><span class="p">;</span>
+    <span class="n">FreePage_t</span> <span class="o">*</span><span class="n">pt</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(;</span> <span class="n">p</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">KERNBASE</span><span class="p">;</span> <span class="n">p</span> <span class="o">-=</span> <span class="n">PAGESIZE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">pt</span> <span class="o">=</span> <span class="p">(</span><span class="n">FreePage_t</span> <span class="o">*</span><span class="p">)</span><span class="n">p</span><span class="p">;</span>
+        <span class="n">pt</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">kmem</span><span class="p">;</span>
+        <span class="n">kmem</span> <span class="o">=</span> <span class="n">pt</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后，就是页表的等值映射问题，先分配出一个页表，然后再使用 <code class="language-plaintext highlighter-rouge">map</code> 函数，它可以将给定的物理地址和虚拟地址联系在一起，在一开始，我们不分三七二十一，直接把用到的所有地址都进行等值映射。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">initmm</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="n">kernel_pagatable</span> <span class="o">=</span> <span class="p">(</span><span class="n">PageTable_t</span><span class="p">)</span><span class="n">kalloc</span><span class="p">();</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">kernel_pagatable</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PAGESIZE</span><span class="p">);</span>
+    <span class="n">map</span><span class="p">(</span><span class="n">kernel_pagatable</span><span class="p">,</span> <span class="mh">0x2000000</span><span class="p">,</span> <span class="mh">0x2000000</span><span class="p">,</span> <span class="mh">0x10000</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+    <span class="n">map</span><span class="p">(</span><span class="n">kernel_pagatable</span><span class="p">,</span> <span class="mh">0x10000000</span><span class="p">,</span> <span class="mh">0x10000000</span><span class="p">,</span> <span class="mh">0x100</span><span class="p">,</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+    <span class="n">map</span><span class="p">(</span><span class="n">kernel_pagatable</span><span class="p">,</span> <span class="mh">0x80000000</span><span class="p">,</span> <span class="mh">0x80000000</span><span class="p">,</span> <span class="mh">0x100000</span><span class="p">,</span> <span class="n">PTE_X</span> <span class="o">|</span> <span class="n">PTE_R</span> <span class="o">|</span> <span class="n">PTE_W</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">map</code> 函数的实现要难很多，大家要细看<a href="#VAPA">虚拟地址与物理地址</a>，函数从第三级页表开始，一步一步地找到虚拟地址对应的叶 PTE。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PTE_t</span> <span class="o">*</span><span class="nf">virt2phys</span><span class="p">(</span><span class="n">PageTable_t</span> <span class="n">table</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">va</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">level</span><span class="p">;</span>
+    <span class="n">PTE_t</span> <span class="o">*</span><span class="n">pte</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">level</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">;</span> <span class="n">level</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">pte</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">table</span><span class="p">[</span><span class="n">get_pagenum</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">va</span><span class="p">)];</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_V</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_R</span> <span class="o">||</span> <span class="o">*</span><span class="n">pte</span> <span class="o">&amp;</span> <span class="n">PTE_X</span><span class="p">)</span> <span class="p">{</span>		<span class="c1">// valid</span>
+                <span class="k">break</span><span class="p">;</span>  <span class="c1">// leaf</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>  <span class="c1">// non-leaf</span>
+                <span class="n">table</span> <span class="o">=</span> <span class="p">(</span><span class="n">PageTable_t</span><span class="p">)</span><span class="n">PTE2PA</span><span class="p">(</span><span class="o">*</span><span class="n">pte</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">table</span> <span class="o">=</span> <span class="p">(</span><span class="n">PageTable_t</span><span class="p">)</span><span class="n">kalloc</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+            <span class="n">memset</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">PAGESIZE</span><span class="p">);</span>
+            <span class="o">*</span><span class="n">pte</span> <span class="o">=</span> <span class="n">PA2PTE</span><span class="p">((</span><span class="n">uint64</span><span class="p">)</span><span class="n">table</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_V</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="n">table</span><span class="p">[</span><span class="n">get_pagenum</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">va</span><span class="p">)];</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">map</span><span class="p">(</span><span class="n">PageTable_t</span> <span class="n">table</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">va</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">pa</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">size</span><span class="p">,</span> <span class="n">uint64</span> <span class="n">mode</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">uint64</span> <span class="n">pgstart</span> <span class="o">=</span> <span class="n">page_aligndown</span><span class="p">(</span><span class="n">va</span><span class="p">);</span>
+    <span class="n">uint64</span> <span class="n">pglast</span> <span class="o">=</span> <span class="n">page_aligndown</span><span class="p">(</span><span class="n">va</span> <span class="o">+</span> <span class="n">size</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(;</span> <span class="n">pgstart</span> <span class="o">&lt;=</span> <span class="n">pglast</span><span class="p">;</span> <span class="n">pgstart</span> <span class="o">+=</span> <span class="n">PAGESIZE</span><span class="p">,</span> <span class="n">pa</span> <span class="o">+=</span> <span class="n">PAGESIZE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">PTE_t</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">virt2phys</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">pgstart</span><span class="p">);</span>
+        <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="p">((</span><span class="n">pa</span> <span class="o">&gt;&gt;</span> <span class="n">PAGEOFF</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">10</span><span class="p">)</span> <span class="o">|</span> <span class="n">PTE_V</span> <span class="o">|</span> <span class="n">mode</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">virt2phys</code> 函数中：</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">pte = &amp;table[get_pagenum(level, va)]</code> 利用偏移量找到对应的 PTE 。</li>
+  <li><code class="language-plaintext highlighter-rouge">if (*pte &amp; PTE_V)</code> 判断是否有效。</li>
+  <li><code class="language-plaintext highlighter-rouge">if (*pte &amp; PTE_R || *pte &amp; PTE_X)</code> 判断是否为叶 PTE 。</li>
+  <li>如果无效，需要重新分配出一个页，并且将页的地址放入到 PTE 中。</li>
+  <li>最终，返回叶 PTE 。</li>
+</ol>
+
+<p>最后，不要忘记打开内存分页“开关”：</p>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">csrw</span> <span class="nv">satp</span><span class="p">,</span> <span class="p">(</span><span class="mi">8</span><span class="nv">L</span> <span class="o">&lt;&lt;</span> <span class="mi">60</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nv">KERNBASE</span> <span class="o">&gt;&gt;</span> <span class="mi">12</span><span class="p">)</span>
+<span class="nf">sfence.vma</span> <span class="nv">zero</span><span class="p">,</span> <span class="nv">zero</span>
+</code></pre></div></div>
+
+<p>最终，为了方便大家理解虚拟内存和物理内存的分布，我特意画了一幅图。在我的设计中，UART CLINT 等设备的内存映射寄存器的所在地都是等值映射，在未启动分页前的函数也应当在等值映射的范围内，这是方便启动分页后这些函数无需进行重新映射也可以被找到。</p>
+
+<center>
+<img src="/assets/img/pagingmem.png" />
+</center>
+
+<h2 id="一些疑问">一些疑问</h2>
+
+<p>博主在实现内存分页时遇到过很多问题，经过思考后将某些问题的回答记录在此，方便自己和大家更好地理解内存分页机制。</p>
+
+<p>当我注意到 RISC-V 64 支持的分页模式有 Sv39 Sv48 后，我发现 RV64 的分页模式至少有三级分页，而 QEMU 提供的 <code class="language-plaintext highlighter-rouge">virt</code> 机器内存大小只有 128 MB ，这难道不会在页表上浪费很大的空间么？经计算我发现，空间占用确实比二级页表、一级页表要大，但不需要很担心空间的问题。事实上在虚拟内存有 128 MB 时，三级页表只有一个 PTE ，因此只存在一个二级页表，而二级页表的 PTE 也只有 64 个，意味着有 64 个一级页表，总共 66 个页表，每个页表占 4 KiB，因此只需要 264 KiB 。相比 128 MB 的物理内存空间，无需担心。我们真正需要担心的是页内空间的浪费，因为我们现在只实现了基于页的内存分配，如在处理 C 语言中 <code class="language-plaintext highlighter-rouge">malloc(8)</code>  时也只能分配给 4 KiB 的内存，太不合理了，我们需要实现基于字节的内存分配。这里留个坑，我们可以在进程实现之后再来处理这个问题。</p>
+
+<p>虚拟地址可以比物理地址大么？确实可以，不同的虚拟地址可以映射到同一个物理地址，实现代码/数据的共享。</p>
+
+<p>到底哪些地址必须使用等值映射？博主经过多次实验，发现目前我们所写的代码/数据几乎都需要等值映射。在 RISC-V 64 中，机器模式使用物理地址，而监管者模式、用户模式使用虚拟地址，我认为只要在机器模式下确定的地址，且需要在监管者模式下使用的，基本都需要等值映射，包括程序代码、全局 section 、UART 等等。</p>
+
+<h2 id="接下来">接下来</h2>
+
+<p>之前我打算攻克下一个难题——进程。但在做初步调研后，发现做进程之前，先完成内核分页可能更加合适。然后我就一头栽进了内核分页这个大坑。弄懂内核分页并实现确实不容易，有很多地方仍需要自己慢慢学习。那么，接下来，我们需要好好消化一下学到的东西，整理一下日益凌乱的文件夹，然后一鼓作气，向进程进军！</p>
+
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://https-dingfen-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-08-29T00:00:00+08:00">August 29, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=RISC-V+from+Scratch+7%20http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F29%2Friscv-from-scratch-7.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F29%2Friscv-from-scratch-7.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Frisc-v%2F2020%2F08%2F29%2Friscv-from-scratch-7.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/risc-v/2020/08/17/riscv-from-scratch-6.html" class="pagination--pager" title="RISC-V from Scratch 6
+">previous</a>
+    
+    
+      <a href="/risc-v/2020/09/15/WHY-RISC-V.html" class="pagination--pager" title="Why RISC-V ?
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/risc-v/2020/08/29/riscv-from-scratch-7.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/risc-v/2020/08/29/riscv-from-scratch-7"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

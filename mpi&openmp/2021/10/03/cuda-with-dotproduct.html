@@ -1,0 +1,820 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>CUDA 中的向量内积 - 峰子的乐园</title>
+<meta name="description" content="动手书写 CUDA 核函数">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="CUDA 中的向量内积">
+<meta property="og:url" content="http://localhost:4000/mpi&openmp/2021/10/03/cuda-with-dotproduct.html">
+
+
+  <meta property="og:description" content="动手书写 CUDA 核函数">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-10-03T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/mpi&openmp/2021/10/03/cuda-with-dotproduct.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          CUDA 中的向量内积
+
+        
+      </h1>
+      
+        <p class="page__lead">动手书写 CUDA 核函数
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="CUDA 中的向量内积">
+    <meta itemprop="description" content="动手书写 CUDA 核函数">
+    <meta itemprop="datePublished" content="2021-10-03T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#cuda-中的向量内积">CUDA 中的向量内积</a>
+    <ul>
+      <li><a href="#向量内积">向量内积</a></li>
+      <li><a href="#程序优化">程序优化</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="cuda-中的向量内积">CUDA 中的向量内积</h1>
+
+<p>博主本科时略学过 CUDA 编程的相关知识，但远算不上熟练，更谈不上精通。恰好本人对并行计算很感兴趣，这几天实现了一下最基础的向量内积，对以前的知识做了一点总结，算是温故而知新，可以为师矣。</p>
+
+<h2 id="向量内积">向量内积</h2>
+
+<p>两个长为 N 的向量做内积。从并行计算的角度看，可并行部分就是 <code class="language-plaintext highlighter-rouge">a[i] * b[i]</code> 部分，然后再对得到的乘积做累加求和。可以让 GPU 中的每个线程执行一个 <code class="language-plaintext highlighter-rouge">a[i] * b[i]</code>，然后再进行累加。如下图，考虑到 N 可能非常大，GPU 网格中的线程数量不足以覆盖整个向量，因此需要使用 <code class="language-plaintext highlighter-rouge">while</code> 循环，让线程运算多个乘法。</p>
+
+<p><img src="/assets/img/PP/dotproduct.png" alt="cuda 向量内积示意图" /></p>
+
+<p>显而易见，第一步就是首先使用内嵌变量计算线程的编号，然后使用 <code class="language-plaintext highlighter-rouge">while</code> 循环，让每个线程跨步计算相应的乘法，并累加到 <code class="language-plaintext highlighter-rouge">cache</code> 数组中（橙色箭头）。相应的代码如下，配合上图相应能更好地理解计算过程。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">dot</span><span class="p">(</span><span class="kt">float</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">tid</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">cache</span><span class="p">[</span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">];</span>
+  <span class="kt">float</span> <span class="n">ans</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+  <span class="c1">// 线程并行地执行内积 乘法</span>
+  <span class="k">while</span><span class="p">(</span><span class="n">tid</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ans</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="n">tid</span><span class="p">];</span>
+    <span class="n">tid</span> <span class="o">+=</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">cache</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">ans</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上述计算完成后，还需要将 <code class="language-plaintext highlighter-rouge">cache</code> 中的数组进一步累加。但这里必须注意，进一步累加前，必须确保所有线程已经完成了上面的循环。因此，这里需添加一个 barrier：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="c1">// 线程同步，确保所有线程都完成了上面的循环</span>
+  <span class="n">__syncthreads</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>随后，使用一个线程对 <code class="language-plaintext highlighter-rouge">cache</code> 中的数组累加，输出结果。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 归约累加</span>
+<span class="kt">float</span> <span class="n">sum</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">tid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">sum</span> <span class="o">+=</span> <span class="n">cache</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+  <span class="p">}</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"dot product is : %f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="程序优化">程序优化</h2>
+
+<p>上述代码虽然可以完成任务，但没有达到更高的性能。下面我对上面的程序做进一步优化。</p>
+
+<p>首先介绍一下 CUDA C 中的共享内存。<strong>共享内存</strong>中的变量被线程块中的每个线程共享，而其他线程不能对其访问和修改。如此一来，编写 CUDA 代码时，就只需要将共享内存和线程块绑定考虑就行：一个线程块中的线程也可以通过它进行通信协作，完成更加复杂的任务。最后，共享内存在物理上更贴近线程，因此访问共享内存时的延迟要远低于访问普通缓冲区的延迟。</p>
+
+<p>但在使用线程之间的通信时，还需要注意线程之间的同步，防止出现竞争条件（Race Condition），避免错误。</p>
+
+<p>回到该问题，可以明显看到，<code class="language-plaintext highlighter-rouge">while</code> 循环中计算出的结果完全可以暂存到共享内存中。而由于共享内存是被一个线程块内的线程共享的，因此 <code class="language-plaintext highlighter-rouge">cache</code> 的大小也要改为线程块的大小，而不是整个网格的大小：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">dot</span><span class="p">(</span><span class="kt">float</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">tid</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="n">__shared__</span> <span class="kt">float</span> <span class="n">cache</span><span class="p">[</span><span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">];</span>
+  <span class="kt">float</span> <span class="n">ans</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+  <span class="c1">// 线程块内的线程并行地执行内积 乘法</span>
+  <span class="k">while</span><span class="p">(</span><span class="n">tid</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ans</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="n">tid</span><span class="p">];</span>
+    <span class="n">tid</span> <span class="o">+=</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">cache</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">ans</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>改为共享内存后，后面的归约累加部分也必须更改。因为 0 号线程不可能访问其他线程块的共享内存。因此，需要在线程块中完成累加。具体做法类似于<a href="https://dingfen.github.io/mpi&amp;openmp/2020/12/17/PP02.html#%E4%BA%8C%E5%8F%89%E6%A0%91%E6%B1%82%E5%92%8C%E5%AE%9E%E7%8E%B0">二叉树求和</a>。每个线程将数组的两个值加起来，再将结果写到低索引位的数上。这样一次循环结束后，数组中的有效数据便只剩下一半。下一个循环再对这一半数组做同样操作，依次往复，直到累加值存在于 <code class="language-plaintext highlighter-rouge">cache[0]</code> 中。但注意：<strong>这种算法要求线程块内线程数量必须为 2 的幂次</strong>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">i</span><span class="p">)</span>
+    <span class="n">cache</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cache</span><span class="p">[</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">i</span><span class="p">];</span>
+  <span class="n">__syncthreads</span><span class="p">();</span>  <span class="c1">// 为何一定要加上？</span>
+  <span class="n">i</span> <span class="o">/=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="n">c</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+</code></pre></div></div>
+
+<p>很遗憾核函数只能做到这一步了，因为 <code class="language-plaintext highlighter-rouge">cache[0]</code> 都存在于共享内存中，GPU 中没有一个线程可以访问到所有的结果，所以进一步的累加只能靠 CPU。但别灰心，提前放弃在 GPU 中的计算事实上是一件好事：因为累加求和的归约运算一般只能由一个线程完成，交给 GPU 做只能说是杀鸡用牛刀，太浪费计算资源。而且，此时数据量已经非常小，CPU 也能很出色地完成任务。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// last reduction for cpu</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">blocksPerGrid</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+  <span class="o">*</span><span class="n">ans</span> <span class="o">+=</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>最后，放上核函数及其调用代码，供大家参考。若想亲自实验，可从<a href="https://github.com/dingfen/cuda10/blob/master/cudaDotProduct/dotproduct.cu">github 链接</a>获取。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">dot</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span> <span class="n">c</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">__shared__</span> <span class="kt">float</span> <span class="n">cache</span><span class="p">[</span><span class="n">threadsPerBlock</span><span class="p">];</span>
+  <span class="kt">int</span> <span class="n">tid</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">cacheIndex</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="c1">// gird loops addition, reduce sum in cache for every thread.</span>
+  <span class="kt">float</span> <span class="n">temp</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">tid</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">temp</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">tid</span><span class="p">]</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="n">tid</span><span class="p">];</span>
+    <span class="n">tid</span> <span class="o">+=</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">gridDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">cache</span><span class="p">[</span><span class="n">cacheIndex</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+  <span class="c1">// thread synchronize</span>
+  <span class="n">__syncthreads</span><span class="p">();</span>
+
+  <span class="c1">// Reductions parallel as Binary tree in each block</span>
+  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cacheIndex</span> <span class="o">&lt;</span> <span class="n">i</span><span class="p">)</span>
+      <span class="n">cache</span><span class="p">[</span><span class="n">cacheIndex</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cache</span><span class="p">[</span><span class="n">cacheIndex</span> <span class="o">+</span> <span class="n">i</span><span class="p">];</span>
+    <span class="n">__syncthreads</span><span class="p">();</span>
+    <span class="n">i</span> <span class="o">/=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">cacheIndex</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">c</span><span class="p">[</span><span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="c1">// for not waste computing resource, exit now.</span>
+<span class="p">}</span>
+
+<span class="k">extern</span> <span class="s">"C"</span> <span class="n">cudaError_t</span> <span class="nf">dotproduct</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span> <span class="n">ans</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">float</span><span class="o">*</span> <span class="n">dev_a</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="kt">float</span><span class="o">*</span> <span class="n">dev_b</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="kt">float</span><span class="o">*</span> <span class="n">dev_c</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="kt">float</span><span class="o">*</span> <span class="n">c</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">time</span><span class="p">;</span>
+  
+  <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="n">blocksPerGrid</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span>
+  <span class="n">cudaEvent_t</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">;</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">start</span><span class="p">));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaEventCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stop</span><span class="p">));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dev_a</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dev_b</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">dev_c</span><span class="p">,</span> <span class="n">blocksPerGrid</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)));</span>
+
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaSetDevice</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">dev_a</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">dev_b</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span> <span class="n">cudaMemcpyHostToDevice</span><span class="p">));</span>
+
+  <span class="n">dot</span><span class="o">&lt;&lt;&lt;</span><span class="n">blocksPerGrid</span><span class="p">,</span> <span class="n">threadsPerBlock</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">dev_c</span><span class="p">,</span> <span class="n">dev_a</span><span class="p">,</span> <span class="n">dev_b</span><span class="p">);</span>
+
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaGetLastError</span><span class="p">());</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaDeviceSynchronize</span><span class="p">());</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaMemcpy</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">dev_c</span><span class="p">,</span> <span class="n">blocksPerGrid</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">),</span> <span class="n">cudaMemcpyDeviceToHost</span><span class="p">));</span>
+
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaEventRecord</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaEventSynchronize</span><span class="p">(</span><span class="n">stop</span><span class="p">));</span>
+  <span class="n">GPUAssert</span><span class="p">(</span><span class="n">cudaEventElapsedTime</span><span class="p">(</span><span class="o">&amp;</span><span class="n">time</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">));</span>
+  <span class="c1">// last reduction for cpu</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">blocksPerGrid</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">ans</span> <span class="o">+=</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+  <span class="p">}</span>
+
+  <span class="n">printf</span><span class="p">(</span><span class="s">"GPU time: %8.4f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">time</span><span class="p">);</span>
+  <span class="n">cudaFree</span><span class="p">(</span><span class="n">dev_a</span><span class="p">);</span>
+  <span class="n">cudaFree</span><span class="p">(</span><span class="n">dev_b</span><span class="p">);</span>
+  <span class="n">cudaFree</span><span class="p">(</span><span class="n">dev_c</span><span class="p">);</span>
+  <span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">start</span><span class="p">);</span>
+  <span class="n">cudaEventDestroy</span><span class="p">(</span><span class="n">stop</span><span class="p">);</span>
+  <span class="n">free</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">cudaSuccess</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cuda" class="page__taxonomy-item" rel="tag">CUDA</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#mpi-openmp" class="page__taxonomy-item" rel="tag">MPI&OpenMP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-10-03T00:00:00+08:00">October 3, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=CUDA+%E4%B8%AD%E7%9A%84%E5%90%91%E9%87%8F%E5%86%85%E7%A7%AF%20http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F03%2Fcuda-with-dotproduct.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F03%2Fcuda-with-dotproduct.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F03%2Fcuda-with-dotproduct.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cpp/2021/09/24/Qt-Chess.html" class="pagination--pager" title="初学 Qt（一）
+">previous</a>
+    
+    
+      <a href="/mpi&openmp/2021/10/08/cuda-beginer.html" class="pagination--pager" title="CUDA 快速入门
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/mpi&openmp/2021/10/03/cuda-with-dotproduct.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/mpi&openmp/2021/10/03/cuda-with-dotproduct"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

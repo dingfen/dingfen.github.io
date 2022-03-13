@@ -1,0 +1,1194 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>深入理解 Gem5 之一 - 峰子的乐园</title>
+<meta name="description" content="关于gem5事件的实现">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="深入理解 Gem5 之一">
+<meta property="og:url" content="http://localhost:4000/cpp/2022/02/24/gem5-1.html">
+
+
+  <meta property="og:description" content="关于gem5事件的实现">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2022-02-24T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/cpp/2022/02/24/gem5-1.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          深入理解 Gem5 之一
+
+        
+      </h1>
+      
+        <p class="page__lead">关于gem5事件的实现
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  9 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="深入理解 Gem5 之一">
+    <meta itemprop="description" content="关于gem5事件的实现">
+    <meta itemprop="datePublished" content="2022-02-24T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#深入理解-gem5-之一">深入理解 Gem5 之一</a>
+    <ul>
+      <li><a href="#前言">前言</a></li>
+      <li><a href="#创建一个简单的事件">创建一个简单的事件</a></li>
+      <li><a href="#eventbase-类">EventBase 类</a></li>
+      <li><a href="#event-类">Event 类</a></li>
+      <li><a href="#eventqueue-类">EventQueue 类</a></li>
+      <li><a href="#对于创建事件的解释">对于创建事件的解释</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="深入理解-gem5-之一">深入理解 Gem5 之一</h1>
+
+<h2 id="前言">前言</h2>
+
+<p>近期研究需要，我开始研究 <a href="https://www.gem5.org/">gem5</a> 模拟器的底层实现 。gem5 模拟器是一款模块化的计算机系统架构研究平台，可用于研究系统级架构、处理器微架构。gem5 是一个具有开放治理模型的社区主导项目，最初是为学术界的计算机体系结构研究而构想的，目前已发展为学术界、工业研究和教学中的计算机系统设计。</p>
+
+<p>根据 gem5 的 <a href="https://dl.acm.org/doi/10.1145/2024716.2024718">paper</a>，gem5 框架融合了 <a href="https://ieeexplore.ieee.org/abstract/document/1677503">M5</a> 和 <a href="https://dl.acm.org/doi/abs/10.1145/1105734.1105747">GEMS</a> 两者的实现。其中 M5 提供高度可配置的仿真框架，包含了多个 ISA 和多种 CPU 模型；而 GEMS 的详细而灵活的内存系统提供了对多个缓存一致性协议和互连模型的支持。目前，gem5 支持大多数商业 ISA（ARM、ALPHA、MIPS、Power、SPARC 和 x86），包括在其中三个（ARM、ALPHA 和 x86）上 booting Linux。</p>
+
+<p>该项目是许多学术和工业机构共同努力的结果，包括 AMD、ARM、HP、MIPS、普林斯顿大学、麻省理工学院以及密歇根大学、德克萨斯大学和威斯康星大学。在过去的十年中，M5 和 GEMS 已在数百种出版物中使用，并已被下载数万次。 gem5 项目上的高水平协作，再加上组件部分的先前成功和类似 BSD 的自由许可证，使 gem5 成为一个有价值的全系统仿真工具。</p>
+
+<p>在本博客中，我将探讨如何创建、调度事件，并深入理解背后的原理。</p>
+
+<h2 id="创建一个简单的事件"><a href="https://www.gem5.org/documentation/learning_gem5/part2/events/">创建一个简单的事件</a></h2>
+
+<p>gem5 是一个事件驱动（Event-driven）的模拟器。在事件驱动模型中，每个事件（Event）都有一个回调函数用于处理事件。</p>
+
+<p>下面以 HelloObject 类代码为例，在代码中添加一个事件触发时执行的新函数 <code class="language-plaintext highlighter-rouge">processEvent()</code>。此函数必须不带参数并且不返回任何内容。然后，添加一个 EventFunctionWrapper 类对象 event，并在构造函数中包装 <code class="language-plaintext highlighter-rouge">processEvent()</code>。最后，添加了一个 <code class="language-plaintext highlighter-rouge">startup()</code> 函数，其中使用 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数开始调度事件，即让该事件安排在未来的某个时刻被触发（事件驱动的模拟不允许事件在过去执行）。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">HelloObject</span> <span class="o">:</span> <span class="k">public</span> <span class="n">SimObject</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="kt">void</span> <span class="n">processEvent</span><span class="p">();</span>
+    <span class="n">EventFunctionWrapper</span> <span class="n">event</span><span class="p">;</span>
+  <span class="nl">public:</span>
+    <span class="n">HelloObject</span><span class="p">(</span><span class="n">HelloObjectParams</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="n">startup</span><span class="p">();</span>
+<span class="p">};</span>
+
+<span class="n">HelloObject</span><span class="o">::</span><span class="n">HelloObject</span><span class="p">(</span><span class="n">HelloObjectParams</span> <span class="o">*</span><span class="n">params</span><span class="p">)</span>
+  <span class="o">:</span> <span class="n">SimObject</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="n">event</span><span class="p">([</span><span class="k">this</span><span class="p">]{</span><span class="n">processEvent</span><span class="p">();},</span> <span class="n">name</span><span class="p">())</span> <span class="p">{</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Hello</span><span class="p">,</span> <span class="s">"Created the hello object</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">HelloObject</span><span class="o">::</span><span class="n">startup</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">schedule</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">HelloObject</span><span class="o">::</span><span class="n">processEvent</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Hello</span><span class="p">,</span> <span class="s">"Hello world! Processing the event!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码中，事件会在第 100 个 tick 时被触发。通常，需使用 <code class="language-plaintext highlighter-rouge">curTick()</code> 加偏移来定事件触发的时间，但由于在第一次开始模拟之前 <code class="language-plaintext highlighter-rouge">startup()</code> 不会被执行（即从 Python 配置文件中调用 <code class="language-plaintext highlighter-rouge">simulate()</code> 函数），因此是在 tick 为 0 时调用 <code class="language-plaintext highlighter-rouge">startup()</code> 函数，就显式地标明了该值。</p>
+
+<p>当运行 gem5 模拟器后，会得到如下输出，可见我们实现了在 100 tick 时执行 <code class="language-plaintext highlighter-rouge">processEvent()</code> 函数。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gem5 Simulator System.  http://gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 compiled Jan  4 2017 11:01:46
+gem5 started Jan  4 2017 13:41:38
+gem5 executing on chinook, pid 1834
+command line: build/X86/gem5.opt --debug-flags=Hello configs/learning_gem5/part2/run_hello.py
+
+Global frequency set at 1000000000000 ticks per second
+      0: hello: Created the hello object
+Beginning simulation!
+info: Entering event queue @ 0.  Starting simulation...
+    100: hello: Hello world! Processing the event!
+Exiting @ tick 18446744073709551615 because simulate() limit reached
+</code></pre></div></div>
+
+<p>当然，<code class="language-plaintext highlighter-rouge">processEvent()</code> 也可以很复杂，甚至在执行 <code class="language-plaintext highlighter-rouge">processEvent()</code> 时再加入一个新的事件等待被触发：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">HelloObject</span><span class="o">::</span><span class="n">processEvent</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">timesLeft</span><span class="o">--</span><span class="p">;</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">HelloExample</span><span class="p">,</span> <span class="s">"Hello world! Processing the event! %d left</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">timesLeft</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">timesLeft</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">DPRINTF</span><span class="p">(</span><span class="n">HelloExample</span><span class="p">,</span> <span class="s">"Done firing!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">schedule</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">curTick</span><span class="p">()</span> <span class="o">+</span> <span class="n">latency</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码中，在 timesleft 还未小于 0 时，<code class="language-plaintext highlighter-rouge">processEvent()</code> 函数每次打印出信息后，都会再次调用 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数增加一个事件，注意到这里使用了 <code class="language-plaintext highlighter-rouge">curTick()</code> 加偏移量的形式指定了事件被触发的时间。</p>
+
+<hr />
+
+<p>接下来，我会带领大家深入分析一下 gem5 的事件驱动原理，以及其代码实现细节。</p>
+
+<h2 id="eventbase-类">EventBase 类</h2>
+
+<p>Gem5 是一个事件驱动的模拟器。所谓事件（Event），可以理解为系统的读写、信号的到达等等一系列改变系统状态的行为，也可以包括程序员自己定义的回调函数。<strong>事件的公共父类是 EventBase 类，其内部定义了很多类的静态常量，方便事件之间共享标志位和优先级等定义。</strong></p>
+
+<p>EventBase 类定义的静态常量中，很大一部分是事件优先级（Priority）。这是用于区分在同一 cycle 中事件被处理的先后顺序的重要方式，事件包括 CPU 切换上下文、延迟写、DVFS 更新等。值得注意的是，优先级数值越小，事件的优先级越高。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>事件</th>
+      <th>描述</th>
+      <th>优先级</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Debug_Enable_Pri</td>
+      <td>调试启动的优先级，用于追踪可能 cycle 动作</td>
+      <td>-101</td>
+    </tr>
+    <tr>
+      <td>Debug_Break_Pri</td>
+      <td>breakpoints 的优先级，应该非常高否则会丢失信息</td>
+      <td>-100</td>
+    </tr>
+    <tr>
+      <td>CPU_Switch_Pri</td>
+      <td>CPU 上下文切换优先级，切换需要先完成再处理其他事件</td>
+      <td>-31</td>
+    </tr>
+    <tr>
+      <td>Delayed_Writeback_Pri</td>
+      <td>延迟写回，在常规写回之前</td>
+      <td>-1</td>
+    </tr>
+    <tr>
+      <td>Default_Pri</td>
+      <td>默认的优先级</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>DVFS_Update_Pri</td>
+      <td>DVFS 更新，会调用 stat dump</td>
+      <td>31</td>
+    </tr>
+    <tr>
+      <td>Serialize_Pri</td>
+      <td>序列化操作优先级</td>
+      <td>32</td>
+    </tr>
+    <tr>
+      <td>CPU_Tick_Pri</td>
+      <td>CPU 下一拍优先级，必须在所有CPU事件后触发</td>
+      <td>50</td>
+    </tr>
+    <tr>
+      <td>CPU_Exit_Pri</td>
+      <td>CPU 退出线程优先级</td>
+      <td>64</td>
+    </tr>
+    <tr>
+      <td>Stat_Event_Pri</td>
+      <td>输出统计信息的优先级，肯定在所有实质事件之后</td>
+      <td>90</td>
+    </tr>
+    <tr>
+      <td>Progress_Event_Pri</td>
+      <td>模拟的进程事件</td>
+      <td>95</td>
+    </tr>
+    <tr>
+      <td>Sim_Exit_Pri</td>
+      <td>标记模拟结束的事件</td>
+      <td>100</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>此外，还有一部分常量是标志位，也记录在此：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>标志位</th>
+      <th>描述</th>
+      <th>常值</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PublicRead</td>
+      <td>可被公开读的标志位</td>
+      <td>0x003f</td>
+    </tr>
+    <tr>
+      <td>PublicWrite</td>
+      <td>可被公开写的标志位</td>
+      <td>0x001d</td>
+    </tr>
+    <tr>
+      <td>Squashed</td>
+      <td>已经 squashed</td>
+      <td>0x0001</td>
+    </tr>
+    <tr>
+      <td>Scheduled</td>
+      <td>已经被调度</td>
+      <td>0x0002</td>
+    </tr>
+    <tr>
+      <td>Managed</td>
+      <td>Use life cycle manager</td>
+      <td>0x0004</td>
+    </tr>
+    <tr>
+      <td>AutoDelete</td>
+      <td>process() 后自动删除</td>
+      <td>0x0004</td>
+    </tr>
+    <tr>
+      <td>IsExitEvent</td>
+      <td>special exit event</td>
+      <td>0x0010</td>
+    </tr>
+    <tr>
+      <td>IsMainQueue</td>
+      <td>on main event queue</td>
+      <td>0x0020</td>
+    </tr>
+    <tr>
+      <td>Initialized</td>
+      <td>somewhat random bits</td>
+      <td>0x7a40</td>
+    </tr>
+    <tr>
+      <td>InitMask</td>
+      <td>mask for init bits</td>
+      <td>0xffc0</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="event-类">Event 类</h2>
+
+<p>事件类 Event 是一个可序列化的类（继承了 Serializable 类，今后再详聊），是事件队列 EventQueue 类中的一项，下面给出 Event 类中重要的成员。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Event</span> <span class="o">:</span> <span class="k">public</span> <span class="n">EventBase</span><span class="p">,</span> <span class="k">public</span> <span class="n">Serializable</span> <span class="p">{</span>
+  <span class="n">Event</span> <span class="o">*</span><span class="n">nextBin</span><span class="p">;</span>  <span class="c1">// Bin defined as when+priority</span>
+  <span class="n">Event</span> <span class="o">*</span><span class="n">nextInBin</span><span class="p">;</span>
+  <span class="n">Tick</span> <span class="n">_when</span><span class="p">;</span>    <span class="c1">// timestamp when event should be processed</span>
+  <span class="n">Priority</span> <span class="n">_priority</span><span class="p">;</span> <span class="c1">//!&lt; event priority</span>
+  <span class="n">Flags</span> <span class="n">flags</span><span class="p">;</span>
+  <span class="n">Counter</span> <span class="n">instance</span><span class="p">;</span>  <span class="c1">// event unique ID</span>
+  <span class="n">EventQueue</span> <span class="o">*</span><span class="n">queue</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>后面会提到，事件队列 EventQueue 实质上是一个二级链表，因此 Event 中存在两个指针：nextBin 指向链表中下一项，而 nextInBin 指向 Bin 相同的下一项事件。此外还有时间戳（记录应当处理该事件的时间）、优先级、标志位、ID和指向队列的指针。</p>
+
+<p><img src="/assets/img/gem5/gem5-1.png" alt="" /></p>
+
+<p>在 Gem5 中，每个事件在被处理时都有一个回调函数 <code class="language-plaintext highlighter-rouge">process()</code>。每个继承了 Event 类的子类都必须实现。在处理事件时，还需要注意 EventBase 中的标志位，并随时注意调整 cycle 周期。此外，事件获取 <code class="language-plaintext highlighter-rouge">acquire()</code> 和释放 <code class="language-plaintext highlighter-rouge">release()</code> 时的动作也可以被子类重载实现。使用 <code class="language-plaintext highlighter-rouge">setwhen()</code> 可以设置事件被触发的时间，并被指定的队列。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">setWhen</span><span class="p">(</span><span class="n">Tick</span> <span class="n">when</span><span class="p">,</span> <span class="n">EventQueue</span> <span class="o">*</span><span class="n">q</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">_when</span> <span class="o">=</span> <span class="n">when</span><span class="p">;</span>
+<span class="cp">#ifndef NDEBUG
+</span>  <span class="n">queue</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+<span class="cp">#endif
+#ifdef EVENTQ_DEBUG
+</span>  <span class="n">whenScheduled</span> <span class="o">=</span> <span class="n">curTick</span><span class="p">();</span>
+<span class="cp">#endif
+</span><span class="p">}</span>
+</code></pre></div></div>
+
+<p>Event 类的使用场景多见于 EventQueue 类内的实现。<strong>若用户要直接使用 Event 类包装另一个类的对象，可能 EventWrapper 类或者 EventFunctionWrapper 更加合适：</strong></p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="n">T</span><span class="o">::*</span> <span class="n">F</span><span class="p">)()&gt;</span>
+<span class="k">class</span> <span class="nc">EventWrapper</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Event</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="n">T</span> <span class="o">*</span><span class="n">object</span><span class="p">;</span>
+  <span class="nl">public:</span>
+    <span class="n">EventWrapper</span><span class="p">(</span><span class="n">T</span> <span class="o">*</span><span class="n">obj</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">del</span> <span class="o">=</span> <span class="nb">false</span><span class="p">,</span> <span class="n">Priority</span> <span class="n">p</span> <span class="o">=</span> <span class="n">Default_Pri</span><span class="p">)</span>
+      <span class="o">:</span> <span class="n">Event</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">del</span><span class="p">)</span>
+        <span class="n">setFlags</span><span class="p">(</span><span class="n">AutoDelete</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">process</span><span class="p">()</span> <span class="p">{</span> <span class="p">(</span><span class="n">object</span><span class="o">-&gt;*</span><span class="n">F</span><span class="p">)();</span> <span class="p">}</span>
+    <span class="c1">// ...</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">EventFunctionWrapper</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Event</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">callback</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">_name</span><span class="p">;</span>
+  <span class="nl">public:</span>
+    <span class="n">EventFunctionWrapper</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">callback</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">name</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">del</span> <span class="o">=</span> <span class="nb">false</span><span class="p">,</span> <span class="n">Priority</span> <span class="n">p</span> <span class="o">=</span> <span class="n">Default_Pri</span><span class="p">)</span>
+      <span class="o">:</span> <span class="n">Event</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">callback</span><span class="p">(</span><span class="n">callback</span><span class="p">),</span> <span class="n">_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">del</span><span class="p">)</span>
+          <span class="n">setFlags</span><span class="p">(</span><span class="n">AutoDelete</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">process</span><span class="p">()</span> <span class="p">{</span> <span class="n">callback</span><span class="p">();</span> <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h2 id="eventqueue-类">EventQueue 类</h2>
+
+<p>事件队列（EventQueue）是管理系统事件的重要载体，每个线程都会维护一个局部的事件队列，事件会在队列中被调度（即插入到队列中）。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EventQueue</span> <span class="p">{</span>
+  <span class="n">Event</span> <span class="o">*</span><span class="n">head</span><span class="p">;</span>
+  <span class="n">Tick</span> <span class="n">_curTick</span><span class="p">;</span>
+  <span class="c1">//! Mutex to protect async queue.</span>
+  <span class="n">UncontendedMutex</span> <span class="n">async_queue_mutex</span><span class="p">;</span>
+  <span class="c1">//! List of events added by other threads to this event queue.</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">Event</span><span class="o">*&gt;</span> <span class="n">async_queue</span><span class="p">;</span>
+  <span class="c1">// taken when servicing events</span>
+  <span class="n">UncontendedMutex</span> <span class="n">service_mutex</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>async_queue 用于处理异步事件的队列，而真正的链表头是 head。此外，EventQueue 类重点还是在于 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数，该函数负责事件调度，其参数是将要被执行的事件 event 和具体执行时间 when，global 参数用于判断队列是否被另一个线程运行，进而分成两个执行路径：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//! Current mode of execution: parallel / serial</span>
+<span class="k">extern</span> <span class="kt">bool</span> <span class="n">inParallelMode</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">schedule</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Tick</span> <span class="n">when</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">global</span><span class="o">=</span><span class="nb">false</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">event</span><span class="o">-&gt;</span><span class="n">setWhen</span><span class="p">(</span><span class="n">when</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+  <span class="c1">// The check below is to make sure of two things</span>
+  <span class="c1">// a. A thread schedules local events on other queues through the asyncq.</span>
+  <span class="c1">// b. A thread schedules global events on the asyncq, whether or not</span>
+  <span class="c1">//    this event belongs to this eventq. This is required to maintain</span>
+  <span class="c1">//    a total order amongst the global events. See global_event.{cc,hh}</span>
+  <span class="c1">//    for more explanation.</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">inParallelMode</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="k">this</span> <span class="o">!=</span> <span class="n">curEventQueue</span><span class="p">()</span> <span class="o">||</span> <span class="n">global</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">asyncInsert</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">insert</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">event</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">.</span><span class="n">set</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">Scheduled</span><span class="p">);</span>
+  <span class="n">event</span><span class="o">-&gt;</span><span class="n">acquire</span><span class="p">();</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">debug</span><span class="o">::</span><span class="n">Event</span><span class="p">)</span>
+    <span class="n">event</span><span class="o">-&gt;</span><span class="n">trace</span><span class="p">(</span><span class="s">"scheduled"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ol>
+  <li>
+    <p>同步事件：调用 <code class="language-plaintext highlighter-rouge">insert()</code> 函数，此时 global 参数为 false，这是很简单的链表插入动作，插入在插入点之前，符合惯例。之前提到，EventQueue 队列是一个二级链表，是由一串串单链表的头节点组成的链表。从代码可知，在 in Bin 链表中，使用头插法插入了新节点，因此二级链表是 LIFO 的。</p>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Event</span> <span class="o">*</span><span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Either way, event will be the top element in the 'in bin' list</span>
+  <span class="c1">// which is the pointer we need in order to look into the list, so</span>
+  <span class="c1">// we need to insert that into the bin list.</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">curr</span> <span class="o">||</span> <span class="o">*</span><span class="n">event</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">curr</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
+    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextInBin</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="c1">// 头插法 因此 in Bin 链表是LIFO的</span>
+    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextInBin</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">event</span><span class="p">;</span>
+<span class="p">}</span>
+   
+<span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">insert</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">head</span> <span class="o">||</span> <span class="o">*</span><span class="n">event</span> <span class="o">&lt;=</span> <span class="o">*</span><span class="n">head</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">head</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Figure out either which 'in bin' list we are on, or where a new list</span>
+  <span class="c1">// needs to be inserted</span>
+  <span class="n">Event</span> <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
+  <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">curr</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="n">curr</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">prev</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
+    <span class="n">curr</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Note: this operation may render all nextBin pointers on the</span>
+  <span class="c1">// prev 'in bin' list stale (except for the top one)</span>
+  <span class="n">prev</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">curr</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>跨线程的事件调度：要么采用异步事件的调度方案，要么直接获取目的线程的事件队列锁。此时 global 参数设置为 true，采取第一种做法时，因为事件队列被另一个线程运行，为防止冲突，事件会被暂时插入到异步队列 async_queue 中。</p>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">asyncInsert</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+  <span class="n">async_queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
+  <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+<span class="p">}</span>
+   
+<span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">handleAsyncInsertions</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">assert</span><span class="p">(</span><span class="k">this</span> <span class="o">==</span> <span class="n">curEventQueue</span><span class="p">());</span>
+    <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">async_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">insert</span><span class="p">(</span><span class="n">async_queue</span><span class="p">.</span><span class="n">front</span><span class="p">());</span>
+        <span class="n">async_queue</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+
+    <p>最后在每个 simulatoin quantum 的最后时刻，async_queue 会被合入到真正的事件队列中（见 <code class="language-plaintext highlighter-rouge">handleAsyncInsertions()</code> 函数）。而若通过直接获取目的线程的事件队列锁的方式实现，那么为避免死锁情况，线程需要先自动放弃自己的事件队列锁，才能获得新事件队列锁，这样每个线程至多获取一个事件队列锁，从而避免了死锁。该功能由 ScopedMigration 类负责，将东西暂时移植到另一个队列中。</p>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Releasing the current queue, locking the new queue
+ * and updating curEventQueue(). This can, for example
+ * be useful when performing IO across thread event
+ * queues when timing is not crucial (e.g., during fast
+ * forwarding).
+ */</span>
+<span class="n">ScopedMigration</span><span class="p">(</span><span class="n">EventQueue</span> <span class="o">*</span><span class="n">_new_eq</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">_doMigrate</span> <span class="o">=</span> <span class="nb">true</span><span class="p">)</span>
+  <span class="o">:</span><span class="n">new_eq</span><span class="p">(</span><span class="o">*</span><span class="n">_new_eq</span><span class="p">),</span> <span class="n">old_eq</span><span class="p">(</span><span class="o">*</span><span class="n">curEventQueue</span><span class="p">()),</span>
+  <span class="n">doMigrate</span><span class="p">((</span><span class="o">&amp;</span><span class="n">new_eq</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">old_eq</span><span class="p">)</span><span class="o">&amp;&amp;</span><span class="n">_doMigrate</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">doMigrate</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">old_eq</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+      <span class="n">new_eq</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+      <span class="n">curEventQueue</span><span class="p">(</span><span class="o">&amp;</span><span class="n">new_eq</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<p>在 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数的基础之上，还添加了 <code class="language-plaintext highlighter-rouge">reschedule()</code> 和 <code class="language-plaintext highlighter-rouge">deschedule()</code> 等函数，方便事件队列的调度管理。其中 <code class="language-plaintext highlighter-rouge">deschedule()</code> 函数牵扯到链表的删除，也是比较平凡的实现。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">remove</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">head</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="n">panic</span><span class="p">(</span><span class="s">"event not found!"</span><span class="p">);</span>
+    <span class="c1">// deal with an event on the head's 'in bin' list (event has the same</span>
+    <span class="c1">// time as the head)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">head</span> <span class="o">==</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">removeItem</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">head</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// Find the 'in bin' list that this event belongs on</span>
+    <span class="n">Event</span> <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
+    <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">curr</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="n">curr</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
+        <span class="n">curr</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">curr</span> <span class="o">||</span> <span class="o">*</span><span class="n">curr</span> <span class="o">!=</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span>
+        <span class="n">panic</span><span class="p">(</span><span class="s">"event not found!"</span><span class="p">);</span>
+    <span class="n">prev</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">removeItem</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">curr</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">Event</span> <span class="o">*</span><span class="n">Event</span><span class="o">::</span><span class="n">removeItem</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Event</span> <span class="o">*</span><span class="n">top</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span> <span class="o">=</span> <span class="n">top</span><span class="p">;</span>
+    <span class="n">Event</span> <span class="o">*</span><span class="n">next</span> <span class="o">=</span> <span class="n">top</span><span class="o">-&gt;</span><span class="n">nextInBin</span><span class="p">;</span>
+    <span class="c1">// if we removed the top item, we need to handle things specially</span>
+    <span class="c1">// and just remove the top item, fixing up the next bin pointer of</span>
+    <span class="c1">// the new top item</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">event</span> <span class="o">==</span> <span class="n">top</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">next</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">top</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+        <span class="n">next</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">top</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">next</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// Since we already checked the current element, we're going to</span>
+    <span class="c1">// keep checking event against the next element.</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">event</span> <span class="o">!=</span> <span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">next</span><span class="p">)</span>
+            <span class="n">panic</span><span class="p">(</span><span class="s">"event not found!"</span><span class="p">);</span>
+
+        <span class="n">curr</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+        <span class="n">next</span> <span class="o">=</span> <span class="n">next</span><span class="o">-&gt;</span><span class="n">nextInBin</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// remove next from the 'in bin' list since it's what we're looking for</span>
+    <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextInBin</span> <span class="o">=</span> <span class="n">next</span><span class="o">-&gt;</span><span class="n">nextInBin</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">top</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在我们来看一下 EventQueue 中，Event 是如何被执行的：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Event</span> <span class="o">*</span><span class="n">EventQueue</span><span class="o">::</span><span class="n">serviceOne</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">EventQueue</span><span class="o">&gt;</span> <span class="n">lock</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="p">);</span>
+  <span class="n">Event</span> <span class="o">*</span><span class="n">event</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
+  <span class="n">Event</span> <span class="o">*</span><span class="n">next</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">nextInBin</span><span class="p">;</span>
+  <span class="n">event</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">.</span><span class="n">clear</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">Scheduled</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">next</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="n">head</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">squashed</span><span class="p">())</span> <span class="p">{</span>
+    <span class="c1">// forward current cycle to the time when this event occurs.</span>
+    <span class="n">setCurTick</span><span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">when</span><span class="p">());</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">debug</span><span class="o">::</span><span class="n">Event</span><span class="p">)</span>
+      <span class="n">event</span><span class="o">-&gt;</span><span class="n">trace</span><span class="p">(</span><span class="s">"executed"</span><span class="p">);</span>
+    <span class="n">event</span><span class="o">-&gt;</span><span class="n">process</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">isExitEvent</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">.</span><span class="n">isSet</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">Managed</span><span class="p">)</span> <span class="o">||</span>
+          <span class="o">!</span><span class="n">event</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">.</span><span class="n">isSet</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">IsMainQueue</span><span class="p">));</span> <span class="c1">// would be silly</span>
+      <span class="k">return</span> <span class="n">event</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span> <span class="k">else</span>
+      <span class="n">event</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">.</span><span class="n">clear</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">Squashed</span><span class="p">);</span>
+  <span class="n">event</span><span class="o">-&gt;</span><span class="n">release</span><span class="p">();</span>
+  <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>当调用 <code class="language-plaintext highlighter-rouge">ServiceOne()</code> 函数时，默认是处理 EventQueue 中的第一个事件，取出第一个事件 event 后，在判断其是否 squashed（被压缩、合并），若不是被压缩的，那么直接将时间调整至事件处理时刻（事件驱动），随后调用 <code class="language-plaintext highlighter-rouge">event-&gt;process()</code> ，若是，那么仅需要清除标志位即可。</p>
+
+<p><strong>为降低用户使用难度，使用 EventManager 类来包装 EventQueue 类，包括常用的许多事件调度函数，而这些包装函数是 SimObject 类内经常调用的：</strong></p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EventManager</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="n">EventQueue</span> <span class="o">*</span><span class="n">eventq</span><span class="p">;</span>
+  <span class="nl">public:</span>
+    <span class="kt">void</span> <span class="n">schedule</span><span class="p">(</span><span class="n">Event</span> <span class="o">&amp;</span><span class="n">event</span><span class="p">,</span> <span class="n">Tick</span> <span class="n">when</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">eventq</span><span class="o">-&gt;</span><span class="n">schedule</span><span class="p">(</span><span class="o">&amp;</span><span class="n">event</span><span class="p">,</span> <span class="n">when</span><span class="p">);</span>
+    <span class="p">}</span>
+  
+    <span class="kt">void</span> <span class="n">deschedule</span><span class="p">(</span><span class="n">Event</span> <span class="o">&amp;</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">eventq</span><span class="o">-&gt;</span><span class="n">deschedule</span><span class="p">(</span><span class="o">&amp;</span><span class="n">event</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h2 id="对于创建事件的解释">对于创建事件的解释</h2>
+
+<p>现在，再回到 HelloObject 类上来，HelloObject 类继承了 SimObject 类。值得注意的是，SimObject 类是 gem5 中最重要的类之一，几乎所有的系统组件，如 CPU 、总线、Cache 等都需要继承 SimObject 类。根据代码，SimObject 类继承了 EventManager 类，EventManager 类中包装了一个 EventQueue 对象。因此，在 <code class="language-plaintext highlighter-rouge">startup()</code> 函数中使用的 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数本质就是调用了 <code class="language-plaintext highlighter-rouge">EventQueue::schedule()</code> 函数：将事件 event 放入事件队列中，等待被调度。</p>
+
+<p>另外，EventFunctionWrapper 类是 Event 类的子类，该类建立起了回调函数与事件对象的联系，当事件被触发后，回调函数会被执行。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">HelloObject</span> <span class="o">:</span> <span class="k">public</span> <span class="n">SimObject</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="kt">void</span> <span class="n">processEvent</span><span class="p">();</span>
+    <span class="n">EventFunctionWrapper</span> <span class="n">event</span><span class="p">;</span>
+  <span class="nl">public:</span>
+    <span class="n">HelloObject</span><span class="p">(</span><span class="n">HelloObjectParams</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="n">startup</span><span class="p">();</span>
+<span class="p">};</span>
+
+<span class="n">HelloObject</span><span class="o">::</span><span class="n">HelloObject</span><span class="p">(</span><span class="n">HelloObjectParams</span> <span class="o">*</span><span class="n">params</span><span class="p">)</span>
+  <span class="o">:</span> <span class="n">SimObject</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="n">event</span><span class="p">([</span><span class="k">this</span><span class="p">]{</span><span class="n">processEvent</span><span class="p">();},</span> <span class="n">name</span><span class="p">())</span> <span class="p">{</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">Hello</span><span class="p">,</span> <span class="s">"Created the hello object</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">HelloObject</span><span class="o">::</span><span class="n">startup</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">schedule</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#gem5" class="page__taxonomy-item" rel="tag">gem5</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2022-02-24T00:00:00+08:00">February 24, 2022</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3+Gem5+%E4%B9%8B%E4%B8%80%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cpp/2021/11/15/Qt-signal-slot.html" class="pagination--pager" title="信号槽机制的简陋实现
+">previous</a>
+    
+    
+      <a href="/cpp/2022/03/08/gem5-2.html" class="pagination--pager" title="深入理解 Gem5 之二
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/08/cuda-beginer.html" rel="permalink">CUDA 快速入门
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">代码驱动学习法
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/cpp/2022/02/24/gem5-1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/cpp/2022/02/24/gem5-1"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

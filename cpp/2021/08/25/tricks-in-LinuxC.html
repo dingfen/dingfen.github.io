@@ -1,0 +1,966 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>在 Linux 中更好地使用C/C++语言 - 峰子的乐园</title>
+<meta name="description" content="边写边熟练">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="在 Linux 中更好地使用C/C++语言">
+<meta property="og:url" content="http://localhost:4000/cpp/2021/08/25/tricks-in-LinuxC.html">
+
+
+  <meta property="og:description" content="边写边熟练">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser3.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-08-25T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/cpp/2021/08/25/tricks-in-LinuxC.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser3.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          在 Linux 中更好地使用C/C++语言
+
+        
+      </h1>
+      
+        <p class="page__lead">边写边熟练
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  5 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="在 Linux 中更好地使用C/C++语言">
+    <meta itemprop="description" content="边写边熟练">
+    <meta itemprop="datePublished" content="2021-08-25T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#一linux下的命令行处理">一、Linux下的命令行处理</a>
+    <ul>
+      <li><a href="#c-语言中命令行参数">C 语言中命令行参数</a></li>
+      <li><a href="#getopt">getopt</a></li>
+      <li><a href="#getopt_long">getopt_long</a></li>
+    </ul>
+  </li>
+  <li><a href="#二linux下的时间处理">二、Linux下的时间处理</a></li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h2 id="一linux下的命令行处理">一、Linux下的命令行处理</h2>
+
+<h3 id="c-语言中命令行参数">C 语言中命令行参数</h3>
+
+<p>执行程序时，可以从命令行传入参数给 C 的 main 函数。这些参数被称为<strong>命令行参数</strong>，它们对程序很重要，可以从外部控制程序的执行。</p>
+
+<p>使用 <code class="language-plaintext highlighter-rouge">main()</code> 的函数参数可以处理命令行参数：</p>
+
+<ul>
+  <li><strong>argc</strong> 是指传入参数的个数，包括最开头的执行程序名</li>
+  <li><strong>argv[]</strong> 是一个指针数组，指向传递给程序的每个参数。</li>
+</ul>
+
+<p>举例来说：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+   <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">"The argument supplied is %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+   <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">"Too many arguments supplied.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+   <span class="k">else</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">"One argument expected.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在编译上面的程序，并执行 <code class="language-plaintext highlighter-rouge">&gt; ./a.out testing</code>，它会产生下列结果：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$.</span>/a.out testing
+The argument supplied is testing
+</code></pre></div></div>
+
+<h3 id="getopt">getopt</h3>
+
+<p>但上面的机制还是过于简陋了。通常，命令行参数还带有很多选项（option），提供用户选择执行程序不同功能的机会，如查询版本一般用 <code class="language-plaintext highlighter-rouge">-V</code> 或者 <code class="language-plaintext highlighter-rouge">--version</code> 等，查看帮助文档一般使用 <code class="language-plaintext highlighter-rouge">--helo</code> 或 <code class="language-plaintext highlighter-rouge">-h</code> 等。为了方便处理，Linux 提供了更强大的函数，帮助开发者更好更快地解析命令行传来的参数。</p>
+
+<p>先介绍 <code class="language-plaintext highlighter-rouge">getopt()</code> 函数：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;unistd.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">getopt</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="k">const</span> <span class="n">argv</span><span class="p">[],</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">optstring</span><span class="p">);</span>
+
+<span class="k">extern</span> <span class="kt">char</span> <span class="o">*</span><span class="n">optarg</span><span class="p">;</span>
+<span class="k">extern</span> <span class="kt">int</span> <span class="n">optind</span><span class="p">,</span> <span class="n">opterr</span><span class="p">,</span> <span class="n">optopt</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">getopt()</code> 函数的前两个参数之前已经介绍过了，第三个参数 <code class="language-plaintext highlighter-rouge">optstring</code> 是一个字符列表，其中的每个字母代表一个选项。</p>
+
+<p>举例说明，<code class="language-plaintext highlighter-rouge">optstring</code> 的具体用法：当我们将 <code class="language-plaintext highlighter-rouge">optstring = "ab:c::"</code> 时，它表示：</p>
+
+<ul>
+  <li>单个字符 <code class="language-plaintext highlighter-rouge">a:</code> 表示选项a 没有参数，即在命令行输入 <code class="language-plaintext highlighter-rouge">-a</code> 即算打开该功能，类似于其他执行程序中查看帮助的 <code class="language-plaintext highlighter-rouge">-h</code>。</li>
+  <li>单个字符加冒号 <code class="language-plaintext highlighter-rouge">b:</code> 表示选项b 在命令行输入时必须有参数，如 <code class="language-plaintext highlighter-rouge">-b 10</code>。</li>
+  <li>单个字符加两个冒号 <code class="language-plaintext highlighter-rouge">c::</code> 表示选项c 在命令行输入时 <code class="language-plaintext highlighter-rouge">-c</code> 后跟的参数是可有可无的</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">getopt()</code> 函数的返回值很有意思：</p>
+
+<ul>
+  <li>如果处理的 option 成功，那么返回选项的字母，如果有值跟随，<strong>那么字符串会被放在 <code class="language-plaintext highlighter-rouge">optarg</code> 中。</strong></li>
+  <li>如果处理的 option 需要一个值，但命令行中没有给定值，返回 <code class="language-plaintext highlighter-rouge">:</code></li>
+  <li>如果处理了一个未知的 option ，返回 <code class="language-plaintext highlighter-rouge">?</code>，并将值存入到 <code class="language-plaintext highlighter-rouge">optopt</code></li>
+  <li>如果没有更多的 option 等待处理，返回 -1</li>
+  <li>如果多余出一些跟随值，那么会将多余的存放在<code class="language-plaintext highlighter-rouge">argv</code>数组中，<code class="language-plaintext highlighter-rouge">optind</code>和<code class="language-plaintext highlighter-rouge">argc</code>分别充当索引和总数。</li>
+</ul>
+
+<p>再注意一下全局变量 <code class="language-plaintext highlighter-rouge">optind</code> <code class="language-plaintext highlighter-rouge">opterr</code> <code class="language-plaintext highlighter-rouge">optopt</code>，它们在解析命令行参数时非常重要。</p>
+
+<ul>
+  <li>extern char *optarg; 存放了正在被处理的 option 后跟的参数</li>
+  <li>extern int optind; 表下一个将被处理到的参数在 argv 中的下标值</li>
+  <li>extern int opterr; 正常运行状态下为 0。非零时表示存在无效选项或者缺少选项参数，并输出其错误信息</li>
+  <li>extern int optopt; 包含的发现未知 option 的无效选项字符</li>
+</ul>
+
+<p>下面，放上一个简单的程序示例，例如要实现一个程序，要求有选项功能如下：<code class="language-plaintext highlighter-rouge">&gt; ./a.out -i -f file.txt -lr -x 'hero'</code>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+</span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">opt</span><span class="p">;</span>      
+  <span class="c1">// put ':' in the starting of the </span>
+  <span class="c1">// string so that program can  </span>
+  <span class="c1">// distinguish between '?' and ':'  </span>
+  <span class="k">while</span><span class="p">((</span><span class="n">opt</span> <span class="o">=</span> <span class="n">getopt</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="s">":if:lrx:"</span><span class="p">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>  
+    <span class="k">switch</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span> <span class="p">{</span>  
+      <span class="k">case</span> <span class="sc">'i'</span><span class="p">:</span>
+      <span class="k">case</span> <span class="sc">'l'</span><span class="p">:</span>
+      <span class="k">case</span> <span class="sc">'r'</span><span class="p">:</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"option: %c</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">opt</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">'f'</span><span class="p">:</span>
+      <span class="k">case</span> <span class="sc">'x'</span><span class="p">:</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"option: %c argname: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>  
+      <span class="k">case</span> <span class="sc">':'</span><span class="p">:</span>  
+        <span class="n">printf</span><span class="p">(</span><span class="s">"option needs a value</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="sc">'?'</span><span class="p">:</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"unknown option: %c</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">optopt</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="c1">// optind is for the extra arguments </span>
+  <span class="c1">// which are not parsed </span>
+  <span class="k">for</span><span class="p">(;</span> <span class="n">optind</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">;</span> <span class="n">optind</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>      
+    <span class="n">printf</span><span class="p">(</span><span class="s">"extra arguments: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="p">]);</span>  
+  <span class="p">}</span>     
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> 
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>编译后运行，在命令行中输入 <code class="language-plaintext highlighter-rouge">&gt; ./a.out -i -f file.txt -lr -x hero</code>，则会输出：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>option: i
+option: f argname: file.txt
+option: l
+option: r
+option: x argname: hero
+</code></pre></div></div>
+
+<p>而如果输入 <code class="language-plaintext highlighter-rouge">&gt; ./a.out -q -x</code>，则会：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unknown option: q
+option: x argname: -w
+extra arguments: 2
+</code></pre></div></div>
+
+<h3 id="getopt_long">getopt_long</h3>
+
+<p><code class="language-plaintext highlighter-rouge">getopt_long()</code> 函数与 <code class="language-plaintext highlighter-rouge">getopt_long_only()</code> 函数，它们的工作方式与 <code class="language-plaintext highlighter-rouge">getopt()</code> 函数很像，除了这些函数还可以接收（<code class="language-plaintext highlighter-rouge">getopt_long_only()</code>除外）长选项<code class="language-plaintext highlighter-rouge">--</code>，形式可以为<code class="language-plaintext highlighter-rouge">--arg=param</code>或者<code class="language-plaintext highlighter-rouge">--arg param</code>。<code class="language-plaintext highlighter-rouge">getopt_long()</code> 函数用法如下：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">getopt_long</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="k">const</span> <span class="o">*</span><span class="n">argv</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">shortopts</span><span class="p">,</span> 
+                <span class="k">const</span> <span class="k">struct</span> <span class="nc">option</span> <span class="o">*</span><span class="n">longopts</span><span class="p">,</span> <span class="kt">int</span> <span class="n">longind</span><span class="p">);</span>
+<span class="c1">// 其中结构体option</span>
+<span class="k">struct</span> <span class="nc">option</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">;</span> <span class="c1">// name of ong option</span>
+    <span class="kt">int</span> <span class="n">has_arg</span><span class="p">;</span>  <span class="c1">// 0 no 1 required 2 optional</span>
+    <span class="kt">int</span> <span class="o">*</span><span class="n">flag</span><span class="p">;</span>    <span class="c1">// how results returned</span>
+    <span class="kt">int</span> <span class="n">val</span><span class="p">;</span>      <span class="c1">// value to return</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>前两个参数相信早已不陌生，重点介绍后三个参数，<code class="language-plaintext highlighter-rouge">optstring</code> 是格式控制符，<code class="language-plaintext highlighter-rouge">longopts</code> 是 <code class="language-plaintext highlighter-rouge">struct option</code> 结构体组成的数组，该结构体表示的是“长参数”（即形如<code class="language-plaintext highlighter-rouge">-–name</code> 的参数）名称和性质：</p>
+
+<ul>
+  <li>name 长选项名称</li>
+  <li>has_arg 参数可选项，<code class="language-plaintext highlighter-rouge">no_argument</code> 表示该选项后不带参，<code class="language-plaintext highlighter-rouge">required_argument</code> 表示该选项后面带参数</li>
+  <li>*flag 匹配到选项后，如果flag是 <code class="language-plaintext highlighter-rouge">NULL</code> ，则返回val；如果不是 <code class="language-plaintext highlighter-rouge">NULL</code> ，则返回0，并且将 <code class="language-plaintext highlighter-rouge">val</code> 的值赋给flag指向的内存</li>
+  <li>val 匹配到选项后的返回值</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">longindex</code>，表示是当前处理 <code class="language-plaintext highlighter-rouge">longopts</code> 数组的下标值。</p>
+
+<p>下面也给出个简单的例子，方便大家理解：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;getopt.h&gt;
+</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="n">verbose_flag</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">c</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">static</span> <span class="k">struct</span> <span class="nc">option</span> <span class="n">long_options</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="cm">/* 下面的选项会将返回值写入 verbose_flag */</span>
+        <span class="p">{</span><span class="s">"verbose"</span><span class="p">,</span> <span class="n">no_argument</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">verbose_flag</span><span class="p">,</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"brief"</span><span class="p">,</span> <span class="n">no_argument</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">verbose_flag</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="cm">/* 下面的选项返回值是val值 no_argument required_argument是宏常量 */</span>
+        <span class="p">{</span><span class="s">"add"</span><span class="p">,</span>     <span class="n">no_argument</span><span class="p">,</span>       <span class="mi">0</span><span class="p">,</span> <span class="sc">'a'</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"beyond"</span><span class="p">,</span>  <span class="n">no_argument</span><span class="p">,</span>       <span class="mi">0</span><span class="p">,</span> <span class="sc">'b'</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"delete"</span><span class="p">,</span>  <span class="n">required_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">'d'</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"create"</span><span class="p">,</span>  <span class="n">required_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">'c'</span><span class="p">},</span>
+        <span class="p">{</span><span class="s">"file"</span><span class="p">,</span>    <span class="n">required_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">'f'</span><span class="p">}</span>
+        <span class="p">};</span>
+
+    <span class="cm">/* getopt_long 数组索引 */</span>
+    <span class="kt">int</span> <span class="n">option_index</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">getopt_long</span> <span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="s">"abc:d:f:"</span><span class="p">,</span>
+                <span class="n">long_options</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">option_index</span><span class="p">);</span>
+    <span class="cm">/* 返回-1 循环结束 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="cm">/* If this option set a flag, do nothing else now. */</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">long_options</span><span class="p">[</span><span class="n">option_index</span><span class="p">].</span><span class="n">flag</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"option %s"</span><span class="p">,</span> <span class="n">long_options</span><span class="p">[</span><span class="n">option_index</span><span class="p">].</span><span class="n">name</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">optarg</span><span class="p">)</span>
+                <span class="n">printf</span> <span class="p">(</span><span class="s">" with arg %s"</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="sc">'a'</span><span class="p">:</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"option -a</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="sc">'b'</span><span class="p">:</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"option -b</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="sc">'c'</span><span class="p">:</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"option -c with value `%s'</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="sc">'d'</span><span class="p">:</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"option -d with value `%s'</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="sc">'f'</span><span class="p">:</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"option -f with value `%s'</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="sc">'?'</span><span class="p">:</span>
+            <span class="cm">/* getopt_long already printed an error message. */</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="nl">default:</span>
+            <span class="n">abort</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">printf</span> <span class="p">(</span><span class="s">"verbose flag is %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">verbose_flag</span><span class="p">);</span>
+
+    <span class="cm">/* 输出多余的命令行参数 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">optind</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span> <span class="p">(</span><span class="s">"non-option ARGV-elements: "</span><span class="p">);</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">optind</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">)</span>
+            <span class="n">printf</span> <span class="p">(</span><span class="s">"%s "</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="o">++</span><span class="p">]);</span>
+        <span class="n">putchar</span> <span class="p">(</span><span class="sc">'\n'</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>编译后执行，可以看下图结果：</p>
+
+<p><img src="/assets/img/getopt_long.png" alt="" /></p>
+
+<h2 id="二linux下的时间处理">二、Linux下的时间处理</h2>
+
+<p>Linux内核提供的基本时间服务是计算自协调世界时（UTC）公元1970年1月1日 00:00:00 这一特定时间以来经过的秒数。这种秒数用<code class="language-plaintext highlighter-rouge"> time_t </code>数据结构表示。</p>
+
+<p><code class="language-plaintext highlighter-rouge">time()</code>函数返回当前的秒数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;time.h&gt;
+</span>
+<span class="kt">time_t</span> <span class="nf">time</span><span class="p">(</span><span class="kt">time_t</span> <span class="o">*</span><span class="n">calptr</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>时间值作为函数值返回。若参数非空，时间值也会放在<code class="language-plaintext highlighter-rouge">calptr</code>指向的值中。</p>
+
+<p><code class="language-plaintext highlighter-rouge">clock_gettime()</code>函数可以用于获取指定时钟的时间，返回的时间在<code class="language-plaintext highlighter-rouge">timespec</code>数据结构中，它将时间分为秒和纳秒。<code class="language-plaintext highlighter-rouge">clock_id</code>用于指示选项，常用的有<code class="language-plaintext highlighter-rouge">CLOCK_REALTIME</code>、<code class="language-plaintext highlighter-rouge">CLOCK_MONOTONIC</code>、<code class="language-plaintext highlighter-rouge">CLOCK_PROCESS_CPUTIME_ID</code>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;sys/time.h&gt;
+</span>
+<span class="kt">int</span> <span class="nf">clock_gettime</span><span class="p">(</span><span class="n">clockid_t</span> <span class="n">clock_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">timespec</span> <span class="o">*</span><span class="n">tsp</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">clock_getres</span><span class="p">(</span><span class="n">clockid_t</span> <span class="n">clock_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">timespec</span> <span class="o">*</span><span class="n">tsp</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">clock_settime</span><span class="p">(</span><span class="n">clockid_t</span> <span class="n">clock_id</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">timespec</span> <span class="o">*</span><span class="n">tsp</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">clock_getres</code>函数把<code class="language-plaintext highlighter-rouge">tsp</code>指向的<code class="language-plaintext highlighter-rouge">timespec</code>结构初始化为<code class="language-plaintext highlighter-rouge">clock_id</code>参数对于的<strong>时钟精度</strong>。我们还可以使用<code class="language-plaintext highlighter-rouge">clock_settime</code>函数设置时间，但有些时钟不能修改。</p>
+
+<p>以上这些函数得到的数字都是自UTC时间的秒数，这对人类非常不友好。需要用<code class="language-plaintext highlighter-rouge">localtime</code>、<code class="language-plaintext highlighter-rouge">gmtime</code>、<code class="language-plaintext highlighter-rouge">strftime</code>等函数将秒数转为可读时间。<code class="language-plaintext highlighter-rouge">localtime</code>和<code class="language-plaintext highlighter-rouge">gmtime</code>将时间转换存入到结构体<code class="language-plaintext highlighter-rouge">tm</code>中。而<code class="language-plaintext highlighter-rouge">mktime</code>函数将tm时间转换为秒数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;time.h&gt;
+</span><span class="k">struct</span> <span class="nc">tm</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">tm_sec</span><span class="p">;</span>		<span class="c1">// [0-60] 允许润秒</span>
+    <span class="kt">int</span> <span class="n">tm_min</span><span class="p">;</span>		<span class="c1">// [0-59]</span>
+    <span class="kt">int</span> <span class="n">tm_hour</span><span class="p">;</span>	<span class="c1">// [0-23] </span>
+    <span class="kt">int</span> <span class="n">tm_mday</span><span class="p">;</span>	<span class="c1">// [1-31]</span>
+    <span class="kt">int</span> <span class="n">tm_mon</span><span class="p">;</span>		<span class="c1">// [0-11]</span>
+    <span class="kt">int</span> <span class="n">tm_year</span><span class="p">;</span>	<span class="c1">// years since 1900</span>
+    <span class="kt">int</span> <span class="n">tm_wday</span><span class="p">;</span>	<span class="c1">// [0-6]</span>
+    <span class="kt">int</span> <span class="n">tm_yday</span><span class="p">;</span>	<span class="c1">// [0-365]</span>
+    <span class="kt">int</span> <span class="n">tm_isdst</span><span class="p">;</span>	<span class="c1">// daylight saving time flag</span>
+<span class="p">}</span>
+
+<span class="k">struct</span> <span class="nc">tm</span> <span class="o">*</span><span class="nf">gmtime</span><span class="p">(</span><span class="k">const</span> <span class="kt">time_t</span> <span class="o">*</span><span class="n">calptr</span><span class="p">);</span>
+<span class="k">struct</span> <span class="nc">tm</span> <span class="o">*</span><span class="nf">localtime</span><span class="p">(</span><span class="k">const</span> <span class="kt">time_t</span> <span class="o">*</span><span class="n">calptr</span><span class="p">);</span>
+
+<span class="kt">time_t</span> <span class="nf">mktime</span><span class="p">(</span><span class="k">struct</span> <span class="nc">tm</span> <span class="o">*</span><span class="n">tmptr</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>当然，<code class="language-plaintext highlighter-rouge">gmtime</code>和<code class="language-plaintext highlighter-rouge">localtime</code>函数仍然不能满足人们的需要。函数<code class="language-plaintext highlighter-rouge">strftime</code>是类似于<code class="language-plaintext highlighter-rouge">printf</code>的时间值函数，可以通过多个参数定制产生的字符串。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;time.h&gt;
+</span>
+<span class="kt">size_t</span> <span class="nf">strftime</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">maxsize</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">,</span> 
+                <span class="k">const</span> <span class="k">struct</span> <span class="nc">tm</span> <span class="o">*</span><span class="n">tmptr</span><span class="p">);</span>
+<span class="kt">size_t</span> <span class="nf">strftime_l</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">maxsize</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">,</span> 
+                  <span class="k">const</span> <span class="k">struct</span> <span class="nc">tm</span> <span class="o">*</span><span class="n">tmptr</span><span class="p">,</span> <span class="n">locale_t</span> <span class="n">locale</span><span class="p">);</span>
+<span class="kt">char</span> <span class="o">*</span><span class="nf">strptime</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">tm</span> <span class="o">*</span><span class="n">tmptr</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">tmptr</code>是要格式化的时间值，格式化的结果存放在长度为<code class="language-plaintext highlighter-rouge">maxsize</code>的<code class="language-plaintext highlighter-rouge">buf</code>数组中，如果长度不足，函数返回0，否则返回在 <code class="language-plaintext highlighter-rouge">buf</code> 中存放的字符数。<code class="language-plaintext highlighter-rouge">format</code>是控制时间值的格式，与<code class="language-plaintext highlighter-rouge">printf</code>相同。</p>
+
+<p>这是使用说明：</p>
+
+<p><img src="/assets/img/strftime.png" alt="" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">strptime</code>是<code class="language-plaintext highlighter-rouge">strftime</code>的反过来的版本，把字符串时间转换为分解时间。</p>
+
+<p>这些函数的转换关系，可以用这一张图概括：</p>
+
+<p><img src="/assets/img/time.png" alt="" /></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#c" class="page__taxonomy-item" rel="tag">C</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#linux" class="page__taxonomy-item" rel="tag">Linux</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-08-25T00:00:00+08:00">August 25, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E5%9C%A8+Linux+%E4%B8%AD%E6%9B%B4%E5%A5%BD%E5%9C%B0%E4%BD%BF%E7%94%A8C%2FC%2B%2B%E8%AF%AD%E8%A8%80%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F08%2F25%2Ftricks-in-LinuxC.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F08%2F25%2Ftricks-in-LinuxC.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2021%2F08%2F25%2Ftricks-in-LinuxC.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cpp/2021/08/23/non-trivial-thing-in-C.html" class="pagination--pager" title="C语言中容易忽视的小知识
+">previous</a>
+    
+    
+      <a href="/cpp/2021/09/24/Qt-Chess.html" class="pagination--pager" title="初学 Qt（一）
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/cpp/2021/08/25/tricks-in-LinuxC.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/cpp/2021/08/25/tricks-in-LinuxC"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

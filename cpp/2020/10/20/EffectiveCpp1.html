@@ -1,0 +1,1099 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Effective C++ 内容提要（上） - 峰子的乐园</title>
+<meta name="description" content="开始对 Cplusplus 更透彻的理解的第一步">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="Effective C++ 内容提要（上）">
+<meta property="og:url" content="http://localhost:4000/cpp/2020/10/20/EffectiveCpp1.html">
+
+
+  <meta property="og:description" content="开始对 Cplusplus 更透彻的理解的第一步">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-10-20T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/cpp/2020/10/20/EffectiveCpp1.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Effective C++ 内容提要（上）
+
+        
+      </h1>
+      
+        <p class="page__lead">开始对 Cplusplus 更透彻的理解的第一步
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Effective C++ 内容提要（上）">
+    <meta itemprop="description" content="开始对 Cplusplus 更透彻的理解的第一步">
+    <meta itemprop="datePublished" content="2020-10-20T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#effective-c">Effective C++</a>
+    <ul>
+      <li><a href="#让自己习惯-c">让自己习惯 C++</a>
+        <ul>
+          <li><a href="#条款-01视-c-为语言联邦">条款 01：视 C++ 为语言联邦</a></li>
+          <li><a href="#条款-02尽量以-const-enmu-inline-替换-define">条款 02：尽量以 const enmu inline 替换 #define</a></li>
+          <li><a href="#条款-03尽可能使用-const">条款 03：尽可能使用 const</a></li>
+          <li><a href="#条款-04确定对象被使用前已先被初始化">条款 04：确定对象被使用前已先被初始化</a></li>
+        </ul>
+      </li>
+      <li><a href="#构造析构赋值运算">构造/析构/赋值运算</a>
+        <ul>
+          <li><a href="#条款-05了解-c-默默编写并调用了哪些函数">条款 05：了解 C++ 默默编写并调用了哪些函数</a></li>
+          <li><a href="#条款-06若不想使编译器用自动生成的函数就应该明确拒绝">条款 06：若不想使编译器用自动生成的函数，就应该明确拒绝</a></li>
+          <li><a href="#条款-07为多态基类声明-virtual-析构函数">条款 07：为多态基类声明 virtual 析构函数</a></li>
+          <li><a href="#条款-08别让异常逃离析构函数">条款 08：别让异常逃离析构函数</a></li>
+          <li><a href="#条款-09绝不在构造和析构过程中调用-virtual-函数">条款 09：绝不在构造和析构过程中调用 virtual 函数</a></li>
+          <li><a href="#条款-10令-operator-返回一个-reference-to-this">条款 10：令 operator= 返回一个 reference to *this</a></li>
+          <li><a href="#条款-11在-operator-中处理自我赋值">条款 11：在 operator= 中处理“自我赋值”</a></li>
+          <li><a href="#条款-12复制对象时勿忘其每一个成分">条款 12：复制对象时勿忘其每一个成分</a></li>
+        </ul>
+      </li>
+      <li><a href="#资源管理">资源管理</a>
+        <ul>
+          <li><a href="#条款-13以对象管理资源">条款 13：以对象管理资源</a></li>
+          <li><a href="#条款-14在资源管理类中小心-copying-行为">条款 14：在资源管理类中小心 copying 行为</a></li>
+          <li><a href="#条款-15在资源管理类中提供对原始资源的访问">条款 15：在资源管理类中提供对原始资源的访问</a></li>
+          <li><a href="#条款-16成对使用-new-和-delete-时要采用相同的形式">条款 16：成对使用 new 和 delete 时要采用相同的形式</a></li>
+          <li><a href="#条款-17以独立语句将-newed-对象置入智能指针">条款 17：以独立语句将 newed 对象置入智能指针</a></li>
+        </ul>
+      </li>
+      <li><a href="#设计与声明">设计与声明</a>
+        <ul>
+          <li><a href="#条款-18让接口容易被正确使用不易被误用">条款 18：让接口容易被正确使用，不易被误用</a></li>
+          <li><a href="#条款-19设计-class-犹如设计-type">条款 19：设计 class 犹如设计 type</a></li>
+          <li><a href="#条款-20宁以-pass-by-reference-to-const-替换-pass-by-value">条款 20：宁以 pass-by-reference-to-const 替换 pass-by-value</a></li>
+          <li><a href="#条款-21必须返回对象时别妄想返回其-reference">条款 21：必须返回对象时，别妄想返回其 reference</a></li>
+          <li><a href="#条款-22将成员变量声明为-private">条款 22：将成员变量声明为 private</a></li>
+          <li><a href="#条款-23宁以-non-member-non-friend-替换-member-函数">条款 23：宁以 non-member non-friend 替换 member 函数</a></li>
+          <li><a href="#条款-24若所有参数皆需类型转换请为此采用-non-member-函数">条款 24：若所有参数皆需类型转换，请为此采用 non-member 函数</a></li>
+          <li><a href="#条款-25考虑写一个不抛出异常的-swap-函数">条款 25：考虑写一个不抛出异常的 swap 函数</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="effective-c">Effective C++</h1>
+
+<p><a href="https://book.douban.com/subject/1231590/">Effective C++</a> 的内容提要。博主通读完一遍 <a href="https://book.douban.com/subject/1231590/">Effective C++</a> 后，深感 C++ 的编写不易，在写程序时需要时刻考虑方方面面的多种因素，但我深知这些知识看完就会遗忘，因而将每个条款最精要的部分记录在此，方便自己和他人随时翻看。</p>
+
+<h2 id="让自己习惯-c">让自己习惯 C++</h2>
+
+<h3 id="条款-01视-c-为语言联邦">条款 01：视 C++ 为语言联邦</h3>
+
+<p>要将 C++ 视为一个由相关语言组成的联邦而非单一语言。在其中某个次语言中，各种守则都比较易懂，但当从一个次语言切换到另一个，编程守则就可能改变。有 4 个主要的次语言：</p>
+
+<ul>
+  <li>C</li>
+  <li>Object-Oriented C++</li>
+  <li>Template C++</li>
+  <li>STL</li>
+</ul>
+
+<h3 id="条款-02尽量以-const-enmu-inline-替换-define">条款 02：尽量以 const enmu inline 替换 #define</h3>
+
+<p>也可以说成”宁可以编译器替换预处理器“。因为<code class="language-plaintext highlighter-rouge">#define</code> 定义的符号无法进入记号表；没有作用域；不遵守访问规则；用宏实现函数会很麻烦等缺点。</p>
+
+<p>可以使用 <code class="language-plaintext highlighter-rouge">const</code> 对象或者 <code class="language-plaintext highlighter-rouge">class</code> 中的 <code class="language-plaintext highlighter-rouge">static const</code> 对象替换 <code class="language-plaintext highlighter-rouge">#define</code> 中单纯的常量，用 <code class="language-plaintext highlighter-rouge">inline</code> 函数替换 <code class="language-plaintext highlighter-rouge">#define</code> 定义的“宏函数”，并不会带来额外的运行时间开销。</p>
+
+<h3 id="条款-03尽可能使用-const">条款 03：尽可能使用 const</h3>
+
+<p>只要某个值保持不变是事实，就应该用 <code class="language-plaintext highlighter-rouge">const</code> 指明。<strong>若关键字 <code class="language-plaintext highlighter-rouge">const</code> 出现在 * 左边，表示被指物是常量；出现在 * 右边，表示指针自身是常量</strong>。关于 <code class="language-plaintext highlighter-rouge">const</code>：</p>
+
+<ul>
+  <li>
+    <p>令函数返回一个常量值，减少意外发生。<code class="language-plaintext highlighter-rouge">const Rational operator*(...);</code> 可以防止用户写出 <code class="language-plaintext highlighter-rouge">if ((a * b) = c)</code></p>
+  </li>
+  <li>
+    <p>两个成员函数若只是常量性不同，可以被重载。<code class="language-plaintext highlighter-rouge">const char&amp; operator[]() const</code> 与 <code class="language-plaintext highlighter-rouge">char&amp; operator[]()</code></p>
+  </li>
+  <li>
+    <p>注意 bitwise constness 和 logical constness，可以使用 <code class="language-plaintext highlighter-rouge">mutable</code> 关键字</p>
+  </li>
+  <li>
+    <p>在 <code class="language-plaintext highlighter-rouge">const</code> 和 <code class="language-plaintext highlighter-rouge">non-const</code> 成员函数中避免重复。令 <code class="language-plaintext highlighter-rouge">non-const</code> 版本调用 <code class="language-plaintext highlighter-rouge">const</code> 版本避免重复</p>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">char</span><span class="o">&amp;</span> <span class="k">operator</span><span class="p">[](</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">position</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">const_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&amp;&gt;</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">XX</span><span class="o">&amp;&gt;</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="p">)[</span><span class="n">position</span><span class="p">]);</span>
+<span class="p">}</span>
+  
+<span class="k">const</span> <span class="kt">char</span><span class="o">&amp;</span> <span class="k">operator</span><span class="p">[](</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">position</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h3 id="条款-04确定对象被使用前已先被初始化">条款 04：确定对象被使用前已先被初始化</h3>
+
+<p>确保每一个构造函数都将对象的每一个成员初始化。注意在构造函数中，要使用 member initialization list 进行初始化。</p>
+
+<p>C++ 有着十分固定的成员初始化次序。最好总是以声明的次序进行初始化。</p>
+
+<p>注意不同编译单元内定义的 non-local static 对象的初始化次序。解决方法：将每个 non-local static 对象搬运到自己的专属函数内（该对象在此函数声明为 <code class="language-plaintext highlighter-rouge">static</code>）。这些函数返回一个 reference 指向它所含的对象。即 non-local static 被 local static 替换了：</p>
+
+<pre><code class="language-C++">class FileSystem
+FileSystem&amp; tfs() {
+    static FileSystem fs;
+    return fs;
+}
+</code></pre>
+
+<h2 id="构造析构赋值运算">构造/析构/赋值运算</h2>
+
+<h3 id="条款-05了解-c-默默编写并调用了哪些函数">条款 05：了解 C++ 默默编写并调用了哪些函数</h3>
+
+<p>注意，在程序员没有定义的情况下，编译器会默默地构造出：</p>
+
+<ul>
+  <li>default 构造函数</li>
+  <li>non-virtual 析构函数</li>
+  <li>copy 构造函数</li>
+  <li>copy assignment 操作符</li>
+</ul>
+
+<p>但一般而言，只有当生成的代码合法且有机会证明其有意义时，才可。</p>
+
+<h3 id="条款-06若不想使编译器用自动生成的函数就应该明确拒绝">条款 06：若不想使编译器用自动生成的函数，就应该明确拒绝</h3>
+
+<p>若你设计的某一类的对象是独一无二的，不可以被拷贝或者拷贝是无意义的，那么就应该：</p>
+
+<ul>
+  <li>将 copy 构造函数或 copy assignment 操作符声明为 <code class="language-plaintext highlighter-rouge">private</code></li>
+  <li>不要定义它们</li>
+</ul>
+
+<p>或者，你也可以继承一个阻止拷贝动作而设计的 base class：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Uncopyable</span> <span class="p">{</span>
+    <span class="nl">protected:</span>
+    	<span class="n">Uncopyable</span><span class="p">()</span> <span class="p">{}</span>
+    	<span class="o">~</span><span class="n">Uncopyable</span><span class="p">()</span> <span class="p">{}</span>
+    <span class="nl">private:</span>
+    	<span class="n">Uncopyable</span><span class="p">(</span><span class="k">const</span> <span class="n">Uncopyable</span><span class="o">&amp;</span><span class="p">);</span>
+    	<span class="n">Uncopyable</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">Uncopyable</span><span class="o">&amp;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>或者考虑使用 Boost 库提供的 <code class="language-plaintext highlighter-rouge">noncopyable</code> 类。</p>
+
+<h3 id="条款-07为多态基类声明-virtual-析构函数">条款 07：为多态基类声明 virtual 析构函数</h3>
+
+<p>当 derived class 对象经由一个 base class 指针删除，而该 base class 带有一个 non-virtual 析构函数，就会发生不确定行为。这是因为，<strong>只有 base class 的析构函数会被调用，将 derived class 对象中的 base class 部分销毁了，而剩下 derived class 部分没有销毁</strong>，造成了一个“局部销毁”的现象。因此，带有多态性质的 base class 应该声明一个 <code class="language-plaintext highlighter-rouge">virtual</code> 的析构函数。</p>
+
+<p>而如果 class 不含 <code class="language-plaintext highlighter-rouge">virtual</code> 函数，往往表示它并不想做一个 base class，因此令其析构函数为 <code class="language-plaintext highlighter-rouge">virtual</code> 也是一个馊主意。因为 <code class="language-plaintext highlighter-rouge">virtual</code> 函数会带来完全不必要的开销。但有时候，令 class 带一个 pure virtual 析构函数会十分便利，比如我们在声明一个抽象基类（abstract base class），又想不到其他的 pure virtual 函数时，就可以：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AWOV</span> <span class="p">{</span>
+    <span class="nl">public:</span>
+    	<span class="k">virtual</span> <span class="o">~</span><span class="n">AWOV</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="条款-08别让异常逃离析构函数">条款 08：别让异常逃离析构函数</h3>
+
+<p>C++ 不喜欢析构函数吐出异常！若你的析构函数必须执行一个动作，且该动作可能会在失败时抛出异常，那么可以在异常出现时就结束程序；也可以吞下异常。但这都不是非常好的选择！我们可以重新设计类的接口，让客户有机会处理可能出现的异常。</p>
+
+<p>我们将析构函数执行的动作放到另一个新函数中（当然考虑到客户会忘记调用它，会在析构函数里另设一个保险），这样选择权就在客户手里。如果客户认为该动作决不会抛出异常，就不必调用新函数；但若因为客户忘调用新函数，导致析构函数抛出异常进而导致程序进入不确定行为，锅也不在设计者头上，毕竟客户自己放弃了处理异常的机会。</p>
+
+<h3 id="条款-09绝不在构造和析构过程中调用-virtual-函数">条款 09：绝不在构造和析构过程中调用 virtual 函数</h3>
+
+<p>不要在构造函数和析构函数中调用 <code class="language-plaintext highlighter-rouge">virtual</code> 函数，这样的调用会带来意想不到的效果。为什么？因为程序会先调用 base class 的构造函数，然后才会使用 derived class ，才会初始化这个 derived class 对象。如果你在构造函数中使用 <code class="language-plaintext highlighter-rouge">virtual</code> 函数，编译器只会将它认作为 base class 的对象（因为这时候 derived 部分还未完成构建，其部分成员值仍是未确定的），就会调用 base class 的函数，而不是你想的 derived class 的函数。</p>
+
+<p>同样道理也适合用于析构函数，当析构函数开始时，derived class 对象就会被逐步销毁，编译器就会把它视作 base class 的对象，调用 base class 的函数。</p>
+
+<p>可以使用一种办法避免这样的局面。先将构造函数中的 virtual 函数改为 non-virtual ，然后，我们要求 derived class 的构造函数传递必要的信息给 base class 构造函数，然后，base class 的构造函数就可以调用 non-virtual 函数。</p>
+
+<h3 id="条款-10令-operator-返回一个-reference-to-this">条款 10：令 operator= 返回一个 reference to *this</h3>
+
+<p>为了实现像 <code class="language-plaintext highlighter-rouge">x = y = z</code> 的连续赋值，赋值操作符必须返回一个 reference 指向操作符的左侧实参。如：</p>
+
+<pre><code class="language-C++">Widget&amp; operator=(const Widget&amp; rhs) {
+    ...
+    return *this;
+}
+</code></pre>
+
+<h3 id="条款-11在-operator-中处理自我赋值">条款 11：在 operator= 中处理“自我赋值”</h3>
+
+<p><code class="language-plaintext highlighter-rouge">*px = *py</code> 如果恰巧 <code class="language-plaintext highlighter-rouge">px</code> 和 <code class="language-plaintext highlighter-rouge">py</code> 指向了同一个东西，就会发生自我赋值。这会导致“你要使用该资源之前意外地释放了它”的潜在问题。</p>
+
+<p>可以使用“证同测试”来消除“自我赋值”，即 <code class="language-plaintext highlighter-rouge">if (this == &amp;rhs) return *this;</code> 。但为了做得更好，还需要考虑“异常安全性”，可以使用<a href="">条款 29</a> 的 copy and swap 技术，或者可以先暂存原先的值，等到新值被构建好并没有出现问题时，再将旧值抛弃。</p>
+
+<h3 id="条款-12复制对象时勿忘其每一个成分">条款 12：复制对象时勿忘其每一个成分</h3>
+
+<p>如果你自己在写一个 copying 函数时，一定要记住不要遗漏每一个成分，因为编译器不会警告这一点。请确保：1）复制了所有的 local 成员变量。2）调用了所有 base classes 的适当的 copying 函数。</p>
+
+<p>特别注意，copy assignment 操作符与 copy 构造函数不要相互调用，这是荒谬的。如果你发现了这两个函数有相似的代码，那么你应该写一个第三方函数，再让它们都调用它。</p>
+
+<h2 id="资源管理">资源管理</h2>
+
+<h3 id="条款-13以对象管理资源">条款 13：以对象管理资源</h3>
+
+<p>为确保分配后的资源总是被释放，我们需要将资源放入到对象内。因为单纯依赖 <code class="language-plaintext highlighter-rouge">delete</code> 语句是不能百分百保证资源一定会被释放的，把资源放进对象内，便可倚赖 C++ 的析构函数确保资源被释放。<em>Resource Acquisition Is Initialization (RAII)</em> 告诫我们，在资源被获得的同时，就应该立即被放入管理对象中。</p>
+
+<p>现在，C++ 11 以上的版本中，<code class="language-plaintext highlighter-rouge">tr1::shared_ptr</code> 、<code class="language-plaintext highlighter-rouge">tr1::unique_ptr</code> 或者 Boost 的相关库完全可以提供这项服务，不要再使用 raw pointer 了！</p>
+
+<p><span id="item14"></span></p>
+
+<h3 id="条款-14在资源管理类中小心-copying-行为">条款 14：在资源管理类中小心 copying 行为</h3>
+
+<p>前面的条款介绍了在 heap-based 资源上的管理方式：使用智能指针。然而并非所有资源都是 heap-based 的，也并非所有资源管理问题都可以用智能指针解决。例如，对于互斥锁（Mutex Lock）而言，我们就需要小心复制行为带来的问题。你可以：</p>
+
+<ul>
+  <li>禁止复制。就如<a href="">条款 06</a> 中做的那样</li>
+  <li>对底层资源使用引用计数。在复制时，将资源的引用计数增加，并在最后引用计数归零时删除（释放）资源。注意：<code class="language-plaintext highlighter-rouge">tr1::shared_ptr</code> 的删除器可能会帮你大忙。</li>
+  <li>复制底部资源。在复制资源管理对象时，应同时复制其所管理的资源，进行深拷贝。</li>
+  <li>转移底部资源的控制权。就像 <code class="language-plaintext highlighter-rouge">tr1::unique_ptr</code> 做的那样</li>
+</ul>
+
+<h3 id="条款-15在资源管理类中提供对原始资源的访问">条款 15：在资源管理类中提供对原始资源的访问</h3>
+
+<p>这一条款主要是针对那些直接使用 raw pointer 的 APIs 。因为你在编程的过程中几乎不可避免的遇到它们，你需要提供一个取得原始资源的方法。有两种解决方案：</p>
+
+<ul>
+  <li>显式转换。比较安全，比如智能指针的 <code class="language-plaintext highlighter-rouge">get()</code> 函数。</li>
+  <li>隐式转换。比较方便，例如 <code class="language-plaintext highlighter-rouge">operator FontHandle() const { return f; }</code></li>
+</ul>
+
+<h3 id="条款-16成对使用-new-和-delete-时要采用相同的形式">条款 16：成对使用 new 和 delete 时要采用相同的形式</h3>
+
+<p>很简单，若你调用 new 时使用了 <code class="language-plaintext highlighter-rouge">[]</code> ，你必须在对应调用 delete 时也使用 <code class="language-plaintext highlighter-rouge">[]</code> ，如果你调用 new 时没有使用 <code class="language-plaintext highlighter-rouge">[]</code> ，那么也不应在调用对应 delete 时使用 <code class="language-plaintext highlighter-rouge">[]</code>。</p>
+
+<h3 id="条款-17以独立语句将-newed-对象置入智能指针">条款 17：以独立语句将 newed 对象置入智能指针</h3>
+
+<p>如果不这样做，有可能导致难以察觉的资源泄漏。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">priority</span><span class="p">();</span>
+<span class="kt">void</span> <span class="nf">processWidget</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">tr1</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span> <span class="n">pw</span><span class="p">,</span> <span class="kt">int</span> <span class="n">priority</span><span class="p">);</span>
+
+<span class="c1">// 调用 priority()</span>
+<span class="c1">// 进行 new  但也可能顺序相反，在 priority() 函数抛出异常后，可能出现内存泄漏</span>
+<span class="n">processWidget</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">tr1</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">Widget</span><span class="p">),</span> <span class="n">priority</span><span class="p">());</span>
+
+<span class="c1">// 建议如下：将 new 对象的语句独立出来，不与任何其他语句掺和在一起</span>
+<span class="n">std</span><span class="o">::</span><span class="n">tr1</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span> <span class="n">pw</span><span class="p">(</span><span class="k">new</span> <span class="n">Widget</span><span class="p">);</span>
+
+<span class="n">processWidget</span><span class="p">(</span><span class="n">pw</span><span class="p">,</span> <span class="n">priority</span><span class="p">());</span>
+</code></pre></div></div>
+
+<h2 id="设计与声明">设计与声明</h2>
+
+<h3 id="条款-18让接口容易被正确使用不易被误用">条款 18：让接口容易被正确使用，不易被误用</h3>
+
+<p>理想上，若客户错误地使用了接口，那么这个代码不应通过编译，如果代码可以通过编译，那么接口的行为就应当与客户的期望一致。例如：</p>
+
+<pre><code class="language-C++">class Date {
+    public:
+    	Date(int month, int day, int year);
+    	...
+};
+</code></pre>
+
+<p>三个参数都是 <code class="language-plaintext highlighter-rouge">int</code> ，客户在使用接口时可能会把年月日的参数传错，也有可能传入了一个不存在的日期，比如 13 月 39 日。阻止误用的办法有：新建新类型，限制类型上的操作，束缚对象值，消除客户的资源管理责任。比如，设计者可以使用类型系统来防止这样的低级错误。</p>
+
+<pre><code class="language-C++">// 使用外覆类型区别 年月日，但这样无法限制其值
+struct Month {
+    explicit Month(int m): val(m) {}
+    int val;
+};
+
+// 可以使用静态函数来限制取值，注意到需要使用函数，详看条款04
+class Month {
+    public:
+    	static Month Jan() { return Month(1); }
+    	static Month Feb() { return Month(2); }
+    	....
+        static Month Dec() { return Month(12); }
+};
+
+Date d(Month::Jan(), Day(30), Year(2010));
+</code></pre>
+
+<p>为避免资源泄露，可以将接口</p>
+
+<pre><code class="language-C++">Tank* createTank();
+</code></pre>
+
+<p>改成：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">std</span><span class="o">::</span><span class="n">tr1</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Tank</span><span class="o">&gt;</span> <span class="n">createTank</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>强迫客户使用智能指针，其好处正如<a href="#item14">条款 14</a>所言，也可以防范 <a href="https://blog.csdn.net/pxhero2012/article/details/8974370">cross-DLL problem</a>。</p>
+
+<h3 id="条款-19设计-class-犹如设计-type">条款 19：设计 class 犹如设计 type</h3>
+
+<p>设计一个好的 type 是一项艰巨的工作，自然的语法、直观的语义、一个或多个高效实现等。重载函数、控制内存、定义对象等都需要注意。你要考虑好以下问题：新的类型对象如何被创建和销毁？对象的初始化和赋值会有什么差别？新类型的对象若是 pass-by-value ，意味着什么？什么是该类的合法值？新的类型需要配合某个继承图系吗？新的类型需要什么样的转换？哪些操作符和函数对新类型而言是合理的？哪些标准函数必须被驳回？谁该使用新类型的成员？什么是新类型的未声明接口？新类型有多么一般化？你真的需要一个新类型吗？</p>
+
+<h3 id="条款-20宁以-pass-by-reference-to-const-替换-pass-by-value">条款 20：宁以 pass-by-reference-to-const 替换 pass-by-value</h3>
+
+<p>默认情况下，C++ 都是使用 by-value 方式传递对象。这过程中会使用 copy 构造函数，对于一些体量庞大的对象来说，pass-by-value 是<strong>非常耗时</strong>的操作（因为要复制很多字节）。事实上，该条款给出的忠告可以这么理解，<strong>除了 C++ 中的内置类型和 STL 的迭代器和函数对象，其他任何东西（尤其是你实现的类）都最好使用 pass-by-reference-const 。</strong></p>
+
+<p>除了效率方面的考量，by reference 传递参数也可以避免<strong>对象切割</strong>的问题。当一个 derived class 对象以 by value 的方式传递到函数中，而函数参数的类型是 base class 类，那么 base class 的 copy 构造函数会被调用，导致传入的对象变成了 base class ，绝不会是你想要的 derived class。</p>
+
+<p>references 在 C++ 编译器的底层中，往往通过指针实现。</p>
+
+<h3 id="条款-21必须返回对象时别妄想返回其-reference">条款 21：必须返回对象时，别妄想返回其 reference</h3>
+
+<p>可能受到上一条款的影响，我们可能会陷入另一个误区——在所有地方都是用 by reference 传递对象。然而，我们不可能传递一些 reference 指向其实<strong>不存在的对象</strong>。</p>
+
+<p>比如，你可能会在函数的最后，返回一个 local 变量的 reference😅。这是相当危险的，因为函数调用一旦结束，local 变量就会被销毁释放，其 reference 就指向了一个毫无意义的东西。当然，你可能还会想将 local 变量放入 heap 中，或者使用 <code class="language-plaintext highlighter-rouge">static</code> 变量，那就更离谱了。</p>
+
+<p>当程序在逻辑上，就要返回一个新对象时，请不要吝啬这一点点的拷贝效率，就让那个函数返回一个新对象。</p>
+
+<h3 id="条款-22将成员变量声明为-private">条款 22：将成员变量声明为 private</h3>
+
+<p>很多人都说所有的成员变量最好为 <code class="language-plaintext highlighter-rouge">private</code> ，可实际做工程时却又怕麻烦直接使用 <code class="language-plaintext highlighter-rouge">public</code> 的成员变量😅。事实上，类的所有成员变量都需要为 <code class="language-plaintext highlighter-rouge">private</code> ，然后使用函数做读/写访问。有两大原因：</p>
+
+<ul>
+  <li>使用函数控制可以让成员变量的处理有更精密的控制，比如，你可以通过设置 getter 和 setter 实现只读访问、不准访问、读写访问，甚至只写访问。</li>
+  <li>封装。如果有一个成员变量是 <code class="language-plaintext highlighter-rouge">public</code> ，并且在工程后续中客户使用了它。那么，一旦你需要对该类进行更改维护，你会发现很多客户的代码都需要变更！这是一个非常可怕的工作量。<code class="language-plaintext highlighter-rouge">private</code> 提供了非常好的封装，而且，我们使用类的一个原因不就是它的封装性么？</li>
+</ul>
+
+<h3 id="条款-23宁以-non-member-non-friend-替换-member-函数">条款 23：宁以 non-member non-friend 替换 member 函数</h3>
+
+<p>还是一个与封装性有关的条款。面向对象守则要求数据应该尽可能地被封装，然而与直觉相反的是，提供 non-member 函数可允许对类的相关功能有较大的灵活性，可以更好地封装。为什么？从封装的角度出发，<strong>如果类内的东西被封装，它就不再可见，越多东西被封装，越少的人可以看到它，越少的人看到它，就意味着我们有越大的弹性来改变它</strong>！</p>
+
+<p>就如条款 22 所说，将成员变量声明为 <code class="language-plaintext highlighter-rouge">private</code>，那么就只有 class 的成员函数和其 friend 函数看到而已，改变就相对容易，改变的弹性就越大。增加一个member 函数就意味着增加一个可以窥见类内部秘密的“知情人”，其封装性就会减弱。因此，如果要在一个 member 函数（可以改变类内的 <code class="language-plaintext highlighter-rouge">private</code> 数据）和一个 non-member non-friend 函数中二选一，那么从封装的角度考虑，non-member non-friend 函数会更好。</p>
+
+<p>值得注意的是，成为类的 non-member non-friend 函数并不意味它不可以是另一个 class 的 member ，比如可以设立某些工具类的 member 函数来完成这差事。</p>
+
+<p>但在 C++ 中，更加自然的做法就是让 class 和这些 non-member non-friend 函数存在于同一个 <code class="language-plaintext highlighter-rouge">namespace</code> 中。因为 <code class="language-plaintext highlighter-rouge">namespace</code> 可以跨文件，那么这些 non-member non-friend 函数就可以按分类放在不同的文件内，当客户需要时，再 <code class="language-plaintext highlighter-rouge">#include</code> 相应的头文件，以此降低编译依赖性。C++ 的标准程序库就是这样组织起来的。</p>
+
+<h3 id="条款-24若所有参数皆需类型转换请为此采用-non-member-函数">条款 24：若所有参数皆需类型转换，请为此采用 non-member 函数</h3>
+
+<p>如果你需要为某个函数的所有参数（包括被 <code class="language-plaintext highlighter-rouge">this</code> 指针所指的那个隐喻参数）进行类型转换，那么这个函数必须是个 non-member 。</p>
+
+<p>举个例子来说明该条款，假设一个你设计的 <code class="language-plaintext highlighter-rouge">Rational</code> 类，用于计算分数的加减乘除。</p>
+
+<pre><code class="language-C++">class Rational {
+    public:
+    	Rational(int numerator = 0, int denominator = 1);
+    	...
+        const Rational operator*(const Rational &amp;rhs) const;	// 可以想一想为什么接受一个 reference-to-const ，返回一个 const by-value
+}
+</code></pre>
+
+<p>重载 * 函数可以让你完成很多乘法运算，但</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Rational</span> <span class="nf">oneEight</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+<span class="n">Rational</span> <span class="nf">oneHalf</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+<span class="n">Rational</span> <span class="n">result</span> <span class="o">=</span> <span class="n">oneHalf</span> <span class="o">*</span> <span class="n">oneEight</span><span class="p">;</span> 	<span class="c1">// good</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">oneHalf</span> <span class="o">*</span> <span class="mi">2</span>	<span class="c1">// good</span>
+<span class="n">result</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">oneHalf</span>    <span class="c1">// Error!</span>
+</code></pre></div></div>
+
+<p>为什么最后一句话错了，因为整数 2 并没有相应的 <code class="language-plaintext highlighter-rouge">operator*</code> 函数！同样因为不存在接受 <code class="language-plaintext highlighter-rouge">int</code> 和 <code class="language-plaintext highlighter-rouge">Rational</code> 的函数，<code class="language-plaintext highlighter-rouge">result = operator*(2, oneHalf)</code> 也会报错。为什么倒数第二句话对，最后一句话错？因为只有当参数被列于参数列（parameter list），这个参数才是隐式类型转换的合格参与者！整数在第一个时，就无法隐式转换了。</p>
+
+<p>其实，我们的目标就是让编译器把整数 2 “看作”一个 <code class="language-plaintext highlighter-rouge">Rational</code> 对象，那么，应当怎么办呢？很简单，只要我们避开 member 函数的陷阱，使用 non-member 函数，让第一个乘数也可以被放入参数列中就行。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">const</span> <span class="n">Rational</span> <span class="k">operator</span><span class="o">*</span><span class="p">(</span><span class="k">const</span> <span class="n">Rational</span> <span class="o">&amp;</span><span class="n">lhs</span><span class="p">,</span> <span class="k">const</span> <span class="n">Rational</span> <span class="o">&amp;</span><span class="n">rhs</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="条款-25考虑写一个不抛出异常的-swap-函数">条款 25：考虑写一个不抛出异常的 swap 函数</h3>
+
+<p>swap 函数，原本只是用于将两者交换，但现在，却被赋予了更多重大的任务。用 swap 来应对异常安全性编程（见条款 29）和处理自我赋值（条款 11）已经非常常见。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">namespace</span> <span class="n">std</span> <span class="p">{</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+    <span class="kt">void</span> <span class="n">swap</span><span class="p">(</span><span class="n">T</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">T</span> <span class="n">temp</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">b</span><span class="p">;</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">temp</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>不过，我们还是得一步一步地讨论问题，首先来看效率方面。</p>
+
+<p><code class="language-plaintext highlighter-rouge">std::swap</code> 会调用 copy 构造函数来完成交换，而很多时候 <code class="language-plaintext highlighter-rouge">std::swap</code> 对你的类型效率不高时，此时就需要提供一个 swap 成员函数，并确定这个函数不抛出异常。比如说，你设计的类型是一种“以指针指向对象，内含真正数据”的，即所谓的 <strong>pimpl 手法</strong>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Widget</span> <span class="p">{</span>
+    <span class="nl">public:</span>
+    	<span class="n">Widget</span><span class="p">(</span><span class="k">const</span> <span class="n">Widget</span> <span class="o">&amp;</span><span class="n">rhs</span><span class="p">);</span>
+    	<span class="n">Widget</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="n">Widget</span> <span class="o">&amp;</span> <span class="n">rhs</span><span class="p">)</span> <span class="p">{</span>
+            <span class="p">...</span>
+            <span class="o">*</span><span class="n">pImpl</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="n">rhs</span><span class="p">.</span><span class="n">pImpl</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="k">private</span>
+        <span class="n">WidgetImpl</span><span class="o">*</span> <span class="n">pImpl</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么如果要交换两个值，最有效率的办法毫无疑问就是交换它们内部的指针。那么，我们该怎么做才能让 <code class="language-plaintext highlighter-rouge">std::swap</code> 明白这一点呢？或者说我们要自己实现一个交换函数吗？可以利用 <code class="language-plaintext highlighter-rouge">std::swap</code> 的全特化版本，让 swap template 在遇到某一特定的类（Widget）时才会使用我们写的版本。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">namespace</span> <span class="n">std</span> <span class="p">{</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="p">&gt;</span>
+    <span class="kt">void</span> <span class="n">swap</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Widget</span> <span class="o">&amp;</span><span class="n">a</span><span class="p">,</span> <span class="n">Widget</span> <span class="o">&amp;</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">a</span><span class="p">.</span><span class="n">swap</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">Widget</span> <span class="p">{</span>
+    <span class="nl">public:</span>
+    	<span class="kt">void</span> <span class="n">swap</span> <span class="p">(</span><span class="n">Widget</span> <span class="o">&amp;</span> <span class="n">rhs</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">using</span> <span class="n">std</span><span class="o">::</span><span class="n">swap</span><span class="p">;</span>
+            <span class="n">swap</span><span class="p">(</span><span class="n">pImpl</span><span class="p">,</span> <span class="n">rhs</span><span class="p">.</span><span class="n">pImpl</span><span class="p">);</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>但如果遇到了 class template，情况就会变得更加复杂。因为 C++ 不允许偏特化一个 function template，只允许偏特化 class template。更重要的是，std 允许客户全特化内部的 template，但不允许添加新的 template 或者 class 等东西，这意味着我们也无法重载 <code class="language-plaintext highlighter-rouge">std::swap</code>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">WidgetImpl</span> <span class="p">{...};</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">Widget</span> <span class="p">{...};</span>
+
+<span class="c1">// nonono</span>
+<span class="k">namespace</span> <span class="n">std</span> <span class="p">{</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span> <span class="c1">// 不合法</span>
+    <span class="kt">void</span> <span class="n">swap</span><span class="p">(</span><span class="n">Widget</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">Widget</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span> <span class="n">a</span><span class="p">.</span><span class="n">swap</span><span class="p">(</span><span class="n">b</span><span class="p">);}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们可以声明一个 non-member swap ，让它调用 member swap，但不再将 non-member swap 声明为 <code class="language-plaintext highlighter-rouge">std::swap</code> 的全特化版本。它们存在于某个命名空间中（不能是 std）。但是，客户调用 swap 时，可不知道到底用哪个命名空间的 swap（客户甚至不知道 WidgetStuff 命名空间中是否存在专属的 swap），所以，我们需要用 <code class="language-plaintext highlighter-rouge">using std::swap</code> ，让 C++ 编译器在找不到原命名空间下的 swap 时，去调用 <code class="language-plaintext highlighter-rouge">std::swap</code> 。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">namespace</span> <span class="n">WidgetStuff</span> <span class="p">{</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="nc">T</span><span class="p">&gt;</span>
+    <span class="kt">void</span> <span class="n">swap</span><span class="p">(</span><span class="n">Widget</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">Widget</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">a</span><span class="p">.</span><span class="n">swap</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 交换时，可以如下调用</span>
+<span class="k">using</span> <span class="n">std</span><span class="o">::</span><span class="n">swap</span><span class="p">;</span>
+<span class="n">swap</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>但不能这么写 <code class="language-plaintext highlighter-rouge">std::swap(obj1, obj2);</code> 。这样是在强制 C++ 编译器使用 std 空间下的 swap 函数，我们的本意可不是这样。</p>
+
+<p>最后的最后，成员版的 swap 绝不可以抛出异常，因为 swap 的一个最好的应用就是提供强烈的异常安全性保障（条款 29）。注意，只是成员版的 swap 。</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#effective-c" class="page__taxonomy-item" rel="tag">Effective C++</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-10-20T00:00:00+08:00">October 20, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=Effective+C%2B%2B+%E5%86%85%E5%AE%B9%E6%8F%90%E8%A6%81%EF%BC%88%E4%B8%8A%EF%BC%89%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2020%2F10%2F20%2FEffectiveCpp1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2020%2F10%2F20%2FEffectiveCpp1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2020%2F10%2F20%2FEffectiveCpp1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/apollo/2020/10/17/Cyber-RT.html" class="pagination--pager" title="Apollo Cyber RT 调度系统
+">previous</a>
+    
+    
+      <a href="/apollo/2020/10/21/CyberTimer.html" class="pagination--pager" title="Apollo Cyber RT 定时器
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/cpp/2020/10/20/EffectiveCpp1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/cpp/2020/10/20/EffectiveCpp1"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

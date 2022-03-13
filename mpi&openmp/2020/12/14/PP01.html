@@ -1,0 +1,970 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>对一并行程序实验的简单理解 - 峰子的乐园</title>
+<meta name="description" content="关于MPI编程的一点技巧，以及对矩阵优化的一些简单理解">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="对一并行程序实验的简单理解">
+<meta property="og:url" content="http://localhost:4000/mpi&openmp/2020/12/14/PP01.html">
+
+
+  <meta property="og:description" content="关于MPI编程的一点技巧，以及对矩阵优化的一些简单理解">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2020-12-14T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/mpi&openmp/2020/12/14/PP01.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links">
+<li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li>
+<li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li>
+</ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay" style=" background-image: url('/assets/img/teaser2.jpg');">
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          对一并行程序实验的简单理解
+
+        
+      </h1>
+      
+        <p class="page__lead">关于MPI编程的一点技巧，以及对矩阵优化的一些简单理解
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="对一并行程序实验的简单理解">
+    <meta itemprop="description" content="关于MPI编程的一点技巧，以及对矩阵优化的一些简单理解">
+    <meta itemprop="datePublished" content="2020-12-14T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title">
+<i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li>
+<a href="#%E5%AF%B9%E4%B8%80%E5%B9%B6%E8%A1%8C%E7%A8%8B%E5%BA%8F%E5%AE%9E%E9%AA%8C%E7%9A%84%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3">对一并行程序实验的简单理解</a>
+    <ul>
+      <li>
+<a href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2">写在前面</a>
+        <ul>
+          <li><a href="#%E4%BD%BF%E7%94%A8%E4%B8%80%E7%BB%B4%E6%95%B0%E7%BB%84">使用一维数组</a></li>
+          <li><a href="#%E4%BD%BF%E7%94%A8%E5%A0%86%E7%A9%BA%E9%97%B4%E5%B9%B6%E6%B3%A8%E6%84%8F%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2">使用堆空间并注意内存泄露</a></li>
+          <li><a href="#%E4%BD%BF%E7%94%A8%E4%B8%B2%E8%A1%8C%E7%A8%8B%E5%BA%8F%E8%BF%9B%E8%A1%8C%E9%AA%8C%E7%AE%97">使用串行程序进行验算</a></li>
+        </ul>
+      </li>
+      <li><a href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0">题目描述</a></li>
+      <li>
+<a href="#%E6%8C%89%E8%A1%8C%E8%BF%9E%E7%BB%AD%E5%88%92%E5%88%86">按行连续划分</a>
+        <ul>
+          <li><a href="#%E6%96%B9%E6%B3%95%E6%A6%82%E8%A6%81">方法概要</a></li>
+          <li><a href="#%E7%BB%86%E8%8A%82%E5%A4%84%E7%90%86">细节处理</a></li>
+          <li><a href="#%E9%83%A8%E5%88%86%E4%BB%A3%E7%A0%81%E8%A7%A3%E6%9E%90">部分代码解析</a></li>
+        </ul>
+      </li>
+      <li>
+<a href="#%E6%A3%8B%E7%9B%98%E5%88%92%E5%88%86">棋盘划分</a>
+        <ul>
+          <li><a href="#%E6%96%B9%E6%B3%95%E6%A6%82%E8%A6%81-1">方法概要</a></li>
+          <li><a href="#%E7%BB%86%E8%8A%82%E5%A4%84%E7%90%86-1">细节处理</a></li>
+          <li><a href="#%E9%83%A8%E5%88%86%E4%BB%A3%E7%A0%81%E8%A7%A3%E6%9E%90-1">部分代码解析</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="对一并行程序实验的简单理解">对一并行程序实验的简单理解</h1>
+
+<h2 id="写在前面">写在前面</h2>
+
+<h3 id="使用一维数组">使用一维数组</h3>
+
+<p>在写并行程序时，会遇到很多针对<strong>矩阵</strong>、<strong>张量</strong>的计算，尽管它们都是以<strong>多维数组</strong>的方式组合在一起，但一般情况下，<u>我更加倾向于使用一维数组来表示这些多维数组的数据</u>。我认为，这样做的好处有：</p>
+
+<ol>
+  <li>方便函数参数类型的统一。如果程序中既声明了二维数组（这意味着它是一个 pointer to pointer 的类型），又存在一维数组，那么在调用函数时（比如需要生成随机数据，或者检查运行结果是否正确），会出现类型不一致，就需要实现两个功能类似的函数，增加了代码冗余。当然了，这里我们只讨论 C 语言的情况 <img class="emoji" title=":sweat:" alt=":sweat:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f613.png" height="20" width="20">。</li>
+  <li>方便索引的计算。计算偏移量是并行编程中常做的事情，然而在多维数组中，指针偏移是很容易出错且吃力的事情（很多时候单看 <code class="language-plaintext highlighter-rouge">p+1</code> 你甚至不知道指针到底偏移了多少！）。而如果全部使用一维数组，偏移的量就很容易理解，你再也不会被多维指针搞得晕头转向<img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20">。</li>
+  <li>更接近机器底层。对计算机系统稍做了解，就会发现所谓的“多维数组”其实是程序员抽象出来的东西，计算机真正认识的只有一维数组。使用一维数组写并行程序，不仅对 MPI 更加友好（大部分 MPI 函数只接受一维指针），还会更有助于我们理解机器行为，挖掘并行潜力。</li>
+</ol>
+
+<p>使用一维数组虽然有如上好处，但也有明显的弊端：索引表达不方便。当然也有办法可以解决这些问题：</p>
+
+<ol>
+  <li>
+    <p>使用宏函数。注意一定要给每个运算部分加上括号。</p>
+
+    <div class="language-c highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code> <span class="cp">#define INDEX(i, j) (((i)*(N))+(j))
+</span></code></pre></div>    </div>
+  </li>
+  <li>
+    <p>如果你对宏函数嗤之以鼻，那么可以使用 <code class="language-plaintext highlighter-rouge">inline</code> 函数代替宏函数，性能不会降低且更加安全。</p>
+  </li>
+</ol>
+
+<h3 id="使用堆空间并注意内存泄露">使用堆空间并注意内存泄露</h3>
+
+<p>并行编程往往涉及非常大的数据量，因此推荐将数据放入堆空间中。不过，这会带来一个非常棘手的问题：内存泄露。C 语言中没有自动的内存回收工具，内存能不能被回收利用全靠程序员自觉，但良好的编程习惯和适当的技巧可以尽可能地避免这类问题：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">do</span> <span class="p">{</span>
+  <span class="c1">// 分配堆空间</span>
+  <span class="n">pa</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+    <span class="c1">// 若失败 break 退出</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pa</span><span class="o">==</span><span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">break</span><span class="p">;</span>
+<span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">pa</span><span class="o">!=</span><span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">pa</span><span class="p">);</span>
+	<span class="n">pa</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>用循环 <code class="language-plaintext highlighter-rouge">do ... while(0)</code> 将程序主体包裹起来，这样一旦分配内存出错就可以直接 <code class="language-plaintext highlighter-rouge">break</code> 跳出来，然后将其释放掉。还避免使用了 <code class="language-plaintext highlighter-rouge">goto</code> 语句。另外需要注意的是，释放内存前一定要检查指针是否已经指向 <code class="language-plaintext highlighter-rouge">NULL</code> ，这可避免二次释放造成的运行时错误。</p>
+
+<h3 id="使用串行程序进行验算">使用串行程序进行验算</h3>
+
+<p>使用串行程序检验最终计算结果对并行编程的重要性不言而喻。但在调试时，串行程序也可以贡献出自己的一份力量。若遇到复杂的程序设计，可能需要分步完成程序，每一步都用串行程序验证正确性。稳扎稳打，步步为营才是王道。</p>
+
+<h2 id="题目描述">题目描述</h2>
+
+<p>矩阵 $A$ 和 $B$ 均为 $N \times N$ 的双精度矩阵，现有 $P$ 个处理器，针对以下程序片段，分别采用<u>按行块连续划分</u>和<u>棋盘划分</u>的方式，给出相应的 MPI 程序实现。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">+</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">+</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="按行连续划分">按行连续划分</h2>
+
+<h3 id="方法概要">方法概要</h3>
+
+<p>按行连续划分，即将矩阵以<strong>行</strong>为单位分割，并交给不同的处理器进行处理。下图就是我们对矩阵 $A$ 行连续划分的示意图。除主处理器外，每个处理器轮流地取出连续的三行。在程序一开始，假设只有0号处理器拥有所有的数据。</p>
+
+<center>
+<img src="/assets/img/PP/lines.png">
+</center>
+
+<p>我们的程序需要完成以下步骤：</p>
+
+<ol>
+  <li>在某个处理器中生成随机数据。为了计算的方便，我假设编号最大的处理器中握有数据，并且还负责最后结果的汇总。</li>
+  <li>将生成的随机数据分发给不同的处理器。从上面的程序片段中看出，计算一个矩阵 $B$ 元素需要三行的矩阵 $A$ 元素，因此至少需要给一个处理器三行数据。</li>
+  <li>各个处理器完成自己的任务。</li>
+  <li>将计算好的结果从各个处理器发出，由主处理器收集整理。</li>
+</ol>
+
+<h3 id="细节处理">细节处理</h3>
+
+<p>细节决定成败，这对并行编程来说尤为如此。特别地，需要注意</p>
+
+<ul>
+  <li>从处理器会接到多个来自主处理器的数据，必须要用明确的标签区分这些数据。</li>
+  <li>处理好余数情况，某几个从处理器收到的数据可能会比其他从处理器多一个，需要一个私有变量记录处理器需要计算多少行矩阵 $B$。当然，也可以采用对矩阵 $A$ 补 0 对齐的方法</li>
+  <li>收集计算结果时，要将起点定在矩阵 $B$ 的（1，1）中，还要弄清楚到底哪一行计算结果存放在哪一个处理器中。</li>
+  <li>时刻注意索引的计算</li>
+</ul>
+
+<h3 id="部分代码解析">部分代码解析</h3>
+<p>先是程序的初始化和随机生成数据，并串行地执行计算。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">double</span> <span class="o">*</span><span class="n">A</span><span class="p">,</span> <span class="o">*</span><span class="n">B</span><span class="p">,</span> <span class="o">*</span><span class="n">B2</span><span class="p">;</span>
+<span class="c1">// malloc A, B, B2 with N*N*sizeof(double)</span>
+<span class="c1">// init MPI</span>
+<span class="kt">int</span> <span class="n">id_procs</span><span class="p">,</span> <span class="n">num_procs</span><span class="p">,</span> <span class="n">num_1</span><span class="p">;</span>
+<span class="n">MPI_Status</span> <span class="n">status</span><span class="p">;</span>
+<span class="n">MPI_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">argc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">argv</span><span class="p">);</span>
+<span class="n">MPI_Comm_size</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">num_procs</span><span class="p">);</span>
+<span class="n">MPI_Comm_rank</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">id_procs</span><span class="p">);</span>
+
+<span class="n">num_1</span> <span class="o">=</span> <span class="n">num_procs</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="c1">// Proc#N-1 randomize the data, and compute B2 for verification</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">==</span> <span class="n">num_1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">random_array</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="n">N</span><span class="p">);</span>
+  <span class="n">comp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B2</span><span class="p">,</span> <span class="n">N</span><span class="o">*</span><span class="n">N</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="c1">// wait Proc#N-1 for computing</span>
+<span class="n">MPI_Barrier</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>随后，开始真正的并行计算：先让拥有数据的线程将数据广播到相应的线程中。注意，根据图上的示例，需要发送连续的三层数据。需要注意到，N 不一定能整除 (num_procs-1)，需要考虑留下的余数。<code class="language-plaintext highlighter-rouge">ctn</code> 变量记录收到数据的份数，表明了后面的计算需要循环的次数。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// ********************************************* //</span>
+<span class="c1">// Parallel Computing Part</span>
+<span class="c1">// Proc#N-1 broadcast 3 lines of A to each Proc</span>
+<span class="kt">int</span> <span class="n">ctn</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">==</span> <span class="n">num_1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">dest</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">num_1</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="n">num_1</span><span class="p">;</span>
+    <span class="n">MPI_Send</span><span class="p">(</span><span class="o">&amp;</span><span class="n">A</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span> <span class="n">N</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">num_1</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">!=</span> <span class="n">num_1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">MPI_Recv</span><span class="p">(</span><span class="o">&amp;</span><span class="n">A</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">ctn</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span> <span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">num_1</span><span class="p">,</span> <span class="n">ctn</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+    <span class="n">ctn</span><span class="o">++</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="n">num_1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">MPI_Recv</span><span class="p">(</span><span class="o">&amp;</span><span class="n">A</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">ctn</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span> <span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">num_1</span><span class="p">,</span> <span class="n">ctn</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+  <span class="n">ctn</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>分发数据完成！接下来就是每个线程的计算部分。这里的实现和串行程序十分类似。注意，<code class="language-plaintext highlighter-rouge">ctn</code> 变量记录了该线程受到了几组数据，因此外层循环需要循环 <code class="language-plaintext highlighter-rouge">ctn</code> 次：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// compute</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">!=</span> <span class="n">num_1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">ctn</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">B</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span><span class="o">+</span><span class="n">A</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span><span class="o">+</span><span class="n">A</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span><span class="o">+</span><span class="n">A</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)])</span> <span class="o">/</span> <span class="mi">4</span><span class="p">.</span><span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>把计算得到的矩阵$B$全都发给 Proc#num-1。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">// Gather</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">==</span> <span class="n">num_1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">src</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">num_1</span><span class="p">;</span>
+            <span class="n">MPI_Recv</span><span class="p">(</span><span class="o">&amp;</span><span class="n">B</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">i</span><span class="o">/</span><span class="n">num_1</span><span class="o">+</span><span class="n">N</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">ctn</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+                <span class="n">MPI_Send</span><span class="p">(</span><span class="o">&amp;</span><span class="n">B</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="n">num_1</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="n">N</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="棋盘划分">棋盘划分</h2>
+
+<h3 id="方法概要-1">方法概要</h3>
+
+<p>先以<strong>块棋盘划分</strong>来实现并行。在程序片段中，矩阵 $B$ 的有效结果范围为 [1~N-2, 1~N-2] 。若将矩阵 B 按如下示意图划分为棋盘状，每个小格子由一个处理器单独完成（以下就用“格子”数据类型称呼它们）。</p>
+
+<center>
+<img src="/assets/img/PP/tables.png">
+</center>
+
+<p>此时，程序需要完成以下步骤：</p>
+
+<ol>
+  <li>在某个处理器中生成随机数据。为方便，这次选择编号0的处理器生成随机数据。</li>
+  <li>将生成的随机数据分发给不同的处理器。按照总共有的处理器数量，合理分配每行处理器的数量以及总行数，分配完成后，将随机数据发给不同的处理器。遇到余数的问题，用补 0 对齐的方法解决（虚线表示）。</li>
+  <li>各个处理器计算自己“格子”内的数据</li>
+  <li>将计算好的结果从各个处理器发出，由编号0的处理器收集整理。</li>
+</ol>
+
+<h3 id="细节处理-1">细节处理</h3>
+
+<p>除了之前在行连续划分中提到的外，还要特别注意到：棋盘划分出的“格子”在一维数组中是<strong>不连续的</strong>。把一个格子发送给某个处理器，如果不采用一些小技巧，是很难做到的（你需要一个循环，并计算格子中每一行的索引），但如果使用 MPI 提供的创建数据类型功能，就很容易办到。通过下面的三条语句，就可以轻松地创建出类型为“格子”的数据类型。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MPI_Datatype</span> <span class="n">SubMat</span><span class="p">;</span>
+<span class="n">MPI_Type_vector</span><span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">b</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">SubMat</span><span class="p">);</span>
+<span class="n">MPI_Type_commit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">SubMat</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>对于矩阵 $A$ 来说，一个处理器所需要的数据，即所谓的棋盘格子，事实上就是一个有 <code class="language-plaintext highlighter-rouge">a+2</code> 个数据段，每个段长度为 <code class="language-plaintext highlighter-rouge">b+2</code> ，段与段之间相隔 <code class="language-plaintext highlighter-rouge">N</code> 个单位的“结构体”，使用 <code class="language-plaintext highlighter-rouge">MPI_Type_vector</code> 函数就可以轻松描述它，如果你想了解更多，请参考 <a href="https://www.mpich.org/static/docs/latest/">MPICH 官网</a>。</p>
+
+<h3 id="部分代码解析-1">部分代码解析</h3>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">double</span> <span class="o">*</span><span class="n">A</span><span class="p">,</span> <span class="o">*</span><span class="n">B</span><span class="p">,</span> <span class="o">*</span><span class="n">B2</span><span class="p">;</span>
+<span class="c1">// init MPI as usual</span>
+<span class="kt">int</span> <span class="n">id_procs</span><span class="p">,</span> <span class="n">num_procs</span><span class="p">;</span>		<span class="n">MPI_Status</span> <span class="n">status</span><span class="p">;</span>
+<span class="n">MPI_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">argc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">argv</span><span class="p">);</span>
+<span class="n">MPI_Comm_size</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">num_procs</span><span class="p">);</span>
+<span class="n">MPI_Comm_rank</span><span class="p">(</span><span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">id_procs</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>创建新的数据类型，用于描述前面提到的“格子”。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">num_procs</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">num_procs</span> <span class="o">/</span> <span class="n">rows</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">rows</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">rows</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">cols</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">cols</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">alloc_num</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">b</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">num_procs</span><span class="p">;</span>
+
+<span class="cm">/* Proc#0 randomize the data */</span>
+<span class="cm">/* ..... */</span>
+<span class="c1">// Proc#0 broadcast (a+2)x(b+2) mat</span>
+<span class="n">MPI_Datatype</span> <span class="n">SubMat</span><span class="p">;</span>
+<span class="n">MPI_Type_vector</span><span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">b</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">SubMat</span><span class="p">);</span>
+<span class="n">MPI_Type_commit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">SubMat</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>有了这个数据类型，就不需要纠结于繁琐的边界问题，按照索引计算规则，直接将矩阵$A$ 切割好发送出去。当然索引计算什么的仍然很不友好 <img class="emoji" title=":sweat:" alt=":sweat:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f613.png" height="20" width="20">，不过接收方的代码确实简单不少。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">cols</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">continue</span><span class="p">;</span>
+      <span class="n">MPI_Send</span><span class="p">(</span><span class="n">A</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="n">a</span><span class="o">*</span><span class="n">N</span><span class="o">+</span><span class="n">b</span><span class="o">*</span><span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">SubMat</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="n">cols</span><span class="o">*</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="n">MPI_Recv</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">SubMat</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>开始计算，这边的计算完全和串行程序一致，因为我们只是将矩阵$A$ 和 $B$ 变小了而已。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// compute same as the single version</span>
+<span class="n">comp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>收集计算好的数据。注意到，此时数据类型变化了，因为矩阵$A$ 的格子比$B$的要大一圈，用一个数据类型就无法描述了。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Gather result</span>
+<span class="n">MPI_Datatype</span> <span class="n">SubMat_B</span><span class="p">;</span>
+<span class="n">MPI_Type_vector</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">MPI_DOUBLE</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">SubMat_B</span><span class="p">);</span>
+<span class="n">MPI_Type_commit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">SubMat_B</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">id_procs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">cols</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">continue</span><span class="p">;</span>
+      <span class="n">MPI_Recv</span><span class="p">(</span><span class="o">&amp;</span><span class="n">B</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="n">a</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">*</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">SubMat_B</span><span class="p">,</span> <span class="n">i</span><span class="o">*</span><span class="n">cols</span><span class="o">+</span><span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">id_procs</span> <span class="o">/</span> <span class="n">cols</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="n">id_procs</span> <span class="o">%</span> <span class="n">cols</span><span class="p">;</span>
+  <span class="n">MPI_Send</span><span class="p">(</span><span class="o">&amp;</span><span class="n">B</span><span class="p">[</span><span class="n">INDEX</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">SubMat_B</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>当然，还有很多不同的做法：可以使用 <code class="language-plaintext highlighter-rouge">MPI_Pack</code> 函数对“格子”类型的数据进行打包；也可以用面向对象的思想，直接封装一个 class ；当然也可以用循环这种最笨拙的办法传递“格子”</p>
+
+<p>我的代码实现见 <a href="https://github.com/dingfen/ParallelComputing/tree/master/PP_02">github 仓库</a>。</p>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            tex2jax: {
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            inlineMath: [['$','$']]
+            }
+        });
+    </script>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#mpi" class="page__taxonomy-item" rel="tag">MPI</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#mpi-openmp" class="page__taxonomy-item" rel="tag">MPI&amp;OpenMP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-12-14T00:00:00+08:00">December 14, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E5%AF%B9%E4%B8%80%E5%B9%B6%E8%A1%8C%E7%A8%8B%E5%BA%8F%E5%AE%9E%E9%AA%8C%E7%9A%84%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3%20http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2020%2F12%2F14%2FPP01.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2020%2F12%2F14%2FPP01.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2020%2F12%2F14%2FPP01.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/apollo/2020/11/18/CyberServiceDiscovery.html" class="pagination--pager" title="Apollo Cyber RT 服务与服务发现
+">previous</a>
+    
+    
+      <a href="/mpi&amp;openmp/2020/12/17/PP02.html" class="pagination--pager" title="并行程序中的求和
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap">
+<form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词...">
+  </form>
+  <div id="results" class="results"></div>
+</div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">© 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/mpi&openmp/2020/12/14/PP01.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/mpi&openmp/2020/12/14/PP01"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,820 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>CUDA 中的矩阵乘 - 峰子的乐园</title>
+<meta name="description" content="动手书写 CUDA 核函数">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="CUDA 中的矩阵乘">
+<meta property="og:url" content="http://localhost:4000/mpi&openmp/2021/10/20/cuda-with-matmul.html">
+
+
+  <meta property="og:description" content="动手书写 CUDA 核函数">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2021-10-20T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/mpi&openmp/2021/10/20/cuda-with-matmul.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          CUDA 中的矩阵乘
+
+        
+      </h1>
+      
+        <p class="page__lead">动手书写 CUDA 核函数
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="CUDA 中的矩阵乘">
+    <meta itemprop="description" content="动手书写 CUDA 核函数">
+    <meta itemprop="datePublished" content="2021-10-20T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#cuda-中的矩阵相乘">CUDA 中的矩阵相乘</a>
+    <ul>
+      <li><a href="#矩阵乘法-cpu-实现">矩阵乘法 CPU 实现</a></li>
+      <li><a href="#cuda-的核函数实现">CUDA 的核函数实现</a>
+        <ul>
+          <li><a href="#核函数的优化共享内存">核函数的优化——共享内存</a></li>
+          <li><a href="#核函数的进一步优化">核函数的进一步优化</a></li>
+        </ul>
+      </li>
+      <li><a href="#cublas-版本的实现">cuBLAS 版本的实现</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="cuda-中的矩阵相乘">CUDA 中的矩阵相乘</h1>
+
+<p>矩阵乘中很多计算步骤都十分相似且数据依赖不复杂，所以特别适合使用 GPU 来计算, 利用 GPU 内部的高度并行性，可极大地提高计算速度。</p>
+
+<h2 id="矩阵乘法-cpu-实现">矩阵乘法 CPU 实现</h2>
+
+<p>老规矩，先看看在 CPU 下如何实现矩阵乘法，代码非常简单，直接给出如下：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">matMulCpu</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span> <span class="n">c</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">m</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kt">float</span> <span class="n">sum</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">l</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">;</span> <span class="n">l</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">sum</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="n">l</span><span class="p">]</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="n">l</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="n">j</span><span class="p">];</span>
+            <span class="p">}</span>
+            <span class="n">c</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>对于矩阵 $A_{m\times k} \cdot B_{k\times n} = C_{m\times n}$ 而言：</p>
+<ul>
+  <li>计算次数为$ m \times n \times k $</li>
+  <li>时间复杂度为$ O(n^3) $</li>
+</ul>
+
+<h2 id="cuda-的核函数实现">CUDA 的核函数实现</h2>
+
+<p>仍然计算矩阵 $A_{m\times k} \cdot B_{k\times n} = C_{m\times n}$。但这次使用 GPU 计算。不难想到，可以让每个线程读取 A 中的第 m 行和 B 中的第 n 列，进而计算出 C[m, n]。线程数量控制为 $m \times n$ 个，这样就可以计算出矩阵C。更精确地说，控制线程数量为 <code class="language-plaintext highlighter-rouge">gridDim.x * blockDim.x == n &amp;&amp; girdDim.y * blockDim.y == m</code>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// cuda kernel function</span>
+<span class="n">__global__</span> <span class="kt">void</span> <span class="nf">matMulNaiveGpu</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span> <span class="n">c</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">v</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">v</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">y</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="n">x</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="n">pfMatrixC</span><span class="p">[</span><span class="n">y</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// call in host</span>
+<span class="n">dim3</span> <span class="nf">threadsPerBlock</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+<span class="n">matMulNaiveGpu</span><span class="o">&lt;&lt;&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">threadsPerBlock</span><span class="o">&gt;&gt;&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">);</span>
+</code></pre></div></div>
+<p>同样的，</p>
+<ul>
+  <li>计算次数为$ m \times n \times k $，但有$m \times n$个线程并行</li>
+  <li>时间复杂度为$ O(k) $</li>
+</ul>
+
+<p>但我发现，仅仅以计算次数为优化依据是不够明智的。在上面的程序中，每个线程需要读取 $2 \times k$ 个数据，然后写入一个数据，一共需要读取 $2 \times n \times m \times k$ 个数据。而上述核函数中所有的数据都放在全局内存中，读取数据的速度很有可能比计算速度慢，成为程序提升性能的瓶颈。</p>
+
+<blockquote>
+  <p>线程束（Warp） ：GPU 指令发射和执行的最小单元。由于多种原因，即使用户要求 GPU 只需要用一个线程执行指令，GPU 仍会至少启动一个线程束（大多数为 32 个线程）来发射、执行指令。线程束中的一条指令发射一次, 称为 1 次 “transaction”, 重复发射一次, 称为 1 次 “reply”. 对于 Global Memory 的访问, warp 内的指令需要几次 transaction, 或者说是否会发生 reply, 取决于地址对齐及可合并访问的情况.</p>
+</blockquote>
+
+<h3 id="核函数的优化共享内存">核函数的优化——共享内存</h3>
+
+<p>前面提到，对全局内存的访问虽然已经经过优化，尽量实现了访问合并。但我也发现，对矩阵 A、B 仍很多重复读取操作。例如，一个线程束访问矩阵 A 时，其实是合并访问了（32 个线程合并为一次访问）内存的同一地址，无效的重复有 31 次。访问矩阵 B 时，合并访问（8 个线程合并访问一次，取 32 个字节的数据）。</p>
+
+<p>充分利用 GPU 中的共享内存，可以提高读取写入数据的速度。共享内存通常位于芯片内部，访问延时是全局内存的二十到三十分之一，而带宽高 10 倍，具有低延时、高带宽的特性，但比全局内存小得多，因此可以将短时间内经常访问的数据放入到共享内存中，减少重复访问全局内存的频率，从而提高程序运行速度。</p>
+
+<p>那么，如何充分使用 GPU 中的共享内存呢？一般用 <code class="language-plaintext highlighter-rouge">__shared__</code> 指示数组应放在共享内存上。但共享内存比全局内存要小很多，假设矩阵可以完全放入共享内存是不合理的。为此，必须要对矩阵进行切分。我使用了如下切分方式。</p>
+
+<center>
+<img src="/assets/img/PP/matsplit.png" style="transform:rotate(90deg);" />
+</center>
+
+<p>为更好地说明切分和计算过程，以下图为例，GPU 网格中一共有 16 个线程块，将矩阵按照线程块的数量切分，如下图。然后分行列进行计算。在第一次循环中，将<font color="red">红色的数据块</font>放入所有线程块的共享内存中，可以看到第一次循环时，读取了矩阵 A 的一列和矩阵 B 的一行，于是可以计算出矩阵 C 的部分和。第二次循环，将往右移动读取矩阵 A 的一列，往下移动读取矩阵 B 的一行，那么<font color="orange">橙色的数据块</font>会被读入共享内存中，再计算矩阵 C 的部分和，不断循环累加，就可以计算出矩阵 C。</p>
+
+<center>
+<img src="/assets/img/PP/matmul_shared.png" />
+</center>
+
+<p>下面的程序就是根据上述流程编写出来的。首先声明各个标识变量和共享内存（使用 <code class="language-plaintext highlighter-rouge">__shared__</code>）。重点在于下面的循环，先计算矩阵的宽度可以容纳多少个线程块覆盖，然后是分别读取矩阵 A 和 B 的对应列行，对索引计算需要格外仔细。读取完成后，需要加上 <code class="language-plaintext highlighter-rouge">__syncthreads()</code> 语句，确保所有线程已经读取完成，再开始下面的计算，同样也要加上 <code class="language-plaintext highlighter-rouge">__syncthreads()</code> 来保证所有线程都已经完成。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">matMulProGpu</span><span class="p">(</span><span class="kt">float</span><span class="o">*</span> <span class="n">c</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span><span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">tidy</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">tidx</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">v</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+
+    <span class="n">__shared__</span> <span class="kt">float</span> <span class="n">as</span><span class="p">[</span><span class="n">BLOCK_SIZE</span><span class="p">][</span><span class="n">BLOCK_SIZE</span><span class="p">];</span>
+    <span class="n">__shared__</span> <span class="kt">float</span> <span class="n">bs</span><span class="p">[</span><span class="n">BLOCK_SIZE</span><span class="p">][</span><span class="n">BLOCK_SIZE</span><span class="p">];</span>
+
+    <span class="kt">int</span> <span class="n">tilesx</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">BLOCK_SIZE</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">BLOCK_SIZE</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">tilesx</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// load data from global memory to shared memory</span>
+        <span class="n">as</span><span class="p">[</span><span class="n">tidy</span><span class="p">][</span><span class="n">tidx</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">y</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">BLOCK_SIZE</span> <span class="o">+</span> <span class="n">tidx</span><span class="p">];</span>
+        <span class="n">bs</span><span class="p">[</span><span class="n">tidy</span><span class="p">][</span><span class="n">tidx</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[(</span><span class="n">i</span> <span class="o">*</span> <span class="n">BLOCK_SIZE</span> <span class="o">+</span> <span class="n">tidy</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="n">x</span><span class="p">];</span>
+
+        <span class="c1">// sync to wait for all threads in one block to finish loading datas</span>
+        <span class="n">__syncthreads</span><span class="p">();</span>
+
+        <span class="c1">// sub-matrix multiply</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">l</span> <span class="o">&lt;</span> <span class="n">BLOCK_SIZE</span><span class="p">;</span> <span class="n">l</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">v</span> <span class="o">+=</span> <span class="n">as</span><span class="p">[</span><span class="n">tidy</span><span class="p">][</span><span class="n">l</span><span class="p">]</span> <span class="o">*</span> <span class="n">bs</span><span class="p">[</span><span class="n">l</span><span class="p">][</span><span class="n">tidx</span><span class="p">];</span>
+        <span class="p">}</span>
+
+        <span class="c1">// sync to wait for all threads in one block to finish compute</span>
+        <span class="n">__syncthreads</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="c1">// store results into global memory</span>
+    <span class="n">c</span><span class="p">[</span><span class="n">y</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="核函数的进一步优化">核函数的进一步优化</h3>
+
+<h2 id="cublas-版本的实现">cuBLAS 版本的实现</h2>
+
+<p>cuBlAS 是 NVidia 对传统 BLAS（Basic Liner Algebra Subprograms，基本线性代数子程序库）的 GPU 实现，因为 BLAS 最初是由 FORTRAN 语言实现，为了最大程度地遵循传统，NVidia 在实现时，保留了大量 BLAS 和 Fortran 语言的特点，比如以列优先存储数组，索引从 1 开始计数等。但这些“落后于时代”的特征，往往给现代程序员制造了不少麻烦。</p>
+
+<p>cuBLAS 最早在 CUDA6.0 中出现，现在（v11.5.0）包含3类 API</p>
+
+<ul>
+  <li>cuBLAS API</li>
+  <li>cuBLASXt API</li>
+  <li>cuBLASLt API</li>
+</ul>
+
+<p>若用户要使用 cuBLAS API，那么应该：</p>
+
+<ol>
+  <li>分配矩阵或向量所需的 GPU 内存空间，并加载数据到 GPU 上</li>
+  <li>调用所需的 cuBLAS 函数</li>
+  <li>将计算结果传输至主机，cuBLAS API也提供一些帮助函数来写或者读取数据从 GPU 中</li>
+</ol>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">m_size</span> <span class="o">*</span> <span class="nf">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span>
+<span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">m_size</span> <span class="o">*</span> <span class="nf">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span>
+<span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="kt">float</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">m_size</span> <span class="o">*</span> <span class="nf">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">));</span>
+
+<span class="n">cudaMalloc</span><span class="p">((</span><span class="kt">void</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dev_a</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">m_size</span><span class="p">);</span>
+<span class="n">cudaMalloc</span><span class="p">((</span><span class="kt">void</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dev_b</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">m_size</span><span class="p">);</span>
+<span class="n">cudaMalloc</span><span class="p">((</span><span class="kt">void</span> <span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dev_c</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">m_size</span><span class="p">);</span>
+
+<span class="c1">// initialize CUBLAS context</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">cublasCreate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">handle</span><span class="p">);</span>
+
+<span class="n">stat</span> <span class="o">=</span> <span class="n">cublasSetMatrix</span><span class="p">(</span><span class="n">r_size</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">mat1</span><span class="p">),</span> <span class="n">mat1</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="n">g_mat1</span><span class="p">,</span> <span class="n">r_size</span><span class="p">);</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">cublasSetMatrix</span><span class="p">(</span><span class="n">r_size</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">mat2</span><span class="p">),</span> <span class="n">mat2</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="n">g_mat2</span><span class="p">,</span> <span class="n">r_size</span><span class="p">);</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">cublasSetMatrix</span><span class="p">(</span><span class="n">r_size</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">result</span><span class="p">),</span> <span class="n">result</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="n">g_mat_result</span><span class="p">,</span> <span class="n">r_size</span><span class="p">);</span>
+
+<span class="kt">float</span> <span class="n">al</span> <span class="o">=</span> <span class="mf">1.0</span><span class="n">f</span><span class="p">;</span>
+<span class="kt">float</span> <span class="n">bet</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+    
+<span class="n">stat</span> <span class="o">=</span> <span class="n">cublasSgemm</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">CUBLAS_OP_N</span><span class="p">,</span> <span class="n">CUBLAS_OP_N</span><span class="p">,</span> 
+        <span class="n">r_size</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">al</span><span class="p">,</span> <span class="n">g_mat1</span><span class="p">,</span> 
+        <span class="n">r_size</span><span class="p">,</span> <span class="n">g_mat2</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">bet</span><span class="p">,</span> <span class="n">g_mat_result</span><span class="p">,</span> <span class="n">r_size</span><span class="p">);</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">cublasGetMatrix</span><span class="p">(</span><span class="n">r_size</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">result</span><span class="p">),</span> <span class="n">g_mat_result</span><span class="p">,</span> <span class="n">r_size</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">r_size</span><span class="p">);</span>
+</code></pre></div></div>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cuda" class="page__taxonomy-item" rel="tag">CUDA</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#mpi-openmp" class="page__taxonomy-item" rel="tag">MPI&OpenMP</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2021-10-20T00:00:00+08:00">October 20, 2021</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=CUDA+%E4%B8%AD%E7%9A%84%E7%9F%A9%E9%98%B5%E4%B9%98%20http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F20%2Fcuda-with-matmul.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F20%2Fcuda-with-matmul.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fmpi%26openmp%2F2021%2F10%2F20%2Fcuda-with-matmul.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/mpi&openmp/2021/10/08/cuda-beginer.html" class="pagination--pager" title="CUDA 快速入门
+">previous</a>
+    
+    
+      <a href="/cpp/2021/11/15/Qt-signal-slot.html" class="pagination--pager" title="信号槽机制的简陋实现
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  7 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2021/10/08/cuda-beginer.html" rel="permalink">CUDA 快速入门
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  4 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">代码驱动学习法
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/mpi&openmp/2021/10/20/cuda-with-matmul.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/mpi&openmp/2021/10/20/cuda-with-matmul"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>
