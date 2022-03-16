@@ -258,8 +258,14 @@ var store = [{
         "teaser": "/assets/img/teaser.jpg"
       },{
         "title": "深入理解 Gem5 之二",
-        "excerpt":"深入理解 Gem5 之二 Drain DrainState 之前的博文详细解释了事件在 gem5 的作用以及其实现机制。本文开始介绍 gem5 中其他比较重要的机制。 当 gem5 正常运行时，模拟器中的对象在一开始时都处于 DrainState::Running 状态，并用事件驱动模拟器的运行，这会导致很多对象在运行时处于似是而非的状态——部分信号正在传递，部分程序正在运行，缓冲区还待处理等。然而，模拟器总要在某些时刻有所停顿——准备快照（snapshot）、准备移交 CPU 等。这时候就需要引入 drain 的概念，将这些中间态清除。drain 指系统清空 SimObject 对象中内部状态的过程。通常，drain 会在序列化、创建检查点、切换 CPU 模型或 timing 模型前使用。对象会调用 drain() 函数将对象转移到 draining 或 drained 状态。然后进入 drained 状态。下面的代码介绍了四种 drain 状态。 enum class DrainState { Running, /**&lt; Running normally */ Draining, /**&lt; Draining buffers...","categories": ["Cpp"],
+        "excerpt":"深入理解 Gem5 之二 紧接着对 gem5 事件机制的研究，本篇博文我重点研究了 gem5 中对象序列化的操作。总的来说，gem5 在对模拟器中的对象序列化前，需要先将其排水（Drain，由于中文翻译的限制，下文统称为 Drain），将不确定的状态先清除，等到一切安排妥当后，再将对象序列化到磁盘中。 Drain DrainState 之前的博文详细解释了事件在 gem5 的作用以及其实现机制。本文开始介绍 gem5 中其他比较重要的机制。 当 gem5 正常运行时，模拟器中的对象在一开始时都处于 DrainState::Running 状态，并用事件驱动模拟器的运行，这会导致很多对象在运行时处于似是而非的状态——部分信号正在传递，部分程序正在运行，缓冲区还待处理等。然而，模拟器总要在某些时刻有所停顿——准备快照（snapshot）、准备移交 CPU 等。这时候就需要引入 drain 的概念，将这些中间态清除。drain 指系统清空 SimObject 对象中内部状态的过程。通常，drain 会在序列化、创建检查点、切换 CPU 模型或 timing 模型前使用。对象会调用 drain() 函数将对象转移到 draining 或 drained 状态。然后进入 drained 状态。下面的代码介绍了四种 drain 状态。 enum class DrainState { Running, /**&lt;...","categories": ["Cpp"],
         "tags": ["gem5","Cpp"],
         "url": "/cpp/2022/03/08/gem5-2.html",
+        "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "深入理解 Gem5 之三",
+        "excerpt":"深入理解 Gem5 之三——SimObject 之前的两篇博文分别介绍了 gem5 的事件触发机制和序列化问题，它们都和 SimObject 类有密切的联系。正所谓万事俱备，只欠东风。基于目前的理解，我可以更深入地看看 SimObject 类的实现方式。 父类 SimObject 类是一个非常复杂但又十分重要的类。理解该类的实现有助于我们理解整个 gem5 模拟器的运作逻辑。它的父类就有 5 个：EventManger、Serializable、Drainable、statistics::Group、Named。 class SimObject : public EventManager, public Serializable, public Drainable, public statistics::Group, public Named 其中仅有 statistics::Group 类我未作介绍，最后来理解一下 statistics::Group 的作用及实现。 statistics::Group statistics 是 gem5 项目中C++的一个命名空间，statistics::Group 类是统计数据的容器。Group 对象之间可组成一个树状的层次结构。数据统计子系统用 Groups 之间的关系来反推 SimObject 层次结构，并暴露对象内部的层次结构，从而可以更方便地将统计数据分组到它们自己的类中，然后合并到父类 Group（通常是一个 SimObject）中。 Group 类中，有一个指向父节点的指针，以及包含本级信息的数组...","categories": ["Cpp"],
+        "tags": ["gem5","Cpp"],
+        "url": "/cpp/2022/03/13/gem5-3.html",
         "teaser": "/assets/img/teaser.jpg"
       }]

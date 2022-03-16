@@ -1,4 +1,77 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2022-03-13T14:55:52+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">峰子的乐园</title><subtitle>a small but pretty website for me</subtitle><author><name>Bill Ding</name></author><entry><title type="html">深入理解 Gem5 之二</title><link href="http://localhost:4000/cpp/2022/03/08/gem5-2.html" rel="alternate" type="text/html" title="深入理解 Gem5 之二" /><published>2022-03-08T00:00:00+08:00</published><updated>2022-03-08T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2022/03/08/gem5-2</id><content type="html" xml:base="http://localhost:4000/cpp/2022/03/08/gem5-2.html">&lt;h1 id=&quot;深入理解-gem5-之二&quot;&gt;深入理解 Gem5 之二&lt;/h1&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="https://dingfen.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://dingfen.github.io/" rel="alternate" type="text/html" /><updated>2022-03-16T23:27:05+08:00</updated><id>https://dingfen.github.io/feed.xml</id><title type="html">峰子的乐园</title><subtitle>a small but pretty website for me</subtitle><author><name>Bill Ding</name></author><entry><title type="html">深入理解 Gem5 之三</title><link href="https://dingfen.github.io/cpp/2022/03/13/gem5-3.html" rel="alternate" type="text/html" title="深入理解 Gem5 之三" /><published>2022-03-13T00:00:00+08:00</published><updated>2022-03-13T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2022/03/13/gem5-3</id><content type="html" xml:base="https://dingfen.github.io/cpp/2022/03/13/gem5-3.html">&lt;h1 id=&quot;深入理解-gem5-之三simobject&quot;&gt;深入理解 Gem5 之三——SimObject&lt;/h1&gt;
+
+&lt;p&gt;之前的两篇博文分别介绍了 gem5 的&lt;a href=&quot;https://dingfen.github.io/cpp/2022/02/24/gem5-1.html&quot;&gt;事件触发机制&lt;/a&gt;和&lt;a href=&quot;https://dingfen.github.io/cpp/2022/03/08/gem5-2.html&quot;&gt;序列化问题&lt;/a&gt;，它们都和 SimObject 类有密切的联系。正所谓万事俱备，只欠东风。基于目前的理解，我可以更深入地看看 SimObject 类的实现方式。&lt;/p&gt;
+
+&lt;h2 id=&quot;父类&quot;&gt;父类&lt;/h2&gt;
+
+&lt;p&gt;SimObject 类是一个非常复杂但又十分重要的类。理解该类的实现有助于我们理解整个 gem5 模拟器的运作逻辑。它的父类就有 5 个：EventManger、Serializable、Drainable、statistics::Group、Named。&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;SimObject&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;EventManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Serializable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Drainable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;statistics&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Named&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;其中仅有 statistics::Group 类我未作介绍，最后来理解一下 statistics::Group 的作用及实现。&lt;/p&gt;
+
+&lt;h3 id=&quot;statisticsgroup&quot;&gt;statistics::Group&lt;/h3&gt;
+
+&lt;p&gt;statistics 是 gem5 项目中C++的一个命名空间，statistics::Group 类是统计数据的容器。Group 对象之间可组成一个&lt;strong&gt;树状的层次结构&lt;/strong&gt;。数据统计子系统用 Groups 之间的关系来反推 SimObject 层次结构，并暴露对象内部的层次结构，从而可以更方便地将统计数据分组到它们自己的类中，然后合并到父类 Group（通常是一个 SimObject）中。&lt;/p&gt;
+
+&lt;p&gt;Group 类中，有一个指向父节点的指针，以及包含本级信息的数组 stats，和包含了子类 Group 数组的 statGroups 和 mergedStatGroups。&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;cm&quot;&gt;/** Parent pointer if merged into parent */&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mergedParent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;statGroups&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vector&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mergedStatGroups&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;vector&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Info&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;stats&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;parent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mergedParent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;nullptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;parent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;parent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;addStatGroup&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;parent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;parent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mergeStatGroup&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;从构造函数可以看出，当子类 Group 未提供姓名时，使用 mergedStatGroups 存储信息。Group 类可以很轻松地构造出复杂的树状层次，例如：&lt;/p&gt;
+
+&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;// test code&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;statistics&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;root&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;nullptr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;statistics&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;node1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;root&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Node1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;statistics&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;node2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;root&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Node2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;statistics&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;node1_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;node1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Node1_1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;statistics&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;node2_1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;node2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Node2_1&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;statistics&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;node2_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;node2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Node2_2&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;cm&quot;&gt;/* we can get
+ *        root
+ *       /     \
+ *  node1       node2
+ *    |        /     \
+ * node1_1  node2_1 node2_2
+ */&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;gem5 中用 Info 类维护统计数据以及对象的基本信息，由于和本篇博文主题关系不大，不再赘述。&lt;/p&gt;
+
+&lt;h3 id=&quot;小结&quot;&gt;小结&lt;/h3&gt;
+
+&lt;p&gt;在正式开始之前，再回顾一下五个父类各自的作用：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;EventManager 类：负责调度、管理、执行事件。EventManager 类是对 EventQueue 类的包装，SimObject 对象中所有的事件实际都由 EventQueue 队列管理。该队列以二维的单链表的形式管理着所有事件，事件以触发时间点从近到远排列。&lt;/li&gt;
+  &lt;li&gt;Serializable 类：负责对象的序列化。SimObjects 可通过 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SimObject::serializeAll()&lt;/code&gt; 函数自动完成序列化，写入到自己的 sections 中。Serializable 类根据 SimObject 类对象的名字以及对象间的包含关系，帮助用户构建起了层次化的序列化模型，并使用该模型完成 SimObject 的序列化，以 ini 文件格式输出。&lt;/li&gt;
+  &lt;li&gt;Drainable 类：负责 drain 对象。DrainManager 类以单例的方式管理整个模拟器的 drain 过程。只有系统中所有的对象都被 drained，才能开始序列化、更改模型等操作。完成后需要使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DrainManager::resume()&lt;/code&gt; 函数将系统回归到正常运行状态。&lt;/li&gt;
+  &lt;li&gt;statistics::Group 类：负责运行过程中统计、管理数据。Group 对象之间可组成树状层次，从而反应出 SimObject 对象间的树状层次。&lt;/li&gt;
+  &lt;li&gt;Name 类：负责给 SimObject 起名。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;##&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">关于gem5中SimObject类</summary></entry><entry><title type="html">深入理解 Gem5 之二</title><link href="https://dingfen.github.io/cpp/2022/03/08/gem5-2.html" rel="alternate" type="text/html" title="深入理解 Gem5 之二" /><published>2022-03-08T00:00:00+08:00</published><updated>2022-03-08T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2022/03/08/gem5-2</id><content type="html" xml:base="https://dingfen.github.io/cpp/2022/03/08/gem5-2.html">&lt;h1 id=&quot;深入理解-gem5-之二&quot;&gt;深入理解 Gem5 之二&lt;/h1&gt;
+
+&lt;p&gt;紧接着对 &lt;a href=&quot;https://dingfen.github.io/cpp/2022/02/24/gem5-1.html&quot;&gt;gem5 事件机制&lt;/a&gt;的研究，本篇博文我重点研究了 gem5 中对象序列化的操作。总的来说，gem5 在对模拟器中的对象序列化前，需要先将其排水（Drain，由于中文翻译的限制，下文统称为 Drain），将不确定的状态先清除，等到一切安排妥当后，再将对象序列化到磁盘中。&lt;/p&gt;
 
 &lt;h2 id=&quot;drain&quot;&gt;Drain&lt;/h2&gt;
 
@@ -302,7 +375,7 @@ build/&amp;lt;ISA&amp;gt;/gem5.debug configs/example/fs.py &lt;span class=&quot;
     &lt;span class=&quot;n&quot;&gt;fatal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Unable to open file %s for writing&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cpt_file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c_str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
   &lt;span class=&quot;n&quot;&gt;outstream&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;## checkpoint generated: &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ctime&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;t&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">关于gem5中序列化等实现</summary></entry><entry><title type="html">深入理解 Gem5 之一</title><link href="http://localhost:4000/cpp/2022/02/24/gem5-1.html" rel="alternate" type="text/html" title="深入理解 Gem5 之一" /><published>2022-02-24T00:00:00+08:00</published><updated>2022-02-24T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2022/02/24/gem5-1</id><content type="html" xml:base="http://localhost:4000/cpp/2022/02/24/gem5-1.html">&lt;h1 id=&quot;深入理解-gem5-之一&quot;&gt;深入理解 Gem5 之一&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">关于gem5中序列化等实现</summary></entry><entry><title type="html">深入理解 Gem5 之一</title><link href="https://dingfen.github.io/cpp/2022/02/24/gem5-1.html" rel="alternate" type="text/html" title="深入理解 Gem5 之一" /><published>2022-02-24T00:00:00+08:00</published><updated>2022-02-24T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2022/02/24/gem5-1</id><content type="html" xml:base="https://dingfen.github.io/cpp/2022/02/24/gem5-1.html">&lt;h1 id=&quot;深入理解-gem5-之一&quot;&gt;深入理解 Gem5 之一&lt;/h1&gt;
 
 &lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
@@ -828,7 +901,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HelloObject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;startup&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;schedule&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">关于gem5事件的实现</summary></entry><entry><title type="html">信号槽机制的简陋实现</title><link href="http://localhost:4000/cpp/2021/11/15/Qt-signal-slot.html" rel="alternate" type="text/html" title="信号槽机制的简陋实现" /><published>2021-11-15T00:00:00+08:00</published><updated>2021-11-15T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2021/11/15/Qt-signal-slot</id><content type="html" xml:base="http://localhost:4000/cpp/2021/11/15/Qt-signal-slot.html">&lt;h1 id=&quot;qt-信号槽机制的简陋实现&quot;&gt;Qt 信号槽机制的简陋实现&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">关于gem5事件的实现</summary></entry><entry><title type="html">信号槽机制的简陋实现</title><link href="https://dingfen.github.io/cpp/2021/11/15/Qt-signal-slot.html" rel="alternate" type="text/html" title="信号槽机制的简陋实现" /><published>2021-11-15T00:00:00+08:00</published><updated>2021-11-15T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2021/11/15/Qt-signal-slot</id><content type="html" xml:base="https://dingfen.github.io/cpp/2021/11/15/Qt-signal-slot.html">&lt;h1 id=&quot;qt-信号槽机制的简陋实现&quot;&gt;Qt 信号槽机制的简陋实现&lt;/h1&gt;
 
 &lt;p&gt;最近科研中碰到了一个需要实现信号触发机制的场景。我第一时间想到了 Qt 的信号槽机制。但可惜服务器上没有 Qt 的相关环境，因此需要自己实现一个简陋的信号触发机制。&lt;/p&gt;
 
@@ -1090,7 +1163,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 &lt;h2 id=&quot;小结&quot;&gt;小结&lt;/h2&gt;
 
-&lt;p&gt;通过自己不断思考尝试，实现了 Qt 信号槽机制的简陋版。在失去了 MOC 机制后，编写自己的槽机制会有点丑陋，并且有很多地方需要改进，先勉强用上吧。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="Qt" /><category term="Cpp" /></entry><entry><title type="html">CUDA 中的矩阵乘</title><link href="http://localhost:4000/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="alternate" type="text/html" title="CUDA 中的矩阵乘" /><published>2021-10-20T00:00:00+08:00</published><updated>2021-10-20T00:00:00+08:00</updated><id>http://localhost:4000/mpi&amp;openmp/2021/10/20/cuda-with-matmul</id><content type="html" xml:base="http://localhost:4000/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html">&lt;h1 id=&quot;cuda-中的矩阵相乘&quot;&gt;CUDA 中的矩阵相乘&lt;/h1&gt;
+&lt;p&gt;通过自己不断思考尝试，实现了 Qt 信号槽机制的简陋版。在失去了 MOC 机制后，编写自己的槽机制会有点丑陋，并且有很多地方需要改进，先勉强用上吧。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="Qt" /><category term="Cpp" /></entry><entry><title type="html">CUDA 中的矩阵乘</title><link href="https://dingfen.github.io/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="alternate" type="text/html" title="CUDA 中的矩阵乘" /><published>2021-10-20T00:00:00+08:00</published><updated>2021-10-20T00:00:00+08:00</updated><id>https://dingfen.github.io/mpi&amp;openmp/2021/10/20/cuda-with-matmul</id><content type="html" xml:base="https://dingfen.github.io/mpi&amp;openmp/2021/10/20/cuda-with-matmul.html">&lt;h1 id=&quot;cuda-中的矩阵相乘&quot;&gt;CUDA 中的矩阵相乘&lt;/h1&gt;
 
 &lt;p&gt;矩阵乘中很多计算步骤都十分相似且数据依赖不复杂，所以特别适合使用 GPU 来计算, 利用 GPU 内部的高度并行性，可极大地提高计算速度。&lt;/p&gt;
 
@@ -1244,7 +1317,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
         &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;al&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g_mat1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
         &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g_mat2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g_mat_result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;n&quot;&gt;stat&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cublasGetMatrix&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;g_mat_result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;result&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;r_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">动手书写 CUDA 核函数</summary></entry><entry><title type="html">CUDA 快速入门</title><link href="http://localhost:4000/mpi&openmp/2021/10/08/cuda-beginer.html" rel="alternate" type="text/html" title="CUDA 快速入门" /><published>2021-10-08T00:00:00+08:00</published><updated>2021-10-08T00:00:00+08:00</updated><id>http://localhost:4000/mpi&amp;openmp/2021/10/08/cuda-beginer</id><content type="html" xml:base="http://localhost:4000/mpi&amp;openmp/2021/10/08/cuda-beginer.html">&lt;h1 id=&quot;cuda-快速入门&quot;&gt;CUDA 快速入门&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">动手书写 CUDA 核函数</summary></entry><entry><title type="html">CUDA 快速入门</title><link href="https://dingfen.github.io/mpi&openmp/2021/10/08/cuda-beginer.html" rel="alternate" type="text/html" title="CUDA 快速入门" /><published>2021-10-08T00:00:00+08:00</published><updated>2021-10-08T00:00:00+08:00</updated><id>https://dingfen.github.io/mpi&amp;openmp/2021/10/08/cuda-beginer</id><content type="html" xml:base="https://dingfen.github.io/mpi&amp;openmp/2021/10/08/cuda-beginer.html">&lt;h1 id=&quot;cuda-快速入门&quot;&gt;CUDA 快速入门&lt;/h1&gt;
 
 &lt;p&gt;欢迎来到 CUDA 的世界。本文集中讲述了最基本的 CUDA 知识，供自己以及各位速查。&lt;/p&gt;
 
@@ -1540,7 +1613,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
   &lt;span class=&quot;n&quot;&gt;free&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v_h&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
   &lt;span class=&quot;n&quot;&gt;cudaFree&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;v_d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">代码驱动学习法</summary></entry><entry><title type="html">CUDA 中的向量内积</title><link href="http://localhost:4000/mpi&openmp/2021/10/03/cuda-with-dotproduct.html" rel="alternate" type="text/html" title="CUDA 中的向量内积" /><published>2021-10-03T00:00:00+08:00</published><updated>2021-10-03T00:00:00+08:00</updated><id>http://localhost:4000/mpi&amp;openmp/2021/10/03/cuda-with-dotproduct</id><content type="html" xml:base="http://localhost:4000/mpi&amp;openmp/2021/10/03/cuda-with-dotproduct.html">&lt;h1 id=&quot;cuda-中的向量内积&quot;&gt;CUDA 中的向量内积&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">代码驱动学习法</summary></entry><entry><title type="html">CUDA 中的向量内积</title><link href="https://dingfen.github.io/mpi&openmp/2021/10/03/cuda-with-dotproduct.html" rel="alternate" type="text/html" title="CUDA 中的向量内积" /><published>2021-10-03T00:00:00+08:00</published><updated>2021-10-03T00:00:00+08:00</updated><id>https://dingfen.github.io/mpi&amp;openmp/2021/10/03/cuda-with-dotproduct</id><content type="html" xml:base="https://dingfen.github.io/mpi&amp;openmp/2021/10/03/cuda-with-dotproduct.html">&lt;h1 id=&quot;cuda-中的向量内积&quot;&gt;CUDA 中的向量内积&lt;/h1&gt;
 
 &lt;p&gt;博主本科时略学过 CUDA 编程的相关知识，但远算不上熟练，更谈不上精通。恰好本人对并行计算很感兴趣，这几天实现了一下最基础的向量内积，对以前的知识做了一点总结，算是温故而知新，可以为师矣。&lt;/p&gt;
 
@@ -1700,7 +1773,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
   &lt;span class=&quot;n&quot;&gt;free&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
   &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cudaSuccess&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">动手书写 CUDA 核函数</summary></entry><entry><title type="html">初学 Qt（一）</title><link href="http://localhost:4000/cpp/2021/09/24/Qt-Chess.html" rel="alternate" type="text/html" title="初学 Qt（一）" /><published>2021-09-24T00:00:00+08:00</published><updated>2021-09-24T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2021/09/24/Qt-Chess</id><content type="html" xml:base="http://localhost:4000/cpp/2021/09/24/Qt-Chess.html">&lt;h1 id=&quot;初学-qt-之从零开始的中国象棋小游戏一&quot;&gt;初学 Qt 之从零开始的中国象棋小游戏（一）&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">动手书写 CUDA 核函数</summary></entry><entry><title type="html">初学 Qt（一）</title><link href="https://dingfen.github.io/cpp/2021/09/24/Qt-Chess.html" rel="alternate" type="text/html" title="初学 Qt（一）" /><published>2021-09-24T00:00:00+08:00</published><updated>2021-09-24T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2021/09/24/Qt-Chess</id><content type="html" xml:base="https://dingfen.github.io/cpp/2021/09/24/Qt-Chess.html">&lt;h1 id=&quot;初学-qt-之从零开始的中国象棋小游戏一&quot;&gt;初学 Qt 之从零开始的中国象棋小游戏（一）&lt;/h1&gt;
 
 &lt;p&gt;最近对 Qt 这个跨平台 C++ 图形应用程序框架很感兴趣，闲暇时间多学了一下，收获很多，也踩了不少坑，在这里记录一下，分享心得。&lt;/p&gt;
 
@@ -1814,7 +1887,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
   &lt;li&gt;远程玩家对战功能（双人游戏）&lt;/li&gt;
   &lt;li&gt;对局的复盘模式&lt;/li&gt;
   &lt;li&gt;AI 对战情景的进一步优化&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="Qt" /><category term="Cpp" /><summary type="html">用 C++ 写小游戏</summary></entry><entry><title type="html">在 Linux 中更好地使用C/C++语言</title><link href="http://localhost:4000/cpp/2021/08/25/tricks-in-LinuxC.html" rel="alternate" type="text/html" title="在 Linux 中更好地使用C/C++语言" /><published>2021-08-25T00:00:00+08:00</published><updated>2021-08-25T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2021/08/25/tricks-in-LinuxC</id><content type="html" xml:base="http://localhost:4000/cpp/2021/08/25/tricks-in-LinuxC.html">&lt;h2 id=&quot;一linux下的命令行处理&quot;&gt;一、Linux下的命令行处理&lt;/h2&gt;
+&lt;/ul&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="Qt" /><category term="Cpp" /><summary type="html">用 C++ 写小游戏</summary></entry><entry><title type="html">在 Linux 中更好地使用C/C++语言</title><link href="https://dingfen.github.io/cpp/2021/08/25/tricks-in-LinuxC.html" rel="alternate" type="text/html" title="在 Linux 中更好地使用C/C++语言" /><published>2021-08-25T00:00:00+08:00</published><updated>2021-08-25T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2021/08/25/tricks-in-LinuxC</id><content type="html" xml:base="https://dingfen.github.io/cpp/2021/08/25/tricks-in-LinuxC.html">&lt;h2 id=&quot;一linux下的命令行处理&quot;&gt;一、Linux下的命令行处理&lt;/h2&gt;
 
 &lt;h3 id=&quot;c-语言中命令行参数&quot;&gt;C 语言中命令行参数&lt;/h3&gt;
 
@@ -2114,7 +2187,7 @@ extra arguments: 2
 
 &lt;p&gt;这些函数的转换关系，可以用这一张图概括：&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/time.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="Linux" /><category term="C" /><summary type="html">边写边熟练</summary></entry><entry><title type="html">C语言中容易忽视的小知识</title><link href="http://localhost:4000/cpp/2021/08/23/non-trivial-thing-in-C.html" rel="alternate" type="text/html" title="C语言中容易忽视的小知识" /><published>2021-08-23T00:00:00+08:00</published><updated>2021-08-23T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2021/08/23/non-trivial-thing-in-C</id><content type="html" xml:base="http://localhost:4000/cpp/2021/08/23/non-trivial-thing-in-C.html">&lt;h2 id=&quot;一在c文件中引用c函数&quot;&gt;一、在C文件中引用C++函数&lt;/h2&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/img/time.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="Linux" /><category term="C" /><summary type="html">边写边熟练</summary></entry><entry><title type="html">C语言中容易忽视的小知识</title><link href="https://dingfen.github.io/cpp/2021/08/23/non-trivial-thing-in-C.html" rel="alternate" type="text/html" title="C语言中容易忽视的小知识" /><published>2021-08-23T00:00:00+08:00</published><updated>2021-08-23T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2021/08/23/non-trivial-thing-in-C</id><content type="html" xml:base="https://dingfen.github.io/cpp/2021/08/23/non-trivial-thing-in-C.html">&lt;h2 id=&quot;一在c文件中引用c函数&quot;&gt;一、在C文件中引用C++函数&lt;/h2&gt;
 
 &lt;ol&gt;
   &lt;li&gt;将要使用的函数声明放在一个头文件中&lt;/li&gt;
@@ -2477,195 +2550,4 @@ extra arguments: 2
   &lt;li&gt;Type attributes described &lt;a href=&quot;http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html&quot;&gt;here&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;这里就不一一介绍了。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="C" /><summary type="html">触及到你知识盲区的东西</summary></entry><entry><title type="html">熟练使用 Vim</title><link href="http://localhost:4000/miscellaneous/2021/08/22/VimTech.html" rel="alternate" type="text/html" title="熟练使用 Vim" /><published>2021-08-22T00:00:00+08:00</published><updated>2021-08-22T00:00:00+08:00</updated><id>http://localhost:4000/miscellaneous/2021/08/22/VimTech</id><content type="html" xml:base="http://localhost:4000/miscellaneous/2021/08/22/VimTech.html">&lt;h1 id=&quot;vim-小技巧&quot;&gt;Vim 小技巧&lt;/h1&gt;
-
-&lt;h2 id=&quot;情景一自动写入文件头&quot;&gt;情景一：自动写入文件头&lt;/h2&gt;
-
-&lt;p&gt;在编写 C++ 程序时，总有一些东西会在每个头文件中出现，比如：&lt;/p&gt;
-
-&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#ifndef &amp;lt;_File_Name_MACRO_&amp;gt;
-#define &amp;lt;_File_Name_MACRO_&amp;gt;
-&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;// ...&lt;/span&gt;
-&lt;span class=&quot;cp&quot;&gt;#endif // &amp;lt;_File_Name_MACRO_&amp;gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;每次键入这些信息会非常枯燥。但只要熟练使用 Vim ，就可以逃避这些烦人的操作。&lt;em&gt;如有需要，直接拉到最后复制粘贴&lt;/em&gt;。&lt;/p&gt;
-
-&lt;h3 id=&quot;autocmd&quot;&gt;autocmd&lt;/h3&gt;
-
-&lt;p&gt;vim 中自带的自动命令，会在&lt;strong&gt;指定事件发生时&lt;/strong&gt;自动执行。巧妙地利用自动命令就可以迅速完成上面场景的要求，将重复的操作自动化，提高编辑效率并减少人为操作的差错。&lt;/p&gt;
-
-&lt;p&gt;举例来说，先定义以下函数，用于在文件中插入当前日期：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;:function DateInsert&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-:    &lt;span class=&quot;nv&quot;&gt;$read&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;date&lt;/span&gt;
-:endfunction
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;使用以下命令，可以手动调用此函数：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;:call DateInsert&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;而若使用自动命令，则可以在保存文件时自动执行函数，其中 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;FileWritePre&lt;/code&gt; 是 vim 中的内置事件：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;:autocmd FileWritePre &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt; :call DateInsert&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;也可以用简写 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;:au&lt;/code&gt; 代替 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;:autocmd&lt;/code&gt;。内置事件有很多种，参考&lt;a href=&quot;https://zhuanlan.zhihu.com/p/98360630&quot;&gt;知乎专栏&lt;/a&gt;罗列在此，官方文档可见 &lt;a href=&quot;http://vimdoc.sourceforge.net/htmldoc/autocmd.html&quot;&gt;Vim Doc&lt;/a&gt;：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/img/vim_event.jpg&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;再回到情景一的问题中，如果要想在创建新的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.hpp&lt;/code&gt; 文件后，让 vim 自动添加文件头，应当在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vimrc&lt;/code&gt; 中添加：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# 自定义命令，发生在编辑新的文件时，且文件名后缀为hpp，需要执行&quot;call AddHPPHeader&quot;&lt;/span&gt;
-autocmd BufNewFile &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;.hpp &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;:call AddHPPHeader()&quot;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;h3 id=&quot;关于函数&quot;&gt;关于函数&lt;/h3&gt;
-
-&lt;p&gt;那么，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AddHPPHeader&lt;/code&gt; 函数应该怎么写呢？首先，在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vimrc&lt;/code&gt; 中，需要定义函数 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AddHPPHeader&lt;/code&gt; ：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;func AddHPPHeader&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-	&lt;span class=&quot;c&quot;&gt;# ...&lt;/span&gt;
-endfunc
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;函数内，第一步就是判断文件类型是否真的为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.hpp&lt;/code&gt;。使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;expand()&lt;/code&gt; 内置函数可以对当前文件进行分类。&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;expand(&quot;%:e&quot;)&lt;/code&gt; 中，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;%&lt;/code&gt; 表示当前文件名，而 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;:e&lt;/code&gt; 表示只有扩展名，于是该函数返回的是当前文件名的扩展名。如果文件是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hpp&lt;/code&gt;，就添加文件头：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;if &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;expand&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%:e&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'hpp'&lt;/span&gt;
-	&lt;span class=&quot;c&quot;&gt;# 先限定在文件的第一行&lt;/span&gt;
-	call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;1, &lt;span class=&quot;s2&quot;&gt;&quot;/** &quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-	&lt;span class=&quot;c&quot;&gt;# 再一行一行地添加内容&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;添加文件头内容时，有很多办法，最简单的就是使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;setline&lt;/code&gt; 函数一行一行地写：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;line&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'.'&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;+1, &lt;span class=&quot;s2&quot;&gt;&quot;#ifndef XXXX&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;line&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'.'&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;+2, &lt;span class=&quot;s2&quot;&gt;&quot;#define XXXX&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;line&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'.'&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;+5, &lt;span class=&quot;s2&quot;&gt;&quot;#endif // XXXX&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;最简单的方法往往不够灵活，试想若换一个文件，宏定义的具体内容必然需要改变，那岂不是又要修改 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;vimrc&lt;/code&gt; 了？&lt;/p&gt;
-
-&lt;p&gt;使用变量才能保证宏定义可以随着文件名等条件变化。&lt;/p&gt;
-
-&lt;h3 id=&quot;关于变量&quot;&gt;关于变量&lt;/h3&gt;
-
-&lt;p&gt;vim 中，变量使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;let&lt;/code&gt; 进行&lt;strong&gt;赋值&lt;/strong&gt;，通过 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;unlet&lt;/code&gt; &lt;strong&gt;销毁变量&lt;/strong&gt; ，可用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;echo&lt;/code&gt; 打印变量的值。对于 Vim 选项还可用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;set&lt;/code&gt; 来更方便地操作，比如 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;set {option}&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;set no{option}&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;set {option}?&lt;/code&gt;。&lt;/p&gt;
-
-&lt;p&gt;与 bash 中的变量类似，普通变量可以直接引用，环境变量要加前缀 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;$&lt;/code&gt;、寄存器变量要加前缀 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@&lt;/code&gt;、Vim 选项要加前缀 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;amp;&lt;/code&gt;。如，在正常模式下：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;:let str &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hello World&quot;&lt;/span&gt;
-:echo str
-:let &lt;span class=&quot;nv&quot;&gt;$PATH&lt;/span&gt; .&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;':/foo:/bar'&lt;/span&gt;
-:echo &lt;span class=&quot;nv&quot;&gt;$PATH&lt;/span&gt;
-&lt;span class=&quot;c&quot;&gt;# 打印当前文件名&lt;/span&gt;
-&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; @%
-&lt;span class=&quot;c&quot;&gt;# 把刚才拷贝的内容放到 a 寄存器中&lt;/span&gt;
-&lt;span class=&quot;nb&quot;&gt;let&lt;/span&gt; @a &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; @&lt;span class=&quot;s2&quot;&gt;&quot;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.=&lt;/code&gt; 运算符在 Vim 中用来做字符串拼接并赋值。&lt;/p&gt;
-
-&lt;p&gt;Vim 选项是控制着 Vim 编辑器行为的一些变量，比如是否显示行号，使用哪种剪切板。 引用选项变量时需要添加 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;amp;&lt;/code&gt; 前缀。例如：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# 显示行号&lt;/span&gt;
-:let &amp;amp;number &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 1
-&lt;span class=&quot;c&quot;&gt;# 不显示行号&lt;/span&gt;
-:let &amp;amp;number &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 1
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Vim 提供了 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;set&lt;/code&gt; 命令来更方便地操作选项变量，网上相关内容很多，这里不再赘述。&lt;/p&gt;
-
-&lt;p&gt;变量作用域值得一提，变量默认作用域取决于定义的位置，函数内则为函数作用域，外部则为全局变量。 赋值和引用变量时可以使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;b:&lt;/code&gt;,&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;g:&lt;/code&gt;,&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;l:&lt;/code&gt;,&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;t:&lt;/code&gt; 等前缀来指定要操作哪个作用域的变量。&lt;/p&gt;
-
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th&gt;变量作用域&lt;/th&gt;
-      &lt;th&gt;简写&lt;/th&gt;
-      &lt;th&gt;描述&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td&gt;buffer-var&lt;/td&gt;
-      &lt;td&gt;b:&lt;/td&gt;
-      &lt;td&gt;Local to the current buffer&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;window-var&lt;/td&gt;
-      &lt;td&gt;w:&lt;/td&gt;
-      &lt;td&gt;Local to the current window&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;tabpage-var&lt;/td&gt;
-      &lt;td&gt;t:&lt;/td&gt;
-      &lt;td&gt;Local to the current tab page&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;global-var&lt;/td&gt;
-      &lt;td&gt;g:&lt;/td&gt;
-      &lt;td&gt;Global variable&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;local-var&lt;/td&gt;
-      &lt;td&gt;l:&lt;/td&gt;
-      &lt;td&gt;Local to a function&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;vim-var&lt;/td&gt;
-      &lt;td&gt;v:&lt;/td&gt;
-      &lt;td&gt;Global, predefined by Vim&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td&gt;function-arg&lt;/td&gt;
-      &lt;td&gt;a:&lt;/td&gt;
-      &lt;td&gt;Function argument (only inside function)&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
-
-&lt;p&gt;回到我们要解决的问题上来，先定义一个 Vim 变量，通常宏定义都是大写，因此需要用到 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;toupper&lt;/code&gt; 函数将小写的文件名变为大写。&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;let &lt;/span&gt;str &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hello, Vim&quot;&lt;/span&gt;
-&lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;toupper&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;str&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;c&quot;&gt;# 输出为 HELLO, VIM&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;考虑到，文件名路径通常包含 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.&lt;/code&gt; 等符号，这对宏定义来说是非法的。要使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;substitute&lt;/code&gt; 将非法符号替换为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_&lt;/code&gt; 。&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;substitute&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;expand&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'%'&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;[/.]&quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;_&quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;g&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;第一个参数是要修改的字符串，第二个是 pattern，第三个是替换的子串，第四个是替换的 flags，上面这句话将文件名路径中的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.&lt;/code&gt; 都替换为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_&lt;/code&gt; 。&lt;/p&gt;
-
-&lt;p&gt;综合以上几点，可以如下定义 Vim 变量：&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nb&quot;&gt;let &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;macro&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;_DF_&quot;&lt;/span&gt;.toupper&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;substitute&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;expand&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;[/.]&quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;_&quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;g&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;.&lt;span class=&quot;s2&quot;&gt;&quot;_&quot;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;其中，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;.&lt;/code&gt; 在 Vim 中充当字符串连接符。如果当前文件名为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;process.hpp&lt;/code&gt; ，那么 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;macro&lt;/code&gt; 变量的值为 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_DF_PROCESS_HPP_&lt;/code&gt;。&lt;/p&gt;
-
-&lt;h3 id=&quot;总结&quot;&gt;总结&lt;/h3&gt;
-
-&lt;p&gt;最后，我们得到了一个简短有用的 Vim 自动化脚本，可以有效地解决情景一提出的问题。&lt;/p&gt;
-
-&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;autocmd BufNewFile &lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;.hpp &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;:call AddHPPHeader()&quot;&lt;/span&gt;
-
-func AddHPPHeader&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
-	&lt;span class=&quot;k&quot;&gt;if &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;expand&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%:e&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'hpp'&lt;/span&gt;
-        &lt;span class=&quot;c&quot;&gt;# 先限定在文件的第一行&lt;/span&gt;
-        call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;1, &lt;span class=&quot;s2&quot;&gt;&quot;/** &quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-        &lt;span class=&quot;c&quot;&gt;# 再一行一行地添加内容&lt;/span&gt;
-        &lt;span class=&quot;nb&quot;&gt;let &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;macro&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;_DF_&quot;&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;.&lt;/span&gt;
-        	toupper&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;substitute&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;expand&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;%&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;[/.]&quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;_&quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;g&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;))&lt;/span&gt;.&lt;span class=&quot;s2&quot;&gt;&quot;_&quot;&lt;/span&gt;
-        normal o
-        call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;line&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'.'&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&quot;#ifndef &quot;&lt;/span&gt;.macro&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-        call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;line&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'.'&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;+1, &lt;span class=&quot;s2&quot;&gt;&quot;#define &quot;&lt;/span&gt;.macro&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-        call setline&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;line&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'.'&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;+4, &lt;span class=&quot;s2&quot;&gt;&quot;#endif // &quot;&lt;/span&gt;.macro&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-endfunc
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Miscellaneous" /><category term="Vim" /><summary type="html">让手指跟上思维的步伐</summary></entry></feed>
+&lt;p&gt;这里就不一一介绍了。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="C" /><summary type="html">触及到你知识盲区的东西</summary></entry></feed>
