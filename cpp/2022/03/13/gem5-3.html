@@ -191,7 +191,7 @@
 
 
 
-  1 minutes read
+  6 minutes read
 
 </p>
       
@@ -342,6 +342,15 @@
           <li><a href="#小结">小结</a></li>
         </ul>
       </li>
+      <li><a href="#simobject">SimObject</a></li>
+      <li><a href="#时钟-与-clockedobject">时钟 与 ClockedObject</a>
+        <ul>
+          <li><a href="#时钟">时钟</a></li>
+          <li><a href="#clocked-类">Clocked 类</a></li>
+          <li><a href="#clockedobject">ClockedObject</a></li>
+          <li><a href="#simplecache">SimpleCache</a></li>
+        </ul>
+      </li>
     </ul>
   </li>
 </ul>
@@ -355,7 +364,7 @@
 
 <h2 id="父类">父类</h2>
 
-<p>SimObject 类是一个非常复杂但又十分重要的类。理解该类的实现有助于我们理解整个 gem5 模拟器的运作逻辑。它的父类就有 5 个：EventManger、Serializable、Drainable、statistics::Group、Named。</p>
+<p>SimObject 类是一个非常复杂但又十分重要的类，它在 Gem5 中占有极为重要的地位。gem5 的模块化设计是围绕 SimObject 类型构建的。 模拟系统中的大多数组件都是 SimObjects 的子类，如CPU、缓存、内存控制器、总线等。gem5 将所有这些对象从其 C++ 实现导出到 python。使用提供的 python 配置脚本便可以创建任何 SimObject 类对象，设置其参数，并指定 SimObject 之间的交互。理解该类的实现有助于我们理解整个 gem5 模拟器的运作逻辑。我们先从它的父类开始讲起，它一共有 5 个父类：EventManger、Serializable、Drainable、statistics::Group、Named。</p>
 
 <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SimObject</span> <span class="o">:</span> <span class="k">public</span> <span class="n">EventManager</span><span class="p">,</span> <span class="k">public</span> <span class="n">Serializable</span><span class="p">,</span> <span class="k">public</span> <span class="n">Drainable</span><span class="p">,</span>
     <span class="k">public</span> <span class="n">statistics</span><span class="o">::</span><span class="n">Group</span><span class="p">,</span> <span class="k">public</span> <span class="n">Named</span>
@@ -420,8 +429,251 @@
   <li>Name 类：负责给 SimObject 起名。</li>
 </ul>
 
-<p>##</p>
+<h2 id="simobject">SimObject</h2>
 
+<p>对其父类有了充足的理解后，我们再来看一下 SimObject 类中的静态变量：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SimObject</span> <span class="o">:</span> <span class="k">public</span> <span class="n">EventManager</span><span class="p">,</span> <span class="k">public</span> <span class="n">Serializable</span><span class="p">,</span> <span class="k">public</span> <span class="n">Drainable</span><span class="p">,</span>
+                  <span class="k">public</span> <span class="n">statistics</span><span class="o">::</span><span class="n">Group</span><span class="p">,</span> <span class="k">public</span> <span class="n">Named</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">SimObject</span> <span class="o">*&gt;</span> <span class="n">SimObjectList</span><span class="p">;</span>
+    <span class="k">static</span> <span class="n">SimObjectList</span> <span class="n">simObjectList</span><span class="p">;</span>
+
+    <span class="cm">/** Helper to resolve an object given its name. */</span>
+    <span class="k">static</span> <span class="n">SimObjectResolver</span> <span class="o">*</span><span class="n">_objNameResolver</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>SimObject 类中维护了一个数组，记录所有被例化的对象，方便统一管理。SimObjectResolver 类根据传入的 SimObject 路径名字，解析出 SimObject 对象；维护 simObjectList 数组的目的是方便实现 <code class="language-plaintext highlighter-rouge">serializeAll()</code> 函数，也方便用户通过对象名找到对应的 SimObject。</p>
+
+<p>再来看看 SimObject 类有哪些成员：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SimObject</span> <span class="o">:</span> <span class="k">public</span> <span class="n">EventManager</span><span class="p">,</span> <span class="k">public</span> <span class="n">Serializable</span><span class="p">,</span> <span class="k">public</span> <span class="n">Drainable</span><span class="p">,</span>
+                  <span class="k">public</span> <span class="n">statistics</span><span class="o">::</span><span class="n">Group</span><span class="p">,</span> <span class="k">public</span> <span class="n">Named</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+    <span class="cm">/** Manager coordinates hooking up probe points with listeners. */</span>
+    <span class="n">ProbeManager</span> <span class="o">*</span><span class="n">probeManager</span><span class="p">;</span>
+    <span class="cm">/** Cached copy of the object parameters. */</span>
+    <span class="k">const</span> <span class="n">SimObjectParams</span> <span class="o">&amp;</span><span class="n">_params</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>ProbeManager 类是一个可连接探测点和监视器的协调类。所谓探测点主要用于 PMU(Performance Measurement Unit) 的实现，PMU 在 RTL 实现中，通常用于评估处理器模块的性能。而在 gem5 模拟器中，需要使用探测点（Probe Point）为 SimObject 类实现 PMU 提供了统一的接口，从而易于维护，simobject 对象调用 notify 时，需将事件计数增量作为它的唯一参数。</p>
+
+<p>从 gem5 的官方文档中，可了解到 simulate.py 使用以下函数完成对模拟对象的初始化：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">SimObject::init()</code> 只有当 C++ SimObject 对象被创建，且所有接口都被连上后，该函数会被调用</li>
+  <li><code class="language-plaintext highlighter-rouge">SimObject::regStats()</code> 本是 Group 类的回调函数，用于设置需要复杂参数的统计信息。
+（例如，分布）
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">SimObject::initState()</code> 若 SimObject 不是从检查点恢复时，需要调用该函数。该函数标记了状态的初始点，仅在冷启动时会被使用，让 simobject 回到初始状态。</li>
+      <li><code class="language-plaintext highlighter-rouge">SimObject::loadState()</code> 若从检查点恢复，调用该函数。其默认实现是调用 <code class="language-plaintext highlighter-rouge">unserialize()</code> 函数。因为从检查点恢复的过程就如同序列化后，装载之前保存的状态的过程。</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">SimObject::resetStats()</code> 重置统计数据。</li>
+  <li><code class="language-plaintext highlighter-rouge">SimObject::startup()</code> 是模拟前的最终的启动函数。此时所有状态都已初始化（包括未序列化的状态，如果有的话，如 <code class="language-plaintext highlighter-rouge">curTick()</code> 的值），因此这是调度初始事件的合适时间点。</li>
+  <li>Drainable::drainResume() 如果从检查点恢复。</li>
+</ul>
+
+<p>以上这些函数（除 <code class="language-plaintext highlighter-rouge">loadState()</code> 有默认非空的实现）都需要继承 SimObject 类的派生类来实现。SimObject 类只是搭建了模拟对象的运行框架，规定了对象的运行步骤。</p>
+
+<p>最后再介绍一些有意义的成员函数：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SimObject</span> <span class="p">{</span>
+  <span class="nl">public:</span>
+    <span class="k">virtual</span> <span class="n">Port</span> <span class="o">&amp;</span><span class="n">getPort</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">if_name</span><span class="p">,</span> <span class="n">PortID</span> <span class="n">idx</span><span class="o">=</span><span class="n">InvalidPortID</span><span class="p">);</span>
+    <span class="cm">/** Write back dirty buffers to memory using functional writes. */</span>
+    <span class="k">virtual</span> <span class="kt">void</span> <span class="n">memWriteback</span><span class="p">()</span> <span class="p">{};</span>
+    <span class="cm">/** Invalidate the contents of memory buffers. */</span>
+    <span class="k">virtual</span> <span class="kt">void</span> <span class="n">memInvalidate</span><span class="p">()</span> <span class="p">{};</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>其中，<code class="language-plaintext highlighter-rouge">getPort()</code> 用于获取给定名称和索引的端口。通常在绑定时使用，返回对协议无关端口的引用。</p>
+
+<p>注意到，gem5 有一对请求和响应端口接口。 所有内存对象都通过端口连接在一起。这些端口在内存对象之间提供了三种不同的内存系统模式：时序(timing)、原子(atomic)和功能(functional)。 最重要的模式是时序模式，即 cycle-level 级别的时序周期模式。其他模式仅在特殊情况下使用，这些端口可以让 SimObject 相互通信。</p>
+
+<p><code class="language-plaintext highlighter-rouge">memWriteback()</code> 函数将脏缓冲区写回内存。函数完成后，对象内所有脏数据都已写回内存。带缓存的系统通常用该函数来为检查点前做准备。<code class="language-plaintext highlighter-rouge">memInvalidate()</code> 函数使内存缓冲区的内容无效。当切换到硬件虚拟化 CPU 模型时，我们需要确保系统中没有任何在我们返回时陈旧的缓存数据。该函数将所有此类状态刷新回主存储器，但它不会将任何脏状态写回内存。</p>
+
+<h2 id="时钟-与-clockedobject">时钟 与 ClockedObject</h2>
+
+<p>接下来，研究一个常见的 SimObject 派生类 ClockedObject，同时也了解一下 Gem5 中时钟的实现方式</p>
+
+<h3 id="时钟">时钟</h3>
+
+<p><code class="language-plaintext highlighter-rouge">curTick()</code> 全局函数，通常使用 <code class="language-plaintext highlighter-rouge">curTick()</code> 来获取全局时钟值。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="kt">uint64_t</span> <span class="n">Tick</span><span class="p">;</span>
+<span class="kr">__thread</span> <span class="n">Tick</span> <span class="o">*</span><span class="n">_curTickPtr</span><span class="p">;</span>
+
+<span class="kr">inline</span> <span class="n">Tick</span> <span class="nf">curTick</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="o">*</span><span class="n">Gem5Internal</span><span class="o">::</span><span class="n">_curTickPtr</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">__thread</code> 将变量存储到线程的局部空间中，在线程的生命周期内有效。因此，在多线程程序中，每个线程都创建了该变量的唯一实例，并在线程终止时销毁。<code class="language-plaintext highlighter-rouge">__thread</code> 存储类说明符能被 gcc 识别，可确保线程安全：因为变量被多个线程访问时无需担心竞争，同时避免处理线程同步带来的繁琐编程。</p>
+</blockquote>
+
+<h3 id="clocked-类">Clocked 类</h3>
+
+<p>Clocked 类为 SimObject 类提供时钟周期模拟。Gem5 在模拟 SimObject 对象的工作流程时，会模拟硬件中时钟打拍行为，进而得到准确的模拟性能。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Clocked</span> <span class="p">{</span>
+  <span class="cm">/** Tick value of the next clock edge (&gt;= curTick()) at the
+   *  time of the last call to update() */</span>
+  <span class="k">mutable</span> <span class="n">Tick</span> <span class="n">tick</span><span class="p">;</span>
+  <span class="cm">/* Cycle counter value corresponding to the current value of 'tick' */</span>
+  <span class="k">mutable</span> <span class="n">Cycles</span> <span class="n">cycle</span><span class="p">;</span>
+  <span class="cm">/* The clock domain this clocked object belongs to */</span>
+  <span class="n">ClockDomain</span> <span class="o">&amp;</span><span class="n">clockDomain</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Clocked 类中有三个变量：</p>
+
+<ul>
+  <li>tick 变量类型为 <code class="language-plaintext highlighter-rouge">uint64_t</code>，指示下一个时钟边缘沿到来的 tick 值。tick 值是模拟器中时间的最小单位</li>
+  <li>cycle 类型为 Cycles，该类表示当前经过的时钟周期总数，其内部包装了 <code class="language-plaintext highlighter-rouge">uint64_t</code>。这是硬件中常说的时钟周期。之所以不直接使用 <code class="language-plaintext highlighter-rouge">uint64_t</code>，是为避免混淆 Tick 和 Cycles 这两个类型。</li>
+  <li>clockDomain 表示位于的时钟域。时钟域是若干个共享同一个时钟的 SimObject 对象集合。其中，<code class="language-plaintext highlighter-rouge">clockPeriod()</code> 记录了时钟的周期（单位：Tick）。</li>
+</ul>
+
+<p>Clocked 类中最重要的函数就是 <code class="language-plaintext highlighter-rouge">updateClockPeriod()</code>。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Update the tick to the current tick</span>
+<span class="kt">void</span> <span class="nf">updateClockPeriod</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// tick and cycle update</span>
+  <span class="n">update</span><span class="p">();</span>
+  <span class="c1">// hook function to add extra work.</span>
+  <span class="n">clockPeriodUpdated</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>其中，<code class="language-plaintext highlighter-rouge">clockPeriodUpdated()</code> 函数是 hook 函数，由子类负责实现，用来增加一些与时钟周期打拍有关的功能。而 <code class="language-plaintext highlighter-rouge">update()</code> 函数的实现如下：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">update</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">tick</span> <span class="o">&gt;=</span> <span class="n">curTick</span><span class="p">())</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="cm">/** in most case, add one cycle */</span>
+  <span class="n">tick</span> <span class="o">+=</span> <span class="n">clockPeriod</span><span class="p">();</span>
+  <span class="o">++</span><span class="n">cycle</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">tick</span> <span class="o">&gt;=</span> <span class="n">curTick</span><span class="p">()</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="cm">/* special case, add one more cycle. divCeil(a, b): (a + b -1) / b */</span>
+  <span class="n">Cycles</span> <span class="n">elapsedCycles</span><span class="p">(</span><span class="n">divCeil</span><span class="p">(</span><span class="n">curTick</span><span class="p">()</span> <span class="o">-</span> <span class="n">tick</span><span class="p">,</span> <span class="n">clockPeriod</span><span class="p">()));</span>
+  <span class="n">cycle</span> <span class="o">+=</span> <span class="n">elapsedCycles</span><span class="p">;</span>
+  <span class="n">tick</span> <span class="o">+=</span> <span class="n">elapsedCycles</span> <span class="o">*</span> <span class="n">clockPeriod</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">update()</code> 对齐了 cycle 和 tick 到下一个时钟沿，若 tick &gt;= curTick()，即当前 tick 已经与全局时钟对齐时，那么时钟就是最新的。大部分情况下，累加一个时钟周期就可以达到最新，但也有例外，需要增加更多的时钟周期才行。</p>
+
+<p><code class="language-plaintext highlighter-rouge">clockEdge()</code> 函数根据传入的 cycles 数，换算出未来达到这一时钟周期数要求的 tick 数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Tick</span> <span class="nf">clockEdge</span><span class="p">(</span><span class="n">Cycles</span> <span class="n">cycles</span> <span class="o">=</span> <span class="n">Cycles</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="k">const</span> <span class="p">{</span>
+  <span class="c1">// align tick to the next clock edge</span>
+  <span class="n">update</span><span class="p">();</span>
+  <span class="c1">// figure out when this future cycle is</span>
+  <span class="k">return</span> <span class="n">tick</span> <span class="o">+</span> <span class="n">clockPeriod</span><span class="p">()</span> <span class="o">*</span> <span class="n">cycles</span><span class="p">;</span>
+<span class="err">}</span>
+</code></pre></div></div>
+
+<h3 id="clockedobject">ClockedObject</h3>
+
+<p>ClockedObject 类继承了 Clocked 类和 SimObject 类，以 Tick 与对象的 cycle 相关联。其中 PowerState 类也是 SimObject 类的派生类，它提供了描述功耗状态和切换功耗状态的功能。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ClockedObject</span> <span class="o">:</span> <span class="k">public</span> <span class="n">SimObject</span><span class="p">,</span> <span class="k">public</span> <span class="n">Clocked</span> <span class="p">{</span>
+  <span class="nl">public:</span>
+  <span class="n">ClockedObject</span><span class="p">(</span><span class="k">const</span> <span class="n">ClockedObjectParams</span> <span class="o">&amp;</span><span class="n">p</span><span class="p">);</span>
+
+  <span class="cm">/** Parameters of ClockedObject */</span>
+  <span class="k">using</span> <span class="n">Params</span> <span class="o">=</span> <span class="n">ClockedObjectParams</span><span class="p">;</span>
+
+  <span class="kt">void</span> <span class="n">serialize</span><span class="p">(</span><span class="n">CheckpointOut</span> <span class="o">&amp;</span><span class="n">cp</span><span class="p">)</span> <span class="k">const</span> <span class="k">override</span><span class="p">;</span>
+  <span class="kt">void</span> <span class="n">unserialize</span><span class="p">(</span><span class="n">CheckpointIn</span> <span class="o">&amp;</span><span class="n">cp</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+  <span class="n">PowerState</span> <span class="o">*</span><span class="n">powerState</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 gem5 的教程代码 part2 中，使用 ClockedObject 类实现了一个简单的 Cache：SimpleCache 类。借助这一例子，我们可以从中看出 SimObject 类以及其派生类在模拟系统时的作用。</p>
+
+<h3 id="simplecache">SimpleCache</h3>
+
+<p>现在，根据我之前对 gem5 底层的了解，我试图理解 SimpleCache 类中的实现原理。SimpleCache 类描述的 Cache 在硬件上是一种</p>
+
+<ul>
+  <li>全相联的 Cache</li>
+  <li>使用随机替换算法来实现新旧 Cacheline 替换</li>
+  <li>只能同时处理一个请求</li>
+  <li>写回式的 Cache</li>
+</ul>
+
+<p>要实现这样一个 SimpleCache，首先需要1）连接 Cache 的端口。2）Cache 的块大小以及容量，存储数据等。3）Cache 的命中、丢失延迟等。这些需求都在下面的类定义中有所体现：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SimpleCache</span> <span class="o">:</span> <span class="k">public</span> <span class="n">ClockedObject</span> <span class="p">{</span>
+  <span class="c1">// Latency to check the cache. Number of cycles for both hit and miss</span>
+  <span class="k">const</span> <span class="n">Cycles</span> <span class="n">latency</span><span class="p">;</span>
+
+  <span class="c1">// The block size for the cache</span>
+  <span class="k">const</span> <span class="kt">unsigned</span> <span class="n">blockSize</span><span class="p">;</span>
+
+  <span class="c1">// Number of blocks in the cache (size of cache / block size)</span>
+  <span class="k">const</span> <span class="kt">unsigned</span> <span class="n">capacity</span><span class="p">;</span>
+
+  <span class="c1">// Instantiation of the CPU-side port</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">CPUSidePort</span><span class="o">&gt;</span> <span class="n">cpuPorts</span><span class="p">;</span>
+
+  <span class="c1">// Instantiation of the memory-side port</span>
+  <span class="n">MemSidePort</span> <span class="n">memPort</span><span class="p">;</span>
+
+  <span class="c1">// True if this cache is currently blocked waiting for a response.</span>
+  <span class="kt">bool</span> <span class="n">blocked</span><span class="p">;</span>
+
+  <span class="c1">// Packet that we are currently handling. Used for upgrading to larger</span>
+  <span class="c1">// cache line sizes</span>
+  <span class="n">PacketPtr</span> <span class="n">originalPacket</span><span class="p">;</span>
+
+  <span class="c1">// The port to send the response when we recieve it back</span>
+  <span class="kt">int</span> <span class="n">waitingPortId</span><span class="p">;</span>
+
+  <span class="c1">// For tracking the miss latency</span>
+  <span class="n">Tick</span> <span class="n">missTime</span><span class="p">;</span>
+
+  <span class="c1">// An incredibly simple cache storage. Maps block addresses to data</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">Addr</span><span class="p">,</span> <span class="kt">uint8_t</span><span class="o">*&gt;</span> <span class="n">cacheStore</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>对于函数实现，直接看我们能理解的部分。例如，<code class="language-plaintext highlighter-rouge">handleRequest()</code> 函数用于处理来自 CPU 的 Cache 访问/读写请求。下面代码展示了请求被处理的过程：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">SimpleCache</span><span class="o">::</span><span class="n">handleRequest</span><span class="p">(</span><span class="n">PacketPtr</span> <span class="n">pkt</span><span class="p">,</span> <span class="kt">int</span> <span class="n">port_id</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">blocked</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// There is currently an outstanding request so we can't respond. Stall</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">DPRINTF</span><span class="p">(</span><span class="n">SimpleCache</span><span class="p">,</span> <span class="s">"Got request for addr %#x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">getAddr</span><span class="p">());</span>
+
+  <span class="c1">// This cache is now blocked waiting for the response to this packet.</span>
+  <span class="n">blocked</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+
+  <span class="c1">// Store the port for when we get the response</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">waitingPortId</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">waitingPortId</span> <span class="o">=</span> <span class="n">port_id</span><span class="p">;</span>
+
+  <span class="c1">// Schedule an event after cache access latency to actually access</span>
+  <span class="n">schedule</span><span class="p">(</span><span class="k">new</span> <span class="n">EventFunctionWrapper</span><span class="p">([</span><span class="k">this</span><span class="p">,</span> <span class="n">pkt</span><span class="p">]{</span><span class="n">accessTiming</span><span class="p">(</span><span class="n">pkt</span><span class="p">);},</span>
+    <span class="n">name</span><span class="p">()</span> <span class="o">+</span> <span class="s">".accessEvent"</span><span class="p">,</span> <span class="nb">true</span><span class="p">),</span> <span class="n">clockEdge</span><span class="p">(</span><span class="n">latency</span><span class="p">));</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>由于 Cache 一次只能处理一个请求，因此当 Cache 状态为 blocked 时，请求无法被处理，直接返回 false。否则，将状态设置为 blocked，然后创建一个 Event 事件并调度：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">schedule</span><span class="p">(</span><span class="k">new</span> <span class="nf">EventFunctionWrapper</span><span class="p">([</span><span class="k">this</span><span class="p">,</span> <span class="n">pkt</span><span class="p">]{</span><span class="n">accessTiming</span><span class="p">(</span><span class="n">pkt</span><span class="p">);</span><span class="err">}</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">()</span> <span class="o">+</span> <span class="s">".accessEvent"</span><span class="p">,</span> <span class="nb">true</span><span class="p">),</span> <span class="n">clockEdge</span><span class="p">(</span><span class="n">latency</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>回顾一下之前博客中的分析，<code class="language-plaintext highlighter-rouge">schedule()</code> 函数负责事件调度，其参数是将要被执行的事件 event 和具体执行时间 when。在这里，被执行的事件 event 就是 <code class="language-plaintext highlighter-rouge">accessTiming(pkt)</code> 函数，它被 EventFunctionWrapper 进一步封装，出入到 <code class="language-plaintext highlighter-rouge">schedule()</code> 中，而具体执行的时间，是 <code class="language-plaintext highlighter-rouge">clockEdge(latency)</code>。其中 latency 是 Cache 对于检查数据是否命中的延迟，而 <code class="language-plaintext highlighter-rouge">clockEdge()</code> 将 latency 的时间单位从 cycles 转换为 ticks 的函数。当时间和事件本身都被设置好后，如同前面提到的那样，事件会按照调度的时间先后顺序，被放入事件队列中等待执行。最后产生的效果就是，等待了 latency 个时钟周期后，这一请求被 Cache 执行并完成。</p>
+
+<p>SimpleCache 类其余部分的实现也非常有意思，但与该博文的主题偏离太远，之后再来细细品读。</p>
 
         
       </section>

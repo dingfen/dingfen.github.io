@@ -264,7 +264,7 @@ var store = [{
         "teaser": "/assets/img/teaser.jpg"
       },{
         "title": "深入理解 Gem5 之三",
-        "excerpt":"深入理解 Gem5 之三——SimObject 之前的两篇博文分别介绍了 gem5 的事件触发机制和序列化问题，它们都和 SimObject 类有密切的联系。正所谓万事俱备，只欠东风。基于目前的理解，我可以更深入地看看 SimObject 类的实现方式。 父类 SimObject 类是一个非常复杂但又十分重要的类。理解该类的实现有助于我们理解整个 gem5 模拟器的运作逻辑。它的父类就有 5 个：EventManger、Serializable、Drainable、statistics::Group、Named。 class SimObject : public EventManager, public Serializable, public Drainable, public statistics::Group, public Named 其中仅有 statistics::Group 类我未作介绍，最后来理解一下 statistics::Group 的作用及实现。 statistics::Group statistics 是 gem5 项目中C++的一个命名空间，statistics::Group 类是统计数据的容器。Group 对象之间可组成一个树状的层次结构。数据统计子系统用 Groups 之间的关系来反推 SimObject 层次结构，并暴露对象内部的层次结构，从而可以更方便地将统计数据分组到它们自己的类中，然后合并到父类 Group（通常是一个 SimObject）中。 Group 类中，有一个指向父节点的指针，以及包含本级信息的数组...","categories": ["Cpp"],
+        "excerpt":"深入理解 Gem5 之三——SimObject 之前的两篇博文分别介绍了 gem5 的事件触发机制和序列化问题，它们都和 SimObject 类有密切的联系。正所谓万事俱备，只欠东风。基于目前的理解，我可以更深入地看看 SimObject 类的实现方式。 父类 SimObject 类是一个非常复杂但又十分重要的类，它在 Gem5 中占有极为重要的地位。gem5 的模块化设计是围绕 SimObject 类型构建的。 模拟系统中的大多数组件都是 SimObjects 的子类，如CPU、缓存、内存控制器、总线等。gem5 将所有这些对象从其 C++ 实现导出到 python。使用提供的 python 配置脚本便可以创建任何 SimObject 类对象，设置其参数，并指定 SimObject 之间的交互。理解该类的实现有助于我们理解整个 gem5 模拟器的运作逻辑。我们先从它的父类开始讲起，它一共有 5 个父类：EventManger、Serializable、Drainable、statistics::Group、Named。 class SimObject : public EventManager, public Serializable, public Drainable, public statistics::Group, public Named 其中仅有 statistics::Group...","categories": ["Cpp"],
         "tags": ["gem5","Cpp"],
         "url": "/cpp/2022/03/13/gem5-3.html",
         "teaser": "/assets/img/teaser.jpg"
