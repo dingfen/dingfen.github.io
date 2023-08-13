@@ -1,0 +1,913 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>awk 从入门到入土 - 峰子的乐园</title>
+<meta name="description" content="初步入土计划">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="awk 从入门到入土">
+<meta property="og:url" content="http://localhost:4000/miscellaneous/2022/07/19/awk.html">
+
+
+  <meta property="og:description" content="初步入土计划">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser3.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2022-07-19T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/miscellaneous/2022/07/19/awk.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser3.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          awk 从入门到入土
+
+        
+      </h1>
+      
+        <p class="page__lead">初步入土计划
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="awk 从入门到入土">
+    <meta itemprop="description" content="初步入土计划">
+    <meta itemprop="datePublished" content="2022-07-19T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#awk-从入门到入土">awk 从入门到入土</a>
+    <ul>
+      <li><a href="#何为-awk-">何为 awk ？</a></li>
+      <li><a href="#awk-到底能做什么">awk 到底能做什么？</a>
+        <ul>
+          <li><a href="#awk-对文件操作">awk 对文件操作</a></li>
+        </ul>
+      </li>
+      <li><a href="#awk-命令格式和选项">awk 命令格式和选项</a>
+        <ul>
+          <li><a href="#语法形式">语法形式</a></li>
+          <li><a href="#常用命令选项--options">常用命令选项 —— [options]</a></li>
+          <li><a href="#awk-模式和操作--script">awk 模式和操作 —— ‘script’</a>
+            <ul>
+              <li><a href="#模式">模式</a></li>
+              <li><a href="#操作">操作</a></li>
+            </ul>
+          </li>
+          <li><a href="#awk-的变量--varvalue">awk 的变量 —— [var=value]</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="awk-从入门到入土">awk 从入门到入土</h1>
+
+<h2 id="何为-awk-">何为 awk ？</h2>
+
+<p><a href="https://www.gnu.org/software/gawk/manual/gawk.html">awk</a> 是一种用于文本处理、数据提取分析和报告常用的 linux 工具（命令）。与 sed 和 grep 一样，在日常编程和使用 linux 操作系统中，它是提升效率的法宝。</p>
+
+<p>awk 处理的数据可以来自标准输入(stdin)、文件，或其它命令的输出。它支持用户自定义函数和动态正则表达式等功能，是linux/unix下的一个强大编程工具。它在命令行中使用，但更多是作为脚本来使用。awk 内有完备的“语言”，可以写出数组、函数、分支等复杂结构，且语法与 C 语言的相通之处。相比 sed grep 命令，灵活性是 awk 最大的优势，但其包含了复杂语法、正则表达式、内置变量（函数）也让很多人望而生畏。</p>
+
+<p>另外，该工具之所以叫 AWK 是因为其取了三位创始人 Alfred Aho，Peter Weinberger, 和 Brian Kernighan 的 Family Name 的首字符。</p>
+
+<h2 id="awk-到底能做什么">awk 到底能做什么？</h2>
+
+<p>awk 功能强大，特点繁杂，若开篇介绍用法会让该博文显得杂乱无章，让人毫无阅读兴趣。我尝试抛开复杂的语法和命令格式，先利用几个例子让读者了解一下 awk 的工作方式和功能是怎样的。相信你一定会被 awk 强大的信息提取能力所折服。当你熟练掌握 awk 后，就再也不会烦恼于数据的格式化输出和信息提取了😄。</p>
+
+<h3 id="awk-对文件操作">awk 对文件操作</h3>
+
+<ol>
+  <li>
+    <p><strong>逐行扫描文件</strong>。awk 的基本功能是搜索/匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 例1：打印文件的每行的第一列(域)
+ &gt; awk '{print $1}' filename
+
+ 例2：打印文件的每一行
+ &gt; awk '{print $0}' filename
+</code></pre></div>    </div>
+
+    <p>print 是 awk 中最常用的操作，可打印出后面的字符，若有多个变量，用’,’连接。虽然脚本中<strong>只写了对一行的操作</strong>，但由于 awk 会以逐行的方式遍历整个文本，因此最终该命令会打印出每一行的结果。</p>
+  </li>
+  <li>
+    <p><strong>将每一行输入拆分为字段</strong>。awk 逐行扫描文件后，再对行中的列（域）做匹配。可以使用 $n 来表示第n列的字符，而 $0 表示整一行。内置变量 $NF 表示字段总数，因此 $NF 可表示倒数第一列。对列的分割默认是空格，但也可以通过改变内置变量 FS 来改变分割符号。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 例3：从 /etc/passwd 文件中，按照":"分割打印出第2列和倒数第一列、倒数第二列：
+ &gt; awk -F":" '{print $2,$(NF),$(NF-1)}' /etc/passwd （或）
+ &gt; awk 'BEGIN{FS=":"} {print $2,$(NF),$(NF-1)}' /etc/passwd
+</code></pre></div>    </div>
+
+    <p>BEGIN 块表示该脚本块需要在 awk 逐行遍历文件前就执行，且只执行一次，通常用于初始化内部变量或计算数据。与之相反，END 块只能在awk 逐行遍历文件后执行，且执行一次</p>
+  </li>
+  <li>
+    <p><strong>比较输入行/字段与模式</strong>。比较或匹配模式通常要涉及到正则表达式的相关知识，关于正则表达式可参考<a href="https://www.runoob.com/regexp/regexp-syntax.html">菜鸟教程</a>。但 awk 还提供了类似 C 语言中的判断指令，从而做出更复杂的条件判断和算术逻辑。甚至可以完全抛弃文件，单独做一些复杂计算。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 例4：找到 test.txt 中最后一列大于 5000 的列并打印出来：
+ &gt; awk '{if ($NF &gt; 5000) print $NF}' test.txt
+
+ 例5：使用 awk 命令计算 exp(5)：
+ &gt; awk 'BEGIN {param = 5; result = exp(param); printf "Result is %f.\n", result}'
+</code></pre></div>    </div>
+
+    <p>awk 有大量的内置变量和内置函数，具体介绍在后小节。</p>
+  </li>
+  <li>
+    <p><strong>对匹配的行执行动作</strong>。awk主要的操作就是print，将数据按规定的格式打印出来。但需要注意，awk 命令一般不直接修改文件，只能将输出信息重定向到某一个文件中（非源文件）。</p>
+  </li>
+</ol>
+
+<center>
+<img src="/assets/img/awk.png" width="80%" />
+</center>
+
+<p>可用此图再回顾一下 awk 的四步流程。总结一下，awk 适用于数据文件转换和编制格式报告，并且能做到：1、格式化地输出信息。2、各种复杂的算术逻辑运算和字符串操作。3、配合逐行特性，实现条件和循环结构。</p>
+
+<h2 id="awk-命令格式和选项">awk 命令格式和选项</h2>
+
+<h3 id="语法形式">语法形式</h3>
+
+<p>使用 awk 命令时，一般遵循下面两种形式书写：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; awk [options] 'script' [var=value] [file(s) name]
+&gt; awk [options] -f scriptfile [var=value] [file(s) name]
+</code></pre></div></div>
+
+<p>接下来的几个小节开始介绍 awk 各个部分的使用规则：</p>
+
+<h3 id="常用命令选项--options">常用命令选项 —— [options]</h3>
+
+<ul>
+  <li>-F &lt;fs&gt; 或 –field-separator &lt;fs&gt; ：fs 为指定输入分隔符，也可以是字符串或正则表达式。默认的分隔符是连续的空格或制表符</li>
+  <li>-v &lt;var&gt;=&lt;value&gt; 赋值一个用户定义变量，将外部变量传递给 awk</li>
+  <li>-f &lt;scripfile&gt; 从脚本文件中读取awk命令</li>
+  <li>-m[fr] &lt;val]&gt; 对 val 值设置内在限制，-mf选项限制分配给val的最大块数目；-mr选项限制记录的最大数目。这两个功能是Bell实验室版awk的扩展功能，在标准awk中不适用。</li>
+</ul>
+
+<h3 id="awk-模式和操作--script">awk 模式和操作 —— ‘script’</h3>
+
+<p>首先回顾一下前文所说：</p>
+
+<blockquote>
+  <p>awk 的基本功能是搜索/匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
+</blockquote>
+
+<p><strong>模式</strong>和<strong>操作</strong>无疑是 awk 命令中最重要的部分，而它们都会在 ‘script’ 处集中表达，其中</p>
+
+<h4 id="模式">模式</h4>
+
+<p>模式可以是以下任意一个：</p>
+
+<ul>
+  <li>
+    <p>正则表达式：使用通配符的扩展集。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例6：从 employee.txt 文件中找到含有 manager 的行并打印
+&gt; awk '/manager/ {print}' employee.txt 
+</code></pre></div>    </div>
+
+    <p>‘/manager/’ 即要匹配字符串中含有 manager 的子串。找到后打印文件所在行，{print} 默认打印一行的所有列。</p>
+  </li>
+  <li>
+    <p>关系表达式：使用运算符进行操作，可以是字符串或数字的比较测试。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例7：打印 log.txt 中第一列大于2并且第二列等于 'Are' 的行的前三列：
+&gt; awk '$1&gt;2 &amp;&amp; $2=="Are" {print $1,$2,$3}' log.txt
+</code></pre></div>    </div>
+
+    <p>$1&gt;2 &amp;&amp; $2==”Are” 表示第一列大于2且第二列为 ‘Are’，可以仅写一个条件，也可以完整地写出 if 语句结构，见下例。</p>
+  </li>
+  <li>
+    <p>模式匹配表达式：用运算符~（匹配）和!~（不匹配）。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例8：打印 test.txt 文件中第二列，并匹配以80开头并以80结束的行：
+&gt; awk '{if ($2 ~ /^80$/) print}' test.txt
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>BEGIN 语句块、pattern 语句块、END 语句块。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例9：找到 test.txt 文件中最长行的所占的字符数
+&gt; awk 'BEGIN{max=0} {if (length($0) &gt; max) max=length($0)} END{print max}' test.txt
+</code></pre></div>    </div>
+
+    <p>由三个语句块组成的模式甚至可看成一个简单 C 程序。length() 是 awk 的内置函数。更多函数可见<a href="https://www.runoob.com/w3cnote/awk-built-in-functions.html">菜鸟教程的整理</a></p>
+  </li>
+</ul>
+
+<p>由于 awk 的逐行处理文本的特性，很多重要的全局信息往往通过内置变量表达，在书写 awk 命令时常需要快速查表并使用。限于篇幅不详细介绍内置变量的使用了，不太懂的话可以参考这篇<a href="https://www.zsythink.net/archives/1374">博客</a>：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>内置变量</th>
+      <th>含义</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NF</td>
+      <td>字段个数，（读取的列数）</td>
+    </tr>
+    <tr>
+      <td>NR</td>
+      <td>记录数（行号），从1开始，新的文件延续上面的计数，新文件不从1开始</td>
+    </tr>
+    <tr>
+      <td>FNR</td>
+      <td>读取文件的记录数（行号），从1开始，新的文件重新从1开始计数</td>
+    </tr>
+    <tr>
+      <td>FS</td>
+      <td>输入字段分隔符，默认是空格</td>
+    </tr>
+    <tr>
+      <td>OFS</td>
+      <td>输出字段分隔符 默认也是空格</td>
+    </tr>
+    <tr>
+      <td>RS</td>
+      <td>输入行分隔符，默认为换行符</td>
+    </tr>
+    <tr>
+      <td>ORS</td>
+      <td>输出行分隔符，默认为换行符</td>
+    </tr>
+    <tr>
+      <td>FILENAME</td>
+      <td>输入的文件名</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例10：读出 /etc/passwd 文件的第三和第四列，并用等号连接打印出来。
+&gt; awk -F':' 'BEGIN{OFS="=";} {print $3,$4;}' /etc/passwd
+</code></pre></div></div>
+
+<h4 id="操作">操作</h4>
+
+<p>操作由一个或多个命令、函数、表达式组成，之间由换行符或分号隔开，并位于大括号内，主要部分是：</p>
+
+<p>变量或数组赋值
+输出命令
+内置函数
+控制流语句</p>
+
+<h3 id="awk-的变量--varvalue">awk 的变量 —— [var=value]</h3>
+
+<p>除了之前提到的内置变量外，用户在使用 awk 时也可以自定义变量：<code class="language-plaintext highlighter-rouge">var=value</code>。当然也可以直接使用 awk 语言定义</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例11：定义变量var并将其打印出来
+&gt; awk -v var="test" 'BEGIN{print var}'
+
+例12：直接在操作中给变量赋值
+&gt; awk 'BEGIN{var="test"; print var}'
+</code></pre></div></div>
+
+<p>回顾例9，变量的设置可以帮助程序员用类C的语法完成更加复杂的任务。</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例9：找到 test.txt 文件中最长行的所占的字符数
+&gt; awk 'BEGIN{max=0} {if (length($0) &gt; max) max=length($0)} END{print max}' test.txt
+</code></pre></div></div>
+
+<p>awk 常常与其他 shell 指令合用，在传递数据时也需要通过变量：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例13：读取文件 a.txt 的行数，并用 awk 打印出来
+&gt; num=$(cat a.txt | wc -l)
+&gt; awk -v n=$num 'BEGIN{print n}' 或者
+&gt; awk 'BEGIN{print '"$num"'}'
+</code></pre></div></div>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#linux" class="page__taxonomy-item" rel="tag">linux</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#miscellaneous" class="page__taxonomy-item" rel="tag">Miscellaneous</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2022-07-19T00:00:00+08:00">July 19, 2022</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=awk+%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E5%85%A5%E5%9C%9F%20http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2022%2F07%2F19%2Fawk.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2022%2F07%2F19%2Fawk.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2022%2F07%2F19%2Fawk.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cpp/2022/06/18/gem5-6.html" class="pagination--pager" title="深入理解 Gem5 之五
+">previous</a>
+    
+    
+      <a href="/miscellaneous/2023/02/06/recommender_systems.html" class="pagination--pager" title="推荐系统简介
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/06/18/gem5-6.html" rel="permalink">深入理解 Gem5 之五
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">gem5中的Cache实现
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/04/02/gem5-4.html" rel="permalink">深入理解 Gem5 之四
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  12 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">gem5中的内存系统
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/13/gem5-3.html" rel="permalink">深入理解 Gem5 之三
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中SimObject类
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/miscellaneous/2022/07/19/awk.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/miscellaneous/2022/07/19/awk"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

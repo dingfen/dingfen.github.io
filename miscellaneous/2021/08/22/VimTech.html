@@ -20,14 +20,14 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="峰子的乐园">
 <meta property="og:title" content="熟练使用 Vim">
-<meta property="og:url" content="https://dingfen.github.io/miscellaneous/2021/08/22/VimTech.html">
+<meta property="og:url" content="http://localhost:4000/miscellaneous/2021/08/22/VimTech.html">
 
 
   <meta property="og:description" content="让手指跟上思维的步伐">
 
 
 
-  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser2.jpg">
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
 
 
 
@@ -44,7 +44,7 @@
   
 
 
-<link rel="canonical" href="https://dingfen.github.io/miscellaneous/2021/08/22/VimTech.html">
+<link rel="canonical" href="http://localhost:4000/miscellaneous/2021/08/22/VimTech.html">
 
 
 
@@ -55,7 +55,7 @@
     
       "@type": "Person",
       "name": "Bill Ding",
-      "url": "https://dingfen.github.io/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -102,6 +102,27 @@
 <!-- insert favicons. use https://realfavicongenerator.net/ -->
 
 <!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
   </head>
 
@@ -191,7 +212,7 @@
 
 
 
-  2 minutes read
+  3 minutes read
 
 </p>
       
@@ -344,6 +365,12 @@
           <li><a href="#总结">总结</a></li>
         </ul>
       </li>
+      <li><a href="#情景二vundle工具和nerd文件树">情景二：vundle工具和nerd文件树</a>
+        <ul>
+          <li><a href="#vundle-插件管理器">vundle 插件管理器</a></li>
+          <li><a href="#nerd-文件树">nerd 文件树</a></li>
+        </ul>
+      </li>
     </ul>
   </li>
 </ul>
@@ -363,40 +390,42 @@
 <span class="cp">#endif // &lt;_File_Name_MACRO_&gt;
 </span></code></pre></div></div>
 
-<p>每次键入这些信息会非常枯燥。但只要熟练使用 Vim ，就可以逃避这些烦人的操作。<em>如有需要，直接拉到最后复制粘贴</em>。</p>
+<p>每次键入这些信息会非常枯燥。但只要配置好 Vim ，就可以逃避这些烦人的操作。我们可以在 .vimrc 中将需要每次键入的信息写在一个函数内，每次在创建一个特定文件时（比如 .cpp），vim 会帮我们自动把这些信息写好。下面我来介绍一下使用方法，<em>如有需要，直接拉到最后复制粘贴</em>。</p>
 
 <h3 id="autocmd">autocmd</h3>
 
-<p>vim 中自带的自动命令，会在<strong>指定事件发生时</strong>自动执行。巧妙地利用自动命令就可以迅速完成上面场景的要求，将重复的操作自动化，提高编辑效率并减少人为操作的差错。</p>
+<p>vim 中自带的自动命令，会在<strong>指定事件发生时</strong>自动执行。我们正打算利用这一特性，迅速完成上面场景的要求，将重复的操作自动化，提高编辑效率并减少人为操作的差错。</p>
 
-<p>举例来说，先定义以下函数，用于在文件中插入当前日期：</p>
+<p>先从最简单的开始举例，vim 中可定义以下函数，用于在文件中插入当前日期：</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:function DateInsert<span class="o">()</span>
 :    <span class="nv">$read</span> <span class="o">!</span><span class="nb">date</span>
 :endfunction
 </code></pre></div></div>
 
-<p>使用以下命令，可以手动调用此函数：</p>
+<p>而使用以下命令，可以手动调用此函数：</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:call DateInsert<span class="o">()</span>
 </code></pre></div></div>
 
-<p>而若使用自动命令，则可以在保存文件时自动执行函数，其中 <code class="language-plaintext highlighter-rouge">FileWritePre</code> 是 vim 中的内置事件：</p>
+<p>但每次调用函数有点太过麻烦，我们使用自动命令，在保存文件时自动执行函数，其中 <code class="language-plaintext highlighter-rouge">FileWritePre</code> 是 vim 中的内置事件：</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:autocmd FileWritePre <span class="k">*</span> :call DateInsert<span class="o">()</span>
 </code></pre></div></div>
 
-<p>也可以用简写 <code class="language-plaintext highlighter-rouge">:au</code> 代替 <code class="language-plaintext highlighter-rouge">:autocmd</code>。内置事件有很多种，参考<a href="https://zhuanlan.zhihu.com/p/98360630">知乎专栏</a>罗列在此，官方文档可见 <a href="http://vimdoc.sourceforge.net/htmldoc/autocmd.html">Vim Doc</a>：</p>
+<p>上一句话可以简单地翻译为：“在写入文件前，需要自动执行命令 <code class="language-plaintext highlighter-rouge">call DateInsert()</code>”。可用简写 <code class="language-plaintext highlighter-rouge">:au</code> 代替 <code class="language-plaintext highlighter-rouge">:autocmd</code>。内置事件有很多种，参考<a href="https://zhuanlan.zhihu.com/p/98360630">知乎专栏</a>罗列在此，官方文档可见 <a href="http://vimdoc.sourceforge.net/htmldoc/autocmd.html">Vim Doc</a>：</p>
 
 <p><img src="/assets/img/vim_event.jpg" alt="" /></p>
 
 <hr />
 
-<p>再回到情景一的问题中，如果要想在创建新的 <code class="language-plaintext highlighter-rouge">.hpp</code> 文件后，让 vim 自动添加文件头，应当在 <code class="language-plaintext highlighter-rouge">vimrc</code> 中添加：</p>
+<p>简单的例子介绍完了，再回到情景一的问题中，结合上面给出的表格，如果要想在创建新的 <code class="language-plaintext highlighter-rouge">.hpp</code> 文件后，让 vim 自动添加文件头，那么应当在 <code class="language-plaintext highlighter-rouge">vimrc</code> 中添加：</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 自定义命令，发生在编辑新的文件时，且文件名后缀为hpp，需要执行"call AddHPPHeader"</span>
 autocmd BufNewFile <span class="k">*</span>.hpp <span class="nb">exec</span> <span class="s2">":call AddHPPHeader()"</span>
 </code></pre></div></div>
+
+<p>现在，每次打开一个新的 .hpp 文件后，vim 都会帮我们自动执行命令 <code class="language-plaintext highlighter-rouge">call AddHPPHeader()</code>。</p>
 
 <h3 id="关于函数">关于函数</h3>
 
@@ -407,7 +436,7 @@ autocmd BufNewFile <span class="k">*</span>.hpp <span class="nb">exec</span> <sp
 endfunc
 </code></pre></div></div>
 
-<p>函数内，第一步就是判断文件类型是否真的为 <code class="language-plaintext highlighter-rouge">.hpp</code>。使用 <code class="language-plaintext highlighter-rouge">expand()</code> 内置函数可以对当前文件进行分类。<code class="language-plaintext highlighter-rouge">expand("%:e")</code> 中，<code class="language-plaintext highlighter-rouge">%</code> 表示当前文件名，而 <code class="language-plaintext highlighter-rouge">:e</code> 表示只有扩展名，于是该函数返回的是当前文件名的扩展名。如果文件是 <code class="language-plaintext highlighter-rouge">hpp</code>，就添加文件头：</p>
+<p>函数内，第一步就是判断文件类型是否为 <code class="language-plaintext highlighter-rouge">.hpp</code>。这里使用 <code class="language-plaintext highlighter-rouge">expand()</code> 内置函数可以对当前文件进行分类。<code class="language-plaintext highlighter-rouge">expand("%:e")</code> 中，<code class="language-plaintext highlighter-rouge">%</code> 表示当前文件名，而 <code class="language-plaintext highlighter-rouge">:e</code> 表示只有扩展名，于是该函数返回的是当前文件名的扩展名。如果文件是 <code class="language-plaintext highlighter-rouge">hpp</code>，就添加文件头：</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if </span><span class="nb">expand</span><span class="o">(</span><span class="s2">"%:e"</span><span class="o">)</span> <span class="o">==</span> <span class="s1">'hpp'</span>
 	<span class="c"># 先限定在文件的第一行</span>
@@ -422,7 +451,7 @@ call setline<span class="o">(</span>line<span class="o">(</span><span class="s1"
 call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+5, <span class="s2">"#endif // XXXX"</span><span class="o">)</span>
 </code></pre></div></div>
 
-<p>最简单的方法往往不够灵活，试想若换一个文件，宏定义的具体内容必然需要改变，那岂不是又要修改 <code class="language-plaintext highlighter-rouge">vimrc</code> 了？</p>
+<p>这里的XXXX被我们写死在了 <code class="language-plaintext highlighter-rouge">.vimrc</code> 中，这样不够灵活，试想若换一个文件，宏定义的具体内容必然需要改变，那岂不是又要修改 <code class="language-plaintext highlighter-rouge">.vimrc</code> 了？</p>
 
 <p>使用变量才能保证宏定义可以随着文件名等条件变化。</p>
 
@@ -515,7 +544,7 @@ call setline<span class="o">(</span>line<span class="o">(</span><span class="s1"
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>substitute<span class="o">(</span><span class="nb">expand</span><span class="o">(</span><span class="s1">'%'</span><span class="o">)</span>, <span class="s2">"[/.]"</span>, <span class="s2">"_"</span>, <span class="s2">"g"</span><span class="o">)</span>
 </code></pre></div></div>
 
-<p>第一个参数是要修改的字符串，第二个是 pattern，第三个是替换的子串，第四个是替换的 flags，上面这句话将文件名路径中的 <code class="language-plaintext highlighter-rouge">/</code> 和 <code class="language-plaintext highlighter-rouge">.</code> 都替换为 <code class="language-plaintext highlighter-rouge">_</code> 。</p>
+<p><code class="language-plaintext highlighter-rouge">substitute</code> 的第一个参数是要修改的字符串，第二个是 pattern，第三个是替换的子串，第四个是替换的 flags，上面这句话将文件名路径中的 <code class="language-plaintext highlighter-rouge">/</code> 和 <code class="language-plaintext highlighter-rouge">.</code> 都替换为 <code class="language-plaintext highlighter-rouge">_</code> 。</p>
 
 <p>综合以上几点，可以如下定义 Vim 变量：</p>
 
@@ -528,22 +557,112 @@ call setline<span class="o">(</span>line<span class="o">(</span><span class="s1"
 
 <p>最后，我们得到了一个简短有用的 Vim 自动化脚本，可以有效地解决情景一提出的问题。</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>autocmd BufNewFile <span class="k">*</span>.hpp <span class="nb">exec</span> <span class="s2">":call AddHPPHeader()"</span>
+<div class="language-vim highlighter-rouge"><div class="highlight"><pre class="highlight"><code>autocmd <span class="nb">BufNewFile</span> *<span class="p">.</span>hpp exec <span class="s2">":call AddHPPHeader()"</span>
 
-func AddHPPHeader<span class="o">()</span>
-	<span class="k">if </span><span class="nb">expand</span><span class="o">(</span><span class="s2">"%:e"</span><span class="o">)</span> <span class="o">==</span> <span class="s1">'hpp'</span>
-        <span class="c"># 先限定在文件的第一行</span>
-        call setline<span class="o">(</span>1, <span class="s2">"/** "</span><span class="o">)</span>
-        <span class="c"># 再一行一行地添加内容</span>
-        <span class="nb">let </span><span class="nv">macro</span><span class="o">=</span> <span class="s2">"_DF_"</span><span class="nb">.</span>
-        	toupper<span class="o">(</span>substitute<span class="o">(</span><span class="nb">expand</span><span class="o">(</span><span class="s2">"%"</span><span class="o">)</span>, <span class="s2">"[/.]"</span>, <span class="s2">"_"</span>, <span class="s2">"g"</span><span class="o">))</span>.<span class="s2">"_"</span>
-        normal o
-        call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>, <span class="s2">"#ifndef "</span>.macro<span class="o">)</span>
-        call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+1, <span class="s2">"#define "</span>.macro<span class="o">)</span>
-        call setline<span class="o">(</span>line<span class="o">(</span><span class="s1">'.'</span><span class="o">)</span>+4, <span class="s2">"#endif // "</span>.macro<span class="o">)</span>
+func AddHPPHeader<span class="p">()</span>
+	<span class="k">if</span> <span class="nb">expand</span><span class="p">(</span><span class="s2">"%:e"</span><span class="p">)</span> <span class="p">==</span> <span class="s1">'hpp'</span>
+        # 先限定在文件的第一行
+        <span class="k">call</span> <span class="nb">setline</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="s2">"/** "</span><span class="p">)</span>
+        # 再一行一行地添加内容
+        <span class="k">let</span> macro<span class="p">=</span> <span class="s2">"_DF_"</span><span class="p">.</span>
+        	<span class="nb">toupper</span><span class="p">(</span><span class="nb">substitute</span><span class="p">(</span><span class="nb">expand</span><span class="p">(</span><span class="s2">"%"</span><span class="p">),</span> <span class="s2">"[/.]"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">,</span> <span class="s2">"g"</span><span class="p">)).</span><span class="s2">"_"</span>
+        normal <span class="k">o</span>
+        <span class="k">call</span> <span class="nb">setline</span><span class="p">(</span><span class="nb">line</span><span class="p">(</span><span class="s1">'.'</span><span class="p">),</span> <span class="s2">"#ifndef "</span><span class="p">.</span>macro<span class="p">)</span>
+        <span class="k">call</span> <span class="nb">setline</span><span class="p">(</span><span class="nb">line</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)+</span><span class="m">1</span><span class="p">,</span> <span class="s2">"#define "</span><span class="p">.</span>macro<span class="p">)</span>
+        <span class="k">call</span> <span class="nb">setline</span><span class="p">(</span><span class="nb">line</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)+</span><span class="m">4</span><span class="p">,</span> <span class="s2">"#endif // "</span><span class="p">.</span>macro<span class="p">)</span>
 endfunc
 </code></pre></div></div>
 
+<h2 id="情景二vundle工具和nerd文件树">情景二：vundle工具和nerd文件树</h2>
+
+<h3 id="vundle-插件管理器">vundle 插件管理器</h3>
+
+<p>许多 vim 的第三方插件可以让工作变得更加简单。但首先，我们需要安装一个<strong>管理插件</strong>的插件 vundle，其安装方式很简单，把它的 git 仓库存在 <code class="language-plaintext highlighter-rouge">.vim/bundle</code> 下就行了，执行：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/gmarik/vundle.git ~/.vim/bundle/vundle
+</code></pre></div></div>
+
+<p>随后，我们需要在 <code class="language-plaintext highlighter-rouge">.vimrc</code> 上使用这个插件管理器，使用方法很简单：</p>
+
+<div class="language-vim highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">set</span> <span class="nb">rtp</span><span class="p">+=~</span><span class="sr">/.vim/</span>bundle/Vundle<span class="p">.</span><span class="k">vim</span>
+<span class="k">call</span> vundle#begin<span class="p">()</span>
+<span class="c">" VundleVim/Vundle.vim</span>
+Plugin <span class="s1">'VundleVim/Vundle.vim'</span>
+<span class="c">" The Nerd Tree</span>
+Plugin <span class="s1">'preservim/nerdtree'</span>
+<span class="c">" Vim airline</span>
+Plugin <span class="s1">'vim-airline/vim-airline'</span>
+<span class="k">call</span> vundle#end<span class="p">()</span>
+</code></pre></div></div>
+
+<p>好，复制完上面这段代码后，我们来挨个看看他们的意思。第一句 <code class="language-plaintext highlighter-rouge">set</code> 命令是在指定 vundle 插件的运行路径，方便进行初始化操作。随后，<code class="language-plaintext highlighter-rouge">call vundle#begin()</code> 启动 vundle ，开始进行插件管理。之后紧跟的三句话表示我们的 vim 会使用到如下三个插件：Vundle.vim、nerdtree 和vim-airline ，请求 vundle 对这三个插件进行管理。最后 <code class="language-plaintext highlighter-rouge">call vundle#end()</code> 表示 vundle 管理结束。</p>
+
+<h3 id="nerd-文件树">nerd 文件树</h3>
+
+<p>使用 nerd 文件树目录可以方便我们在打开 vim 的同时看到我们目前所处的文件路径和文件树结构。其安装方法与 vundle 一样简单便捷，只需执行：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/preservim/nerdtree.git ~/.vim/bundle/nerdtree
+</code></pre></div></div>
+
+<p>即可完成下载和安装。但此时你打开 vim ，你仍无法看到文件树，需要输入<code class="language-plaintext highlighter-rouge">:NERDTreeToggle</code> 才能打开。我们可以利用在情景一中的小知识，使用 <code class="language-plaintext highlighter-rouge">autocmd</code> 来自动完成打开 vim 即打开文件树目录的操作：</p>
+
+<div class="language-vim highlighter-rouge"><div class="highlight"><pre class="highlight"><code>autocmd vimenter * NERDTree
+</code></pre></div></div>
+
+<p>受限于 vim 平台本身，nerdtree 的使用有些小门槛，需要使用它提供的环境变量与它更好地配合，下表分享一下常用的 nerdtree 变量：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>变量名</th>
+      <th>描述</th>
+      <th>值</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NERDTreeDirArrowExpandable</td>
+      <td>设置树的显示图标，该图标表示这层目录可以被展开</td>
+      <td>字符</td>
+    </tr>
+    <tr>
+      <td>NERDTreeDirArrowCollapsible</td>
+      <td>设置树的显示图标，该图标表示这层目录已经被展开</td>
+      <td>字符</td>
+    </tr>
+    <tr>
+      <td>NERDTreeIgnore</td>
+      <td>用于过滤所有列表中的文件</td>
+      <td>例如[’\.tmp$’, ‘\.git$’] 表示所有扩展名为 .tmp 或 .git 的文件都不会显示在上面</td>
+    </tr>
+    <tr>
+      <td>NERDTreeShowLineNumbers</td>
+      <td>指示 nerd 的窗口是否需要显示行号</td>
+      <td>1 为需要</td>
+    </tr>
+    <tr>
+      <td>NERDTreeMinimalUI</td>
+      <td>是否需要最小化 UI</td>
+      <td>为 1 时不显示 ‘Press ? for help’</td>
+    </tr>
+    <tr>
+      <td>NERDTreeWinSize</td>
+      <td>指定文件树占用的窗口宽度</td>
+      <td>宽度值</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>顺便秀一下我的配置吧：</p>
+
+<p><img src="/assets/img/ui4nerdtree.png" alt="img" /></p>
+
+<p>关于 nerdtree 的使用，还有许多有趣的小技巧分享给大家：</p>
+
+<ul>
+  <li>nerdtree 的刷新：打开的 vim 中，Nerdtree 目录结构是不会自动刷新的，需要按 r 手动进行刷新</li>
+  <li>恢复显示隐藏的文件：在 nerdtree 中按 Ctrl-I（大写）</li>
+</ul>
 
         
       </section>
@@ -602,11 +721,11 @@ endfunc
     <h4 class="page__share-title">share</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?text=%E7%86%9F%E7%BB%83%E4%BD%BF%E7%94%A8+Vim%20https%3A%2F%2Fdingfen.github.io%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?text=%E7%86%9F%E7%BB%83%E4%BD%BF%E7%94%A8+Vim%20http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fmiscellaneous%2F2021%2F08%2F22%2FVimTech.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
@@ -646,7 +765,7 @@ endfunc
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/03/13/gem5-3.html" rel="permalink">深入理解 Gem5 之三
+        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
 </a>
       
     </h2>
@@ -656,11 +775,11 @@ endfunc
 
 
 
-  4 minutes read
+  2 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5中SimObject类
+    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
 </p>
   </article>
 </div>
@@ -679,7 +798,7 @@ endfunc
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+        <a href="/miscellaneous/2022/07/19/awk.html" rel="permalink">awk 从入门到入土
 </a>
       
     </h2>
@@ -689,11 +808,11 @@ endfunc
 
 
 
-  6 minutes read
+  3 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+    <p class="archive__item-excerpt" itemprop="description">初步入土计划
 </p>
   </article>
 </div>
@@ -712,7 +831,7 @@ endfunc
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+        <a href="/cpp/2022/06/18/gem5-6.html" rel="permalink">深入理解 Gem5 之五
 </a>
       
     </h2>
@@ -726,7 +845,7 @@ endfunc
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+    <p class="archive__item-excerpt" itemprop="description">gem5中的Cache实现
 </p>
   </article>
 </div>
@@ -745,7 +864,7 @@ endfunc
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+        <a href="/cpp/2022/04/02/gem5-4.html" rel="permalink">深入理解 Gem5 之四
 </a>
       
     </h2>
@@ -755,11 +874,11 @@ endfunc
 
 
 
-  4 minutes read
+  13 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">
+    <p class="archive__item-excerpt" itemprop="description">gem5中的内存系统
 </p>
   </article>
 </div>
@@ -813,7 +932,7 @@ endfunc
   </ul>
 </div>
 
-<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+<div class="page__footer-copyright">&copy; 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
 
       </footer>
     </div>
@@ -835,7 +954,7 @@ endfunc
     
   <script>
     var disqus_config = function () {
-      this.page.url = "https://dingfen.github.io/miscellaneous/2021/08/22/VimTech.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.url = "http://localhost:4000/miscellaneous/2021/08/22/VimTech.html";  /* Replace PAGE_URL with your page's canonical URL variable */
       this.page.identifier = "/miscellaneous/2021/08/22/VimTech"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
     };
     (function() { /* DON'T EDIT BELOW THIS LINE */

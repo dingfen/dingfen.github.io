@@ -20,14 +20,14 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="峰子的乐园">
 <meta property="og:title" content="深入理解 Gem5 之一">
-<meta property="og:url" content="https://dingfen.github.io/cpp/2022/02/24/gem5-1.html">
+<meta property="og:url" content="http://localhost:4000/cpp/2022/02/24/gem5-1.html">
 
 
   <meta property="og:description" content="关于gem5事件的实现">
 
 
 
-  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser2.jpg">
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
 
 
 
@@ -44,7 +44,7 @@
   
 
 
-<link rel="canonical" href="https://dingfen.github.io/cpp/2022/02/24/gem5-1.html">
+<link rel="canonical" href="http://localhost:4000/cpp/2022/02/24/gem5-1.html">
 
 
 
@@ -55,7 +55,7 @@
     
       "@type": "Person",
       "name": "Bill Ding",
-      "url": "https://dingfen.github.io/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -102,6 +102,27 @@
 <!-- insert favicons. use https://realfavicongenerator.net/ -->
 
 <!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
   </head>
 
@@ -338,9 +359,30 @@
     <ul>
       <li><a href="#前言">前言</a></li>
       <li><a href="#创建一个简单的事件">创建一个简单的事件</a></li>
-      <li><a href="#eventbase-类">EventBase 类</a></li>
-      <li><a href="#event-类">Event 类</a></li>
-      <li><a href="#eventqueue-类">EventQueue 类</a></li>
+      <li><a href="#eventbase-类">EventBase 类</a>
+        <ul>
+          <li><a href="#优先级">优先级</a></li>
+          <li><a href="#标志位">标志位</a></li>
+        </ul>
+      </li>
+      <li><a href="#event-类">Event 类</a>
+        <ul>
+          <li><a href="#核心实现">核心实现</a></li>
+          <li><a href="#派生类">派生类</a></li>
+        </ul>
+      </li>
+      <li><a href="#eventqueue-类">EventQueue 类</a>
+        <ul>
+          <li><a href="#schedule">Schedule</a>
+            <ul>
+              <li><a href="#同步插入">同步插入</a></li>
+              <li><a href="#跨线程的事件调度">跨线程的事件调度</a></li>
+            </ul>
+          </li>
+          <li><a href="#deschedule">Deschedule</a></li>
+          <li><a href="#service">Service</a></li>
+        </ul>
+      </li>
       <li><a href="#对于创建事件的解释">对于创建事件的解释</a></li>
     </ul>
   </li>
@@ -390,9 +432,9 @@
 <span class="p">}</span>
 </code></pre></div></div>
 
-<p>上面的代码中，事件会在第 100 个 tick 时被触发。通常，需使用 <code class="language-plaintext highlighter-rouge">curTick()</code> 加偏移来定事件触发的时间，但由于在第一次开始模拟之前 <code class="language-plaintext highlighter-rouge">startup()</code> 不会被执行（即从 Python 配置文件中调用 <code class="language-plaintext highlighter-rouge">simulate()</code> 函数），因此是在 tick 为 0 时调用 <code class="language-plaintext highlighter-rouge">startup()</code> 函数，就显式地标明了该值。</p>
+<p>上面的代码中，事件会在第 100 个 tick 时被触发。通常，需使用 <code class="language-plaintext highlighter-rouge">curTick()</code> 加<strong>时间偏移</strong>来确定事件触发的时间。但在这一简单示例中，开始模拟的函数（即 Python 配置文件中调用 <code class="language-plaintext highlighter-rouge">simulate()</code> 函数） 是以 tick = 0 的原点开始执行的，因此这里的 <code class="language-plaintext highlighter-rouge">startup()</code> 可以显式地标明要调度的时间点。</p>
 
-<p>当运行 gem5 模拟器后，会得到如下输出，可见我们实现了在 100 tick 时执行 <code class="language-plaintext highlighter-rouge">processEvent()</code> 函数。</p>
+<p>当运行 gem5 模拟器后，会得到如下输出，具体如何运行不是本博客的重点，感兴趣的读者可参考<a href="https://www.gem5.org/documentation/learning_gem5/part2/helloobject/">官方文档</a>运行。从下面的输出信息可知，我们实现了在 100 tick 时执行 <code class="language-plaintext highlighter-rouge">processEvent()</code> 函数。</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gem5 Simulator System.  http://gem5.org
 gem5 is copyrighted software; use the --copyright option for details.
@@ -423,7 +465,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 <span class="p">}</span>
 </code></pre></div></div>
 
-<p>上面代码中，在 timesleft 还未小于 0 时，<code class="language-plaintext highlighter-rouge">processEvent()</code> 函数每次打印出信息后，都会再次调用 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数增加一个事件，注意到这里使用了 <code class="language-plaintext highlighter-rouge">curTick()</code> 加偏移量的形式指定了事件被触发的时间。</p>
+<p>上面代码中，在 timesleft 还未小于 0 时，<code class="language-plaintext highlighter-rouge">processEvent()</code> 函数每次打印出信息后，都会再次调用 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数增加一个事件。注意，此处使用的 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数 就利用了 <code class="language-plaintext highlighter-rouge">curTick()</code> 生成时间偏移量，进而指定了事件被调度的时间。</p>
 
 <hr />
 
@@ -431,14 +473,16 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 <h2 id="eventbase-类">EventBase 类</h2>
 
-<p>Gem5 是一个事件驱动的模拟器。所谓事件（Event），可以理解为系统的读写、信号的到达等等一系列改变系统状态的行为，也可以包括程序员自己定义的回调函数。<strong>事件的公共父类是 EventBase 类，其内部定义了很多类的静态常量，方便事件之间共享标志位和优先级等定义。</strong></p>
+<p>Gem5 是一个事件驱动的模拟器。因此，事件（Event）是模拟器的基本调度、执行单位，是一个非常重要的核心概念。事件可以理解为一系列改变系统状态的行为，包括但不限于对内存的读写、数据包的发送和到达等。模拟器整个的模拟过程就是对所有事件创建、调度、执行和终止的过程。从技术上讲，事件是由特殊的回调函数和一组状态信息位域实现的。对该事件的执行本质就是执行事件内的回调函数。本小节重点介绍<strong>事件的公共父类——EventBase 类，其内部定义了很多类的静态常量，方便事件之间共享标志位和优先级等定义。</strong></p>
 
-<p>EventBase 类定义的静态常量中，很大一部分是事件优先级（Priority）。这是用于区分在同一 cycle 中事件被处理的先后顺序的重要方式，事件包括 CPU 切换上下文、延迟写、DVFS 更新等。值得注意的是，优先级数值越小，事件的优先级越高。</p>
+<h3 id="优先级">优先级</h3>
+
+<p>EventBase 类定义的静态常量中，很大一部分是事件优先级（Priority）。这是用于区分在同一 cycle 中事件被处理的先后顺序的重要方式，事件包括 CPU 切换上下文、延迟写、DVFS 更新等。值得注意的是，优先级数值越小，事件的优先级越高。大多数事件在调度时都使用默认的优先级。</p>
 
 <table>
   <thead>
     <tr>
-      <th>事件</th>
+      <th>事件优先级</th>
       <th>描述</th>
       <th>优先级</th>
     </tr>
@@ -451,7 +495,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     </tr>
     <tr>
       <td>Debug_Break_Pri</td>
-      <td>breakpoints 的优先级，应该非常高否则会丢失信息</td>
+      <td>断点的优先级，应该非常高否则会丢失信息</td>
       <td>-100</td>
     </tr>
     <tr>
@@ -471,7 +515,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     </tr>
     <tr>
       <td>DVFS_Update_Pri</td>
-      <td>DVFS 更新，会调用 stat dump</td>
+      <td>DVFS 更新事件，会将所有相关的状态dump 出来</td>
       <td>31</td>
     </tr>
     <tr>
@@ -507,7 +551,9 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
   </tbody>
 </table>
 
-<p>此外，还有一部分常量是标志位，也记录在此：</p>
+<h3 id="标志位">标志位</h3>
+
+<p>此外，EventBase 类还定义了一部分标志位，这些标志位要么是规定了用户的权限（可读或可写），要么是记录了事件处于的某种状态（squashed或Scheduled），也记录在此：</p>
 
 <table>
   <thead>
@@ -520,22 +566,22 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
   <tbody>
     <tr>
       <td>PublicRead</td>
-      <td>可被公开读的标志位</td>
+      <td>表示最低的6位是可被公开读的标志位</td>
       <td>0x003f</td>
     </tr>
     <tr>
       <td>PublicWrite</td>
-      <td>可被公开写的标志位</td>
+      <td>表示可被公开写的标志位</td>
       <td>0x001d</td>
     </tr>
     <tr>
       <td>Squashed</td>
-      <td>已经 squashed</td>
+      <td>表示该事件已经 squashed</td>
       <td>0x0001</td>
     </tr>
     <tr>
       <td>Scheduled</td>
-      <td>已经被调度</td>
+      <td>表示事件已经被调度，该位不可公开写</td>
       <td>0x0002</td>
     </tr>
     <tr>
@@ -545,17 +591,22 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     </tr>
     <tr>
       <td>AutoDelete</td>
-      <td>process() 后自动删除</td>
+      <td>标志该事件 process() 后自动删除</td>
       <td>0x0004</td>
     </tr>
     <tr>
+      <td>Reserved</td>
+      <td>该位被保留，预备后续使用</td>
+      <td>0x0008</td>
+    </tr>
+    <tr>
       <td>IsExitEvent</td>
-      <td>special exit event</td>
+      <td>标识该事件是否为 exit_event</td>
       <td>0x0010</td>
     </tr>
     <tr>
       <td>IsMainQueue</td>
-      <td>on main event queue</td>
+      <td>标识该事件是否位于main_queue</td>
       <td>0x0020</td>
     </tr>
     <tr>
@@ -565,7 +616,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     </tr>
     <tr>
       <td>InitMask</td>
-      <td>mask for init bits</td>
+      <td>初始化位的掩码</td>
       <td>0xffc0</td>
     </tr>
   </tbody>
@@ -573,7 +624,9 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 <h2 id="event-类">Event 类</h2>
 
-<p>事件类 Event 是一个可序列化的类（继承了 Serializable 类，今后再详聊），是事件队列 EventQueue 类中的一项，下面给出 Event 类中重要的成员。</p>
+<h3 id="核心实现">核心实现</h3>
+
+<p>事件类 Event 是 Gem5 中的核心类，是所有事件的父类。该类继承自 Serializable 类（这今后再详聊）和 EventBase 类。此外，Event 类为抽象类，内含有一个纯虚函数 <code class="language-plaintext highlighter-rouge">process()</code>，通常程序员需要通过 Event 的派生类来创建事件对象。但在此之前，我们必须深入了解该类的运行机制。下面列出 Event 类中一些重要的成员。</p>
 
 <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Event</span> <span class="o">:</span> <span class="k">public</span> <span class="n">EventBase</span><span class="p">,</span> <span class="k">public</span> <span class="n">Serializable</span> <span class="p">{</span>
   <span class="n">Event</span> <span class="o">*</span><span class="n">nextBin</span><span class="p">;</span>  <span class="c1">// Bin defined as when+priority</span>
@@ -583,14 +636,28 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
   <span class="n">Flags</span> <span class="n">flags</span><span class="p">;</span>
   <span class="n">Counter</span> <span class="n">instance</span><span class="p">;</span>  <span class="c1">// event unique ID</span>
   <span class="n">EventQueue</span> <span class="o">*</span><span class="n">queue</span><span class="p">;</span>
+
+  <span class="k">static</span> <span class="n">Event</span> <span class="o">*</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span><span class="p">);</span>
+  <span class="k">static</span> <span class="n">Event</span> <span class="o">*</span><span class="n">removeItem</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Event</span> <span class="o">*</span><span class="n">last</span><span class="p">);</span>
+
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">process</span><span class="p">()</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="n">scheduled</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">flags</span><span class="p">.</span><span class="n">isSet</span><span class="p">(</span><span class="n">Scheduled</span><span class="p">);</span> <span class="p">}</span>
+  
+  <span class="c1">// Managed event scheduled and being held in the event queue.</span>
+  <span class="kt">void</span> <span class="n">acquire</span><span class="p">()</span> <span class="p">{</span> <span class="k">if</span> <span class="p">(</span><span class="n">flags</span><span class="p">.</span><span class="n">isSet</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">Managed</span><span class="p">))</span>  <span class="n">acquireImpl</span><span class="p">();</span> <span class="p">}</span>
+
+  <span class="c1">// Managed event removed from the event queue.</span>
+  <span class="kt">void</span> <span class="n">release</span><span class="p">()</span> <span class="p">{</span> <span class="k">if</span> <span class="p">(</span><span class="n">flags</span><span class="p">.</span><span class="n">isSet</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">Managed</span><span class="p">))</span>  <span class="n">releaseImpl</span><span class="p">();</span> <span class="p">}</span>
+  
+  <span class="kt">void</span> <span class="n">setWhen</span><span class="p">(</span><span class="n">Tick</span> <span class="n">when</span><span class="p">,</span> <span class="n">EventQueue</span> <span class="o">*</span><span class="n">q</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div></div>
 
-<p>后面会提到，事件队列 EventQueue 实质上是一个二级链表，因此 Event 中存在两个指针：nextBin 指向链表中下一项，而 nextInBin 指向 Bin 相同的下一项事件。此外还有时间戳（记录应当处理该事件的时间）、优先级、标志位、ID和指向队列的指针。</p>
+<p>抽象类 Event 描述了事件这一核心概念，因而它也是整个底层机制的核心实现类。上节提到事件本质是由特殊的回调函数和一组状态标志位组成的，这体现在实现中便是类 Event 内部预留的虚函数 <code class="language-plaintext highlighter-rouge">process()</code>，以及存有运行时刻 <code class="language-plaintext highlighter-rouge">_when</code>，优先级 <code class="language-plaintext highlighter-rouge">_priority</code>，标记位 <code class="language-plaintext highlighter-rouge">flags</code> 和用于维护二维链表的两个指针变量 <code class="language-plaintext highlighter-rouge">nextBin</code> 和 <code class="language-plaintext highlighter-rouge">nextInBin</code> 等，其中 <code class="language-plaintext highlighter-rouge">nextBin</code> 指向链表中下一项，而 <code class="language-plaintext highlighter-rouge">nextInBin</code> 指向 Bin （Bin = when + priority）相同的下一项事件。</p>
 
 <p><img src="/assets/img/gem5/gem5-1.png" alt="" /></p>
 
-<p>在 Gem5 中，每个事件在被处理时都有一个回调函数 <code class="language-plaintext highlighter-rouge">process()</code>。每个继承了 Event 类的子类都必须实现。在处理事件时，还需要注意 EventBase 中的标志位，并随时注意调整 cycle 周期。此外，事件获取 <code class="language-plaintext highlighter-rouge">acquire()</code> 和释放 <code class="language-plaintext highlighter-rouge">release()</code> 时的动作也可以被子类重载实现。使用 <code class="language-plaintext highlighter-rouge">setwhen()</code> 可以设置事件被触发的时间，并被指定的队列。</p>
+<p>在 Gem5 中，每个事件在被处理时都有一个纯虚函数 <code class="language-plaintext highlighter-rouge">process()</code>。每个继承了 Event 类的子类都必须实现。在处理事件时，还需要注意其中的标志位，并随时注意调整 cycle 周期。此外，事件获取 <code class="language-plaintext highlighter-rouge">acquire()</code> 和释放 <code class="language-plaintext highlighter-rouge">release()</code> 时的动作也可以被子类重载实现。使用 <code class="language-plaintext highlighter-rouge">setwhen()</code> 可以设置事件被触发的时间，并被指定的队列。</p>
 
 <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">setWhen</span><span class="p">(</span><span class="n">Tick</span> <span class="n">when</span><span class="p">,</span> <span class="n">EventQueue</span> <span class="o">*</span><span class="n">q</span><span class="p">)</span> <span class="p">{</span>
   <span class="n">_when</span> <span class="o">=</span> <span class="n">when</span><span class="p">;</span>
@@ -603,7 +670,9 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 </span><span class="p">}</span>
 </code></pre></div></div>
 
-<p>Event 类的使用场景多见于 EventQueue 类内的实现。<strong>若用户要直接使用 Event 类包装另一个类的对象，可能 EventWrapper 类或者 EventFunctionWrapper 更加合适：</strong></p>
+<h3 id="派生类">派生类</h3>
+
+<p>Event 类的使用场景多见于 EventQueue 类内的实现。前文提到，由于类 Event 为抽象类，程序员需要通过类 Event 的派生类来创建事件对象，其中有两个派生类最为常用。一个是类 EventFunctionWrapper，其内部封装了一个执行函数。而另一个派生类是模板类 EventWrapper，它可以封装一个模板类，从而提供更加灵活的执行机制。<strong>若用户要直接使用 Event 类包装另一个类的对象，可能 EventWrapper 类或者 EventFunctionWrapper 更加合适：</strong></p>
 
 <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="n">T</span><span class="o">::*</span> <span class="n">F</span><span class="p">)()&gt;</span>
 <span class="k">class</span> <span class="nc">EventWrapper</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Event</span> <span class="p">{</span>
@@ -635,7 +704,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 <h2 id="eventqueue-类">EventQueue 类</h2>
 
-<p>事件队列（EventQueue）是管理系统事件的重要载体，每个线程都会维护一个局部的事件队列，事件会在队列中被调度（即插入到队列中）。</p>
+<p>事件队列（EventQueue）是管理系统事件的重要载体，类 EventQueue 用于描述该事件队列，它将被调度的事件按执行时间排列，其中队列头是执行时间最早的事件，执行时间一致的按照优先级高低在另一个维度上排列，形成了一个二维链表。每个线程都会维护一个局部的事件队列，事件会在队列中被调度（即插入到队列中）。</p>
 
 <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EventQueue</span> <span class="p">{</span>
   <span class="n">Event</span> <span class="o">*</span><span class="n">head</span><span class="p">;</span>
@@ -649,22 +718,26 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 <span class="p">}</span>
 </code></pre></div></div>
 
-<p>async_queue 用于处理异步事件的队列，而真正的链表头是 head。此外，EventQueue 类重点还是在于 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数，该函数负责事件调度，其参数是将要被执行的事件 event 和具体执行时间 when，global 参数用于判断队列是否被另一个线程运行，进而分成两个执行路径：</p>
+<p>async_queue 和 async_queue_mutex 用于管理多线程下异步事件队列，而真正的链表头是 head。</p>
 
-<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//! Current mode of execution: parallel / serial</span>
+<h3 id="schedule">Schedule</h3>
+
+<p>EventQueue 类重点还是在于 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数，该函数负责事件调度，将创建好的事件插入到事件队列中，以备事件引擎执行。其参数是将要被执行的事件 <code class="language-plaintext highlighter-rouge">event</code> 和具体执行时间 <code class="language-plaintext highlighter-rouge">when</code>，global 参数用于判断队列是否被另一个线程运行。在 <code class="language-plaintext highlighter-rouge">schedule()</code> 中，设置完 event 的执行时间后，分成两个执行方式：同步插入和异步插入。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//! 当前的执行模式: parallel / serial</span>
 <span class="k">extern</span> <span class="kt">bool</span> <span class="n">inParallelMode</span><span class="p">;</span>
 
 <span class="kt">void</span> <span class="nf">schedule</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Tick</span> <span class="n">when</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">global</span><span class="o">=</span><span class="nb">false</span><span class="p">)</span> <span class="p">{</span>
   <span class="n">event</span><span class="o">-&gt;</span><span class="n">setWhen</span><span class="p">(</span><span class="n">when</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
-  <span class="c1">// The check below is to make sure of two things</span>
-  <span class="c1">// a. A thread schedules local events on other queues through the asyncq.</span>
-  <span class="c1">// b. A thread schedules global events on the asyncq, whether or not</span>
-  <span class="c1">//    this event belongs to this eventq. This is required to maintain</span>
-  <span class="c1">//    a total order amongst the global events. See global_event.{cc,hh}</span>
-  <span class="c1">//    for more explanation.</span>
+  <span class="c1">// 两种模式:</span>
+  <span class="c1">// a. 异步插入：硬件线程将局部事件调度到一个不属于自己的其他队列 需要 `asyncq`.</span>
+  <span class="c1">// b. 全局调度：硬件线程将全局事件调度到 `asyncq` 需要维护全局事件的整体顺序</span>
+  <span class="c1">//    See global_event.{cc,hh} for more explanation.</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">inParallelMode</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="k">this</span> <span class="o">!=</span> <span class="n">curEventQueue</span><span class="p">()</span> <span class="o">||</span> <span class="n">global</span><span class="p">))</span> <span class="p">{</span>
+    <span class="c1">// 异步插入</span>
     <span class="n">asyncInsert</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="c1">// 同步插入</span>
     <span class="n">insert</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
   <span class="p">}</span>
   <span class="n">event</span><span class="o">-&gt;</span><span class="n">flags</span><span class="p">.</span><span class="n">set</span><span class="p">(</span><span class="n">Event</span><span class="o">::</span><span class="n">Scheduled</span><span class="p">);</span>
@@ -675,84 +748,92 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 <span class="p">}</span>
 </code></pre></div></div>
 
-<ol>
-  <li>
-    <p>同步事件：调用 <code class="language-plaintext highlighter-rouge">insert()</code> 函数，此时 global 参数为 false，这是很简单的链表插入动作，插入在插入点之前，符合惯例。之前提到，EventQueue 队列是一个二级链表，是由一串串单链表的头节点组成的链表。从代码可知，在 in Bin 链表中，使用头插法插入了新节点，因此二级链表是 LIFO 的。</p>
+<h4 id="同步插入">同步插入</h4>
 
-    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Event</span> <span class="o">*</span><span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span><span class="p">)</span> <span class="p">{</span>
-  <span class="c1">// Either way, event will be the top element in the 'in bin' list</span>
-  <span class="c1">// which is the pointer we need in order to look into the list, so</span>
-  <span class="c1">// we need to insert that into the bin list.</span>
-  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">curr</span> <span class="o">||</span> <span class="o">*</span><span class="n">event</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">curr</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
-    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextInBin</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-    <span class="c1">// 头插法 因此 in Bin 链表是LIFO的</span>
-    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
-    <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextInBin</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="k">return</span> <span class="n">event</span><span class="p">;</span>
-<span class="p">}</span>
+<p>同步事件的调度需要调用 <code class="language-plaintext highlighter-rouge">insert()</code> 函数，且此时 global 参数为 false。这是很简单的链表插入动作，插入在插入点之前，符合编程惯例。之前提到，EventQueue 队列是一个二级链表，是由一串串单链表的头节点组成的链表。从以下代码可知，在 in Bin 链表中，使用头插法插入了新节点，因此二级链表是 LIFO 的。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="n">Event</span> <span class="o">*</span><span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">,</span> <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span><span class="p">)</span> <span class="p">{</span>
+     <span class="c1">// 当前没有事件，或者插入的事件比头部还早 event进入 top 链表 'in bin'</span>
+     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">curr</span> <span class="o">||</span> <span class="o">*</span><span class="n">event</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">curr</span><span class="p">)</span> <span class="p">{</span>
+       <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
+       <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextInBin</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+     <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+       <span class="c1">// 头插法 因此 in Bin 链表是LIFO的</span>
+       <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+       <span class="n">event</span><span class="o">-&gt;</span><span class="n">nextInBin</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
+     <span class="p">}</span>
+     <span class="k">return</span> <span class="n">event</span><span class="p">;</span>
+   <span class="p">}</span>
    
-<span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">insert</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">head</span> <span class="o">||</span> <span class="o">*</span><span class="n">event</span> <span class="o">&lt;=</span> <span class="o">*</span><span class="n">head</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">head</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">head</span><span class="p">);</span>
-    <span class="k">return</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="c1">// Figure out either which 'in bin' list we are on, or where a new list</span>
-  <span class="c1">// needs to be inserted</span>
-  <span class="n">Event</span> <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
-  <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
-  <span class="k">while</span> <span class="p">(</span><span class="n">curr</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="n">curr</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">prev</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
-    <span class="n">curr</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="c1">// Note: this operation may render all nextBin pointers on the</span>
-  <span class="c1">// prev 'in bin' list stale (except for the top one)</span>
-  <span class="n">prev</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">curr</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div>    </div>
-  </li>
-  <li>
-    <p>跨线程的事件调度：要么采用异步事件的调度方案，要么直接获取目的线程的事件队列锁。此时 global 参数设置为 true，采取第一种做法时，因为事件队列被另一个线程运行，为防止冲突，事件会被暂时插入到异步队列 async_queue 中。</p>
+   <span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">insert</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">head</span> <span class="o">||</span> <span class="o">*</span><span class="n">event</span> <span class="o">&lt;=</span> <span class="o">*</span><span class="n">head</span><span class="p">)</span> <span class="p">{</span>
+       <span class="c1">// call insertBefore()</span>
+       <span class="n">head</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">head</span><span class="p">);</span>
+       <span class="k">return</span><span class="p">;</span>
+     <span class="p">}</span>
+     <span class="c1">// 首先找打事件应位于哪个 'in bin'</span>
+     <span class="n">Event</span> <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
+     <span class="n">Event</span> <span class="o">*</span><span class="n">curr</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+     <span class="k">while</span> <span class="p">(</span><span class="n">curr</span> <span class="o">&amp;&amp;</span> <span class="o">*</span><span class="n">curr</span> <span class="o">&lt;</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+       <span class="n">prev</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>
+       <span class="n">curr</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">nextBin</span><span class="p">;</span>
+     <span class="p">}</span>
+     <span class="c1">// Note: this operation may render all nextBin pointers on the</span>
+     <span class="c1">// prev 'in bin' list stale (except for the top one)</span>
+     <span class="n">prev</span><span class="o">-&gt;</span><span class="n">nextBin</span> <span class="o">=</span> <span class="n">Event</span><span class="o">::</span><span class="n">insertBefore</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">curr</span><span class="p">);</span>
+   <span class="p">}</span>
+</code></pre></div></div>
 
-    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">asyncInsert</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
-  <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-  <span class="n">async_queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
-  <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-<span class="p">}</span>
+<h4 id="跨线程的事件调度">跨线程的事件调度</h4>
+
+<p>跨线程的事件调度可采用异步事件的调度方案（即将事件调度到另一个线程的事件队列中），此时 global 参数设置为 true。采取该做法时，因为事件队列被另一个线程运行，为防止冲突，<code class="language-plaintext highlighter-rouge">asyncInsert()</code> 会将事件暂时插入到异步队列 <code class="language-plaintext highlighter-rouge">async_queue</code> 中。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">asyncInsert</span><span class="p">(</span><span class="n">Event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+     <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+     <span class="n">async_queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">event</span><span class="p">);</span>
+     <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+   <span class="p">}</span>
    
-<span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">handleAsyncInsertions</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">assert</span><span class="p">(</span><span class="k">this</span> <span class="o">==</span> <span class="n">curEventQueue</span><span class="p">());</span>
-    <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">async_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
-        <span class="n">insert</span><span class="p">(</span><span class="n">async_queue</span><span class="p">.</span><span class="n">front</span><span class="p">());</span>
-        <span class="n">async_queue</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-<span class="p">}</span>
-</code></pre></div>    </div>
+   <span class="kt">void</span> <span class="n">EventQueue</span><span class="o">::</span><span class="n">handleAsyncInsertions</span><span class="p">()</span> <span class="p">{</span>
+       <span class="n">assert</span><span class="p">(</span><span class="k">this</span> <span class="o">==</span> <span class="n">curEventQueue</span><span class="p">());</span>
+       <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+       <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">async_queue</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+           <span class="n">insert</span><span class="p">(</span><span class="n">async_queue</span><span class="p">.</span><span class="n">front</span><span class="p">());</span>
+           <span class="n">async_queue</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+       <span class="p">}</span>
+       <span class="n">async_queue_mutex</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+   <span class="p">}</span>
+</code></pre></div></div>
 
-    <p>最后在每个 simulatoin quantum 的最后时刻，async_queue 会被合入到真正的事件队列中（见 <code class="language-plaintext highlighter-rouge">handleAsyncInsertions()</code> 函数）。而若通过直接获取目的线程的事件队列锁的方式实现，那么为避免死锁情况，线程需要先自动放弃自己的事件队列锁，才能获得新事件队列锁，这样每个线程至多获取一个事件队列锁，从而避免了死锁。该功能由 ScopedMigration 类负责，将东西暂时移植到另一个队列中。</p>
+<p>最后在每个模拟循环（或barrier）的最后时刻，<code class="language-plaintext highlighter-rouge">async_queue</code> 中的事件会被全部取出，然后捯饬到真正的事件队列中（见上述 <code class="language-plaintext highlighter-rouge">handleAsyncInsertions()</code> 函数）。</p>
 
-    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Releasing the current queue, locking the new queue
- * and updating curEventQueue(). This can, for example
- * be useful when performing IO across thread event
- * queues when timing is not crucial (e.g., during fast
- * forwarding).
- */</span>
-<span class="n">ScopedMigration</span><span class="p">(</span><span class="n">EventQueue</span> <span class="o">*</span><span class="n">_new_eq</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">_doMigrate</span> <span class="o">=</span> <span class="nb">true</span><span class="p">)</span>
-  <span class="o">:</span><span class="n">new_eq</span><span class="p">(</span><span class="o">*</span><span class="n">_new_eq</span><span class="p">),</span> <span class="n">old_eq</span><span class="p">(</span><span class="o">*</span><span class="n">curEventQueue</span><span class="p">()),</span>
-  <span class="n">doMigrate</span><span class="p">((</span><span class="o">&amp;</span><span class="n">new_eq</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">old_eq</span><span class="p">)</span><span class="o">&amp;&amp;</span><span class="n">_doMigrate</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">doMigrate</span><span class="p">)</span> <span class="p">{</span>
-      <span class="n">old_eq</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
-      <span class="n">new_eq</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
-      <span class="n">curEventQueue</span><span class="p">(</span><span class="o">&amp;</span><span class="n">new_eq</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>    </div>
-  </li>
-</ol>
+<p>若要直接跨线程和事件队列地调度事件，或者获取目标事件队列的锁，在 <code class="language-plaintext highlighter-rouge">schedule()</code> 之外，还需要有特殊的机制避免死锁。原理也很简单：线程必须先自动放弃当前手中的事件队列锁，才能获得新事件队列锁，确保每个线程至多获取一个事件队列锁。该功能由 ScopedMigration 类负责，它将事件从一个事件队列暂时移植到另一个队列中。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="cm">/* Releasing the current queue, locking the new queue
+    * and updating curEventQueue(). This can, for example
+    * be useful when performing IO across thread event
+    * queues when timing is not crucial (e.g., during fast
+    * forwarding).
+    */</span>
+   <span class="n">ScopedMigration</span><span class="p">(</span><span class="n">EventQueue</span> <span class="o">*</span><span class="n">_new_eq</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">_doMigrate</span> <span class="o">=</span> <span class="nb">true</span><span class="p">)</span>
+     <span class="o">:</span><span class="n">new_eq</span><span class="p">(</span><span class="o">*</span><span class="n">_new_eq</span><span class="p">),</span> <span class="n">old_eq</span><span class="p">(</span><span class="o">*</span><span class="n">curEventQueue</span><span class="p">()),</span>
+     <span class="n">doMigrate</span><span class="p">((</span><span class="o">&amp;</span><span class="n">new_eq</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">old_eq</span><span class="p">)</span><span class="o">&amp;&amp;</span><span class="n">_doMigrate</span><span class="p">)</span> <span class="p">{</span>
+       <span class="k">if</span> <span class="p">(</span><span class="n">doMigrate</span><span class="p">)</span> <span class="p">{</span>
+         <span class="n">old_eq</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+         <span class="n">new_eq</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+         <span class="n">curEventQueue</span><span class="p">(</span><span class="o">&amp;</span><span class="n">new_eq</span><span class="p">);</span>
+       <span class="p">}</span>
+   <span class="p">}</span>
+   <span class="c1">// Temporarily migrate execution to a different event queue.</span>
+   <span class="k">class</span> <span class="nc">EventQueue</span><span class="o">::</span><span class="n">ScopedMigration</span> <span class="p">{</span>
+     <span class="nl">private:</span>
+      <span class="n">EventQueue</span> <span class="o">&amp;</span><span class="n">new_eq</span><span class="p">;</span>
+      <span class="n">EventQueue</span> <span class="o">&amp;</span><span class="n">old_eq</span><span class="p">;</span>
+      <span class="kt">bool</span> <span class="n">doMigrate</span><span class="p">;</span>
+   <span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="deschedule">Deschedule</h3>
 
 <p>在 <code class="language-plaintext highlighter-rouge">schedule()</code> 函数的基础之上，还添加了 <code class="language-plaintext highlighter-rouge">reschedule()</code> 和 <code class="language-plaintext highlighter-rouge">deschedule()</code> 等函数，方便事件队列的调度管理。其中 <code class="language-plaintext highlighter-rouge">deschedule()</code> 函数牵扯到链表的删除，也是比较平凡的实现。</p>
 
@@ -803,6 +884,8 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     <span class="k">return</span> <span class="n">top</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div></div>
+
+<h3 id="service">Service</h3>
 
 <p>现在我们来看一下 EventQueue 中，Event 是如何被执行的：</p>
 
@@ -938,11 +1021,11 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     <h4 class="page__share-title">share</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3+Gem5+%E4%B9%8B%E4%B8%80%20https%3A%2F%2Fdingfen.github.io%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3+Gem5+%E4%B9%8B%E4%B8%80%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F02%2F24%2Fgem5-1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
@@ -982,7 +1065,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/03/13/gem5-3.html" rel="permalink">深入理解 Gem5 之三
+        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
 </a>
       
     </h2>
@@ -992,11 +1075,11 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 
 
-  4 minutes read
+  2 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5中SimObject类
+    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
 </p>
   </article>
 </div>
@@ -1015,7 +1098,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+        <a href="/miscellaneous/2022/07/19/awk.html" rel="permalink">awk 从入门到入土
 </a>
       
     </h2>
@@ -1025,11 +1108,11 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 
 
-  6 minutes read
+  3 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+    <p class="archive__item-excerpt" itemprop="description">初步入土计划
 </p>
   </article>
 </div>
@@ -1048,7 +1131,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+        <a href="/cpp/2022/06/18/gem5-6.html" rel="permalink">深入理解 Gem5 之五
 </a>
       
     </h2>
@@ -1058,11 +1141,11 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 
 
-  4 minutes read
+  7 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">
+    <p class="archive__item-excerpt" itemprop="description">gem5中的Cache实现
 </p>
   </article>
 </div>
@@ -1081,7 +1164,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+        <a href="/cpp/2022/04/02/gem5-4.html" rel="permalink">深入理解 Gem5 之四
 </a>
       
     </h2>
@@ -1091,11 +1174,11 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
 
 
 
-  4 minutes read
+  13 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+    <p class="archive__item-excerpt" itemprop="description">gem5中的内存系统
 </p>
   </article>
 </div>
@@ -1149,7 +1232,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
   </ul>
 </div>
 
-<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+<div class="page__footer-copyright">&copy; 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
 
       </footer>
     </div>
@@ -1171,7 +1254,7 @@ Exiting @ tick 18446744073709551615 because simulate() limit reached
     
   <script>
     var disqus_config = function () {
-      this.page.url = "https://dingfen.github.io/cpp/2022/02/24/gem5-1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.url = "http://localhost:4000/cpp/2022/02/24/gem5-1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
       this.page.identifier = "/cpp/2022/02/24/gem5-1"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
     };
     (function() { /* DON'T EDIT BELOW THIS LINE */

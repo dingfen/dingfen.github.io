@@ -20,14 +20,14 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="峰子的乐园">
 <meta property="og:title" content="深入理解计算机系统之动态存储分配器实现">
-<meta property="og:url" content="https://dingfen.github.io/csapp/2021/07/05/CSAPPLab05.html">
+<meta property="og:url" content="http://localhost:4000/csapp/2021/07/05/CSAPPLab05.html">
 
 
   <meta property="og:description" content="动手写一个 malloc 函数">
 
 
 
-  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser2.jpg">
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
 
 
 
@@ -44,7 +44,7 @@
   
 
 
-<link rel="canonical" href="https://dingfen.github.io/csapp/2021/07/05/CSAPPLab05.html">
+<link rel="canonical" href="http://localhost:4000/csapp/2021/07/05/CSAPPLab05.html">
 
 
 
@@ -55,7 +55,7 @@
     
       "@type": "Person",
       "name": "Bill Ding",
-      "url": "https://dingfen.github.io/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -102,6 +102,27 @@
 <!-- insert favicons. use https://realfavicongenerator.net/ -->
 
 <!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
   </head>
 
@@ -717,11 +738,11 @@
     <h4 class="page__share-title">share</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%8A%A8%E6%80%81%E5%AD%98%E5%82%A8%E5%88%86%E9%85%8D%E5%99%A8%E5%AE%9E%E7%8E%B0%20https%3A%2F%2Fdingfen.github.io%2Fcsapp%2F2021%2F07%2F05%2FCSAPPLab05.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B9%8B%E5%8A%A8%E6%80%81%E5%AD%98%E5%82%A8%E5%88%86%E9%85%8D%E5%99%A8%E5%AE%9E%E7%8E%B0%20http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F07%2F05%2FCSAPPLab05.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fcsapp%2F2021%2F07%2F05%2FCSAPPLab05.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F07%2F05%2FCSAPPLab05.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3A%2F%2Fdingfen.github.io%2Fcsapp%2F2021%2F07%2F05%2FCSAPPLab05.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3A%2F%2Flocalhost%3A4000%2Fcsapp%2F2021%2F07%2F05%2FCSAPPLab05.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
@@ -761,7 +782,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/03/13/gem5-3.html" rel="permalink">深入理解 Gem5 之三
+        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
 </a>
       
     </h2>
@@ -771,11 +792,11 @@
 
 
 
-  4 minutes read
+  2 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5中SimObject类
+    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
 </p>
   </article>
 </div>
@@ -794,7 +815,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+        <a href="/miscellaneous/2022/07/19/awk.html" rel="permalink">awk 从入门到入土
 </a>
       
     </h2>
@@ -804,11 +825,11 @@
 
 
 
-  6 minutes read
+  3 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+    <p class="archive__item-excerpt" itemprop="description">初步入土计划
 </p>
   </article>
 </div>
@@ -827,7 +848,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+        <a href="/cpp/2022/06/18/gem5-6.html" rel="permalink">深入理解 Gem5 之五
 </a>
       
     </h2>
@@ -841,7 +862,7 @@
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+    <p class="archive__item-excerpt" itemprop="description">gem5中的Cache实现
 </p>
   </article>
 </div>
@@ -860,7 +881,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+        <a href="/cpp/2022/04/02/gem5-4.html" rel="permalink">深入理解 Gem5 之四
 </a>
       
     </h2>
@@ -870,11 +891,11 @@
 
 
 
-  4 minutes read
+  13 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">
+    <p class="archive__item-excerpt" itemprop="description">gem5中的内存系统
 </p>
   </article>
 </div>
@@ -930,7 +951,7 @@
   </ul>
 </div>
 
-<div class="page__footer-copyright">© 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+<div class="page__footer-copyright">© 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
 
       </footer>
     </div>
@@ -952,7 +973,7 @@
     
   <script>
     var disqus_config = function () {
-      this.page.url = "https://dingfen.github.io/csapp/2021/07/05/CSAPPLab05.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.url = "http://localhost:4000/csapp/2021/07/05/CSAPPLab05.html";  /* Replace PAGE_URL with your page's canonical URL variable */
       this.page.identifier = "/csapp/2021/07/05/CSAPPLab05"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
     };
     (function() { /* DON'T EDIT BELOW THIS LINE */

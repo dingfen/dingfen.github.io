@@ -20,14 +20,14 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="峰子的乐园">
 <meta property="og:title" content="深入理解 Gem5 之三">
-<meta property="og:url" content="https://dingfen.github.io/cpp/2022/03/13/gem5-3.html">
+<meta property="og:url" content="http://localhost:4000/cpp/2022/03/13/gem5-3.html">
 
 
   <meta property="og:description" content="关于gem5中SimObject类">
 
 
 
-  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser2.jpg">
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser2.jpg">
 
 
 
@@ -44,7 +44,7 @@
   
 
 
-<link rel="canonical" href="https://dingfen.github.io/cpp/2022/03/13/gem5-3.html">
+<link rel="canonical" href="http://localhost:4000/cpp/2022/03/13/gem5-3.html">
 
 
 
@@ -55,7 +55,7 @@
     
       "@type": "Person",
       "name": "Bill Ding",
-      "url": "https://dingfen.github.io/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -102,6 +102,27 @@
 <!-- insert favicons. use https://realfavicongenerator.net/ -->
 
 <!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
   </head>
 
@@ -191,7 +212,7 @@
 
 
 
-  4 minutes read
+  8 minutes read
 
 </p>
       
@@ -348,6 +369,7 @@
           <li><a href="#时钟">时钟</a></li>
           <li><a href="#clocked-类">Clocked 类</a></li>
           <li><a href="#clockedobject">ClockedObject</a></li>
+          <li><a href="#simplecache">SimpleCache</a></li>
         </ul>
       </li>
     </ul>
@@ -565,9 +587,19 @@
 
 <p><code class="language-plaintext highlighter-rouge">update()</code> 对齐了 cycle 和 tick 到下一个时钟沿，若 tick &gt;= curTick()，即当前 tick 已经与全局时钟对齐时，那么时钟就是最新的。大部分情况下，累加一个时钟周期就可以达到最新，但也有例外，需要增加更多的时钟周期才行。</p>
 
+<p><code class="language-plaintext highlighter-rouge">clockEdge()</code> 函数根据传入的 cycles 数，换算出未来达到这一时钟周期数要求的 tick 数。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Tick</span> <span class="nf">clockEdge</span><span class="p">(</span><span class="n">Cycles</span> <span class="n">cycles</span> <span class="o">=</span> <span class="n">Cycles</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> <span class="k">const</span> <span class="p">{</span>
+  <span class="c1">// align tick to the next clock edge</span>
+  <span class="n">update</span><span class="p">();</span>
+  <span class="c1">// figure out when this future cycle is</span>
+  <span class="k">return</span> <span class="n">tick</span> <span class="o">+</span> <span class="n">clockPeriod</span><span class="p">()</span> <span class="o">*</span> <span class="n">cycles</span><span class="p">;</span>
+<span class="err">}</span>
+</code></pre></div></div>
+
 <h3 id="clockedobject">ClockedObject</h3>
 
-<p>ClockedObject 类继承了 Clocked 类和 SimObject 类，以 Tick 与对象的 cycle 相关联。</p>
+<p>ClockedObject 类继承了 Clocked 类和 SimObject 类，以 Tick 与对象的 cycle 相关联。其中 PowerState 类也是 SimObject 类的派生类，它提供了描述功耗状态和切换功耗状态的功能。</p>
 
 <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ClockedObject</span> <span class="o">:</span> <span class="k">public</span> <span class="n">SimObject</span><span class="p">,</span> <span class="k">public</span> <span class="n">Clocked</span> <span class="p">{</span>
   <span class="nl">public:</span>
@@ -581,6 +613,152 @@
   <span class="n">PowerState</span> <span class="o">*</span><span class="n">powerState</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div></div>
+
+<p>在 gem5 的教程代码 part2 中，使用 ClockedObject 类实现了一个简单的 Cache：SimpleCache 类。借助这一例子，我们可以从中看出 SimObject 类以及其派生类在模拟系统时的作用。</p>
+
+<h3 id="simplecache">SimpleCache</h3>
+
+<p>现在，根据我之前对 gem5 底层的了解，我试图理解 SimpleCache 类中的实现原理。SimpleCache 类描述的 Cache 在硬件上是一种</p>
+
+<ul>
+  <li>全相联的 Cache</li>
+  <li>使用随机替换算法来实现新旧 Cacheline 替换</li>
+  <li>只能同时处理一个请求</li>
+  <li>写回式的 Cache</li>
+</ul>
+
+<p>要实现这样一个 SimpleCache，首先需要1）连接 Cache 的端口。2）Cache 的块大小以及容量，存储数据等。3）Cache 的命中、丢失延迟等。这些需求都在下面的类定义中有所体现：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SimpleCache</span> <span class="o">:</span> <span class="k">public</span> <span class="n">ClockedObject</span> <span class="p">{</span>
+  <span class="c1">// Latency to check the cache. Number of cycles for both hit and miss</span>
+  <span class="k">const</span> <span class="n">Cycles</span> <span class="n">latency</span><span class="p">;</span>
+
+  <span class="c1">// The block size for the cache</span>
+  <span class="k">const</span> <span class="kt">unsigned</span> <span class="n">blockSize</span><span class="p">;</span>
+
+  <span class="c1">// Number of blocks in the cache (size of cache / block size)</span>
+  <span class="k">const</span> <span class="kt">unsigned</span> <span class="n">capacity</span><span class="p">;</span>
+
+  <span class="c1">// Instantiation of the CPU-side port</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">CPUSidePort</span><span class="o">&gt;</span> <span class="n">cpuPorts</span><span class="p">;</span>
+
+  <span class="c1">// Instantiation of the memory-side port</span>
+  <span class="n">MemSidePort</span> <span class="n">memPort</span><span class="p">;</span>
+
+  <span class="c1">// True if this cache is currently blocked waiting for a response.</span>
+  <span class="kt">bool</span> <span class="n">blocked</span><span class="p">;</span>
+
+  <span class="c1">// Packet that we are currently handling. Used for upgrading to larger</span>
+  <span class="c1">// cache line sizes</span>
+  <span class="n">PacketPtr</span> <span class="n">originalPacket</span><span class="p">;</span>
+
+  <span class="c1">// The port to send the response when we recieve it back</span>
+  <span class="kt">int</span> <span class="n">waitingPortId</span><span class="p">;</span>
+
+  <span class="c1">// For tracking the miss latency</span>
+  <span class="n">Tick</span> <span class="n">missTime</span><span class="p">;</span>
+
+  <span class="c1">// An incredibly simple cache storage. Maps block addresses to data</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">Addr</span><span class="p">,</span> <span class="kt">uint8_t</span><span class="o">*&gt;</span> <span class="n">cacheStore</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>对于函数实现，直接看我们能理解的部分。例如，<code class="language-plaintext highlighter-rouge">handleRequest()</code> 函数用于处理来自 CPU 的 Cache 访问/读写请求。下面代码展示了请求被处理的过程：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">SimpleCache</span><span class="o">::</span><span class="n">handleRequest</span><span class="p">(</span><span class="n">PacketPtr</span> <span class="n">pkt</span><span class="p">,</span> <span class="kt">int</span> <span class="n">port_id</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">blocked</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// There is currently an outstanding request so we can't respond. Stall</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">DPRINTF</span><span class="p">(</span><span class="n">SimpleCache</span><span class="p">,</span> <span class="s">"Got request for addr %#x</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">getAddr</span><span class="p">());</span>
+
+  <span class="c1">// This cache is now blocked waiting for the response to this packet.</span>
+  <span class="n">blocked</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+
+  <span class="c1">// Store the port for when we get the response</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">waitingPortId</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">waitingPortId</span> <span class="o">=</span> <span class="n">port_id</span><span class="p">;</span>
+
+  <span class="c1">// Schedule an event after cache access latency to actually access</span>
+  <span class="n">schedule</span><span class="p">(</span><span class="k">new</span> <span class="n">EventFunctionWrapper</span><span class="p">([</span><span class="k">this</span><span class="p">,</span> <span class="n">pkt</span><span class="p">]{</span><span class="n">accessTiming</span><span class="p">(</span><span class="n">pkt</span><span class="p">);},</span>
+    <span class="n">name</span><span class="p">()</span> <span class="o">+</span> <span class="s">".accessEvent"</span><span class="p">,</span> <span class="nb">true</span><span class="p">),</span> <span class="n">clockEdge</span><span class="p">(</span><span class="n">latency</span><span class="p">));</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>由于 Cache 一次只能处理一个请求，因此当 Cache 状态为 blocked 时，请求无法被处理，直接返回 false。否则，将状态设置为 blocked，然后创建一个 Event 事件并调度：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">schedule</span><span class="p">(</span><span class="k">new</span> <span class="nf">EventFunctionWrapper</span><span class="p">([</span><span class="k">this</span><span class="p">,</span> <span class="n">pkt</span><span class="p">]{</span><span class="n">accessTiming</span><span class="p">(</span><span class="n">pkt</span><span class="p">);</span><span class="err">}</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">()</span> <span class="o">+</span> <span class="s">".accessEvent"</span><span class="p">,</span> <span class="nb">true</span><span class="p">),</span> <span class="n">clockEdge</span><span class="p">(</span><span class="n">latency</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>回顾一下之前博客中的分析，<code class="language-plaintext highlighter-rouge">schedule()</code> 函数负责事件调度，其参数是将要被执行的事件 event 和具体执行时间 when。在这里，被执行的事件 event 就是 <code class="language-plaintext highlighter-rouge">accessTiming(pkt)</code> 函数，它被 EventFunctionWrapper 进一步封装，出入到 <code class="language-plaintext highlighter-rouge">schedule()</code> 中，而具体执行的时间，是 <code class="language-plaintext highlighter-rouge">clockEdge(latency)</code>。其中 latency 是 Cache 对于检查数据是否命中的延迟，而 <code class="language-plaintext highlighter-rouge">clockEdge()</code> 将 latency 的时间单位从 cycles 转换为 ticks 的函数。当时间和事件本身都被设置好后，如同前面提到的那样，事件会按照调度的时间先后顺序，被放入事件队列中等待执行。最后产生的效果就是，等待了 latency 个时钟周期后，这一请求被 Cache 执行并完成。</p>
+
+<p><code class="language-plaintext highlighter-rouge">accessTiming(pkt)</code> 函数功能是访问 Cache，判断读取的请求是否命中，并统计出所需要的延迟。如果命中，那么直接进入返回应答的操作，发送应答消息给 CPU 端：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">SimpleCache</span><span class="o">::</span><span class="n">accessTiming</span><span class="p">(</span><span class="n">PacketPtr</span> <span class="n">pkt</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">bool</span> <span class="n">hit</span> <span class="o">=</span> <span class="n">accessFunctional</span><span class="p">(</span><span class="n">pkt</span><span class="p">);</span>
+  <span class="n">DPRINTF</span><span class="p">(</span><span class="n">SimpleCache</span><span class="p">,</span> <span class="s">"%s for packet: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">hit</span> <span class="o">?</span> <span class="s">"Hit"</span> <span class="o">:</span> <span class="s">"Miss"</span><span class="p">,</span>
+      <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">print</span><span class="p">());</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">hit</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Respond to the CPU side</span>
+    <span class="n">stats</span><span class="p">.</span><span class="n">hits</span><span class="o">++</span><span class="p">;</span> <span class="c1">// update stats</span>
+    <span class="n">DDUMP</span><span class="p">(</span><span class="n">SimpleCache</span><span class="p">,</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">getConstPtr</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;</span><span class="p">(),</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">getSize</span><span class="p">());</span>
+    <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">makeResponse</span><span class="p">();</span>
+    <span class="n">sendResponse</span><span class="p">(</span><span class="n">pkt</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="cm">/* ... */</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>而若没有命中，那么需要先记录开始替换的时刻，然后进行目标块的替换。这里需要注意到，因为请求的地址不一定与块地址大小对齐，而内存端口取 Cache 块大小时要求必须是块的首地址。因此，需要分情况讨论是否可以直接访问内存取块（即forward），若未对齐，那么需要重新生成一个块对齐的 Packet 来访问 DRAM 端。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">else</span> <span class="p">{</span>
+  <span class="n">stats</span><span class="p">.</span><span class="n">misses</span><span class="o">++</span><span class="p">;</span> <span class="c1">// update stats</span>
+  <span class="n">missTime</span> <span class="o">=</span> <span class="n">curTick</span><span class="p">();</span>
+  <span class="c1">// Forward to the memory side.</span>
+  <span class="c1">// We can't directly forward the packet unless it is exactly the size</span>
+  <span class="c1">// of the cache line, and aligned. Check for that here.</span>
+  <span class="n">Addr</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">getAddr</span><span class="p">();</span>
+  <span class="n">Addr</span> <span class="n">block_addr</span> <span class="o">=</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">getBlockAddr</span><span class="p">(</span><span class="n">blockSize</span><span class="p">);</span>
+  <span class="kt">unsigned</span> <span class="n">size</span> <span class="o">=</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">getSize</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">addr</span> <span class="o">==</span> <span class="n">block_addr</span> <span class="o">&amp;&amp;</span> <span class="n">size</span> <span class="o">==</span> <span class="n">blockSize</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Aligned and block size. We can just forward.</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">SimpleCache</span><span class="p">,</span> <span class="s">"forwarding packet</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">memPort</span><span class="p">.</span><span class="n">sendPacket</span><span class="p">(</span><span class="n">pkt</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">SimpleCache</span><span class="p">,</span> <span class="s">"Upgrading packet to block size</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">panic_if</span><span class="p">(</span><span class="n">addr</span> <span class="o">-</span> <span class="n">block_addr</span> <span class="o">+</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="n">blockSize</span><span class="p">,</span>
+              <span class="s">"Cannot handle accesses that span multiple cache lines"</span><span class="p">);</span>
+    <span class="c1">// Unaligned access to one cache block</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">pkt</span><span class="o">-&gt;</span><span class="n">needsResponse</span><span class="p">());</span>
+    <span class="n">MemCmd</span> <span class="n">cmd</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pkt</span><span class="o">-&gt;</span><span class="n">isWrite</span><span class="p">()</span> <span class="o">||</span> <span class="n">pkt</span><span class="o">-&gt;</span><span class="n">isRead</span><span class="p">())</span> <span class="p">{</span>
+        <span class="c1">// Read the data from memory to write into the block.</span>
+        <span class="c1">// We'll write the data in the cache (i.e., a writeback cache)</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">MemCmd</span><span class="o">::</span><span class="n">ReadReq</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">panic</span><span class="p">(</span><span class="s">"Unknown packet type in upgrade size"</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Create a new packet that is blockSize</span>
+    <span class="n">PacketPtr</span> <span class="n">new_pkt</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Packet</span><span class="p">(</span><span class="n">pkt</span><span class="o">-&gt;</span><span class="n">req</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">blockSize</span><span class="p">);</span>
+    <span class="n">new_pkt</span><span class="o">-&gt;</span><span class="n">allocate</span><span class="p">();</span>
+
+    <span class="c1">// Should now be block aligned</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">new_pkt</span><span class="o">-&gt;</span><span class="n">getAddr</span><span class="p">()</span> <span class="o">==</span> <span class="n">new_pkt</span><span class="o">-&gt;</span><span class="n">getBlockAddr</span><span class="p">(</span><span class="n">blockSize</span><span class="p">));</span>
+
+    <span class="c1">// Save the old packet</span>
+    <span class="n">originalPacket</span> <span class="o">=</span> <span class="n">pkt</span><span class="p">;</span>
+
+    <span class="n">DPRINTF</span><span class="p">(</span><span class="n">SimpleCache</span><span class="p">,</span> <span class="s">"forwarding packet</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">memPort</span><span class="p">.</span><span class="n">sendPacket</span><span class="p">(</span><span class="n">new_pkt</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>SimpleCache 类其余部分的实现也非常有意思，但与该博文的主题偏离太远，我们之后再来细细品读。</p>
 
         
       </section>
@@ -643,11 +821,11 @@
     <h4 class="page__share-title">share</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3+Gem5+%E4%B9%8B%E4%B8%89%20https%3A%2F%2Fdingfen.github.io%2Fcpp%2F2022%2F03%2F13%2Fgem5-3.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3+Gem5+%E4%B9%8B%E4%B8%89%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F03%2F13%2Fgem5-3.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fcpp%2F2022%2F03%2F13%2Fgem5-3.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F03%2F13%2Fgem5-3.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Fcpp%2F2022%2F03%2F13%2Fgem5-3.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F03%2F13%2Fgem5-3.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
@@ -658,7 +836,8 @@
 ">previous</a>
     
     
-      <a href="#" class="pagination--pager disabled">next</a>
+      <a href="/cpp/2022/04/02/gem5-4.html" class="pagination--pager" title="深入理解 Gem5 之四
+">next</a>
     
   </nav>
 
@@ -686,7 +865,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/03/08/gem5-2.html" rel="permalink">深入理解 Gem5 之二
+        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
 </a>
       
     </h2>
@@ -696,11 +875,11 @@
 
 
 
-  6 minutes read
+  2 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5中序列化等实现
+    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
 </p>
   </article>
 </div>
@@ -719,7 +898,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2022/02/24/gem5-1.html" rel="permalink">深入理解 Gem5 之一
+        <a href="/miscellaneous/2022/07/19/awk.html" rel="permalink">awk 从入门到入土
 </a>
       
     </h2>
@@ -729,11 +908,11 @@
 
 
 
-  9 minutes read
+  3 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">关于gem5事件的实现
+    <p class="archive__item-excerpt" itemprop="description">初步入土计划
 </p>
   </article>
 </div>
@@ -752,7 +931,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/cpp/2021/11/15/Qt-signal-slot.html" rel="permalink">信号槽机制的简陋实现
+        <a href="/cpp/2022/06/18/gem5-6.html" rel="permalink">深入理解 Gem5 之五
 </a>
       
     </h2>
@@ -762,11 +941,11 @@
 
 
 
-  4 minutes read
+  7 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">
+    <p class="archive__item-excerpt" itemprop="description">gem5中的Cache实现
 </p>
   </article>
 </div>
@@ -785,7 +964,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/mpi&openmp/2021/10/20/cuda-with-matmul.html" rel="permalink">CUDA 中的矩阵乘
+        <a href="/cpp/2022/04/02/gem5-4.html" rel="permalink">深入理解 Gem5 之四
 </a>
       
     </h2>
@@ -795,11 +974,11 @@
 
 
 
-  4 minutes read
+  13 minutes read
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">动手书写 CUDA 核函数
+    <p class="archive__item-excerpt" itemprop="description">gem5中的内存系统
 </p>
   </article>
 </div>
@@ -853,7 +1032,7 @@
   </ul>
 </div>
 
-<div class="page__footer-copyright">&copy; 2022 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+<div class="page__footer-copyright">&copy; 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
 
       </footer>
     </div>
@@ -875,7 +1054,7 @@
     
   <script>
     var disqus_config = function () {
-      this.page.url = "https://dingfen.github.io/cpp/2022/03/13/gem5-3.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.url = "http://localhost:4000/cpp/2022/03/13/gem5-3.html";  /* Replace PAGE_URL with your page's canonical URL variable */
       this.page.identifier = "/cpp/2022/03/13/gem5-3"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
     };
     (function() { /* DON'T EDIT BELOW THIS LINE */

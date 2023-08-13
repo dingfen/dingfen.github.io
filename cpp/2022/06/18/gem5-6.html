@@ -1,0 +1,1018 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>深入理解 Gem5 之五 - 峰子的乐园</title>
+<meta name="description" content="gem5中的Cache实现">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="深入理解 Gem5 之五">
+<meta property="og:url" content="http://localhost:4000/cpp/2022/06/18/gem5-6.html">
+
+
+  <meta property="og:description" content="gem5中的Cache实现">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser3.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2022-06-18T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/cpp/2022/06/18/gem5-6.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser3.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          深入理解 Gem5 之五
+
+        
+      </h1>
+      
+        <p class="page__lead">gem5中的Cache实现
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="深入理解 Gem5 之五">
+    <meta itemprop="description" content="gem5中的Cache实现">
+    <meta itemprop="datePublished" content="2022-06-18T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#gem5-中的-cache">Gem5 中的 Cache</a>
+    <ul>
+      <li><a href="#cacheblock">CacheBlock</a>
+        <ul>
+          <li><a href="#replaceable-entry">replaceable Entry</a></li>
+          <li><a href="#tagged-entry">Tagged Entry</a></li>
+          <li><a href="#cacheblk">CacheBlk</a></li>
+        </ul>
+      </li>
+      <li><a href="#queue">Queue</a>
+        <ul>
+          <li><a href="#queueentry">QueueEntry</a></li>
+          <li><a href="#queue-1">Queue</a></li>
+          <li><a href="#mshr">MSHR</a></li>
+          <li><a href="#writebuffer">WriteBuffer</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="gem5-中的-cache">Gem5 中的 Cache</h1>
+
+<h2 id="cacheblock">CacheBlock</h2>
+
+<h3 id="replaceable-entry">replaceable Entry</h3>
+
+<p><code class="language-plaintext highlighter-rouge">ReplaceableEntry</code> 类描述了 Cache 中具有可替换功能的基本项。除表示该项在 Cache的位置（特定组和路）外，还包含了指向 <code class="language-plaintext highlighter-rouge">ReplacementData</code> 智能指针。注意，在使用 <code class="language-plaintext highlighter-rouge">ReplaceableEntry</code> 类之前，必须由 <code class="language-plaintext highlighter-rouge">replacement_policy</code> 来将 <code class="language-plaintext highlighter-rouge">ReplacementData</code> 实例化。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="cm">/* The replacement data needed by replacement policies. Each replacement policy
+ *  should have its own implementation of replacement data.
+ */</span>
+<span class="k">struct</span> <span class="nc">ReplacementData</span> <span class="p">{};</span>
+
+<span class="k">class</span> <span class="nc">ReplaceableEntry</span> <span class="p">{</span>
+  <span class="nl">protected:</span>
+    <span class="c1">// Set &amp; way to which this entry belongs.</span>
+    <span class="kt">uint32_t</span> <span class="n">_set</span><span class="p">;</span>
+    <span class="kt">uint32_t</span> <span class="n">_way</span><span class="p">;</span>
+  <span class="nl">public:</span>
+    <span class="cm">/* Replacement data associated to this entry.
+     * It must be instantiated by the replacement policy before being used. */</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">replacement_policy</span><span class="o">::</span><span class="n">ReplacementData</span><span class="o">&gt;</span> <span class="n">replacementData</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="tagged-entry">Tagged Entry</h3>
+
+<p>TaggedEntry 是包含有 tag 的条目。每个 tag 都附有一个安全 bit，用于标识它是否位于安全地址空间内。TaggedEntry 的内容仅在 valid 位有效时才有意义。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TaggedEntry</span> <span class="o">:</span> <span class="k">public</span> <span class="n">ReplaceableEntry</span> <span class="p">{</span>
+    <span class="c1">// Valid bit. The contents of this entry are only valid if it is set.</span>
+    <span class="kt">bool</span> <span class="n">_valid</span><span class="p">;</span>
+
+    <span class="c1">// Secure bit. Marks whether entry's address in the secure memory space.</span>
+    <span class="kt">bool</span> <span class="n">_secure</span><span class="p">;</span>
+
+    <span class="c1">/// The entry's tag.</span>
+    <span class="n">Addr</span> <span class="n">_tag</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h3 id="cacheblk">CacheBlk</h3>
+
+<p>CacheBlk 类包含了与一致性、预取状态以及指向其数据指针等相关的信息。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CacheBlk</span> <span class="o">:</span> <span class="k">public</span> <span class="n">TaggedEntry</span> <span class="p">{</span>
+  <span class="nl">public:</span>
+    <span class="c1">// Contains a copy of the data in this block for easy access.</span>
+    <span class="kt">uint8_t</span> <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+
+    <span class="cm">/**
+     * Cache block's enum listing the supported coherence bits.
+     */</span>
+    <span class="k">enum</span> <span class="n">CoherenceBits</span> <span class="o">:</span> <span class="kt">unsigned</span> <span class="p">{</span>
+        <span class="cm">/** write permission */</span>
+        <span class="n">WritableBit</span> <span class="o">=</span>       <span class="mh">0x02</span><span class="p">,</span>
+        <span class="cm">/**
+         * Read permission. Note that a block can be valid but not readable
+         * if there is an outstanding write upgrade miss.
+         */</span>
+        <span class="n">ReadableBit</span> <span class="o">=</span>       <span class="mh">0x04</span><span class="p">,</span>
+        <span class="cm">/** dirty (modified) */</span>
+        <span class="n">DirtyBit</span> <span class="o">=</span>          <span class="mh">0x08</span><span class="p">,</span>
+
+        <span class="cm">/**
+         * Helper enum value that includes all other bits. Whenever a new
+         * bits is added, this should be updated.
+         */</span>
+        <span class="n">AllBits</span>  <span class="o">=</span>          <span class="mh">0x0E</span><span class="p">,</span>
+    <span class="p">};</span>
+  <span class="nl">protected:</span>
+    <span class="cm">/**
+     * Represents that the indicated thread context has a "lock" on
+     * the block, in the LL/SC sense.
+     */</span>
+    <span class="k">class</span> <span class="nc">Lock</span> <span class="p">{};</span>
+
+    <span class="cm">/** The current coherence status of this block. */</span>
+    <span class="kt">unsigned</span> <span class="n">coherence</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="queue">Queue</h2>
+
+<h3 id="queueentry">QueueEntry</h3>
+
+<p><code class="language-plaintext highlighter-rouge">QueueEntry</code> 类描述了 <code class="language-plaintext highlighter-rouge">Queue</code> 中的基本表项。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">QueueEntry</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Packet</span><span class="o">::</span><span class="n">SenderState</span><span class="p">,</span> <span class="k">public</span> <span class="n">Named</span> <span class="p">{</span>
+  <span class="nl">protected:</span>
+    <span class="cm">/** Tick when ready to issue */</span>
+    <span class="n">Tick</span> <span class="n">readyTime</span><span class="p">;</span>
+    <span class="cm">/** True if the entry is uncacheable */</span>
+    <span class="kt">bool</span> <span class="n">_isUncacheable</span><span class="p">;</span>
+
+  <span class="nl">public:</span>
+     <span class="cm">/** True if the entry has been sent downstream. */</span>
+    <span class="kt">bool</span> <span class="n">inService</span><span class="p">;</span>
+    <span class="cm">/** Order number assigned to disambiguate writes and misses. */</span>
+    <span class="n">Counter</span> <span class="n">order</span><span class="p">;</span>
+    <span class="cm">/** Block aligned address. */</span>
+    <span class="n">Addr</span> <span class="n">blkAddr</span><span class="p">;</span>
+    <span class="cm">/** Block size of the cache. */</span>
+    <span class="kt">unsigned</span> <span class="n">blkSize</span><span class="p">;</span>
+    <span class="cm">/** True if the entry targets the secure memory space. */</span>
+    <span class="kt">bool</span> <span class="n">isSecure</span><span class="p">;</span>
+
+    <span class="cm">/* Since multiple references to the same
+     * address can arrive while a packet is not serviced, each packet is
+     * stored in a target containing its availability, order and other info,
+     * and the queue entry stores these similar targets in a list. */</span>
+    <span class="k">class</span> <span class="nc">Target</span> <span class="p">{</span>
+      <span class="nl">public:</span>
+        <span class="k">const</span> <span class="n">Tick</span> <span class="n">recvTime</span><span class="p">;</span>  <span class="c1">//!&lt; Time when request was received (for stats)</span>
+        <span class="k">const</span> <span class="n">Tick</span> <span class="n">readyTime</span><span class="p">;</span> <span class="c1">//!&lt; Time when request is ready to be serviced</span>
+        <span class="k">const</span> <span class="n">Counter</span> <span class="n">order</span><span class="p">;</span>  <span class="c1">//!&lt; Global order (for memory consistency mgmt)</span>
+        <span class="k">const</span> <span class="n">PacketPtr</span> <span class="n">pkt</span><span class="p">;</span>  <span class="c1">//!&lt; Pending request packet.</span>
+    <span class="p">};</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h3 id="queue-1">Queue</h3>
+
+<p>gem5 中实现了一个高级别的队列接口模板类 <code class="language-plaintext highlighter-rouge">Queue</code>，规定队列中只允许放入从 <code class="language-plaintext highlighter-rouge">QueueEntry</code> 派生的子类。文章后面我们会了解到，在 <code class="language-plaintext highlighter-rouge">Queue</code> 类的基础上，gem5 又分别为 Cache 实现了 MSHR 队列和 Cache 的 Write buffer。可以看出，<code class="language-plaintext highlighter-rouge">Queue</code> 在 gem5 的 Cache 系统中显得尤为重要。</p>
+
+<p>该模板类分别继承父类 <code class="language-plaintext highlighter-rouge">Drainable</code> 和 <code class="language-plaintext highlighter-rouge">Named</code> 类，它们都在之前的博文中有过介绍。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">Entry</span><span class="p">&gt;</span>
+<span class="k">class</span> <span class="nc">Queue</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Drainable</span><span class="p">,</span> <span class="k">public</span> <span class="n">Named</span> <span class="p">{</span>
+  <span class="nl">protected:</span>
+    <span class="cm">/** Local label (for functional print requests) */</span>
+    <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">label</span><span class="p">;</span>
+
+    <span class="cm">/* The total number of entries in this queue. */</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">numEntries</span><span class="p">;</span>
+
+    <span class="cm">/** The number of entries to hold as a temporary overflow space. */</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">numReserve</span><span class="p">;</span>
+    <span class="cm">/**  Actual storage. */</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Entry</span><span class="o">&gt;</span> <span class="n">entries</span><span class="p">;</span>
+    <span class="cm">/** Holds pointers to all allocated entries. */</span>
+    <span class="k">typename</span> <span class="n">Entry</span><span class="o">::</span><span class="n">List</span> <span class="n">allocatedList</span><span class="p">;</span>
+    <span class="cm">/** Holds pointers to entries that haven't been sent downstream. */</span>
+    <span class="k">typename</span> <span class="n">Entry</span><span class="o">::</span><span class="n">List</span> <span class="n">readyList</span><span class="p">;</span>
+    <span class="cm">/** Holds non allocated entries. */</span>
+    <span class="k">typename</span> <span class="n">Entry</span><span class="o">::</span><span class="n">List</span> <span class="n">freeList</span><span class="p">;</span>
+    <span class="cm">/** The number of entries that are in service. */</span>
+    <span class="kt">int</span> <span class="n">_numInService</span><span class="p">;</span>
+    <span class="cm">/** The number of currently allocated entries. */</span>
+    <span class="kt">int</span> <span class="n">allocated</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="mshr">MSHR</h3>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MSHR</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QueueEntry</span><span class="p">,</span> <span class="k">public</span> <span class="n">Printable</span> <span class="p">{</span>
+  <span class="nl">private:</span>
+
+    <span class="cm">/** Flag set by downstream caches */</span>
+    <span class="kt">bool</span> <span class="n">downstreamPending</span><span class="p">;</span>
+
+    <span class="cm">/**
+     * Here we use one flag to track both if:
+     *
+     * 1. We are going to become owner or not, i.e., we will get the
+     * block in an ownership state (Owned or Modified) with BlkDirty
+     * set. This determines whether or not we are going to become the
+     * responder and ordering point for future requests that we snoop.
+     *
+     * 2. We know that we are going to get a writable block, i.e. we
+     * will get the block in writable state (Exclusive or Modified
+     * state) with BlkWritable set. That determines whether additional
+     * targets with needsWritable set will be able to be satisfied, or
+     * if not should be put on the deferred list to possibly wait for
+     * another request that does give us writable access.
+     *
+     * Condition 2 is actually just a shortcut that saves us from
+     * possibly building a deferred target list and calling
+     * promoteWritable() every time we get a writable block. Condition
+     * 1, tracking ownership, is what is important. However, we never
+     * receive ownership without marking the block dirty, and
+     * consequently use pendingModified to track both ownership and
+     * writability rather than having separate pendingDirty and
+     * pendingWritable flags.
+     */</span>
+    <span class="kt">bool</span> <span class="n">pendingModified</span><span class="p">;</span>
+
+    <span class="cm">/** Did we snoop an invalidate while waiting for data? */</span>
+    <span class="kt">bool</span> <span class="n">postInvalidate</span><span class="p">;</span>
+
+    <span class="cm">/** Did we snoop a read while waiting for data? */</span>
+    <span class="kt">bool</span> <span class="n">postDowngrade</span><span class="p">;</span>
+
+  <span class="nl">public:</span>
+
+    <span class="cm">/** Track if we sent this as a whole line write or not */</span>
+    <span class="kt">bool</span> <span class="n">wasWholeLineWrite</span><span class="p">;</span>
+
+    <span class="cm">/** True if the entry is just a simple forward from an upper level */</span>
+    <span class="kt">bool</span> <span class="n">isForward</span><span class="p">;</span>
+
+    <span class="k">class</span> <span class="nc">Target</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QueueEntry</span><span class="o">::</span><span class="n">Target</span>
+    <span class="p">{</span>
+      <span class="nl">public:</span>
+
+        <span class="k">enum</span> <span class="n">Source</span>
+        <span class="p">{</span>
+            <span class="n">FromCPU</span><span class="p">,</span>
+            <span class="n">FromSnoop</span><span class="p">,</span>
+            <span class="n">FromPrefetcher</span>
+        <span class="p">};</span>
+
+        <span class="k">const</span> <span class="n">Source</span> <span class="n">source</span><span class="p">;</span>  <span class="c1">//!&lt; Request from cpu, memory, or prefetcher?</span>
+
+        <span class="cm">/**
+         * We use this flag to track whether we have cleared the
+         * downstreamPending flag for the MSHR of the cache above
+         * where this packet originates from and guard noninitial
+         * attempts to clear it.
+         *
+         * The flag markedPending needs to be updated when the
+         * TargetList is in service which can be:
+         * 1) during the Target instantiation if the MSHR is in
+         * service and the target is not deferred,
+         * 2) when the MSHR becomes in service if the target is not
+         * deferred,
+         * 3) or when the TargetList is promoted (deferredTargets -&gt;
+         * targets).
+         */</span>
+        <span class="kt">bool</span> <span class="n">markedPending</span><span class="p">;</span>
+
+        <span class="k">const</span> <span class="kt">bool</span> <span class="n">allocOnFill</span><span class="p">;</span>   <span class="c1">//!&lt; Should the response servicing this</span>
+                                  <span class="c1">//!&lt; target list allocate in the cache?</span>
+    <span class="p">};</span>
+    <span class="k">class</span> <span class="nc">TargetList</span> <span class="o">:</span> <span class="k">public</span> <span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">Target</span><span class="o">&gt;</span><span class="p">,</span> <span class="k">public</span> <span class="n">Named</span> <span class="p">{</span>
+      <span class="nl">public:</span>
+        <span class="kt">bool</span> <span class="n">needsWritable</span><span class="p">;</span>
+        <span class="kt">bool</span> <span class="n">hasUpgrade</span><span class="p">;</span>
+        <span class="cm">/** Set when the response should allocate on fill */</span>
+        <span class="kt">bool</span> <span class="n">allocOnFill</span><span class="p">;</span>
+        <span class="cm">/**
+         * Determine whether there was at least one non-snooping
+         * target coming from another cache.
+         */</span>
+        <span class="kt">bool</span> <span class="n">hasFromCache</span><span class="p">;</span>
+      <span class="nl">private:</span>
+        <span class="cm">/** Address of the cache block for this list of targets. */</span>
+        <span class="n">Addr</span> <span class="n">blkAddr</span><span class="p">;</span>
+    
+        <span class="cm">/** Size of the cache block. */</span>
+        <span class="n">Addr</span> <span class="n">blkSize</span><span class="p">;</span>
+    
+        <span class="cm">/** Indicates whether we can merge incoming write requests */</span>
+        <span class="kt">bool</span> <span class="n">canMergeWrites</span><span class="p">;</span>
+    
+        <span class="c1">// NOTE: std::vector&lt;bool&gt; might not meet satisfy the</span>
+        <span class="c1">// ForwardIterator requirement and therefore cannot be used</span>
+        <span class="c1">// for writesBitmap.</span>
+        <span class="cm">/**
+          * Track which bytes are written by requests in this target
+          * list.
+          */</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span> <span class="n">writesBitmap</span><span class="p">;</span>
+    <span class="p">};</span>
+    <span class="cm">/** A list of MSHRs. */</span>
+    <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">MSHR</span> <span class="o">*&gt;</span> <span class="n">List</span><span class="p">;</span>
+    <span class="cm">/** MSHR list iterator. */</span>
+    <span class="k">typedef</span> <span class="n">List</span><span class="o">::</span><span class="n">iterator</span> <span class="n">Iterator</span><span class="p">;</span>
+
+    <span class="cm">/**
+     * Pointer to this MSHR on the ready list.
+     * @sa MissQueue, MSHRQueue::readyList
+     */</span>
+    <span class="n">Iterator</span> <span class="n">readyIter</span><span class="p">;</span>
+
+    <span class="cm">/**
+     * Pointer to this MSHR on the allocated list.
+     * @sa MissQueue, MSHRQueue::allocatedList
+     */</span>
+    <span class="n">Iterator</span> <span class="n">allocIter</span><span class="p">;</span>
+
+    <span class="cm">/** List of all requests that match the address */</span>
+    <span class="n">TargetList</span> <span class="n">targets</span><span class="p">;</span>
+
+    <span class="n">TargetList</span> <span class="n">deferredTargets</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h3 id="writebuffer">WriteBuffer</h3>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">WriteQueueEntry</span> <span class="o">:</span> <span class="k">public</span> <span class="n">QueueEntry</span><span class="p">,</span> <span class="k">public</span> <span class="n">Printable</span> <span class="p">{</span>
+  <span class="nl">public:</span>
+    <span class="k">class</span> <span class="nc">TargetList</span> <span class="o">:</span> <span class="k">public</span> <span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">Target</span><span class="o">&gt;</span> <span class="p">{</span>
+      <span class="nl">public:</span>
+        <span class="n">TargetList</span><span class="p">()</span> <span class="p">{}</span>
+        <span class="kt">void</span> <span class="n">add</span><span class="p">(</span><span class="n">PacketPtr</span> <span class="n">pkt</span><span class="p">,</span> <span class="n">Tick</span> <span class="n">readyTime</span><span class="p">,</span> <span class="n">Counter</span> <span class="n">order</span><span class="p">);</span>
+        <span class="kt">bool</span> <span class="n">trySatisfyFunctional</span><span class="p">(</span><span class="n">PacketPtr</span> <span class="n">pkt</span><span class="p">);</span>
+        <span class="kt">void</span> <span class="n">print</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">ostream</span> <span class="o">&amp;</span><span class="n">os</span><span class="p">,</span> <span class="kt">int</span> <span class="n">verbosity</span><span class="p">,</span>
+                   <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">prefix</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+    <span class="p">};</span>
+    <span class="cm">/** A list of write queue entriess. */</span>
+    <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">WriteQueueEntry</span> <span class="o">*&gt;</span> <span class="n">List</span><span class="p">;</span>
+    <span class="cm">/** WriteQueueEntry list iterator. */</span>
+    <span class="k">typedef</span> <span class="n">List</span><span class="o">::</span><span class="n">iterator</span> <span class="n">Iterator</span><span class="p">;</span>
+    <span class="kt">bool</span> <span class="n">sendPacket</span><span class="p">(</span><span class="n">BaseCache</span> <span class="o">&amp;</span><span class="n">cache</span><span class="p">)</span> <span class="k">override</span><span class="p">;</span>
+
+  <span class="nl">private:</span>
+    <span class="cm">/** Pointer to this entry on the ready list.
+     * @sa MissQueue, WriteQueue::readyList
+     */</span>
+    <span class="n">Iterator</span> <span class="n">readyIter</span><span class="p">;</span>
+
+    <span class="cm">/** Pointer to this entry on the allocated list.
+     * @sa MissQueue, WriteQueue::allocatedList
+     */</span>
+    <span class="n">Iterator</span> <span class="n">allocIter</span><span class="p">;</span>
+
+    <span class="cm">/** List of all requests that match the address */</span>
+    <span class="n">TargetList</span> <span class="n">targets</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#gem5" class="page__taxonomy-item" rel="tag">gem5</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#cpp" class="page__taxonomy-item" rel="tag">Cpp</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2022-06-18T00:00:00+08:00">June 18, 2022</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3+Gem5+%E4%B9%8B%E4%BA%94%20http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F06%2F18%2Fgem5-6.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F06%2F18%2Fgem5-6.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fcpp%2F2022%2F06%2F18%2Fgem5-6.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/cpp/2022/04/02/gem5-4.html" class="pagination--pager" title="深入理解 Gem5 之四
+">previous</a>
+    
+    
+      <a href="/miscellaneous/2022/07/19/awk.html" class="pagination--pager" title="awk 从入门到入土
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/miscellaneous/2022/07/19/awk.html" rel="permalink">awk 从入门到入土
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  3 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">初步入土计划
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/04/02/gem5-4.html" rel="permalink">深入理解 Gem5 之四
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  12 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">gem5中的内存系统
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/cpp/2022/03/13/gem5-3.html" rel="permalink">深入理解 Gem5 之三
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">关于gem5中SimObject类
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/cpp/2022/06/18/gem5-6.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/cpp/2022/06/18/gem5-6"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>
