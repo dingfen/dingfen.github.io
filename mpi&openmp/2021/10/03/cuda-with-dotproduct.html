@@ -212,7 +212,7 @@
 
 
 
-  3 minutes read
+  4 minutes read
 
 </p>
       
@@ -359,6 +359,7 @@
     <ul>
       <li><a href="#向量内积">向量内积</a></li>
       <li><a href="#程序优化">程序优化</a></li>
+      <li><a href="#kahan-算法">kahan 算法</a></li>
     </ul>
   </li>
 </ul>
@@ -376,7 +377,7 @@
 
 <p><img src="/assets/img/PP/dotproduct.png" alt="cuda 向量内积示意图" /></p>
 
-<p>显而易见，第一步就是首先使用内嵌变量计算线程的编号，然后使用 <code class="language-plaintext highlighter-rouge">while</code> 循环，让每个线程跨步计算相应的乘法，并累加到 <code class="language-plaintext highlighter-rouge">cache</code> 数组中（橙色箭头）。相应的代码如下，配合上图相应能更好地理解计算过程。</p>
+<p>具体而言，在下面的这个循环中，每个线程都会运行一个 grid 中的一次乘法，然后跳转到下一个 grid 继续完成乘法。因此，程序的 <code class="language-plaintext highlighter-rouge">while</code> 循环，让每个线程计算相应的乘法后，跨越一个 grid 的长度再完成乘法，最后累加到 <code class="language-plaintext highlighter-rouge">cache</code> 数组中（橙色箭头），为了不让自增的 <code class="language-plaintext highlighter-rouge">tid</code> 变量超过数组边界，每次累加后还需要在 <code class="language-plaintext highlighter-rouge">while</code> 语句中判断一下。相应的代码如下，配合上图相应能更好地理解计算过程。</p>
 
 <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">__global__</span> <span class="kt">void</span> <span class="nf">dot</span><span class="p">(</span><span class="kt">float</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span> <span class="p">{</span>
   <span class="kt">int</span> <span class="n">tid</span> <span class="o">=</span> <span class="n">threadIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">blockIdx</span><span class="p">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">blockDim</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
@@ -412,7 +413,7 @@
 
 <p>上述代码虽然可以完成任务，但没有达到更高的性能。下面我对上面的程序做进一步优化。</p>
 
-<p>首先介绍一下 CUDA C 中的共享内存。<strong>共享内存</strong>中的变量被线程块中的每个线程共享，而其他线程不能对其访问和修改。如此一来，编写 CUDA 代码时，就只需要将共享内存和线程块绑定考虑就行：一个线程块中的线程也可以通过它进行通信协作，完成更加复杂的任务。最后，共享内存在物理上更贴近线程，因此访问共享内存时的延迟要远低于访问普通缓冲区的延迟。</p>
+<p>首先介绍一下 CUDA C 中的共享内存。<strong>共享内存</strong>中的变量被线程块中的每个线程共享，而其他线程不能对其访问和修改。要使用共享内存，在编写 CUDA 代码时，只需要注意将共享内存和线程块“捆绑”考虑就行。共享内存可以让一个线程块中的线程更快地完成通信协作，执行更加复杂的任务。最后，共享内存在物理上更贴近线程，因此访问共享内存时的延迟要远低于访问普通缓冲区的延迟。</p>
 
 <p>但在使用线程之间的通信时，还需要注意线程之间的同步，防止出现竞争条件（Race Condition），避免错误。</p>
 
@@ -527,6 +528,47 @@
   <span class="k">return</span> <span class="n">cudaSuccess</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div></div>
+
+<h2 id="kahan-算法">kahan 算法</h2>
+
+<p>更新于 2023.9.4</p>
+
+<p>闲来无事，重新温故一下几年前写的代码。突然发现，这好像没算对啊，CPU 计算出来的数据跟 GPU 的数据怎么都对不上。只要数据量一大（上千），二者得出的结果就会差几十，数据量越大差得越多，为啥呢？</p>
+
+<p>首先，我反复琢磨了这几行几年前写的代码，反反复复地推导后得出结论：根本没问题。那么问题出在哪里？</p>
+
+<p>问题出在：<strong>浮点数的加法不满足结合律</strong>。用数学的话说，即 \((a+b)+c != a+(b+c)\)。为什么会这样？这得从浮点数在计算机中的表示说起，在计算机程序中，我们需要用有限位数对实数做近似表示，如今的大多数计算机都使用 <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE-754</a> 规定的浮点数来作为这个近似表示。然而一旦扯到这个，其篇幅和知识点不是本博客可以接受的了的，因此这里就放个<a href="https://blog.csdn.net/K346K346/article/details/50487127">链接</a>供各位感兴趣的读者自行研究。</p>
+
+<p>跳过这些复杂繁琐的细节，这里直接给出了结论：因计算机内资源有限，浮点数在其中无法被精确表示，导致<em>绝对值越大的浮点数拥有越不精确（越少）的小数点位数</em>，而绝对值越接近于0的数有更多的精确的小数点位数。为方便理解，各位读者可以简单地用 C++ 运行如下算式，看它们的结果是否相等。然后再把 <code class="language-plaintext highlighter-rouge">float</code> 变为 <code class="language-plaintext highlighter-rouge">double</code>，或者减小数字的绝对值等，看结果是否有变化。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">float</span> <span class="n">s1</span> <span class="o">=</span> <span class="p">(</span><span class="mf">100000000.00001</span><span class="n">f</span> <span class="o">-</span> <span class="mf">100000000.</span><span class="n">f</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.00001</span><span class="n">f</span><span class="p">;</span>
+<span class="kt">float</span> <span class="n">s2</span> <span class="o">=</span> <span class="p">(</span><span class="mf">100000000.00001</span><span class="n">f</span> <span class="o">+</span> <span class="mf">0.00001</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mf">100000000.</span><span class="n">f</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>那么这跟咱们的程序无法得到准确结果有什么关系呢？首先，因为我们在计算两个甚长向量的内积值，这意味着在算数的最后，我们需要将很多浮点乘积值逐一累加起来，具体做法就是一个一个地将乘积值加入到前缀和中。而若这些乘积值都是正浮点数（或者负浮点数），那么不断累加后，其前缀和的绝对值必然会变得越来越大。而前面提到过，由于计算机内表示一个浮点数所用的资源有限，为表示该前缀和，计算机不得不丢掉越来越多的小数点后的位数，导致该值也就越来越不精确。甚至到最后，前缀和再继续累加乘积值后，可能由于乘积值过小而直接被抛弃了！</p>
+
+<p>计算机运算浮点数存在了这种精度缺陷，应当如何解决？想必大家能从上面的例子中获得一些启发：适当地交换运算顺序，或许就能够避免因“大数加小数”产生的精度损失。kahan 求和法便是利用了这一特点，尽可能挽救了因不断累加而丢失的精确度。</p>
+
+<p>在介绍 kahan 求和法前，先明确一下我们要解决的问题：有一个内含大量正浮点数的数组 <code class="language-plaintext highlighter-rouge">nums</code>，需求得其总和。在不断累加的过程中，我们用 <code class="language-plaintext highlighter-rouge">sum</code> 表示中间过程的前缀和。显然，程序执行到一定程度后，必然会出现 <code class="language-plaintext highlighter-rouge">sum</code> 很大，而 <code class="language-plaintext highlighter-rouge">nums</code> 内值很小的情况。因此若直接计算 <code class="language-plaintext highlighter-rouge">sum += nums</code>，则 <code class="language-plaintext highlighter-rouge">nums</code> 的小数点低位数会丢失。而 kahan 求和法通过记住这其中的误差，将其加到后续的结果中，即可挽回损失的精度。</p>
+
+<p>具体是这样做的，已知 <code class="language-plaintext highlighter-rouge">sum += num</code> 是不准确的，产生了 <code class="language-plaintext highlighter-rouge">eff</code> 的误差。此时考虑：<code class="language-plaintext highlighter-rouge">c = (sum + num) - sum - num</code>。注意，关于 <code class="language-plaintext highlighter-rouge">c</code> 的计算中，只有 <code class="language-plaintext highlighter-rouge">sum + num</code> 是不准确的（因为只有这个运算涉及到了大数加小数），因此，<code class="language-plaintext highlighter-rouge">c</code> 可以将加法产生的误差保留下来，近似等于 <code class="language-plaintext highlighter-rouge">eff</code>。此外，针对 <code class="language-plaintext highlighter-rouge">c</code> 的运算顺序不能变化！否则就有不止一个运算是不准确的了。我们保留 <code class="language-plaintext highlighter-rouge">c</code>，在计算下一个加法的时候，再将这个误差补上，更新到 <code class="language-plaintext highlighter-rouge">sum</code> 中去。</p>
+
+<p>Kahan 求和算法主要通过一个单独变量 <code class="language-plaintext highlighter-rouge">c</code> 用来累积误差。如下方参考代码所示：</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">kahanSum</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">float</span> <span class="n">sum</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">c</span> <span class="o">=</span> <span class="mf">0.0</span><span class="n">f</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">num</span> <span class="o">:</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="n">num</span> <span class="o">-</span> <span class="n">c</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">t</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">y</span><span class="p">;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">sum</span><span class="p">)</span> <span class="o">-</span> <span class="n">y</span><span class="p">;</span>
+    <span class="n">sum</span> <span class="o">=</span> <span class="n">t</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">sum</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>注：Kahan 求和法，又名补偿求和或进位求和法，是一个用来降低有限精度浮点数序列累加值误差的算法。它主要通过保持一个单独变量用来累积误差（常用变量名为 <code class="language-plaintext highlighter-rouge">c</code>）来完成的。该算法主要由 William Kahan 于 1960s 发现。因为 Ivo Babuška 也曾独立提出了一个类似的算法，Kahan 求和算法又名为 Kahan–Babuška 求和算法。</p>
 
         
       </section>

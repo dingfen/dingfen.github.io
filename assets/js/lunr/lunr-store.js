@@ -228,7 +228,7 @@ var store = [{
         "teaser": "/assets/img/teaser.jpg"
       },{
         "title": "CUDA 中的向量内积",
-        "excerpt":"CUDA 中的向量内积 博主本科时略学过 CUDA 编程的相关知识，但远算不上熟练，更谈不上精通。恰好本人对并行计算很感兴趣，这几天实现了一下最基础的向量内积，对以前的知识做了一点总结，算是温故而知新，可以为师矣。 向量内积 两个长为 N 的向量做内积。从并行计算的角度看，可并行部分就是 a[i] * b[i] 部分，然后再对得到的乘积做累加求和。可以让 GPU 中的每个线程执行一个 a[i] * b[i]，然后再进行累加。如下图，考虑到 N 可能非常大，GPU 网格中的线程数量不足以覆盖整个向量，因此需要使用 while 循环，让线程运算多个乘法。 显而易见，第一步就是首先使用内嵌变量计算线程的编号，然后使用 while 循环，让每个线程跨步计算相应的乘法，并累加到 cache 数组中（橙色箭头）。相应的代码如下，配合上图相应能更好地理解计算过程。 __global__ void dot(float *c, float *a, float *b) { int tid = threadIdx.x + blockIdx.x * blockDim.x; float cache[blockDim.x * gridDim.x]; float...","categories": ["MPI&OpenMP"],
+        "excerpt":"CUDA 中的向量内积 博主本科时略学过 CUDA 编程的相关知识，但远算不上熟练，更谈不上精通。恰好本人对并行计算很感兴趣，这几天实现了一下最基础的向量内积，对以前的知识做了一点总结，算是温故而知新，可以为师矣。 向量内积 两个长为 N 的向量做内积。从并行计算的角度看，可并行部分就是 a[i] * b[i] 部分，然后再对得到的乘积做累加求和。可以让 GPU 中的每个线程执行一个 a[i] * b[i]，然后再进行累加。如下图，考虑到 N 可能非常大，GPU 网格中的线程数量不足以覆盖整个向量，因此需要使用 while 循环，让线程运算多个乘法。 具体而言，在下面的这个循环中，每个线程都会运行一个 grid 中的一次乘法，然后跳转到下一个 grid 继续完成乘法。因此，程序的 while 循环，让每个线程计算相应的乘法后，跨越一个 grid 的长度再完成乘法，最后累加到 cache 数组中（橙色箭头），为了不让自增的 tid 变量超过数组边界，每次累加后还需要在 while 语句中判断一下。相应的代码如下，配合上图相应能更好地理解计算过程。 __global__ void dot(float *c, float *a, float *b) { int tid =...","categories": ["MPI&OpenMP"],
         "tags": ["CUDA"],
         "url": "/mpi&openmp/2021/10/03/cuda-with-dotproduct.html",
         "teaser": "/assets/img/teaser.jpg"
