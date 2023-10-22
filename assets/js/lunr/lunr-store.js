@@ -298,4 +298,10 @@ var store = [{
         "tags": ["CUDA"],
         "url": "/mpi&openmp/2023/09/10/cuda-mem.html",
         "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "Transformers",
+        "excerpt":" ","categories": ["AI"],
+        "tags": ["transformer","AI"],
+        "url": "/ai/2023/10/22/transformer.html",
+        "teaser": "/assets/img/teaser.jpg"
       }]
