@@ -300,8 +300,14 @@ var store = [{
         "teaser": "/assets/img/teaser.jpg"
       },{
         "title": "Transformers",
-        "excerpt":" ","categories": ["AI"],
+        "excerpt":"Transformer   去年 OpenAI 发布的 ChatGPT3 开启了新一轮对 AI 研究的热潮，随着大语言 AI 模型的不断发展，与之相关的开源社区和开源代码也在不断地丰富和壮大。本博客主要研究 huggingface transformer 开源仓库，Huggingface 是一家在 NLP 社区做出杰出贡献的纽约创业公司，其所提供的大量预训练模型和代码等资源被广泛的应用于学术研究当中，现已经发展成为大语言 AI 模型领域中最大的开源社区之一。Transformers 仓库则提供了数以千计针对各种任务的预训练模型，开发者可以根据自身的需要，选择模型进行训练或微调，也可参考相关文档和源码，从而快速开发新模型。   不过，这一切的故事还要从 2017 年（甚至更早）说起。自从 deepMind 团队发表的 Attention is all your need 论文提出了 transformer 架构后，绝大部分有影响力模型的基础架构都基于的 transformer（比如基于 decode 的GPT、基于 encode 的 BERT、基于 encode-decode 的 T5 等等），具体有哪些模型可以来看看 huggingface 罗列的   大话 transformer 架构   代码解读   ","categories": ["AI"],
         "tags": ["transformer","AI"],
         "url": "/ai/2023/10/22/transformer.html",
+        "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "huggingface下llama代码细读",
+        "excerpt":"huggingface下llama代码细读 llama 是什么 llama 是 meta 公司于 2023 年初发布的一个大语言模型。根据官网上对llama的介绍，meta 公司发布的语言模型可以帮助那些无法拥有大量计算资源的研究人员小成本地进入 AI 大模型领域进行研究。也正因如此，meta 向全社会提供了经过初步训练的多个不同权重大小的模型数据（7B、13B、33B 和 65B）。 从论文中看，llama 使用了世界上高质量的文本数据进行训练，使用到的训练数据包括： English CommonCrawl [67%] C4 [15%] Github [4.5%] Wikipedia [4.5%] Gutenberg and Books3 [4.5%] ArXiv [2.5%] Stack Exchange [2%] llama 使用的分词（Tokenizer）算法是由 SentencePiece 实现的 Byte-pair-encoding(BPE) 算法，所有的训练数据大约包含了 1.4T 个 tokens。每个 token 在训练期间仅使用一次，但维基百科和图书等数据除外。在发布 llama 后不久，meta 又发布了 llama-2...","categories": ["AI"],
+        "tags": ["Transformer","AI"],
+        "url": "/ai/2023/10/30/huggingface1.html",
         "teaser": "/assets/img/teaser.jpg"
       }]

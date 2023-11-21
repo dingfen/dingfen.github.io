@@ -10,7 +10,7 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Transformers - 峰子的乐园</title>
-<meta name="description" content="随笔">
+<meta name="description" content="总栏">
 
 
   <meta name="author" content="Bill Ding">
@@ -23,7 +23,7 @@
 <meta property="og:url" content="http://localhost:4000/ai/2023/10/22/transformer.html">
 
 
-  <meta property="og:description" content="随笔">
+  <meta property="og:description" content="总栏">
 
 
 
@@ -203,7 +203,7 @@
         
       </h1>
       
-        <p class="page__lead">随笔
+        <p class="page__lead">总栏
 </p>
       
       
@@ -342,7 +342,7 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Transformers">
-    <meta itemprop="description" content="随笔">
+    <meta itemprop="description" content="总栏">
     <meta itemprop="datePublished" content="2023-10-22T00:00:00+08:00">
     
 
@@ -354,12 +354,28 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
-              
+              <ul class="toc__menu">
+  <li><a href="#transformer">Transformer</a>
+    <ul>
+      <li><a href="#大话-transformer-架构">大话 transformer 架构</a></li>
+      <li><a href="#代码解读">代码解读</a></li>
+    </ul>
+  </li>
+</ul>
 
             </nav>
           </aside>
         
-        
+        <h1 id="transformer">Transformer</h1>
+
+<p>去年 OpenAI 发布的 ChatGPT3 开启了新一轮对 AI 研究的热潮，随着大语言 AI 模型的不断发展，与之相关的开源社区和开源代码也在不断地丰富和壮大。本博客主要研究 huggingface transformer 开源仓库，Huggingface 是一家在 NLP 社区做出杰出贡献的纽约创业公司，其所提供的大量预训练模型和代码等资源被广泛的应用于学术研究当中，现已经发展成为大语言 AI 模型领域中最大的开源社区之一。Transformers 仓库则提供了数以千计针对各种任务的预训练模型，开发者可以根据自身的需要，选择模型进行训练或微调，也可参考相关文档和源码，从而快速开发新模型。</p>
+
+<p>不过，这一切的故事还要从 2017 年（甚至更早）说起。自从 deepMind 团队发表的 Attention is all your need 论文提出了 transformer 架构后，绝大部分有影响力模型的基础架构都基于的 transformer（比如基于 decode 的GPT、基于 encode 的 BERT、基于 encode-decode 的 T5 等等），具体有哪些模型可以来看看 <a href="https://huggingface.co/docs/transformers/index?continueFlag=321d881f02dc7278f7538eb190d77134">huggingface 罗列的</a></p>
+
+<h2 id="大话-transformer-架构">大话 transformer 架构</h2>
+
+<h2 id="代码解读">代码解读</h2>
+
 
         
       </section>
@@ -437,7 +453,8 @@
 ">previous</a>
     
     
-      <a href="#" class="pagination--pager disabled">next</a>
+      <a href="/ai/2023/10/30/huggingface1.html" class="pagination--pager" title="huggingface下llama代码细读
+">next</a>
     
   </nav>
 
@@ -451,6 +468,39 @@
     <div class="page__related">
       <h4 class="page__related-title">related</h4>
       <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/10/30/huggingface1.html" rel="permalink">huggingface下llama代码细读
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  15 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">揭开它神秘的面纱
+</p>
+  </article>
+</div>
+
         
           
 
@@ -546,39 +596,6 @@
 </p>
     
     <p class="archive__item-excerpt" itemprop="description">初步入土计划
-</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-      <div class="archive__item-teaser">
-        <img src="/assets/img/teaser.jpg" alt="">
-      </div>
-    
-    <h2 class="archive__item-title" itemprop="headline">
-      
-        <a href="/cpp/2022/06/18/gem5-6.html" rel="permalink">深入理解 Gem5 之五
-</a>
-      
-    </h2>
-    
-      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
-
-
-
-
-  8 minutes read
-
-</p>
-    
-    <p class="archive__item-excerpt" itemprop="description">gem5中的Cache实现
 </p>
   </article>
 </div>
