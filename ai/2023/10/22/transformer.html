@@ -355,10 +355,28 @@
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
               <ul class="toc__menu">
-  <li><a href="#transformer">Transformer</a>
+  <li><a href="#大话-transformer-架构">大话 transformer 架构</a>
     <ul>
-      <li><a href="#大话-transformer-架构">大话 transformer 架构</a></li>
-      <li><a href="#代码解读">代码解读</a></li>
+      <li><a href="#前言">前言</a></li>
+      <li><a href="#故事的开始">故事的开始</a></li>
+      <li><a href="#encoder--decoder-初理解">encoder &amp; decoder 初理解</a></li>
+      <li><a href="#深入编码器">深入编码器</a>
+        <ul>
+          <li><a href="#基本数据流">基本数据流</a></li>
+          <li><a href="#注意力机制">注意力机制</a></li>
+          <li><a href="#多头注意力">多头注意力</a></li>
+          <li><a href="#残差连接">残差连接</a></li>
+          <li><a href="#归一化">归一化</a></li>
+          <li><a href="#mlp">MLP</a></li>
+        </ul>
+      </li>
+      <li><a href="#深入解码器">深入解码器</a>
+        <ul>
+          <li><a href="#基本数据流-1">基本数据流</a></li>
+          <li><a href="#masked-注意力机制">Masked 注意力机制</a></li>
+        </ul>
+      </li>
+      <li><a href="#位置编码与嵌入技术">位置编码与嵌入技术</a></li>
     </ul>
   </li>
 </ul>
@@ -366,15 +384,85 @@
             </nav>
           </aside>
         
-        <h1 id="transformer">Transformer</h1>
+        <h1 id="大话-transformer-架构">大话 transformer 架构</h1>
 
-<p>去年 OpenAI 发布的 ChatGPT3 开启了新一轮对 AI 研究的热潮，随着大语言 AI 模型的不断发展，与之相关的开源社区和开源代码也在不断地丰富和壮大。本博客主要研究 huggingface transformer 开源仓库，Huggingface 是一家在 NLP 社区做出杰出贡献的纽约创业公司，其所提供的大量预训练模型和代码等资源被广泛的应用于学术研究当中，现已经发展成为大语言 AI 模型领域中最大的开源社区之一。Transformers 仓库则提供了数以千计针对各种任务的预训练模型，开发者可以根据自身的需要，选择模型进行训练或微调，也可参考相关文档和源码，从而快速开发新模型。</p>
+<h2 id="前言">前言</h2>
 
-<p>不过，这一切的故事还要从 2017 年（甚至更早）说起。自从 deepMind 团队发表的 Attention is all your need 论文提出了 transformer 架构后，绝大部分有影响力模型的基础架构都基于的 transformer（比如基于 decode 的GPT、基于 encode 的 BERT、基于 encode-decode 的 T5 等等），具体有哪些模型可以来看看 <a href="https://huggingface.co/docs/transformers/index?continueFlag=321d881f02dc7278f7538eb190d77134">huggingface 罗列的</a></p>
+<p>去年 OpenAI 发布的 ChatGPT3 开启了新一轮对 AI 研究的热潮，不过，这一切的故事还要从 2017 年（甚至更早）说起。自从 deepMind 团队发表的 <a href="https://arxiv.org/abs/1706.03762">“Attention is all your need”</a> 论文提出了 transformer 架构后，绝大部分有影响力模型的基础架构都基于的 transformer（比如基于 decode 的GPT、基于 encode 的 BERT、基于 encode-decode 的 T5 等等），具体有哪些模型可以来看看 <a href="https://huggingface.co/docs/transformers/index?continueFlag=321d881f02dc7278f7538eb190d77134">huggingface 罗列的</a></p>
 
-<h2 id="大话-transformer-架构">大话 transformer 架构</h2>
+<h2 id="故事的开始">故事的开始</h2>
 
-<h2 id="代码解读">代码解读</h2>
+<p>与大多数博客一样，我们需要请出论文中最有名的架构图来解释 transformer：</p>
+
+<center>
+<img src="/assets/img/LLM/transformer.png" />
+
+</center>
+
+<p>上面的架构图可以简单地分成两个部分，encoder（左边）和 decoder（右边）。而组成他们的组件又有一些共通之处，因此 transformer 架构其实没有大家想的那样复杂。</p>
+
+<p>虽然现在 transformer 被应用于非常多的 AI 领域，但起初它是在自然语言处理 (NLP) 中针对序列到序列 (seq2seq) 的任务被提出的。所谓的 seq2seq ，可以简单地理解为自然语言翻译：将一串中文翻译成一串英文，对于计算机而言就是程序将一串字符串转换到了另一串字符串。我们将以此为背景讨论 transformer，希望能对刚入门的新人有所帮助。</p>
+
+<h2 id="encoder--decoder-初理解">encoder &amp; decoder 初理解</h2>
+
+<p>在翻译外语时，我们的大脑通常先读入原语言的文字，并理解出文字的大意，然后再输出成对应的语言。而 transformer 的运行过程与上述情况很类似。transformer 的 encoder（中文译：编码器）负责流程的前半部分，读入文字，“编码地”理解文字大意，而 decoder（中文译：解码器）负责在知晓文字大意后，“解码地”将意思用目标语言输出。</p>
+
+<p>将上述过程用数学描述，即为：</p>
+
+<p>encoder 将输入的文字序列 {$ x_1, x_2, … x_n $} 映射为 {$ z_1, z_2, …, z_n $}（transformer 自己的理解大意），decoder 拿到 encoder 的输出，在知晓文字大意后，会生成一个文字序列 {$ y_1, y_2, … , y_m $}。</p>
+
+<p>注意到，encoder 可以一次性看到所有的输入（就如同人们翻译文字时必须根据上下文意思理解原文）但 decoder 只能一个一个的输出，并且还需要根据自己上一个的输出确定自己的本次输出（像极了翻译时一字一句写下外文的样子），因此是一个自回归模型。</p>
+
+<h2 id="深入编码器">深入编码器</h2>
+
+<h3 id="基本数据流">基本数据流</h3>
+
+<p>将目标聚焦到架构图的左边，注意到，encoder 由 N 个相同的模块组成，而最下面是模型的入口。输入 inputs 可以简单地理解为读入的文字序列，它需要经过 Input Embedding 和 Positional Encoding 地处理（这些我们稍后会讨论），再进入到编码器中。数据流进入编码器后，一方面会兵分三路进入到多头注意力块 (multi-head Attention)，另一方面会使用<a href="https://zhuanlan.zhihu.com/p/42833949">残差连接</a>将原始输入添加到输出中，最后执行归一化操作。随后，数据会进入第二个子层 Feed Forward，也就是全连接层，然后再执行残差连接和归一化操作。得到的输出作为下一编码层的输入，再重复上述运算，如此操作 N 次，即完成了对文本的编码。</p>
+
+<center>
+<img src="/assets/img/LLM/transformer_encoder.png" />
+</center>
+
+<h3 id="注意力机制">注意力机制</h3>
+
+<h3 id="多头注意力">多头注意力</h3>
+<p>随后，数据会进入第二个子层 Feed Forward，也就是全连接层。</p>
+
+<p>残差连接需要输入和输出的维度一致，所以每一层的输出维度在transformer里都是固定的，都是512维。</p>
+
+<p>可以看到整个结构的超参数设计非常的简单，只需要调节N和输出的维度就可以了，可以衍生出后续的一系列网络设计，诸如BERT和GPT等等。</p>
+
+<p>残差连接在 Transformer 架构中至关重要。</p>
+
+<p>1、首先，与 ResNet 类似，Transformers 层级很深。某些模型的编码器中包含超过 24 个 blocks。因此，残差连接对于模型梯度的平滑流动至关重要。</p>
+
+<p>2、如果没有残余连接，原始序列的信息就会丢失。多头注意力层忽略序列中元素的位置，并且只能根据输入特征来学习它。删除残余连接意味着该信息在第一个注意层之后（初始化之后）丢失，并且使用随机初始化的查询和键向量，位置 i 的输出向量与其原始输入无关。注意力的所有输出都可能表示相似/相同的信息，并且模型没有机会区分哪些信息来自哪个输入元素。</p>
+
+<p>归一化层在 Transformer 架构中也发挥着重要作用，它可以实现更快的训练速度。</p>
+
+<p>除了多头注意力之外，模型中还包括一个小型全连接前馈网络，应用于每一个 block。它增加了模型的复杂度，并允许单独对每个序列元素进行转换。</p>
+
+<p><img src="/assets/img/LLM/encoder_decoder.png" alt="" /></p>
+
+<p><img src="https://pic3.zhimg.com/80/v2-89c3f1cbaf99ea0bf397d450908f5f0a_720w.webp" alt="" /></p>
+
+<h3 id="残差连接">残差连接</h3>
+
+<h3 id="归一化">归一化</h3>
+
+<h3 id="mlp">MLP</h3>
+
+<h2 id="深入解码器">深入解码器</h2>
+
+<h3 id="基本数据流-1">基本数据流</h3>
+
+<center>
+<img src="/assets/img/LLM/transformer_decoder.png" />
+</center>
+
+<h3 id="masked-注意力机制">Masked 注意力机制</h3>
+
+<h2 id="位置编码与嵌入技术">位置编码与嵌入技术</h2>
 
 
         
@@ -453,7 +541,7 @@
 ">previous</a>
     
     
-      <a href="/ai/2023/10/30/huggingface1.html" class="pagination--pager" title="huggingface下llama代码细读
+      <a href="/ai/2023/10/30/huggingface1.html" class="pagination--pager" title="huggingface下llama代码细读（上）
 ">next</a>
     
   </nav>
@@ -482,7 +570,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/ai/2023/10/30/huggingface1.html" rel="permalink">huggingface下llama代码细读
+        <a href="/ai/2023/11/30/huggingface2.html" rel="permalink">huggingface下llama代码细读（下）
 </a>
       
     </h2>
@@ -492,7 +580,73 @@
 
 
 
-  15 minutes read
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">揭开它神秘的面纱
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/11/30/LLM-inference1.html" rel="permalink">大模型推理优化技术之显存优化
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">在消费级显卡上运行大模型
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/10/30/huggingface1.html" rel="permalink">huggingface下llama代码细读（上）
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  9 minutes read
 
 </p>
     
@@ -530,72 +684,6 @@
 </p>
     
     <p class="archive__item-excerpt" itemprop="description">主机与设备间的数据传输
-</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-      <div class="archive__item-teaser">
-        <img src="/assets/img/teaser.jpg" alt="">
-      </div>
-    
-    <h2 class="archive__item-title" itemprop="headline">
-      
-        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
-</a>
-      
-    </h2>
-    
-      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
-
-
-
-
-  1 minutes read
-
-</p>
-    
-    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
-</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-      <div class="archive__item-teaser">
-        <img src="/assets/img/teaser.jpg" alt="">
-      </div>
-    
-    <h2 class="archive__item-title" itemprop="headline">
-      
-        <a href="/miscellaneous/2022/07/19/awk.html" rel="permalink">awk 从入门到入土
-</a>
-      
-    </h2>
-    
-      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
-
-
-
-
-  2 minutes read
-
-</p>
-    
-    <p class="archive__item-excerpt" itemprop="description">初步入土计划
 </p>
   </article>
 </div>

@@ -9,7 +9,7 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>huggingface下llama代码细读 - 峰子的乐园</title>
+<!-- begin _includes/seo.html --><title>huggingface下llama代码细读（上） - 峰子的乐园</title>
 <meta name="description" content="揭开它神秘的面纱">
 
 
@@ -19,7 +19,7 @@
 <meta property="og:type" content="article">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:title" content="huggingface下llama代码细读">
+<meta property="og:title" content="huggingface下llama代码细读（上）">
 <meta property="og:url" content="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">
 
 
@@ -198,7 +198,7 @@
     <div class="wrapper">
       <h1 id="page-title" class="page__title" itemprop="headline">
         
-          huggingface下llama代码细读
+          huggingface下llama代码细读（上）
 
         
       </h1>
@@ -212,7 +212,7 @@
 
 
 
-  16 minutes read
+  9 minutes read
 
 </p>
       
@@ -341,7 +341,7 @@
 
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
-    <meta itemprop="headline" content="huggingface下llama代码细读">
+    <meta itemprop="headline" content="huggingface下llama代码细读（上）">
     <meta itemprop="description" content="揭开它神秘的面纱">
     <meta itemprop="datePublished" content="2023-10-30T00:00:00+08:00">
     
@@ -355,7 +355,7 @@
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
               <ul class="toc__menu">
-  <li><a href="#huggingface下llama代码细读">huggingface下llama代码细读</a>
+  <li><a href="#huggingface下llama代码细读上">huggingface下llama代码细读（上）</a>
     <ul>
       <li><a href="#llama-是什么">llama 是什么</a></li>
       <li><a href="#llama-架构">llama 架构</a></li>
@@ -381,21 +381,6 @@
           </li>
         </ul>
       </li>
-      <li><a href="#llama-模型">llama 模型</a>
-        <ul>
-          <li><a href="#译码层">译码层</a></li>
-          <li><a href="#llama-model">llama Model</a>
-            <ul>
-              <li><a href="#llamamodel的forward函数">LlamaModel的forward函数</a></li>
-            </ul>
-          </li>
-        </ul>
-      </li>
-      <li><a href="#最终成型">最终成型</a>
-        <ul>
-          <li><a href="#llamaforcausallm">LlamaForCausalLM</a></li>
-        </ul>
-      </li>
       <li><a href="#小结">小结</a></li>
     </ul>
   </li>
@@ -404,11 +389,11 @@
             </nav>
           </aside>
         
-        <h1 id="huggingface下llama代码细读">huggingface下llama代码细读</h1>
+        <h1 id="huggingface下llama代码细读上">huggingface下llama代码细读（上）</h1>
 
 <h2 id="llama-是什么">llama 是什么</h2>
 
-<p>llama 是 meta 公司于 2023 年初发布的一个大语言模型。根据<a href="https://ai.meta.com/blog/large-language-model-llama-meta-ai/">官网</a>上对llama的介绍，meta 公司发布的语言模型可以帮助那些无法拥有大量计算资源的研究人员小成本地进入 AI 大模型领域进行研究。也正因如此，meta 向全社会提供了经过初步训练的多个不同权重大小的模型数据（7B、13B、33B 和 65B）。</p>
+<p>llama 是 meta 公司于 2023 年初发布的一个大语言模型。根据<a href="https://ai.meta.com/blog/large-language-model-llama-meta-ai/">官网</a>上对llama的介绍，meta 公司发布的语言模型可以帮助那些无法拥有大量计算资源的研究人员小成本地进入 AI 大模型领域进行研究。也正因如此，llama 成为了除 ChatGPT 外最有名的大模型之一。为了满足不同级别的研究需要，meta 向全社会提供了经过初步训练的多个不同权重大小的模型数据（7B、13B、33B 和 65B）。</p>
 
 <p>从<a href="https://arxiv.org/abs/2302.13971">论文</a>中看，llama 使用了世界上高质量的文本数据进行训练，使用到的训练数据包括：</p>
 <ul>
@@ -421,7 +406,7 @@
   <li>Stack Exchange [2%]</li>
 </ul>
 
-<p>llama 使用的分词（Tokenizer）算法是由 SentencePiece 实现的 Byte-pair-encoding(BPE) 算法，所有的训练数据大约包含了 1.4T 个 tokens。每个 token 在训练期间仅使用一次，但维基百科和图书等数据除外。在发布 llama 后不久，meta 又发布了 llama-2 模型，这篇博文会对 llama 和 llama-2 模型架构和实现做详细的讨论。</p>
+<p>llama 使用的分词（Tokenizer）算法是由 SentencePiece 实现的 Byte-pair-encoding(BPE) 算法，所有的训练数据大约包含了 1.4T 个 tokens。每个 token 在训练期间仅使用一次，但维基百科和图书等数据除外。在发布 llama 后不久，meta 又发布了 llama-2 模型，接下来，我们会对 llama 和 llama-2 模型架构和实现做详细的讨论。</p>
 
 <h2 id="llama-架构">llama 架构</h2>
 
@@ -468,11 +453,13 @@
 
 <h2 id="llama-基件">llama 基件</h2>
 
-<p>本节开始带领大家深入理解 <a href="https://github.com/huggingface/transformers">transformers</a> 针对 llama 的核心实现。我们先从搭建 llama 的基础组件开始，一步一步从底到顶走过整个代码结构。</p>
+<p>随着大语言 AI 模型的不断发展，与之相关的开源社区和开源代码也在不断地丰富和壮大。本博客主要研究 <a href="https://github.com/huggingface/transformers">huggingface transformer</a> 开源框架，Huggingface 是一家在 NLP 社区做出杰出贡献的纽约创业公司，其所提供的大量预训练模型和代码等资源被广泛的应用于学术研究当中，现已经发展成为大语言 AI 模型领域中最大的开源社区之一。Huggingface 框架提供了数以千计针对各种任务的预训练模型，开发者可以根据自身的需要，选择模型进行训练或微调，也可参考相关文档和源码，从而快速开发新模型。</p>
+
+<p>本节开始带领大家深入理解 <a href="https://github.com/huggingface/transformers/tree/main/src/transformers/models/llama">transformers llama</a> 的核心实现。我们先从搭建 llama 的基础组件开始，一步一步从底到顶走过整个代码结构。</p>
 
 <h3 id="rmsnorm">RMSNorm</h3>
 
-<p>下面是 RMSNorm 实现的部分<a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py">代码</a>。</p>
+<p>在对 RMSNorm 有一定了解后，我们来看一下 RMSNorm 的实现<a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py">代码</a>。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaRMSNorm</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
   <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
@@ -491,11 +478,11 @@
     <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">weight</span> <span class="o">*</span> <span class="n">hidden_states</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">input_dtype</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>对比之前给出的公式：$ RMS(a) = \sqrt{\frac{1}{n}\sum_i^n{a_i^2}} $ 以及 $ \bar{a}_i = \frac{a_i}{RMS(a)}g_i$ 。第13、14行将输入的 <code class="language-plaintext highlighter-rouge">hidden_states</code>（隐藏状态张量）平方后取平均，再用 <code class="language-plaintext highlighter-rouge">rsqrt</code> 取倒数开根号，最后更新 <code class="language-plaintext highlighter-rouge">hidden_states</code> 的值。</p>
+<p><code class="language-plaintext highlighter-rouge">self.variance_epsilon</code> 是用来规避可能出现的协方差为0的情况而引入的极小值。<code class="language-plaintext highlighter-rouge">forward</code> 函数的代码对应了之前给出的公式：$ RMS(a) = \sqrt{\frac{1}{n}\sum_i^n{a_i^2}} $ 以及 $ \bar{a}_i = \frac{a_i}{RMS(a)}g_i$ 。第13、14行将输入的 <code class="language-plaintext highlighter-rouge">hidden_states</code>（隐藏状态张量）的最低维度元素，进行平方后取平均，再用 <code class="language-plaintext highlighter-rouge">rsqrt</code> 取倒数开根号，最后更新 <code class="language-plaintext highlighter-rouge">hidden_states</code> 的值。之后我们会了解到，所谓的最低维度就是张量的特征值 （即 feature 维度）。</p>
 
 <h3 id="激活函数">激活函数</h3>
 
-<p>transformers 的激活函数实现集中在另一个 <a href="https://github.com/huggingface/transformers/blob/main/src/transformers/activations.py">python 文件</a>中，离我们要讨论的 llama 比较远，实现也较为平凡，不细聊。</p>
+<p>transformers 的激活函数实现集中在另一个 <a href="https://github.com/huggingface/transformers/blob/main/src/transformers/activations.py">python 文件</a>中，离我们要讨论的 llama 比较远，实现也较为平凡，不细聊。这里只说明默认使用的是 <a href="https://pytorch.org/docs/stable/generated/torch.nn.SiLU.html"><code class="language-plaintext highlighter-rouge">nn.SiLU</code> 激活函数</a></p>
 
 <h3 id="rope">RoPE</h3>
 
@@ -521,7 +508,7 @@
     <span class="p">)</span>
 </code></pre></div></div>
 
-<p>首先，<code class="language-plaintext highlighter-rouge">LlamaRotaryEmbedding</code> 在构造函数中就将公式中的 $ \theta_i $ 存入到 <code class="language-plaintext highlighter-rouge">nn.Module </code> 中的 <a href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.register_buffer">register_buffer</a>。然后调用内部函数将 cos 和 sin 值算出来👇：详细地，<a href="https://pytorch.org/docs/stable/generated/torch.einsum.html">torch.einsum</a> 计算了 $ m\theta_i $，就如论文中配图所示的过程那样👇👇，将角度与词的绝对位置相乘，就相当于在平面坐标系上转了一个小角度。最后，将这些值在最低维复制一次，拼接起来（<code class="language-plaintext highlighter-rouge">torch.cat</code>），便得到了制备的 cos 和 sin 值。</p>
+<p>首先，<code class="language-plaintext highlighter-rouge">LlamaRotaryEmbedding</code> 在构造函数中就将公式中的 $ \theta_i $ 存入到 <code class="language-plaintext highlighter-rouge">nn.Module </code> 中的 <a href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.register_buffer">register_buffer</a>。然后调用内部函数将 cos 和 sin 值算出来👇：详细地，<a href="https://pytorch.org/docs/stable/generated/torch.einsum.html">torch.einsum</a> 计算了 $ m\theta_i $，就如论文中配图所示的过程那样（下图，代码中的 t 就是图里的 m），将角度与词的绝对位置相乘，就相当于在平面坐标系上转了一个小角度。最后，将这些值在最低维复制一次，拼接起来（<code class="language-plaintext highlighter-rouge">torch.cat</code>），便得到了制备的 cos 和 sin 值。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="nf">_set_cos_sin_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
     <span class="bp">self</span><span class="p">.</span><span class="n">max_seq_len_cached</span> <span class="o">=</span> <span class="n">seq_len</span>
@@ -538,7 +525,7 @@
   <img src="/assets/img/LLM/RoPE4.png" />
 </center>
 
-<p>这样做的好处是，所有的 cos 和 sin 值都在程序构造该类时已经计算完成，推理时无需再次计算，加快了推理过程。那么，另一个问题是：在真实的推理中，llama 是如何使用这些已经制备的 cos 和 sin 的？👇</p>
+<p>这样做的好处是，所有的 cos 和 sin 值都在程序构造该类时已经计算完成，推理时无需再次计算，加快了推理过程。那么，另一个问题是：在真实的推理中，llama 是如何使用这些已经制备的 cos 和 sin 的？来看下面的代码👇：</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">def</span> <span class="nf">rotate_half</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="s">"""Rotates half the hidden dims of the input."""</span>
@@ -565,7 +552,7 @@
     <span class="p">)</span>
 </code></pre></div></div>
 
-<p>之后会提到，<code class="language-plaintext highlighter-rouge">apply_rotary_pos_emb</code> 函数在 <code class="language-plaintext highlighter-rouge">LlamaModel:forward</code> 中被调用，计算位置编码。下图公式的第一项和第二项即是 <code class="language-plaintext highlighter-rouge">(q * cos)</code>，注意到 <code class="language-plaintext highlighter-rouge">cos</code> 已通过 <a href="https://pytorch.org/docs/stable/generated/torch.unsqueeze.html#torch.unsqueeze">torch.unsqueeze</a> 列向排布。而公式中的第三项需要靠 <code class="language-plaintext highlighter-rouge">rotate_half</code> 获得，方法是切半，旋转，取负，于是得到了下图的运算过程。注意看，虽然论文中描述的公式与下图稍有不同，但其本质仍是一样的。而下图的运算过程能被处理得更加快捷。</p>
+<p>之后会提到，<code class="language-plaintext highlighter-rouge">apply_rotary_pos_emb</code> 函数在 <code class="language-plaintext highlighter-rouge">LlamaModel:forward</code> 中被调用，计算位置编码。下图公式的第一项和第二项对应代码里的 <code class="language-plaintext highlighter-rouge">(q * cos)</code>，注意到 <code class="language-plaintext highlighter-rouge">cos</code> 已通过 <a href="https://pytorch.org/docs/stable/generated/torch.unsqueeze.html#torch.unsqueeze">torch.unsqueeze</a> 列向排布。而公式中的第三项需要靠 <code class="language-plaintext highlighter-rouge">rotate_half</code> 获得，方法是切半，旋转，取负，于是得到了下图的运算过程。注意看，虽然论文中描述的公式与下图稍有不同，但其本质仍是一样的。而下图的运算过程能被处理得更加快捷。</p>
 
 <center>
   <img src="/assets/img/LLM/RoPE1.png" />
@@ -575,7 +562,7 @@
 
 <h2 id="llama-中间件">llama 中间件</h2>
 
-<p>后续内容可能会涉及到 llama 的相关超参，我们以 llama-7b-hf 的 config 数据为例，将抽象的说明具体化，便于大家理解：</p>
+<p>后续内容可能会涉及到 llama 的相关超参。下面的数据是 llama-7b-hf 的 config 数据，后续的内容会对这些参数做具体说明：</p>
 
 <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
   </span><span class="nl">"architecture"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"LlamaForCausalLM"</span><span class="p">],</span><span class="w">
@@ -595,7 +582,7 @@
 
 <h3 id="mlp">MLP</h3>
 
-<p>llama 内使用了两层深的 MLP 来存储参数，相对简单。该网络先将维度从 <code class="language-plaintext highlighter-rouge">hidden_size</code> 映射到 <code class="language-plaintext highlighter-rouge">intermediate_size</code>，再将它降维映射到 <code class="language-plaintext highlighter-rouge">hidden_size</code>。具体流程和架构参考下图：</p>
+<p>llama 内使用了两层深的 <a href="https://www.3blue1brown.com/lessons/neural-networks">MLP</a> 来存储参数，相对简单。该网络先将维度从 <code class="language-plaintext highlighter-rouge">hidden_size</code> 映射到 <code class="language-plaintext highlighter-rouge">intermediate_size</code>，再将它降维映射到 <code class="language-plaintext highlighter-rouge">hidden_size</code>。具体流程和架构参考下图：</p>
 
 <center>
   <img src="/assets/img/LLM/llamaMLP.png" />
@@ -637,7 +624,7 @@
     <span class="k">return</span> <span class="n">down_proj</span>
 </code></pre></div></div>
 
-<p>下面这张图展示了 TP 下计算过程，在 <code class="language-plaintext highlighter-rouge">intermediate_size</code> 较大时，使用TP对该维度进行均分，可以很好地加速推理过程：</p>
+<p>下面这张图展示了 TP 下计算过程，在 <code class="language-plaintext highlighter-rouge">intermediate_size</code> 较大时，使用TP对该维度进行均分，可以很好地加速推理过程：MLP 的输入张量 <code class="language-plaintext highlighter-rouge">x</code> 在 TP 模式下会在 <code class="language-plaintext highlighter-rouge">seq_len</code> 这个维度下被均分成若干子矩阵；每个子矩阵 <code class="language-plaintext highlighter-rouge">(seq_len / TP, hidden_size)</code> 都会参与 gate 和 up_proj 的线性层运算，与权重矩阵 <code class="language-plaintext highlighter-rouge">(intermediate_size / TP, hidden_size)^T</code> 相乘，得到结果经拼接后，再将分别按位相乘得到中间状态张量 <code class="language-plaintext highlighter-rouge">intermediate_states</code>；最后中间状态张量通过 down_proj 线性层得到输出张量。</p>
 
 <center>
   <img src="/assets/img/LLM/MLPTP.png" />
@@ -673,19 +660,29 @@
     <span class="bp">self</span><span class="p">.</span><span class="n">_init_rope</span><span class="p">()</span>
 </code></pre></div></div>
 
-<p>注意到 <code class="language-plaintext highlighter-rouge">q_proj</code> <code class="language-plaintext highlighter-rouge">k_proj</code> <code class="language-plaintext highlighter-rouge">v_proj</code> <code class="language-plaintext highlighter-rouge">o_proj</code> 四个线性层的维度，之后的 TP 会将他们在 <code class="language-plaintext highlighter-rouge">hidden_size</code> 拆分。在咱们的 llama-7b-hf 的例子中，注意力头数量较少。若注意力头数量较多，llama2 使用分组和 <a href="https://arxiv.org/pdf/2305.13245">grouped-query attention</a> 机制，使得同一组的Q共享一个KV权重，减少内存使用，进一步优化推理性能。</p>
+<p>注意到 <code class="language-plaintext highlighter-rouge">q_proj</code> <code class="language-plaintext highlighter-rouge">k_proj</code> <code class="language-plaintext highlighter-rouge">v_proj</code> <code class="language-plaintext highlighter-rouge">o_proj</code> 四个线性层的维度，之后的 TP 会将他们在 <code class="language-plaintext highlighter-rouge">hidden_size</code> 拆分，它们的权重张量分别是：</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">q_proj</code>: <code class="language-plaintext highlighter-rouge">(num_heads * head_dim, hidden_size)^T</code></li>
+  <li><code class="language-plaintext highlighter-rouge">k_proj</code>: <code class="language-plaintext highlighter-rouge">(num_key_value_heads * head_dim, hidden_size)^T</code></li>
+  <li><code class="language-plaintext highlighter-rouge">v_proj</code>: <code class="language-plaintext highlighter-rouge">(num_key_value_heads * head_dim, hidden_size)^T</code></li>
+  <li><code class="language-plaintext highlighter-rouge">o_proj</code>: <code class="language-plaintext highlighter-rouge">(hidden_size, num_heads * head_dim)^T</code></li>
+</ul>
+
+<p>在咱们的 llama-7b-hf 的例子中，注意力头数量较少，因此只有一组注意力头。若注意力头数量较多，llama2 使用分组和 <a href="https://arxiv.org/pdf/2305.13245">grouped-query attention</a> 机制，使得同一组的 Q 共享一个 KV 权重，减少内存使用，进一步优化推理性能。</p>
 
 <p><img src="/assets/img/LLM/The-Transformers-architecture-Multi-Head-Attention-consists-of-several-attention-layers.ppm" alt="" /></p>
 
 <h4 id="forward-实现">forward 实现</h4>
 
-<p>每次在阅读 <code class="language-plaintext highlighter-rouge">forward</code> 函数前，都需要问问自己：正在执行运算的张量维度是什么？张量的维度有时能很好地帮助我们找到蛛丝马迹，更好地读懂这些 python 代码，不迷失在细节之中。</p>
+<p>forward 函数的实现通常比较复杂，但也有一些简单的小技巧：每次在阅读 <code class="language-plaintext highlighter-rouge">forward</code> 函数前，都需要问问自己：正在执行运算的张量维度是什么？张量的维度能很好地帮助我们找到代码中隐藏的蛛丝马迹，更好地读懂这些 python 代码，不迷失在细节之海中。</p>
 
-<p>在这里，我们的输入张量 <code class="language-plaintext highlighter-rouge">hidden_states</code> 的维度：<code class="language-plaintext highlighter-rouge">(batch_size, seq_len, hidden_size)</code>。而 QKV 三个权重矩阵的维度也可以从上节的构造函数中确认，分别是 <code class="language-plaintext highlighter-rouge">(num_heads*head_dim, hidden_size)</code>、<code class="language-plaintext highlighter-rouge">(num_key_value_heads*head_dim, hidden_size)</code> 和 <code class="language-plaintext highlighter-rouge">(num_key_value_heads*head_dim, hidden_size)</code>。在我们的例子中，kv_groups 为1，因此这三个权重矩阵的维度是一样的。</p>
+<p>首先，确认我们的输入张量 <code class="language-plaintext highlighter-rouge">hidden_states</code> 的维度：<code class="language-plaintext highlighter-rouge">(batch_size, seq_len, hidden_size)</code>。而 QKV 三个权重矩阵的维度也可以从上节线性层初始化中确认，分别是 <code class="language-plaintext highlighter-rouge">(num_heads*head_dim, hidden_size)</code>、<code class="language-plaintext highlighter-rouge">(num_key_value_heads*head_dim, hidden_size)</code> 和 <code class="language-plaintext highlighter-rouge">(num_key_value_heads*head_dim, hidden_size)</code>。在我们的例子中，kv_groups 为1，因此这三个权重矩阵的维度是一样的。</p>
 
 <p><strong>qkv 状态张量</strong></p>
 
-<p>现在来细看一下 咱们是如何切分这些状态张量以实现 TP 的。第15-17行，query 在最高维度将权重一切为二，18-19行 key 和 value 也是如此；21-28行，将 <code class="language-plaintext highlighter-rouge">hidden_states</code>（就是输入）与 query 权重相乘，TP 并行计算完后在最后一个维度上合并，同理于 key 和 value。</p>
+<p>现在来细看一下 咱们是如何切分这些状态张量以实现 TP 的，其实与上文的 MLP 实现极为类似，都是将输入张量的高维均分进行并行计算。第15-17行，query 在最高维度将权重一切为二，18-19 行 key 和 value 也是如此；21-28行，将 <code class="language-plaintext highlighter-rouge">hidden_states</code>（就是输入）与 query 权重相乘，TP 并行计算完后在最后一个维度上合并，同理于 key 和 value。忽略最高维的 <code class="language-plaintext highlighter-rouge">batch_size</code>，具体运算公式如下：</p>
+
+\[query = H_{seq\_ len, hidden\_size} Q_{num\_heads*head\_dim, hidden\_size}^T\]
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
@@ -724,7 +721,7 @@
 
 <p><strong>RoPE 位置编码</strong></p>
 
-<p>声明好 <code class="language-plaintext highlighter-rouge">query_states</code>、<code class="language-plaintext highlighter-rouge">key_states</code>、<code class="language-plaintext highlighter-rouge">value_states</code> 线性层后，紧接着就是将输入张量加上旋转矩阵位置编码。但在一切开始之前，👇的1-3行将张量的维度做了很大的变化。以 <code class="language-plaintext highlighter-rouge">query_states</code> 为例，原先的维度是 <code class="language-plaintext highlighter-rouge">(num_heads*head_dim, hidden_states)</code>，现在将维度 view 后接转置成了 <code class="language-plaintext highlighter-rouge">(batch_size, num_heads, seq_len, head_dim)</code>。同理与其他 states，那么下一行的 <code class="language-plaintext highlighter-rouge">kv_seq_len</code> 为何取 <code class="language-plaintext highlighter-rouge">shape[-2]</code> 就可以理解了。</p>
+<p>准备好 <code class="language-plaintext highlighter-rouge">query_states</code>、<code class="language-plaintext highlighter-rouge">key_states</code>、<code class="language-plaintext highlighter-rouge">value_states</code> 线性层后，紧接着就是将输入张量加上旋转矩阵位置编码。但在一切开始之前，注意到 1-3 行将张量的维度做了很大的变化。以 <code class="language-plaintext highlighter-rouge">query_states</code> 为例，原先的维度是 <code class="language-plaintext highlighter-rouge">(num_heads*head_dim, hidden_size)</code>，现在将维度 view 后接转置成了 <code class="language-plaintext highlighter-rouge">(batch_size, num_heads, seq_len, head_dim)</code>。同理与其他 states，于是下一行的 <code class="language-plaintext highlighter-rouge">kv_seq_len</code> 为何取 <code class="language-plaintext highlighter-rouge">shape[-2]</code> 就可以理解了。上文提及过，位置编码的余弦值和正弦值计算完成后，<code class="language-plaintext highlighter-rouge">apply_rotary_pos_emb</code> 在这里被调用。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="c1"># ... to be continued
 </span>  <span class="n">query_states</span> <span class="o">=</span> <span class="n">query_states</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="n">q_len</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">head_dim</span><span class="p">).</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -737,13 +734,13 @@
   <span class="n">query_states</span><span class="p">,</span> <span class="n">key_states</span> <span class="o">=</span> <span class="n">apply_rotary_pos_emb</span><span class="p">(</span><span class="n">query_states</span><span class="p">,</span> <span class="n">key_states</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">position_ids</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>不同于原先的 transformer 架构，<code class="language-plaintext highlighter-rouge">LlamaAttention</code> 在每次前推注意力机制时都会加上位置编码：将已经算好的 cos 和 sin 值取出，再相乘。</p>
+<p>注意，不同于原先的 transformer 架构，<code class="language-plaintext highlighter-rouge">LlamaAttention</code> 在每次前推注意力机制时都会加上位置编码。</p>
 
 <p><strong>Grouped-Query Attention</strong></p>
 
-<p>接着往下看，直接跳到第9-10行，注意此时 kv 状态张量的维度是 <code class="language-plaintext highlighter-rouge">(batch_size, num_kv_heads, kv_seq_len, head_dim)</code>，而经过 <code class="language-plaintext highlighter-rouge">repeat_kv</code> 函数的操作后，kv 状态张量变成了 <code class="language-plaintext highlighter-rouge">(batch_size, num_kv_heads*num_kv_groups, kv_seq_len, head_dim)</code>，也就是说，内部的权重被复制了 <code class="language-plaintext highlighter-rouge">num_kv_groups</code> 遍，再对比一下 <code class="language-plaintext highlighter-rouge">query_states</code> 的维度，这意味着同一组的 query 会共享同一个 kv 权重。这就是 llama2 提出的 Grouped-Query Attention 技术，这可以减少权重的内存开销，而实验表明，这样处理后模型的精度不会差很多。</p>
+<p>接着往下看，抛开 <code class="language-plaintext highlighter-rouge">past_key_value</code> 的部分，直接跳到第9-10行，注意此时 kv 状态张量的维度是 <code class="language-plaintext highlighter-rouge">(batch_size, num_kv_heads, kv_seq_len, head_dim)</code>，而经过 <code class="language-plaintext highlighter-rouge">repeat_kv</code> 函数的操作后，kv 状态张量变成了 <code class="language-plaintext highlighter-rouge">(batch_size, num_kv_heads*num_kv_groups, kv_seq_len, head_dim)</code>，也就是说，内部的权重被复制了 <code class="language-plaintext highlighter-rouge">num_kv_groups</code> 遍。具体过程会在后续列出。而再对比一下 <code class="language-plaintext highlighter-rouge">query_states</code> 的维度，这意味着同一组的 query 会共享同一个 kv 权重。这就是 llama2 提出的 Grouped-Query Attention 技术，这可以减少权重的内存开销，而实验表明，这样处理后模型的精度不会差很多。</p>
 
-<p>最后，在第12行完成了 <code class="language-plaintext highlighter-rouge">torch.matmul</code> 执行 QK 矩阵相乘，得到注意力机制权重。从QK两者的维度我们不难得出，<code class="language-plaintext highlighter-rouge">attn_weights</code> 的维度是 <code class="language-plaintext highlighter-rouge">(batch_size, num_heads, seq_len, kv_seq_len)</code>。这一步完成了公式 $ \frac{QK^T}{\sqrt{d_k}} $ 的计算。</p>
+<p>最后，在第 12 行完成了 <code class="language-plaintext highlighter-rouge">torch.matmul</code> 执行 QK 矩阵相乘，得到注意力机制权重。从QK两者的维度我们不难得出，<code class="language-plaintext highlighter-rouge">attn_weights</code> 的维度是 <code class="language-plaintext highlighter-rouge">(batch_size, num_heads, seq_len, kv_seq_len)</code>。这一步完成了公式 $ \frac{QK^T}{\sqrt{d_k}} $ 的计算。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">if</span> <span class="n">past_key_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
     <span class="c1"># reuse k, v, self_attention
@@ -772,7 +769,7 @@
   <span class="k">return</span> <span class="n">hidden_states</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">num_key_value_heads</span> <span class="o">*</span> <span class="n">n_rep</span><span class="p">,</span> <span class="n">slen</span><span class="p">,</span> <span class="n">head_dim</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>输入的张量在2维度复制了一份，因此所有比2维度（即 <code class="language-plaintext highlighter-rouge">None</code> 后低维度的数据）都复制了 <code class="language-plaintext highlighter-rouge">n_rep</code> 遍，最后这些数据会被合并到1维度上。因而最后得到的张量维度是 <code class="language-plaintext highlighter-rouge">(batch_size, num_kv_heads*num_kv_groups, seq_len, head_dim)</code>，其中2、3维度的数据被复制了 <code class="language-plaintext highlighter-rouge">n_rep</code> 遍。就如同下图所示的那样。</p>
+<p>输入的张量在2维度复制了一份，因此所有比2维度低的数据（即 <code class="language-plaintext highlighter-rouge">None</code> 后低维度的数据）都复制了 <code class="language-plaintext highlighter-rouge">n_rep</code> 遍，最后这些数据会被合并到1维度上。因而最后得到的张量维度是 <code class="language-plaintext highlighter-rouge">(batch_size, num_kv_heads*num_kv_groups, seq_len, head_dim)</code>，其中2、3维度的数据被复制了 <code class="language-plaintext highlighter-rouge">n_rep</code> 遍。就如同下图所示的那样。</p>
 
 <center>
   <img src="/assets/img/LLM/grouped-query attention.png" />
@@ -780,9 +777,9 @@
 
 <p><strong>收尾</strong></p>
 
-<p>接着往下看：第7行表示若存在 <code class="language-plaintext highlighter-rouge">attention_mask</code> 则需要将其加到权重上，这与 transformer 的行为一致。10行将得到的权重放入 <code class="language-plaintext highlighter-rouge">softmax</code> 激活函数，11 行再将注意力权重与 v 状态张量相乘，从而完成了 $ softmax(\frac{QK^T}{\sqrt{d_k}})V $ 运算。这就完成了该子层的运算，该子层的输出就是下一层的输入。因此输出张量的维度必然与输入维度一致，所以16行将原先被转置的矩阵重新拨回来，17行又将张量变成了 <code class="language-plaintext highlighter-rouge">(batch_size, seq_len, hidden_size)</code>。</p>
+<p>接着往下看：第7行表示若存在 <code class="language-plaintext highlighter-rouge">attention_mask</code> 则需要将其加到权重上，这与 transformer decoder 的行为一致。因为咱们这次仅关注 forward 过程，不涉及训练，在推理生成文本序列时，<code class="language-plaintext highlighter-rouge">attention_mask</code> 的作用就是防止 decoder 受到未生成张量的影响。10 行将得到的权重放入 <code class="language-plaintext highlighter-rouge">softmax</code> 激活函数，11 行再将注意力权重与 v 状态张量相乘，从而完成了 $ softmax(\frac{QK^T}{\sqrt{d_k}})V $ 运算。这就完成了该子层的运算，该子层的输出就是下一层的输入。因此输出张量的维度必然与输入维度一致，所以16行将原先被转置的矩阵重新拨回来，17行又将张量变成了 <code class="language-plaintext highlighter-rouge">(batch_size, seq_len, hidden_size)</code>。</p>
 
-<p>最后在19-22行，因为上面的计算步骤其实是 TP 的，因此最后还要将结果合并。注意，21行还会经过一个线性层。</p>
+<p>最后在 19-22 行，因为上面的计算步骤其实是 TP 的，因此最后还要将结果合并。注意，21行还会经过一个线性层。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">if</span> <span class="n">attention_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
     <span class="c1"># if attention_mask.size() != (bsz, 1, q_len, kv_seq_len):
@@ -816,402 +813,9 @@
 
 <h4 id="关于-flashattention2">关于 FlashAttention2</h4>
 
-<h2 id="llama-模型">llama 模型</h2>
-
-<h3 id="译码层">译码层</h3>
-
-<p>有了上面说的基本组件后，如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。<code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 类将 <code class="language-plaintext highlighter-rouge">LlamaAttention</code> <code class="language-plaintext highlighter-rouge">LlamaRMSNorm</code> 等基件组合起来，构成了 llama 的译码层。事实上，👆图所展示的架构就是一个译码层的架构。</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaDecoderLayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">LlamaConfig</span><span class="p">):</span>
-    <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">self_attn</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">LlamaAttention</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s">"_flash_attn_2_enabled"</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="k">else</span> <span class="n">LlamaFlashAttention2</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">LlamaMLP</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">input_layernorm</span> <span class="o">=</span> <span class="n">LlamaRMSNorm</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">rms_norm_eps</span><span class="p">)</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">post_attention_layernorm</span> <span class="o">=</span> <span class="n">LlamaRMSNorm</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">rms_norm_eps</span><span class="p">)</span>
-</code></pre></div></div>
-
-<p>而其 forward 函数则完美展示了架构图内张量的执行情况：13 行先将输入执行一次 RMSNorm 归一，16-25行执行一次注意力运算，并加上了残差结构，27-33行将注意力结果输出到 MLP 中，最后返回结果👇</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
-  <span class="bp">self</span><span class="p">,</span>
-  <span class="n">hidden_states</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span>
-  <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">position_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">past_key_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">output_attentions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
-  <span class="n">use_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
-  <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]]]:</span>
-
-  <span class="n">residual</span> <span class="o">=</span> <span class="n">hidden_states</span>
-
-  <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">input_layernorm</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
-
-  <span class="c1"># Self Attention
-</span>  <span class="n">hidden_states</span><span class="p">,</span> <span class="n">self_attn_weights</span><span class="p">,</span> <span class="n">present_key_value</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">self_attn</span><span class="p">(</span>
-      <span class="n">hidden_states</span><span class="o">=</span><span class="n">hidden_states</span><span class="p">,</span>
-      <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
-      <span class="n">position_ids</span><span class="o">=</span><span class="n">position_ids</span><span class="p">,</span>
-      <span class="n">past_key_value</span><span class="o">=</span><span class="n">past_key_value</span><span class="p">,</span>
-      <span class="n">output_attentions</span><span class="o">=</span><span class="n">output_attentions</span><span class="p">,</span>
-      <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
-      <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-  <span class="p">)</span>
-  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">hidden_states</span>
-
-  <span class="c1"># Fully Connected
-</span>  <span class="n">residual</span> <span class="o">=</span> <span class="n">hidden_states</span>
-  <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">post_attention_layernorm</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
-  <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
-  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">hidden_states</span>
-
-  <span class="n">outputs</span> <span class="o">=</span> <span class="p">(</span><span class="n">hidden_states</span><span class="p">,)</span>
-
-  <span class="k">if</span> <span class="n">output_attentions</span><span class="p">:</span>
-      <span class="n">outputs</span> <span class="o">+=</span> <span class="p">(</span><span class="n">self_attn_weights</span><span class="p">,)</span>
-
-  <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
-      <span class="n">outputs</span> <span class="o">+=</span> <span class="p">(</span><span class="n">present_key_value</span><span class="p">,)</span>
-
-  <span class="k">return</span> <span class="n">outputs</span>
-</code></pre></div></div>
-
-<h3 id="llama-model">llama Model</h3>
-
-<p><code class="language-plaintext highlighter-rouge">LlamaModel</code> 由上面介绍的多个 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 堆叠而成。以之前的 llama-7b-hf 为例，<code class="language-plaintext highlighter-rouge">num_hidden_layers</code> 为32，意思是该模型一共堆叠了 32 层译码层。</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaModel</span><span class="p">(</span><span class="n">LlamaPreTrainedModel</span><span class="p">):</span>
-    <span class="s">"""
-    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaDecoderLayer`]
-    """</span>
-
-  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">LlamaConfig</span><span class="p">):</span>
-    <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">padding_idx</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">pad_token_id</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">vocab_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span>
-
-    <span class="bp">self</span><span class="p">.</span><span class="n">embed_tokens</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">padding_idx</span><span class="p">)</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">LlamaDecoderLayer</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">num_hidden_layers</span><span class="p">)])</span>
-    <span class="bp">self</span><span class="p">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">LlamaRMSNorm</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">rms_norm_eps</span><span class="p">)</span>
-
-    <span class="bp">self</span><span class="p">.</span><span class="n">gradient_checkpointing</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="c1"># Initialize weights and apply final processing
-</span>    <span class="bp">self</span><span class="p">.</span><span class="n">post_init</span><span class="p">()</span>
-</code></pre></div></div>
-
-<p>该类继承自 <code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code>，<code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code> 没有那么神秘，只不过是在 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 的基础上包裹了一些初始化操作而已：</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaPreTrainedModel</span><span class="p">(</span><span class="n">PreTrainedModel</span><span class="p">):</span>
-  <span class="n">config_class</span> <span class="o">=</span> <span class="n">LlamaConfig</span>
-  <span class="n">base_model_prefix</span> <span class="o">=</span> <span class="s">"model"</span>
-  <span class="n">supports_gradient_checkpointing</span> <span class="o">=</span> <span class="bp">True</span>
-  <span class="n">_no_split_modules</span> <span class="o">=</span> <span class="p">[</span><span class="s">"LlamaDecoderLayer"</span><span class="p">]</span>
-  <span class="n">_skip_keys_device_placement</span> <span class="o">=</span> <span class="s">"past_key_values"</span>
-  <span class="n">_supports_flash_attn_2</span> <span class="o">=</span> <span class="bp">True</span>
-
-  <span class="k">def</span> <span class="nf">_init_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
-    <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">initializer_range</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">):</span>
-        <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">module</span><span class="p">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">module</span><span class="p">.</span><span class="n">bias</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">zero_</span><span class="p">()</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Embedding</span><span class="p">):</span>
-        <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">module</span><span class="p">.</span><span class="n">padding_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">module</span><span class="p">.</span><span class="n">padding_idx</span><span class="p">].</span><span class="n">zero_</span><span class="p">()</span>
-</code></pre></div></div>
-
-<h4 id="llamamodel的forward函数">LlamaModel的forward函数</h4>
-
-<p>可以简单地理解为，<code class="language-plaintext highlighter-rouge">LlamaModel::forward</code> 是整个大模型的“未封装的”入口。既然是个入口，首先关心一下它需要哪些变量输入：</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">position_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">past_key_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">inputs_embeds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">output_attentions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">output_hidden_states</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-    <span class="n">return_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">BaseModelOutputWithPast</span><span class="p">]:</span>
-</code></pre></div></div>
-
-<ul>
-  <li>input_ids 输入的文本序列</li>
-  <li>attention_mask 注意力掩码，1 表示未遮掩，0表示遮掩。通常会使用下三角矩阵对输出进行遮盖，防止模型作弊。</li>
-  <li>position_ids 输入文本序列的位置编号，从0开始</li>
-  <li>past_key_values 若use_cache为真则之前的kv值会被用于加速推理</li>
-  <li>inputs_embeds 模型支持直接传入input的嵌入张量，代替 input_ids</li>
-  <li>use_cache 是否使用cache加速推理，通过使用 cache 缓存权重等值加速推理</li>
-  <li>output_attentions 是否要返回所有注意力层的注意力张量</li>
-  <li>output_hidden_states 是否要返回所有层的隐藏层状态张量</li>
-  <li>return_dict 指示返回的类型是<code class="language-plaintext highlighter-rouge">~utils.ModelOutput</code> 还是 tuple</li>
-</ul>
-
-<p>接下来看看 forward 的实现。略去错误机制和准备过程代码，最关键的是 <code class="language-plaintext highlighter-rouge">attention_mask</code> 如何被准备的。回顾一下 transformers 机制里的注意力掩码，它是用来在训练和推理时遮挡后续部分的输出，防止模型看到未来的输出而“作弊”用的。这里不得不感慨代码更新速度之快：现在最新版本的 transformers 代码使用 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code>，而 4.37 之前的版本使用的函数还是 <code class="language-plaintext highlighter-rouge">_expand_mask</code>、<code class="language-plaintext highlighter-rouge">_make_causal_mask</code> 🙌：</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ... to be continued some are omitted
-</span>
-  <span class="n">input_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-  <span class="k">elif</span> <span class="n">inputs_embeds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">inputs_embeds</span><span class="p">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-
-  <span class="n">past_key_values_length</span> <span class="o">=</span> <span class="n">past_key_values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-
-  <span class="k">if</span> <span class="n">position_ids</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">position_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span>
-        <span class="n">past_key_values_length</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">+</span> <span class="n">past_key_values_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
-    <span class="p">)</span>
-    <span class="n">position_ids</span> <span class="o">=</span> <span class="n">position_ids</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-  <span class="k">if</span> <span class="n">inputs_embeds</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">inputs_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">embed_tokens</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>
-
-  <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">,</span> <span class="s">"_flash_attn_2_enabled"</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
-    <span class="c1"># 2d mask is passed through the layers
-</span>    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">attention_mask</span> <span class="k">if</span> <span class="p">(</span><span class="n">attention_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="mi">0</span> <span class="ow">in</span> <span class="n">attention_mask</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span>
-  <span class="k">else</span><span class="p">:</span>
-    <span class="c1"># 4d mask is passed through the layers
-</span>    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">_prepare_4d_causal_attention_mask</span><span class="p">(</span>
-      <span class="n">attention_mask</span><span class="p">,</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">),</span> <span class="n">inputs_embeds</span><span class="p">,</span> <span class="n">past_key_values_length</span>
-    <span class="p">)</span>
-
-  <span class="c1"># embed positions
-</span>  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">inputs_embeds</span>
-</code></pre></div></div>
-
-<p>那就让我们看看 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code> 葫芦里卖的什么药：</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">_prepare_4d_causal_attention_mask</span><span class="p">(</span>
-  <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">],</span>
-  <span class="n">input_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">],</span>
-  <span class="n">inputs_embeds</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span>
-  <span class="n">past_key_values_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-  <span class="n">sliding_window</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-<span class="p">):</span>
-  <span class="n">attn_mask_converter</span> <span class="o">=</span> <span class="n">AttentionMaskConverter</span><span class="p">(</span><span class="n">is_causal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">sliding_window</span><span class="o">=</span><span class="n">sliding_window</span><span class="p">)</span>
-  <span class="n">key_value_length</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">past_key_values_length</span>
-
-  <span class="c1"># 4d mask is passed through the layers
-</span>  <span class="k">if</span> <span class="n">attention_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">attn_mask_converter</span><span class="p">.</span><span class="n">to_4d</span><span class="p">(</span>
-      <span class="n">attention_mask</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">key_value_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">.</span><span class="n">dtype</span>
-    <span class="p">)</span>
-  <span class="k">else</span><span class="p">:</span>
-    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">attn_mask_converter</span><span class="p">.</span><span class="n">to_causal_4d</span><span class="p">(</span>
-      <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">key_value_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">.</span><span class="n">device</span>
-    <span class="p">)</span>
-
-  <span class="k">return</span> <span class="n">attention_mask</span>
-
-<span class="k">def</span> <span class="nf">to_causal_4d</span><span class="p">(</span>
-  <span class="bp">self</span><span class="p">,</span>
-  <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-  <span class="n">query_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-  <span class="n">key_value_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-  <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">float32</span><span class="p">,</span>
-  <span class="n">device</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">device</span><span class="p">,</span> <span class="s">"str"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"cpu"</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
-  <span class="c1"># If shape is not cached, create a new causal mask and cache it
-</span>  <span class="n">input_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">query_length</span><span class="p">)</span>
-  <span class="n">past_key_values_length</span> <span class="o">=</span> <span class="n">key_value_length</span> <span class="o">-</span> <span class="n">query_length</span>
-
-  <span class="c1"># create causal mask
-</span>  <span class="c1"># [bsz, seq_len] -&gt; [bsz, 1, tgt_seq_len, src_seq_len]
-</span>  <span class="n">causal_4d_mask</span> <span class="o">=</span> <span class="bp">None</span>
-  <span class="k">if</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="p">.</span><span class="n">sliding_window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-      <span class="n">causal_4d_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_make_causal_mask</span><span class="p">(</span>
-          <span class="n">input_shape</span><span class="p">,</span>
-          <span class="n">dtype</span><span class="p">,</span>
-          <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-          <span class="n">past_key_values_length</span><span class="o">=</span><span class="n">past_key_values_length</span><span class="p">,</span>
-          <span class="n">sliding_window</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">sliding_window</span><span class="p">,</span>
-      <span class="p">)</span>
-
-  <span class="k">return</span> <span class="n">causal_4d_mask</span>
-</code></pre></div></div>
-
-<p>上面的函数输入是一个二维张量<code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code>，输出是一个四维<code class="language-plaintext highlighter-rouge">(batch_size, 1, seq_len, key_value_len)</code>。该函数会去调用 <code class="language-plaintext highlighter-rouge">AttentionMaskConverter</code> 的 <code class="language-plaintext highlighter-rouge">to_causal_4d</code> 或 <code class="language-plaintext highlighter-rouge">to_4d</code>，而它们俩最终绕不开 <code class="language-plaintext highlighter-rouge">_make_causal_mask</code>：</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">_make_causal_mask</span><span class="p">(</span>
-  <span class="n">input_ids_shape</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Size</span><span class="p">,</span>
-  <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">dtype</span><span class="p">,</span>
-  <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">device</span><span class="p">,</span>
-  <span class="n">past_key_values_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-  <span class="n">sliding_window</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-<span class="p">):</span>
-  <span class="n">bsz</span><span class="p">,</span> <span class="n">tgt_len</span> <span class="o">=</span> <span class="n">input_ids_shape</span>
-  <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">full</span><span class="p">((</span><span class="n">tgt_len</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">),</span> <span class="n">torch</span><span class="p">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">dtype</span><span class="p">).</span><span class="nb">min</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-  <span class="n">mask_cond</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-  <span class="n">mask</span><span class="p">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="n">mask_cond</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">mask_cond</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="n">view</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
-  <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
-
-  <span class="k">if</span> <span class="n">past_key_values_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">tgt_len</span><span class="p">,</span> <span class="n">past_key_values_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">mask</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-
-  <span class="c1"># add lower triangular sliding window mask if necessary
-</span>  <span class="k">if</span> <span class="n">sliding_window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">diagonal</span> <span class="o">=</span> <span class="n">past_key_values_length</span> <span class="o">-</span> <span class="n">sliding_window</span> <span class="o">+</span> <span class="mi">1</span>
-    <span class="n">context_mask</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">torch</span><span class="p">.</span><span class="n">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">int</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="n">diagonal</span><span class="p">)</span>
-    <span class="n">mask</span><span class="p">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="n">context_mask</span><span class="p">.</span><span class="nb">bool</span><span class="p">(),</span> <span class="n">torch</span><span class="p">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">dtype</span><span class="p">).</span><span class="nb">min</span><span class="p">)</span>
-
-  <span class="k">return</span> <span class="n">mask</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:].</span><span class="n">expand</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">,</span> <span class="n">tgt_len</span> <span class="o">+</span> <span class="n">past_key_values_length</span><span class="p">)</span>
-</code></pre></div></div>
-
-<p><code class="language-plaintext highlighter-rouge">_make_causal_mask</code> 函数最关键的是前几句话，首先 <code class="language-plaintext highlighter-rouge">mask</code> 会被初始化成 <code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code> 维度的矩阵，然后使用 <code class="language-plaintext highlighter-rouge">mask_cond</code> 来将矩阵下半角矩阵归零，重点在<code class="language-plaintext highlighter-rouge">mask_cond &lt; (mask_cond + 1).view(mask.size(-1), 1)</code>。此处两个横纵向量一比较会产生一个下三角矩阵。随后将全零矩阵与 <code class="language-plaintext highlighter-rouge">mask</code> 相连接，最后改变矩阵维度为 <code class="language-plaintext highlighter-rouge">(bsz, 1, seq_len, key_value_len)</code>返回。</p>
-
-<p>好，我们在注意力掩码这边花了太多功夫了。接下来继续看 <code class="language-plaintext highlighter-rouge">forward</code> 函数的实现👇：首先是初始化张量，然后就是 <code class="language-plaintext highlighter-rouge">llamaModel</code> 对译码层的具体处理。对于这个主 for 循环，先抛开使用检查点的逻辑部分，直接看调用 <code class="language-plaintext highlighter-rouge">decoder_layer</code> 部分，就会发现循环只是在不断地调用 <code class="language-plaintext highlighter-rouge">decoder_layer</code>（也就是 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer:forward</code>）来进行推理，然后把得到的输出结果再作为下一层的输入继续前推，直到所有子层的前推结束。循环退出后，<code class="language-plaintext highlighter-rouge">hidden_states</code> 会最后加一层归一化，最后通过 transformers 自带的 <code class="language-plaintext highlighter-rouge">BaseModelOutputWithPast</code> 将最后的输出张量和 kv 相关信息返回，该类是框架中包含 past kv 值的基础模型输出类，关于此类就不详细展开讲了。</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># decoder layers
-# initialize  all_hidden_states all_self_attns next_decoder_cache
-</span>
-<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">decoder_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">):</span>
-  <span class="k">if</span> <span class="n">output_hidden_states</span><span class="p">:</span>
-    <span class="n">all_hidden_states</span> <span class="o">+=</span> <span class="p">(</span><span class="n">hidden_states</span><span class="p">,)</span>
-  <span class="n">past_key_value</span> <span class="o">=</span> <span class="n">past_key_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">if</span> <span class="n">past_key_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span>
-
-  <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">gradient_checkpointing</span> <span class="ow">and</span> <span class="bp">self</span><span class="p">.</span><span class="n">training</span><span class="p">:</span>
-    <span class="c1">#layer_outputs = self._gradient_checkpointing_func(
-</span>  <span class="k">else</span><span class="p">:</span>
-      <span class="n">layer_outputs</span> <span class="o">=</span> <span class="n">decoder_layer</span><span class="p">(</span>
-          <span class="n">hidden_states</span><span class="p">,</span>
-          <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
-          <span class="n">position_ids</span><span class="o">=</span><span class="n">position_ids</span><span class="p">,</span>
-          <span class="n">past_key_value</span><span class="o">=</span><span class="n">past_key_value</span><span class="p">,</span>
-          <span class="n">output_attentions</span><span class="o">=</span><span class="n">output_attentions</span><span class="p">,</span>
-          <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
-      <span class="p">)</span>
-
-  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">layer_outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-  <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
-      <span class="n">next_decoder_cache</span> <span class="o">+=</span> <span class="p">(</span><span class="n">layer_outputs</span><span class="p">[</span><span class="mi">2</span> <span class="k">if</span> <span class="n">output_attentions</span> <span class="k">else</span> <span class="mi">1</span><span class="p">],)</span>
-
-  <span class="k">if</span> <span class="n">output_attentions</span><span class="p">:</span>
-      <span class="n">all_self_attns</span> <span class="o">+=</span> <span class="p">(</span><span class="n">layer_outputs</span><span class="p">[</span><span class="mi">1</span><span class="p">],)</span>
-
-<span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">norm</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
-
-<span class="c1"># add hidden states from the last decoder layer
-</span><span class="k">if</span> <span class="n">output_hidden_states</span><span class="p">:</span>
-  <span class="n">all_hidden_states</span> <span class="o">+=</span> <span class="p">(</span><span class="n">hidden_states</span><span class="p">,)</span>
-
-<span class="n">next_cache</span> <span class="o">=</span> <span class="n">next_decoder_cache</span> <span class="k">if</span> <span class="n">use_cache</span> <span class="k">else</span> <span class="bp">None</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">return_dict</span><span class="p">:</span>
-  <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">[</span><span class="n">hidden_states</span><span class="p">,</span> <span class="n">next_cache</span><span class="p">,</span> <span class="n">all_hidden_states</span><span class="p">,</span> <span class="n">all_self_attns</span><span class="p">]</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
-<span class="k">return</span> <span class="n">BaseModelOutputWithPast</span><span class="p">(</span>
-  <span class="n">last_hidden_state</span><span class="o">=</span><span class="n">hidden_states</span><span class="p">,</span>
-  <span class="n">past_key_values</span><span class="o">=</span><span class="n">next_cache</span><span class="p">,</span>
-  <span class="n">hidden_states</span><span class="o">=</span><span class="n">all_hidden_states</span><span class="p">,</span>
-  <span class="n">attentions</span><span class="o">=</span><span class="n">all_self_attns</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<p>篇外：for 循环中使用 <code class="language-plaintext highlighter-rouge">gradient_checkpointing</code> 可以有效节约显存，详细内容可以参考 <a href="https://pytorch.org/docs/stable/checkpoint.html"><code class="language-plaintext highlighter-rouge">torch.utils.checkpoint.checkpoint</code></a>。它的原理非常简单：规定程序在对 <code class="language-plaintext highlighter-rouge">decoderLayer</code> 进行前推时，不保存中间计算值。而若模型需要自动微分以完成 backward，程序会重新计算这些中间值，从而节省了模型运算需要的内存空间。因此，<code class="language-plaintext highlighter-rouge">use_cache</code> 和 <code class="language-plaintext highlighter-rouge">gradient_checkpointing</code>最好不要同时设置为 true，因为一个是用空间换时间，一个是时间换空间，两者可能会互相抵消优化影响。</p>
-
-<h2 id="最终成型">最终成型</h2>
-
-<p>由于篇幅关系（这篇博文已经是我写过的最长的博客了），这里仅介绍最常用的 <code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code>。</p>
-
-<h3 id="llamaforcausallm">LlamaForCausalLM</h3>
-
-<p><code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code> 是 Llama 因果类语言模型，可以根据用户输入的文本输出相应的回答。技术上看，它在 <code class="language-plaintext highlighter-rouge">LlamaModel</code> 的基础上增加了一个线性层 <code class="language-plaintext highlighter-rouge">lm_head</code> 作为 Generator，从而实现了一个完整的语言模型。我们来看一下它的 <code class="language-plaintext highlighter-rouge">forward</code> 函数👇，若仔细对比之前模型的输入参数，会发现多了一个可选传入的 <code class="language-plaintext highlighter-rouge">label</code> 张量，该张量形状是 <code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code>，它是用于计算 masked 语言模型的损失值。该模型的 <code class="language-plaintext highlighter-rouge">forward</code> 函数在准备好输入的参数后，就直接调用了 <code class="language-plaintext highlighter-rouge">LlamaModel:forward()</code>。</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
-  <span class="bp">self</span><span class="p">,</span>
-  <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">position_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">past_key_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">inputs_embeds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">use_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">output_attentions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">output_hidden_states</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-  <span class="n">return_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">CausalLMOutputWithPast</span><span class="p">]:</span>
-
-<span class="n">output_attentions</span> <span class="o">=</span> <span class="n">output_attentions</span> <span class="k">if</span> <span class="n">output_attentions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">output_attentions</span>
-<span class="n">output_hidden_states</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">output_hidden_states</span> <span class="k">if</span> <span class="n">output_hidden_states</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">output_hidden_states</span>
-<span class="p">)</span>
-<span class="n">return_dict</span> <span class="o">=</span> <span class="n">return_dict</span> <span class="k">if</span> <span class="n">return_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">use_return_dict</span>
-
-<span class="c1"># decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
-</span><span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">(</span>
-    <span class="n">input_ids</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span>
-    <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
-    <span class="n">position_ids</span><span class="o">=</span><span class="n">position_ids</span><span class="p">,</span>
-    <span class="n">past_key_values</span><span class="o">=</span><span class="n">past_key_values</span><span class="p">,</span>
-    <span class="n">inputs_embeds</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">,</span>
-    <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
-    <span class="n">output_attentions</span><span class="o">=</span><span class="n">output_attentions</span><span class="p">,</span>
-    <span class="n">output_hidden_states</span><span class="o">=</span><span class="n">output_hidden_states</span><span class="p">,</span>
-    <span class="n">return_dict</span><span class="o">=</span><span class="n">return_dict</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<p>随后，将拿到手的 <code class="language-plaintext highlighter-rouge">outputs</code> 放入到添加的线性层 <code class="language-plaintext highlighter-rouge">lm_head</code> 进行运算。同理，TP 并行时会将线性层的矩阵在 dim=0 维度拆分。若传入了 <code class="language-plaintext highlighter-rouge">label</code>，那么得到的结果 <code class="language-plaintext highlighter-rouge">logits</code> 在经过移位后计算交叉熵 <code class="language-plaintext highlighter-rouge">CrossEntropyLoss()</code>，若无则可直接通过 <code class="language-plaintext highlighter-rouge">CausalLMOutputWithPast</code> 返回。</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hidden_states</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">pretraining_tp</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-  <span class="n">lm_head_slices</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">vocab_size</span> <span class="o">//</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">pretraining_tp</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-  <span class="n">logits</span> <span class="o">=</span> <span class="p">[</span><span class="n">F</span><span class="p">.</span><span class="n">linear</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">,</span> <span class="n">lm_head_slices</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">pretraining_tp</span><span class="p">)]</span>
-  <span class="n">logits</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-  <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">lm_head</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
-<span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="nb">float</span><span class="p">()</span>
-<span class="n">loss</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-  <span class="c1"># Shift so that tokens &lt; n predict n
-</span>  <span class="n">shift_logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[...,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:].</span><span class="n">contiguous</span><span class="p">()</span>
-  <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">:].</span><span class="n">contiguous</span><span class="p">()</span>
-  <span class="c1"># Flatten the tokens
-</span>  <span class="n">loss_fct</span> <span class="o">=</span> <span class="n">CrossEntropyLoss</span><span class="p">()</span>
-  <span class="n">shift_logits</span> <span class="o">=</span> <span class="n">shift_logits</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span><span class="p">)</span>
-  <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">shift_labels</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-  <span class="c1"># Enable model parallelism
-</span>  <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">shift_labels</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">shift_logits</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-  <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fct</span><span class="p">(</span><span class="n">shift_logits</span><span class="p">,</span> <span class="n">shift_labels</span><span class="p">)</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">return_dict</span><span class="p">:</span>
-  <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="n">logits</span><span class="p">,)</span> <span class="o">+</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-  <span class="k">return</span> <span class="p">(</span><span class="n">loss</span><span class="p">,)</span> <span class="o">+</span> <span class="n">output</span> <span class="k">if</span> <span class="n">loss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">output</span>
-<span class="k">return</span> <span class="n">CausalLMOutputWithPast</span><span class="p">(</span>
-    <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">,</span>
-    <span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span>
-    <span class="n">past_key_values</span><span class="o">=</span><span class="n">outputs</span><span class="p">.</span><span class="n">past_key_values</span><span class="p">,</span>
-    <span class="n">hidden_states</span><span class="o">=</span><span class="n">outputs</span><span class="p">.</span><span class="n">hidden_states</span><span class="p">,</span>
-    <span class="n">attentions</span><span class="o">=</span><span class="n">outputs</span><span class="p">.</span><span class="n">attentions</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div></div>
-
-<p>使用 huggingface 框架实现的 <code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code> 进行推理的示例如下，从该示例中我们可以更好地理解大模型的推理过程：比如说，上面的输入张量<code class="language-plaintext highlighter-rouge">input_ids</code> 是用户输入的处理后的“文本”。而最初用户输入的字符串<code class="language-plaintext highlighter-rouge">prompt</code> 先进入 tokenizer 进行分词，随后编码、嵌入技术变为张量。这里最重要的函数莫属于 <code class="language-plaintext highlighter-rouge">model.generate</code>，但它只能在推理时使用。它除了在背后默默调用了上面的 <code class="language-plaintext highlighter-rouge">forward</code>，还做了很多：用于多种解码策略，例如 beam search、top-k 采样等……详细的文章可以在<a href="https://huggingface.co/blog/how-to-generate">这篇博客</a>中找到。生成产生的张量人类无法直接看懂，还需要经过解码 <code class="language-plaintext highlighter-rouge">batch_decode</code> 才能呈现流利的英语。</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoTokenizer</span><span class="p">,</span> <span class="n">LlamaForCausalLM</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">LlamaForCausalLM</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">PATH_TO_CONVERTED_WEIGHTS</span><span class="p">)</span>
-<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">PATH_TO_CONVERTED_TOKENIZER</span><span class="p">)</span>
-<span class="n">prompt</span> <span class="o">=</span> <span class="s">"Hey, are you conscious? Can you talk to me?"</span>
-<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">)</span>
-<span class="c1"># Generate
-</span><span class="n">generate_ids</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span><span class="n">inputs</span><span class="p">.</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-<span class="n">tokenizer</span><span class="p">.</span><span class="n">batch_decode</span><span class="p">(</span><span class="n">generate_ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">clean_up_tokenization_spaces</span><span class="o">=</span><span class="bp">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-<span class="s">"Hey, are you conscious? Can you talk to me?</span><span class="se">\n</span><span class="s">I'm not conscious, but I can talk to you."</span>
-</code></pre></div></div>
-
 <h2 id="小结">小结</h2>
 
-<p>本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是如何被训练产生的。随后，我给出了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。然后，我从基础到上层逐个分析了 llama 的代码实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。另外，本篇博文必不可能覆盖 llama 乃至大模型的方方面面，我等还需继续努力，进一步揭开大模型的神秘面纱。</p>
+<p>本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是用什么训练而成的。随后，我介绍了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。本博客重点分析了 llama 的各个基件和中间件，从底至上地分析了 hugginface llama 的实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。下一篇论文将介绍 llama 每一层的实现与组合，主要是利用本篇博客中介绍的组件搭建起译码层的故事，并借此说明大模型推理的主要流程。当然，我不可能面面俱到地介绍所有细节，但也能揭开大模型的神秘面纱，从中瞥见一些人工智能的奥秘。</p>
 
         
       </section>
@@ -1274,7 +878,7 @@
     <h4 class="page__share-title">share</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?text=huggingface%E4%B8%8Bllama%E4%BB%A3%E7%A0%81%E7%BB%86%E8%AF%BB%20https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F10%2F30%2Fhuggingface1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?text=huggingface%E4%B8%8Bllama%E4%BB%A3%E7%A0%81%E7%BB%86%E8%AF%BB%EF%BC%88%E4%B8%8A%EF%BC%89%20https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F10%2F30%2Fhuggingface1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
   <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F10%2F30%2Fhuggingface1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
@@ -1289,7 +893,8 @@
 ">previous</a>
     
     
-      <a href="#" class="pagination--pager disabled">next</a>
+      <a href="/ai/2023/11/30/LLM-inference1.html" class="pagination--pager" title="大模型推理优化技术之显存优化
+">next</a>
     
   </nav>
 
@@ -1303,6 +908,72 @@
     <div class="page__related">
       <h4 class="page__related-title">related</h4>
       <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/11/30/huggingface2.html" rel="permalink">huggingface下llama代码细读（下）
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  6 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">揭开它神秘的面纱
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/11/30/LLM-inference1.html" rel="permalink">大模型推理优化技术之显存优化
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">在消费级显卡上运行大模型
+</p>
+  </article>
+</div>
+
         
           
 
@@ -1365,72 +1036,6 @@
 </p>
     
     <p class="archive__item-excerpt" itemprop="description">主机与设备间的数据传输
-</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-      <div class="archive__item-teaser">
-        <img src="/assets/img/teaser.jpg" alt="">
-      </div>
-    
-    <h2 class="archive__item-title" itemprop="headline">
-      
-        <a href="/miscellaneous/2023/02/06/recommender_systems.html" rel="permalink">推荐系统简介
-</a>
-      
-    </h2>
-    
-      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
-
-
-
-
-  1 minutes read
-
-</p>
-    
-    <p class="archive__item-excerpt" itemprop="description">对主要推荐算法的概述
-</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-      <div class="archive__item-teaser">
-        <img src="/assets/img/teaser.jpg" alt="">
-      </div>
-    
-    <h2 class="archive__item-title" itemprop="headline">
-      
-        <a href="/miscellaneous/2022/07/19/awk.html" rel="permalink">awk 从入门到入土
-</a>
-      
-    </h2>
-    
-      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
-
-
-
-
-  2 minutes read
-
-</p>
-    
-    <p class="archive__item-excerpt" itemprop="description">初步入土计划
 </p>
   </article>
 </div>

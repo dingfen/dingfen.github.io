@@ -300,14 +300,26 @@ var store = [{
         "teaser": "/assets/img/teaser.jpg"
       },{
         "title": "Transformers",
-        "excerpt":"Transformer   去年 OpenAI 发布的 ChatGPT3 开启了新一轮对 AI 研究的热潮，随着大语言 AI 模型的不断发展，与之相关的开源社区和开源代码也在不断地丰富和壮大。本博客主要研究 huggingface transformer 开源仓库，Huggingface 是一家在 NLP 社区做出杰出贡献的纽约创业公司，其所提供的大量预训练模型和代码等资源被广泛的应用于学术研究当中，现已经发展成为大语言 AI 模型领域中最大的开源社区之一。Transformers 仓库则提供了数以千计针对各种任务的预训练模型，开发者可以根据自身的需要，选择模型进行训练或微调，也可参考相关文档和源码，从而快速开发新模型。   不过，这一切的故事还要从 2017 年（甚至更早）说起。自从 deepMind 团队发表的 Attention is all your need 论文提出了 transformer 架构后，绝大部分有影响力模型的基础架构都基于的 transformer（比如基于 decode 的GPT、基于 encode 的 BERT、基于 encode-decode 的 T5 等等），具体有哪些模型可以来看看 huggingface 罗列的   大话 transformer 架构   代码解读   ","categories": ["AI"],
+        "excerpt":"大话 transformer 架构 前言 去年 OpenAI 发布的 ChatGPT3 开启了新一轮对 AI 研究的热潮，不过，这一切的故事还要从 2017 年（甚至更早）说起。自从 deepMind 团队发表的 “Attention is all your need” 论文提出了 transformer 架构后，绝大部分有影响力模型的基础架构都基于的 transformer（比如基于 decode 的GPT、基于 encode 的 BERT、基于 encode-decode 的 T5 等等），具体有哪些模型可以来看看 huggingface 罗列的 故事的开始 与大多数博客一样，我们需要请出论文中最有名的架构图来解释 transformer： 上面的架构图可以简单地分成两个部分，encoder（左边）和 decoder（右边）。而组成他们的组件又有一些共通之处，因此 transformer 架构其实没有大家想的那样复杂。 虽然现在 transformer 被应用于非常多的 AI 领域，但起初它是在自然语言处理 (NLP) 中针对序列到序列 (seq2seq)...","categories": ["AI"],
         "tags": ["transformer","AI"],
         "url": "/ai/2023/10/22/transformer.html",
         "teaser": "/assets/img/teaser.jpg"
       },{
-        "title": "huggingface下llama代码细读",
-        "excerpt":"huggingface下llama代码细读 llama 是什么 llama 是 meta 公司于 2023 年初发布的一个大语言模型。根据官网上对llama的介绍，meta 公司发布的语言模型可以帮助那些无法拥有大量计算资源的研究人员小成本地进入 AI 大模型领域进行研究。也正因如此，meta 向全社会提供了经过初步训练的多个不同权重大小的模型数据（7B、13B、33B 和 65B）。 从论文中看，llama 使用了世界上高质量的文本数据进行训练，使用到的训练数据包括： English CommonCrawl [67%] C4 [15%] Github [4.5%] Wikipedia [4.5%] Gutenberg and Books3 [4.5%] ArXiv [2.5%] Stack Exchange [2%] llama 使用的分词（Tokenizer）算法是由 SentencePiece 实现的 Byte-pair-encoding(BPE) 算法，所有的训练数据大约包含了 1.4T 个 tokens。每个 token 在训练期间仅使用一次，但维基百科和图书等数据除外。在发布 llama 后不久，meta 又发布了 llama-2...","categories": ["AI"],
+        "title": "huggingface下llama代码细读（上）",
+        "excerpt":"huggingface下llama代码细读（上） llama 是什么 llama 是 meta 公司于 2023 年初发布的一个大语言模型。根据官网上对llama的介绍，meta 公司发布的语言模型可以帮助那些无法拥有大量计算资源的研究人员小成本地进入 AI 大模型领域进行研究。也正因如此，llama 成为了除 ChatGPT 外最有名的大模型之一。为了满足不同级别的研究需要，meta 向全社会提供了经过初步训练的多个不同权重大小的模型数据（7B、13B、33B 和 65B）。 从论文中看，llama 使用了世界上高质量的文本数据进行训练，使用到的训练数据包括： English CommonCrawl [67%] C4 [15%] Github [4.5%] Wikipedia [4.5%] Gutenberg and Books3 [4.5%] ArXiv [2.5%] Stack Exchange [2%] llama 使用的分词（Tokenizer）算法是由 SentencePiece 实现的 Byte-pair-encoding(BPE) 算法，所有的训练数据大约包含了 1.4T 个 tokens。每个 token 在训练期间仅使用一次，但维基百科和图书等数据除外。在发布 llama...","categories": ["AI"],
         "tags": ["Transformer","AI"],
         "url": "/ai/2023/10/30/huggingface1.html",
+        "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "大模型推理优化技术之显存优化",
+        "excerpt":"大模型推理优化技术之显存优化   大模型推理可能会遇到的性能问题   推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。   计算给定 GPU 上每个字节可能的操作数，并将其与模型注意力层的算术强度进行比较，可以揭示瓶颈所在：计算或内存。我们可以利用这些信息来选择合适的 GPU 进行模型推理，如果我们的用例允许，还可以使用批处理等技术来更好地利用我们的 GPU 资源。   KV Cache   这是大模型推理性能优化的最常用技术。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 use_cache = True 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？   ###   该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。  ","categories": ["AI"],
+        "tags": ["Transformer","AI"],
+        "url": "/ai/2023/11/30/LLM-inference1.html",
+        "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "huggingface下llama代码细读（下）",
+        "excerpt":"huggingface下llama代码细读（下） 前言 上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 llama 模型的层级搭建挪到了本篇博客中。 llama 模型 译码层 有了上面说的基本组件后，如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。LlamaDecoderLayer 类将 LlamaAttention LlamaRMSNorm 等基件组合起来，构成了 llama 的译码层。事实上，👆图所展示的架构就是一个译码层的架构。 class LlamaDecoderLayer(nn.Module): def __init__(self, config: LlamaConfig): super().__init__() self.hidden_size = config.hidden_size self.self_attn = ( LlamaAttention(config=config) if not getattr(config, \"_flash_attn_2_enabled\", False) else LlamaFlashAttention2(config=config) ) self.mlp = LlamaMLP(config) self.input_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps) self.post_attention_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)...","categories": ["AI"],
+        "tags": ["Transformer","AI"],
+        "url": "/ai/2023/11/30/huggingface2.html",
         "teaser": "/assets/img/teaser.jpg"
       }]

@@ -1,0 +1,1110 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>huggingface下llama代码细读（下） - 峰子的乐园</title>
+<meta name="description" content="揭开它神秘的面纱">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="huggingface下llama代码细读（下）">
+<meta property="og:url" content="https://dingfen.github.io/ai/2023/11/30/huggingface2.html">
+
+
+  <meta property="og:description" content="揭开它神秘的面纱">
+
+
+
+  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser4.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2023-11-30T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://dingfen.github.io/ai/2023/11/30/huggingface2.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "https://dingfen.github.io/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser4.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          huggingface下llama代码细读（下）
+
+        
+      </h1>
+      
+        <p class="page__lead">揭开它神秘的面纱
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="huggingface下llama代码细读（下）">
+    <meta itemprop="description" content="揭开它神秘的面纱">
+    <meta itemprop="datePublished" content="2023-11-30T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#huggingface下llama代码细读下">huggingface下llama代码细读（下）</a>
+    <ul>
+      <li><a href="#前言">前言</a></li>
+      <li><a href="#llama-模型">llama 模型</a>
+        <ul>
+          <li><a href="#译码层">译码层</a></li>
+          <li><a href="#llama-model">llama Model</a>
+            <ul>
+              <li><a href="#llamamodel的forward函数">LlamaModel的forward函数</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a href="#最终成型">最终成型</a>
+        <ul>
+          <li><a href="#llamaforcausallm">LlamaForCausalLM</a></li>
+        </ul>
+      </li>
+      <li><a href="#小结">小结</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="huggingface下llama代码细读下">huggingface下llama代码细读（下）</h1>
+
+<h2 id="前言">前言</h2>
+
+<p>上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 llama 模型的层级搭建挪到了本篇博客中。</p>
+
+<h2 id="llama-模型">llama 模型</h2>
+
+<h3 id="译码层">译码层</h3>
+
+<p>有了上面说的基本组件后，如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。<code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 类将 <code class="language-plaintext highlighter-rouge">LlamaAttention</code> <code class="language-plaintext highlighter-rouge">LlamaRMSNorm</code> 等基件组合起来，构成了 llama 的译码层。事实上，👆图所展示的架构就是一个译码层的架构。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaDecoderLayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">LlamaConfig</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">self_attn</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">LlamaAttention</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s">"_flash_attn_2_enabled"</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">LlamaFlashAttention2</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">LlamaMLP</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">input_layernorm</span> <span class="o">=</span> <span class="n">LlamaRMSNorm</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">rms_norm_eps</span><span class="p">)</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">post_attention_layernorm</span> <span class="o">=</span> <span class="n">LlamaRMSNorm</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">rms_norm_eps</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>而其 forward 函数则完美展示了架构图内张量的执行情况：13 行先将输入执行一次 RMSNorm 归一，16-25行执行一次注意力运算，并加上了残差结构，27-33行将注意力结果输出到 MLP 中，最后返回结果👇</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+  <span class="bp">self</span><span class="p">,</span>
+  <span class="n">hidden_states</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span>
+  <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">position_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">past_key_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">output_attentions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+  <span class="n">use_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+  <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]]]:</span>
+
+  <span class="n">residual</span> <span class="o">=</span> <span class="n">hidden_states</span>
+
+  <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">input_layernorm</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+
+  <span class="c1"># Self Attention
+</span>  <span class="n">hidden_states</span><span class="p">,</span> <span class="n">self_attn_weights</span><span class="p">,</span> <span class="n">present_key_value</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">self_attn</span><span class="p">(</span>
+      <span class="n">hidden_states</span><span class="o">=</span><span class="n">hidden_states</span><span class="p">,</span>
+      <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
+      <span class="n">position_ids</span><span class="o">=</span><span class="n">position_ids</span><span class="p">,</span>
+      <span class="n">past_key_value</span><span class="o">=</span><span class="n">past_key_value</span><span class="p">,</span>
+      <span class="n">output_attentions</span><span class="o">=</span><span class="n">output_attentions</span><span class="p">,</span>
+      <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
+      <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+  <span class="p">)</span>
+  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">hidden_states</span>
+
+  <span class="c1"># Fully Connected
+</span>  <span class="n">residual</span> <span class="o">=</span> <span class="n">hidden_states</span>
+  <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">post_attention_layernorm</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+  <span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">hidden_states</span>
+
+  <span class="n">outputs</span> <span class="o">=</span> <span class="p">(</span><span class="n">hidden_states</span><span class="p">,)</span>
+
+  <span class="k">if</span> <span class="n">output_attentions</span><span class="p">:</span>
+      <span class="n">outputs</span> <span class="o">+=</span> <span class="p">(</span><span class="n">self_attn_weights</span><span class="p">,)</span>
+
+  <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
+      <span class="n">outputs</span> <span class="o">+=</span> <span class="p">(</span><span class="n">present_key_value</span><span class="p">,)</span>
+
+  <span class="k">return</span> <span class="n">outputs</span>
+</code></pre></div></div>
+
+<h3 id="llama-model">llama Model</h3>
+
+<p><code class="language-plaintext highlighter-rouge">LlamaModel</code> 由上面介绍的多个 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 堆叠而成。以之前的 llama-7b-hf 为例，<code class="language-plaintext highlighter-rouge">num_hidden_layers</code> 为32，意思是该模型一共堆叠了 32 层译码层。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaModel</span><span class="p">(</span><span class="n">LlamaPreTrainedModel</span><span class="p">):</span>
+    <span class="s">"""
+    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaDecoderLayer`]
+    """</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">LlamaConfig</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">padding_idx</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">pad_token_id</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">vocab_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span>
+
+    <span class="bp">self</span><span class="p">.</span><span class="n">embed_tokens</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">padding_idx</span><span class="p">)</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">ModuleList</span><span class="p">([</span><span class="n">LlamaDecoderLayer</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">num_hidden_layers</span><span class="p">)])</span>
+    <span class="bp">self</span><span class="p">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">LlamaRMSNorm</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">rms_norm_eps</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="p">.</span><span class="n">gradient_checkpointing</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="c1"># Initialize weights and apply final processing
+</span>    <span class="bp">self</span><span class="p">.</span><span class="n">post_init</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>该类继承自 <code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code>，<code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code> 没有那么神秘，只不过是在 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 的基础上包裹了一些初始化操作而已：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaPreTrainedModel</span><span class="p">(</span><span class="n">PreTrainedModel</span><span class="p">):</span>
+  <span class="n">config_class</span> <span class="o">=</span> <span class="n">LlamaConfig</span>
+  <span class="n">base_model_prefix</span> <span class="o">=</span> <span class="s">"model"</span>
+  <span class="n">supports_gradient_checkpointing</span> <span class="o">=</span> <span class="bp">True</span>
+  <span class="n">_no_split_modules</span> <span class="o">=</span> <span class="p">[</span><span class="s">"LlamaDecoderLayer"</span><span class="p">]</span>
+  <span class="n">_skip_keys_device_placement</span> <span class="o">=</span> <span class="s">"past_key_values"</span>
+  <span class="n">_supports_flash_attn_2</span> <span class="o">=</span> <span class="bp">True</span>
+
+  <span class="k">def</span> <span class="nf">_init_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">):</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">initializer_range</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">):</span>
+        <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">module</span><span class="p">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">module</span><span class="p">.</span><span class="n">bias</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">zero_</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Embedding</span><span class="p">):</span>
+        <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">normal_</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">module</span><span class="p">.</span><span class="n">padding_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">module</span><span class="p">.</span><span class="n">padding_idx</span><span class="p">].</span><span class="n">zero_</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h4 id="llamamodel的forward函数">LlamaModel的forward函数</h4>
+
+<p>可以简单地理解为，<code class="language-plaintext highlighter-rouge">LlamaModel::forward</code> 是整个大模型的“未封装的”入口。既然是个入口，首先关心一下它需要哪些变量输入：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">position_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">past_key_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">inputs_embeds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">output_attentions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">output_hidden_states</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+    <span class="n">return_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">BaseModelOutputWithPast</span><span class="p">]:</span>
+</code></pre></div></div>
+
+<ul>
+  <li>input_ids 输入的文本序列</li>
+  <li>attention_mask 注意力掩码，1 表示未遮掩，0表示遮掩。通常会使用下三角矩阵对输出进行遮盖，防止模型作弊。</li>
+  <li>position_ids 输入文本序列的位置编号，从0开始</li>
+  <li>past_key_values 若use_cache为真则之前的kv值会被用于加速推理</li>
+  <li>inputs_embeds 模型支持直接传入input的嵌入张量，代替 input_ids</li>
+  <li>use_cache 是否使用KV cache加速推理，通过使用 cache 缓存权重等值加速推理</li>
+  <li>output_attentions 是否要返回所有注意力层的注意力张量</li>
+  <li>output_hidden_states 是否要返回所有层的隐藏层状态张量</li>
+  <li>return_dict 指示返回的类型是<code class="language-plaintext highlighter-rouge">~utils.ModelOutput</code> 还是 tuple</li>
+</ul>
+
+<p>接下来看看 forward 的实现。略去错误机制和准备过程代码，最关键的是 <code class="language-plaintext highlighter-rouge">attention_mask</code> 如何被准备的。回顾一下 transformers 机制里的注意力掩码，它是用来在训练和推理时遮挡后续部分的输出，防止模型看到未来的输出而“作弊”用的。这里不得不感慨代码更新速度之快：现在最新版本的 transformers 代码使用 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code>，而 4.37 之前的版本使用的函数还是 <code class="language-plaintext highlighter-rouge">_expand_mask</code>、<code class="language-plaintext highlighter-rouge">_make_causal_mask</code> 🙌：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ... to be continued some are omitted
+</span>
+  <span class="n">input_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+  <span class="k">elif</span> <span class="n">inputs_embeds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">inputs_embeds</span><span class="p">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+
+  <span class="n">past_key_values_length</span> <span class="o">=</span> <span class="n">past_key_values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+  <span class="k">if</span> <span class="n">position_ids</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">position_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span>
+        <span class="n">past_key_values_length</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">+</span> <span class="n">past_key_values_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+    <span class="p">)</span>
+    <span class="n">position_ids</span> <span class="o">=</span> <span class="n">position_ids</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">inputs_embeds</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">inputs_embeds</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">embed_tokens</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">,</span> <span class="s">"_flash_attn_2_enabled"</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+    <span class="c1"># 2d mask is passed through the layers
+</span>    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">attention_mask</span> <span class="k">if</span> <span class="p">(</span><span class="n">attention_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="mi">0</span> <span class="ow">in</span> <span class="n">attention_mask</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="c1"># 4d mask is passed through the layers
+</span>    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">_prepare_4d_causal_attention_mask</span><span class="p">(</span>
+      <span class="n">attention_mask</span><span class="p">,</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">),</span> <span class="n">inputs_embeds</span><span class="p">,</span> <span class="n">past_key_values_length</span>
+    <span class="p">)</span>
+
+  <span class="c1"># embed positions
+</span>  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">inputs_embeds</span>
+</code></pre></div></div>
+
+<p>那就让我们看看 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code> 葫芦里卖的什么药：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">_prepare_4d_causal_attention_mask</span><span class="p">(</span>
+  <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">],</span>
+  <span class="n">input_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">],</span>
+  <span class="n">inputs_embeds</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span>
+  <span class="n">past_key_values_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+  <span class="n">sliding_window</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+<span class="p">):</span>
+  <span class="n">attn_mask_converter</span> <span class="o">=</span> <span class="n">AttentionMaskConverter</span><span class="p">(</span><span class="n">is_causal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">sliding_window</span><span class="o">=</span><span class="n">sliding_window</span><span class="p">)</span>
+  <span class="n">key_value_length</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">past_key_values_length</span>
+
+  <span class="c1"># 4d mask is passed through the layers
+</span>  <span class="k">if</span> <span class="n">attention_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">attn_mask_converter</span><span class="p">.</span><span class="n">to_4d</span><span class="p">(</span>
+      <span class="n">attention_mask</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">key_value_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">.</span><span class="n">dtype</span>
+    <span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">attention_mask</span> <span class="o">=</span> <span class="n">attn_mask_converter</span><span class="p">.</span><span class="n">to_causal_4d</span><span class="p">(</span>
+      <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">key_value_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">.</span><span class="n">device</span>
+    <span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">attention_mask</span>
+
+<span class="k">def</span> <span class="nf">to_causal_4d</span><span class="p">(</span>
+  <span class="bp">self</span><span class="p">,</span>
+  <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+  <span class="n">query_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+  <span class="n">key_value_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+  <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">float32</span><span class="p">,</span>
+  <span class="n">device</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">device</span><span class="p">,</span> <span class="s">"str"</span><span class="p">]</span> <span class="o">=</span> <span class="s">"cpu"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+  <span class="c1"># If shape is not cached, create a new causal mask and cache it
+</span>  <span class="n">input_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">query_length</span><span class="p">)</span>
+  <span class="n">past_key_values_length</span> <span class="o">=</span> <span class="n">key_value_length</span> <span class="o">-</span> <span class="n">query_length</span>
+
+  <span class="c1"># create causal mask
+</span>  <span class="c1"># [bsz, seq_len] -&gt; [bsz, 1, tgt_seq_len, src_seq_len]
+</span>  <span class="n">causal_4d_mask</span> <span class="o">=</span> <span class="bp">None</span>
+  <span class="k">if</span> <span class="n">input_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="p">.</span><span class="n">sliding_window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">causal_4d_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_make_causal_mask</span><span class="p">(</span>
+          <span class="n">input_shape</span><span class="p">,</span>
+          <span class="n">dtype</span><span class="p">,</span>
+          <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+          <span class="n">past_key_values_length</span><span class="o">=</span><span class="n">past_key_values_length</span><span class="p">,</span>
+          <span class="n">sliding_window</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">sliding_window</span><span class="p">,</span>
+      <span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">causal_4d_mask</span>
+</code></pre></div></div>
+
+<p>上面的函数输入是一个二维张量<code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code>，输出是一个四维<code class="language-plaintext highlighter-rouge">(batch_size, 1, seq_len, key_value_len)</code>。该函数会去调用 <code class="language-plaintext highlighter-rouge">AttentionMaskConverter</code> 的 <code class="language-plaintext highlighter-rouge">to_causal_4d</code> 或 <code class="language-plaintext highlighter-rouge">to_4d</code>，而它们俩最终绕不开 <code class="language-plaintext highlighter-rouge">_make_causal_mask</code>：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">_make_causal_mask</span><span class="p">(</span>
+  <span class="n">input_ids_shape</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Size</span><span class="p">,</span>
+  <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">dtype</span><span class="p">,</span>
+  <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">device</span><span class="p">,</span>
+  <span class="n">past_key_values_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="n">sliding_window</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+<span class="p">):</span>
+  <span class="n">bsz</span><span class="p">,</span> <span class="n">tgt_len</span> <span class="o">=</span> <span class="n">input_ids_shape</span>
+  <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">full</span><span class="p">((</span><span class="n">tgt_len</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">),</span> <span class="n">torch</span><span class="p">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">dtype</span><span class="p">).</span><span class="nb">min</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+  <span class="n">mask_cond</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+  <span class="n">mask</span><span class="p">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="n">mask_cond</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">mask_cond</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="n">view</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">past_key_values_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="p">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">tgt_len</span><span class="p">,</span> <span class="n">past_key_values_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">mask</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+  <span class="c1"># add lower triangular sliding window mask if necessary
+</span>  <span class="k">if</span> <span class="n">sliding_window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">diagonal</span> <span class="o">=</span> <span class="n">past_key_values_length</span> <span class="o">-</span> <span class="n">sliding_window</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">context_mask</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">torch</span><span class="p">.</span><span class="n">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">int</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="n">diagonal</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="n">context_mask</span><span class="p">.</span><span class="nb">bool</span><span class="p">(),</span> <span class="n">torch</span><span class="p">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">dtype</span><span class="p">).</span><span class="nb">min</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">mask</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:].</span><span class="n">expand</span><span class="p">(</span><span class="n">bsz</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">,</span> <span class="n">tgt_len</span> <span class="o">+</span> <span class="n">past_key_values_length</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">_make_causal_mask</code> 函数最关键的是前几句话。首先 <code class="language-plaintext highlighter-rouge">mask</code> 会被初始化成 <code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code> 维度的矩阵，初始值为很大的负数👇。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">full</span><span class="p">((</span><span class="n">tgt_len</span><span class="p">,</span> <span class="n">tgt_len</span><span class="p">),</span> <span class="n">torch</span><span class="p">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">dtype</span><span class="p">).</span><span class="nb">min</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>然后使用 <code class="language-plaintext highlighter-rouge">mask_cond</code> 来将<strong>矩阵下半角矩阵归零</strong>，重点在<code class="language-plaintext highlighter-rouge">mask_cond &lt; (mask_cond + 1).view(mask.size(-1), 1)</code>。此处两个横纵向量一比较会产生一个上三角矩阵。随后将全零矩阵与 <code class="language-plaintext highlighter-rouge">mask</code> 相连接，最后改变矩阵维度为 <code class="language-plaintext highlighter-rouge">(bsz, 1, seq_len, key_value_len)</code>返回。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">mask_cond</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+  <span class="n">mask</span><span class="p">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="n">mask_cond</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">mask_cond</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="n">view</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>这里大家不妨思考一下：为什么 Mask 矩阵必须是下三角归零，而上三角全为最小值？简单地说，生成文本序列时只能参考之前的词，而不能参考未来生成的词。当 decoder 使用 masked 注意力机制生成输出时，计算 $ QK^T $ 的注意力权重时，我们允许 query 去查看之前生成词的信息，但不允许 query 查看之后生成的词（因为它们还未被产生）。对应到矩阵乘法中，就意味着 query 对应的行向量序号必须大于等于 key 的行向量序号。</p>
+
+<p>好，我们在注意力掩码这边花了太多功夫了。接下来继续看 <code class="language-plaintext highlighter-rouge">forward</code> 函数的实现👇：首先是初始化张量，然后就是 <code class="language-plaintext highlighter-rouge">llamaModel</code> 对译码层的具体处理。对于这个主 for 循环，先抛开使用检查点的逻辑部分，直接看调用 <code class="language-plaintext highlighter-rouge">decoder_layer</code> 部分，就会发现循环只是在不断地调用 <code class="language-plaintext highlighter-rouge">decoder_layer</code>（也就是 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer:forward</code>）来进行推理，然后把得到的输出结果再作为下一层的输入继续前推，直到所有子层的前推结束。循环退出后，<code class="language-plaintext highlighter-rouge">hidden_states</code> 会最后加一层归一化，最后通过 transformers 自带的 <code class="language-plaintext highlighter-rouge">BaseModelOutputWithPast</code> 将最后的输出张量和 kv 相关信息返回，该类是框架中包含 past kv 值的基础模型输出类，关于此类就不详细展开讲了。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># decoder layers
+# initialize  all_hidden_states all_self_attns next_decoder_cache
+</span><span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">decoder_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">layers</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">output_hidden_states</span><span class="p">:</span>
+    <span class="n">all_hidden_states</span> <span class="o">+=</span> <span class="p">(</span><span class="n">hidden_states</span><span class="p">,)</span>
+  <span class="n">past_key_value</span> <span class="o">=</span> <span class="n">past_key_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">if</span> <span class="n">past_key_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span>
+
+  <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">gradient_checkpointing</span> <span class="ow">and</span> <span class="bp">self</span><span class="p">.</span><span class="n">training</span><span class="p">:</span>
+    <span class="c1">#layer_outputs = self._gradient_checkpointing_func(
+</span>  <span class="k">else</span><span class="p">:</span>
+      <span class="n">layer_outputs</span> <span class="o">=</span> <span class="n">decoder_layer</span><span class="p">(</span>
+          <span class="n">hidden_states</span><span class="p">,</span>
+          <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
+          <span class="n">position_ids</span><span class="o">=</span><span class="n">position_ids</span><span class="p">,</span>
+          <span class="n">past_key_value</span><span class="o">=</span><span class="n">past_key_value</span><span class="p">,</span>
+          <span class="n">output_attentions</span><span class="o">=</span><span class="n">output_attentions</span><span class="p">,</span>
+          <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
+      <span class="p">)</span>
+
+  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">layer_outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+  <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
+      <span class="n">next_decoder_cache</span> <span class="o">+=</span> <span class="p">(</span><span class="n">layer_outputs</span><span class="p">[</span><span class="mi">2</span> <span class="k">if</span> <span class="n">output_attentions</span> <span class="k">else</span> <span class="mi">1</span><span class="p">],)</span>
+
+  <span class="k">if</span> <span class="n">output_attentions</span><span class="p">:</span>
+      <span class="n">all_self_attns</span> <span class="o">+=</span> <span class="p">(</span><span class="n">layer_outputs</span><span class="p">[</span><span class="mi">1</span><span class="p">],)</span>
+
+<span class="n">hidden_states</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">norm</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+
+<span class="c1"># add hidden states from the last decoder layer
+</span><span class="k">if</span> <span class="n">output_hidden_states</span><span class="p">:</span>
+  <span class="n">all_hidden_states</span> <span class="o">+=</span> <span class="p">(</span><span class="n">hidden_states</span><span class="p">,)</span>
+
+<span class="n">next_cache</span> <span class="o">=</span> <span class="n">next_decoder_cache</span> <span class="k">if</span> <span class="n">use_cache</span> <span class="k">else</span> <span class="bp">None</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">return_dict</span><span class="p">:</span>
+  <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">[</span><span class="n">hidden_states</span><span class="p">,</span> <span class="n">next_cache</span><span class="p">,</span> <span class="n">all_hidden_states</span><span class="p">,</span> <span class="n">all_self_attns</span><span class="p">]</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">BaseModelOutputWithPast</span><span class="p">(</span>
+  <span class="n">last_hidden_state</span><span class="o">=</span><span class="n">hidden_states</span><span class="p">,</span>
+  <span class="n">past_key_values</span><span class="o">=</span><span class="n">next_cache</span><span class="p">,</span>
+  <span class="n">hidden_states</span><span class="o">=</span><span class="n">all_hidden_states</span><span class="p">,</span>
+  <span class="n">attentions</span><span class="o">=</span><span class="n">all_self_attns</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>篇外：for 循环中使用 <code class="language-plaintext highlighter-rouge">gradient_checkpointing</code> 可以有效节约显存，详细内容可以参考 <a href="https://pytorch.org/docs/stable/checkpoint.html"><code class="language-plaintext highlighter-rouge">torch.utils.checkpoint.checkpoint</code></a>。它的原理非常简单：规定程序在对 <code class="language-plaintext highlighter-rouge">decoderLayer</code> 进行前推时，不保存中间计算值。而若模型需要自动微分以完成 backward，程序会重新计算这些中间值，从而节省了模型运算需要的内存空间。因此，<code class="language-plaintext highlighter-rouge">use_cache</code> 和 <code class="language-plaintext highlighter-rouge">gradient_checkpointing</code>最好不要同时设置为 true，因为一个是用空间换时间，一个是时间换空间，两者可能会互相抵消优化影响。</p>
+
+<h2 id="最终成型">最终成型</h2>
+
+<p>由于篇幅关系（这篇博文已经是我写过的最长的博客了），这里仅介绍最常用的 <code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code>。</p>
+
+<h3 id="llamaforcausallm">LlamaForCausalLM</h3>
+
+<p><code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code> 是 Llama 因果类语言模型，可以根据用户输入的文本输出相应的回答。技术上看，它在 <code class="language-plaintext highlighter-rouge">LlamaModel</code> 的基础上增加了一个线性层 <code class="language-plaintext highlighter-rouge">lm_head</code> 作为 Generator，从而实现了一个完整的语言模型。我们来看一下它的 <code class="language-plaintext highlighter-rouge">forward</code> 函数👇，若仔细对比之前模型的输入参数，会发现多了一个可选传入的 <code class="language-plaintext highlighter-rouge">label</code> 张量，该张量形状是 <code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code>，它是用于计算 masked 语言模型的损失值。该模型的 <code class="language-plaintext highlighter-rouge">forward</code> 函数在准备好输入的参数后，就直接调用了 <code class="language-plaintext highlighter-rouge">LlamaModel:forward()</code>。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+  <span class="bp">self</span><span class="p">,</span>
+  <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">position_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">past_key_values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">inputs_embeds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">FloatTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">use_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">output_attentions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">output_hidden_states</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+  <span class="n">return_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">CausalLMOutputWithPast</span><span class="p">]:</span>
+
+<span class="n">output_attentions</span> <span class="o">=</span> <span class="n">output_attentions</span> <span class="k">if</span> <span class="n">output_attentions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">output_attentions</span>
+<span class="n">output_hidden_states</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">output_hidden_states</span> <span class="k">if</span> <span class="n">output_hidden_states</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">output_hidden_states</span>
+<span class="p">)</span>
+<span class="n">return_dict</span> <span class="o">=</span> <span class="n">return_dict</span> <span class="k">if</span> <span class="n">return_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">use_return_dict</span>
+
+<span class="c1"># decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
+</span><span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">(</span>
+    <span class="n">input_ids</span><span class="o">=</span><span class="n">input_ids</span><span class="p">,</span>
+    <span class="n">attention_mask</span><span class="o">=</span><span class="n">attention_mask</span><span class="p">,</span>
+    <span class="n">position_ids</span><span class="o">=</span><span class="n">position_ids</span><span class="p">,</span>
+    <span class="n">past_key_values</span><span class="o">=</span><span class="n">past_key_values</span><span class="p">,</span>
+    <span class="n">inputs_embeds</span><span class="o">=</span><span class="n">inputs_embeds</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
+    <span class="n">output_attentions</span><span class="o">=</span><span class="n">output_attentions</span><span class="p">,</span>
+    <span class="n">output_hidden_states</span><span class="o">=</span><span class="n">output_hidden_states</span><span class="p">,</span>
+    <span class="n">return_dict</span><span class="o">=</span><span class="n">return_dict</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>随后，将拿到手的 <code class="language-plaintext highlighter-rouge">outputs</code> 放入到添加的线性层 <code class="language-plaintext highlighter-rouge">lm_head</code> 进行运算。同理，TP 并行时会将线性层的矩阵在 dim=0 维度拆分。若传入了 <code class="language-plaintext highlighter-rouge">label</code>，那么得到的结果 <code class="language-plaintext highlighter-rouge">logits</code> 在经过移位后计算交叉熵 <code class="language-plaintext highlighter-rouge">CrossEntropyLoss()</code>，若无则可直接通过 <code class="language-plaintext highlighter-rouge">CausalLMOutputWithPast</code> 返回。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hidden_states</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">pretraining_tp</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+  <span class="n">lm_head_slices</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">vocab_size</span> <span class="o">//</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">pretraining_tp</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+  <span class="n">logits</span> <span class="o">=</span> <span class="p">[</span><span class="n">F</span><span class="p">.</span><span class="n">linear</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">,</span> <span class="n">lm_head_slices</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">pretraining_tp</span><span class="p">)]</span>
+  <span class="n">logits</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">lm_head</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+<span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="nb">float</span><span class="p">()</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+  <span class="c1"># Shift so that tokens &lt; n predict n
+</span>  <span class="n">shift_logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[...,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:].</span><span class="n">contiguous</span><span class="p">()</span>
+  <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">:].</span><span class="n">contiguous</span><span class="p">()</span>
+  <span class="c1"># Flatten the tokens
+</span>  <span class="n">loss_fct</span> <span class="o">=</span> <span class="n">CrossEntropyLoss</span><span class="p">()</span>
+  <span class="n">shift_logits</span> <span class="o">=</span> <span class="n">shift_logits</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span><span class="p">)</span>
+  <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">shift_labels</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+  <span class="c1"># Enable model parallelism
+</span>  <span class="n">shift_labels</span> <span class="o">=</span> <span class="n">shift_labels</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">shift_logits</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
+  <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fct</span><span class="p">(</span><span class="n">shift_logits</span><span class="p">,</span> <span class="n">shift_labels</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">return_dict</span><span class="p">:</span>
+  <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="n">logits</span><span class="p">,)</span> <span class="o">+</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">loss</span><span class="p">,)</span> <span class="o">+</span> <span class="n">output</span> <span class="k">if</span> <span class="n">loss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">output</span>
+<span class="k">return</span> <span class="n">CausalLMOutputWithPast</span><span class="p">(</span>
+    <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">,</span>
+    <span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span>
+    <span class="n">past_key_values</span><span class="o">=</span><span class="n">outputs</span><span class="p">.</span><span class="n">past_key_values</span><span class="p">,</span>
+    <span class="n">hidden_states</span><span class="o">=</span><span class="n">outputs</span><span class="p">.</span><span class="n">hidden_states</span><span class="p">,</span>
+    <span class="n">attentions</span><span class="o">=</span><span class="n">outputs</span><span class="p">.</span><span class="n">attentions</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>使用 huggingface 框架实现的 <code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code> 进行推理的示例如下，从该示例中我们可以更好地理解大模型的推理过程：比如说，上面的输入张量<code class="language-plaintext highlighter-rouge">input_ids</code> 是用户输入的处理后的“文本”。而最初用户输入的字符串<code class="language-plaintext highlighter-rouge">prompt</code> 先进入 tokenizer 进行分词，随后编码、嵌入技术变为张量。这里最重要的函数莫属于 <code class="language-plaintext highlighter-rouge">model.generate</code>，但它只能在推理时使用。它除了在背后默默调用了上面的 <code class="language-plaintext highlighter-rouge">forward</code>，还做了很多：用于多种解码策略，例如 beam search、top-k 采样等……详细的文章可以在<a href="https://huggingface.co/blog/how-to-generate">这篇博客</a>中找到。生成产生的张量人类无法直接看懂，还需要经过解码 <code class="language-plaintext highlighter-rouge">batch_decode</code> 才能呈现流利的英语。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoTokenizer</span><span class="p">,</span> <span class="n">LlamaForCausalLM</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">LlamaForCausalLM</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">PATH_TO_CONVERTED_WEIGHTS</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="p">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">PATH_TO_CONVERTED_TOKENIZER</span><span class="p">)</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="s">"Hey, are you conscious? Can you talk to me?"</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s">"pt"</span><span class="p">)</span>
+<span class="c1"># Generate
+</span><span class="n">generate_ids</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">generate</span><span class="p">(</span><span class="n">inputs</span><span class="p">.</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<span class="n">tokenizer</span><span class="p">.</span><span class="n">batch_decode</span><span class="p">(</span><span class="n">generate_ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">clean_up_tokenization_spaces</span><span class="o">=</span><span class="bp">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="s">"Hey, are you conscious? Can you talk to me?</span><span class="se">\n</span><span class="s">I'm not conscious, but I can talk to you."</span>
+</code></pre></div></div>
+
+<h2 id="小结">小结</h2>
+
+<p>本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是如何被训练产生的。随后，我给出了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。然后，我从基础到上层逐个分析了 llama 的代码实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。另外，本篇博文必不可能覆盖 llama 乃至大模型的方方面面，我等还需继续努力，进一步揭开大模型的神秘面纱。</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#ai" class="page__taxonomy-item" rel="tag">AI</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#transformer" class="page__taxonomy-item" rel="tag">Transformer</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#ai" class="page__taxonomy-item" rel="tag">AI</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2023-11-30T00:00:00+08:00">November 30, 2023</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=huggingface%E4%B8%8Bllama%E4%BB%A3%E7%A0%81%E7%BB%86%E8%AF%BB%EF%BC%88%E4%B8%8B%EF%BC%89%20https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2Fhuggingface2.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2Fhuggingface2.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2Fhuggingface2.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ai/2023/11/30/LLM-inference1.html" class="pagination--pager" title="大模型推理优化技术之显存优化
+">previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/11/30/LLM-inference1.html" rel="permalink">大模型推理优化技术之显存优化
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">在消费级显卡上运行大模型
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/10/30/huggingface1.html" rel="permalink">huggingface下llama代码细读（上）
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  9 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">揭开它神秘的面纱
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/10/22/transformer.html" rel="permalink">Transformers
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">总栏
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2023/09/10/cuda-mem.html" rel="permalink">CUDA 进阶之内存优化
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  5 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">主机与设备间的数据传输
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://dingfen.github.io/ai/2023/11/30/huggingface2.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/ai/2023/11/30/huggingface2"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -9,8 +9,8 @@
   <head>
     <meta charset="utf-8">
 
-<!-- begin _includes/seo.html --><title>RI5CY 介绍 - 峰子的乐园</title>
-<meta name="description" content="深度探究 RI5CY 的前世今生">
+<!-- begin _includes/seo.html --><title>大模型推理优化技术之显存优化 - 峰子的乐园</title>
+<meta name="description" content="在消费级显卡上运行大模型">
 
 
   <meta name="author" content="Bill Ding">
@@ -19,32 +19,32 @@
 <meta property="og:type" content="article">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:title" content="RI5CY 介绍">
-<meta property="og:url" content="https://dingfen.github.io/risc-v/verilog/2020/07/16/RI5CY.html">
+<meta property="og:title" content="大模型推理优化技术之显存优化">
+<meta property="og:url" content="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html">
 
 
-  <meta property="og:description" content="深度探究 RI5CY 的前世今生">
-
-
-
-  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser.jpg">
+  <meta property="og:description" content="在消费级显卡上运行大模型">
 
 
 
-
-
-  <meta property="article:published_time" content="2020-07-16T00:00:00+08:00">
+  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser4.jpg">
 
 
 
 
 
-  
+  <meta property="article:published_time" content="2023-11-30T00:00:00+08:00">
+
+
+
+
 
   
 
+  
 
-<link rel="canonical" href="https://dingfen.github.io/risc-v/verilog/2020/07/16/RI5CY.html">
+
+<link rel="canonical" href="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html">
 
 
 
@@ -192,18 +192,18 @@
 
 
 <div class="page__hero--overlay"
-  style=" background-image: url('/assets/img/teaser.jpg');"
+  style=" background-image: url('/assets/img/teaser4.jpg');"
 >
   
     <div class="wrapper">
       <h1 id="page-title" class="page__title" itemprop="headline">
         
-          RI5CY 介绍
+          大模型推理优化技术之显存优化
 
         
       </h1>
       
-        <p class="page__lead">深度探究 RI5CY 的前世今生
+        <p class="page__lead">在消费级显卡上运行大模型
 </p>
       
       
@@ -212,7 +212,7 @@
 
 
 
-  1 minutes read
+  less than 1 minutes read
 
 </p>
       
@@ -341,9 +341,9 @@
 
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
-    <meta itemprop="headline" content="RI5CY 介绍">
-    <meta itemprop="description" content="深度探究 RI5CY 的前世今生">
-    <meta itemprop="datePublished" content="2020-07-16T00:00:00+08:00">
+    <meta itemprop="headline" content="大模型推理优化技术之显存优化">
+    <meta itemprop="description" content="在消费级显卡上运行大模型">
+    <meta itemprop="datePublished" content="2023-11-30T00:00:00+08:00">
     
 
     <div class="page__inner-wrap">
@@ -355,12 +355,10 @@
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
               <ul class="toc__menu">
-  <li><a href="#introduction-of-ri5cycv32e40p">Introduction of RI5CY(CV32E40P)</a>
+  <li><a href="#大模型推理优化技术之显存优化">大模型推理优化技术之显存优化</a>
     <ul>
-      <li><a href="#什么是-ri5cy">什么是 RI5CY</a></li>
-      <li><a href="#openhw-group-是什么来头">OpenHW Group 是什么来头</a></li>
-      <li><a href="#从-ri5cy-到-cv32e40p">从 RI5CY 到 CV32E40P</a></li>
-      <li><a href="#ri5cy-的特点">RI5CY 的特点</a></li>
+      <li><a href="#大模型推理可能会遇到的性能问题">大模型推理可能会遇到的性能问题</a></li>
+      <li><a href="#kv-cache">KV Cache</a></li>
     </ul>
   </li>
 </ul>
@@ -368,59 +366,21 @@
             </nav>
           </aside>
         
-        <h1 id="introduction-of-ri5cycv32e40p">Introduction of RI5CY(CV32E40P)</h1>
+        <h1 id="大模型推理优化技术之显存优化">大模型推理优化技术之显存优化</h1>
 
-<h2 id="什么是-ri5cy">什么是 RI5CY</h2>
+<h2 id="大模型推理可能会遇到的性能问题">大模型推理可能会遇到的性能问题</h2>
 
-<ul>
-  <li>4阶段流水线，顺序的 32-bit 的 RISC-V 处理核，后改名为 CV32E40P，但为方便叙述，以下均称之为 RI5CY。</li>
-  <li>RI5CY 支持的最基础的 RISC-V 指令集版本（最新）的是 <a href="https://github.com/riscv/riscv-isa-manual/releases/tag/archive">RV32I Base Integer Instruction Set version 2.1</a>。除此之外，它还支持以下 RISC-V 指令集：
-    <ul>
-      <li>C : Standard Extension for Compressed Instructions 2.0</li>
-      <li>M : Standard Extension for Integer Multiplication and Division 2.0</li>
-      <li>Zicsr : Control and Status Register Instructions 2.0</li>
-      <li>Zifencei : Instruction-Fetch Fence 2.0</li>
-      <li>F : Single-Precision Floating-Point 2.2</li>
-    </ul>
-  </li>
-  <li>它的 ISA 不仅支持最基本的 RISC-V 指令集，还增添了如下指令：
-    <ul>
-      <li>乘加指令 (multiple additional instructions)</li>
-      <li>硬件循环 (hardware loops)</li>
-      <li>后累加装载指令 (post-increment load-store instructions)</li>
-      <li>额外的 ALU 运算指令</li>
-    </ul>
-  </li>
-  <li>由 OpenHW Group 开发，这里是它的<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/">用户手册</a>，会有更多详细的介绍，以及它的<a href="https://github.com/openhwgroup/cv32e40p">源代码</a>。</li>
-</ul>
+<p>推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。</p>
 
-<h2 id="openhw-group-是什么来头">OpenHW Group 是什么来头</h2>
+<p>计算给定 GPU 上每个字节可能的操作数，并将其与模型注意力层的算术强度进行比较，可以揭示瓶颈所在：计算或内存。我们可以利用这些信息来选择合适的 GPU 进行模型推理，如果我们的用例允许，还可以使用批处理等技术来更好地利用我们的 GPU 资源。</p>
 
-<p><a href="https://www.openhwgroup.org/">OpenHw</a> 是一个非盈利的国际组织。该组织的软硬件开发人员在开源核 (open-source core)，相关IP (related IP)，工具和软件等开发方面进行协作。OpenHW 提供了一个基础架构，用于托管符合行业最佳实践的高质量开源硬件开发。</p>
+<h2 id="kv-cache">KV Cache</h2>
 
-<p>OpenHW 组织属于 CORE-V Family。CORE-V 是一系列基于RISC-V，以及为电子系统设计师提供相关的处理器子系统 IP，工具和软件的开源核项目。CORE-V Family 在硅片和 FPGA 优化实现中提供符合行业的高质量核心 IP。</p>
+<p>这是大模型推理性能优化的最常用技术。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 <code class="language-plaintext highlighter-rouge">use_cache = True</code> 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？</p>
 
-<p>OpenHW 组织的<a href="https://www.openhwgroup.org/working-groups/">主要技术负责人</a>都在国内外非常有名的研究机构或企业任职。该组织的<a href="https://www.openhwgroup.org/about-us/">董事会</a>主席 Rob同时还是 RISC-V International 董事会成员。 Rob也是IEEE的高级成员，兼任 Southern Methodist University 和 the University of Texas 的兼职教授。</p>
+<p>###</p>
 
-<h2 id="从-ri5cy-到-cv32e40p">从 RI5CY 到 CV32E40P</h2>
-
-<p>从官方<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/intro.html">用户手册</a>上可以了解到，CV32E40P 最初是基于 OpenRISC ISA 的 OR10N CPU 核的分支。在去年我开始了解该处理核的这个时候，其正式名字还是 RI5CY，到了今年就更名为 CV32E40P，项目更名一定程度上伴随着组织关系的变化。之前 RI5CY 的项目主要是由 <a href="https://pulp-platform.org/">PULP Platform</a> 负责。</p>
-
-<p>PULP Platform 的全称为 Parallel Ultra Low Power Platform。该组织的主要工作是开发开源的、可扩展的软硬件研究开发平台，以突破毫瓦功率级别的能效墙，并满足需要灵活处理数据流的 loT 应用的计算需求，例如加速度计，低分辨率摄像头，麦克风阵列和生命体征监视器。</p>
-
-<p>在 OpenHW Group 成立之初，PULP加入了这个组织，并将一些有关 RISC-V 核的实现工程转移到了 OpenHW Group 组织之下，其中 RI5CY 便是其中之一。</p>
-
-<h2 id="ri5cy-的特点">RI5CY 的特点</h2>
-
-<p>之前提到，RI5CY 是一个顺序的4阶段流水线 32-bit 的 RISC-V 处理核。它的流水线设计图如下：</p>
-
-<p><img src="/assets/img/RISC-V_core.png" alt="Block Diagram of CV32E40P(RI5CY) core" /></p>
-
-<p>RI5CY 是一个非常好的自定义处理核的起点，这也是它在科研圈较受欢迎的原因之一。当然这相当程度上归功于 1）开发组人员对它的良好维护，2）非常清晰明确的源代码，3）能被综合或仿真工具实例化，4）有 <a href="https://www.veripool.org/wiki/verilator">Verilator</a> 模型的测试平台，5）可在 FPGA 和 ASIC 上高效实例化。</p>
-
-<p>在最初开发 RI5CY 的过程中 <a href="https://pulp-platform.org/">PULP Platform</a> 就制定了一个设计目标，追求高能效的信号处理。为此，它们添加了乘加指令 (multiple additional instructions)、硬件循环 (hardware loops)、后累加装载指令 (post-increment load-store instructions)和额外的 ALU 运算指令(min, max, absolute value)。这样一来，可以减少要处理的指令，减少能耗。</p>
-
-<p>除了在 ISA 上做增添外，设计人员加入了<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/exceptions_interrupts.html">中断 (Interrupts)、异常 (Exceptions)</a>、<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/sleep.html">事件 (Events)</a>、<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/debug.html">调试 (Debug)</a>、<a href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/perf_counters.html">性能 (Performance Counters)</a> 等多个功能。</p>
+<p>该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。</p>
 
         
       </section>
@@ -441,15 +401,11 @@
     
       
       
-      <a href="/tags/#ri5cy" class="page__taxonomy-item" rel="tag">RI5CY</a><span class="sep">, </span>
+      <a href="/tags/#ai" class="page__taxonomy-item" rel="tag">AI</a><span class="sep">, </span>
     
       
       
-      <a href="/tags/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a><span class="sep">, </span>
-    
-      
-      
-      <a href="/tags/#verilog" class="page__taxonomy-item" rel="tag">Verilog</a>
+      <a href="/tags/#transformer" class="page__taxonomy-item" rel="tag">Transformer</a>
     
     </span>
   </p>
@@ -470,18 +426,14 @@
     
       
       
-      <a href="/categories/#risc-v" class="page__taxonomy-item" rel="tag">RISC-V</a><span class="sep">, </span>
-    
-      
-      
-      <a href="/categories/#verilog" class="page__taxonomy-item" rel="tag">Verilog</a>
+      <a href="/categories/#ai" class="page__taxonomy-item" rel="tag">AI</a>
     
     </span>
   </p>
 
 
         
-  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2020-07-16T00:00:00+08:00">July 16, 2020</time></p>
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2023-11-30T00:00:00+08:00">November 30, 2023</time></p>
 
 
       </footer>
@@ -491,22 +443,22 @@
     <h4 class="page__share-title">share</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?text=RI5CY+%E4%BB%8B%E7%BB%8D%20https%3A%2F%2Fdingfen.github.io%2Frisc-v%2Fverilog%2F2020%2F07%2F16%2FRI5CY.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?text=%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%98%BE%E5%AD%98%E4%BC%98%E5%8C%96%20https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Frisc-v%2Fverilog%2F2020%2F07%2F16%2FRI5CY.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Frisc-v%2Fverilog%2F2020%2F07%2F16%2FRI5CY.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
       
   <nav class="pagination">
     
-      <a href="/2020/07/02/first-blog.html" class="pagination--pager" title="我的第一篇 blog
+      <a href="/ai/2023/10/30/huggingface1.html" class="pagination--pager" title="huggingface下llama代码细读（上）
 ">previous</a>
     
     
-      <a href="/risc-v/2020/07/23/RISC-V_on_QEMU.html" class="pagination--pager" title="QEMU 上运行 RISC-V Linux 内核
+      <a href="/ai/2023/11/30/huggingface2.html" class="pagination--pager" title="huggingface下llama代码细读（下）
 ">next</a>
     
   </nav>
@@ -568,39 +520,6 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/ai/2023/11/30/LLM-inference1.html" rel="permalink">大模型推理优化技术之显存优化
-</a>
-      
-    </h2>
-    
-      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
-
-
-
-
-  less than 1 minutes read
-
-</p>
-    
-    <p class="archive__item-excerpt" itemprop="description">在消费级显卡上运行大模型
-</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-      <div class="archive__item-teaser">
-        <img src="/assets/img/teaser.jpg" alt="">
-      </div>
-    
-    <h2 class="archive__item-title" itemprop="headline">
-      
         <a href="/ai/2023/10/30/huggingface1.html" rel="permalink">huggingface下llama代码细读（上）
 </a>
       
@@ -644,11 +563,44 @@
 
 
 
-  1 minutes read
+  less than 1 minutes read
 
 </p>
     
     <p class="archive__item-excerpt" itemprop="description">总栏
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2023/09/10/cuda-mem.html" rel="permalink">CUDA 进阶之内存优化
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  5 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">主机与设备间的数据传输
 </p>
   </article>
 </div>
@@ -724,8 +676,8 @@
     
   <script>
     var disqus_config = function () {
-      this.page.url = "https://dingfen.github.io/risc-v/verilog/2020/07/16/RI5CY.html";  /* Replace PAGE_URL with your page's canonical URL variable */
-      this.page.identifier = "/risc-v/verilog/2020/07/16/RI5CY"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+      this.page.url = "https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/ai/2023/11/30/LLM-inference1"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
     };
     (function() { /* DON'T EDIT BELOW THIS LINE */
       var d = document, s = d.createElement('script');
