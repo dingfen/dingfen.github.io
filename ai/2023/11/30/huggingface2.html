@@ -363,7 +363,7 @@
           <li><a href="#译码层">译码层</a></li>
           <li><a href="#llama-model">llama Model</a>
             <ul>
-              <li><a href="#llamamodel的forward函数">LlamaModel的forward函数</a></li>
+              <li><a href="#llama-模型的推理过程">Llama 模型的推理过程</a></li>
             </ul>
           </li>
         </ul>
@@ -385,13 +385,17 @@
 
 <h2 id="前言">前言</h2>
 
-<p>上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 llama 模型的层级搭建挪到了本篇博客中。</p>
+<p>上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 transformer llama 的代码解读下半部分移动到了本篇博客中，要想从头开始的读者们可以参考<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">这篇博客</a>。</p>
 
 <h2 id="llama-模型">llama 模型</h2>
 
+<center>
+<img src="/assets/img/LLM/llama.png" />
+</center>
+
 <h3 id="译码层">译码层</h3>
 
-<p>有了上面说的基本组件后，如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。<code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 类将 <code class="language-plaintext highlighter-rouge">LlamaAttention</code> <code class="language-plaintext highlighter-rouge">LlamaRMSNorm</code> 等基件组合起来，构成了 llama 的译码层。事实上，👆图所展示的架构就是一个译码层的架构。</p>
+<p>在了解了构成 llama 的基本组件后，要如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。在大模型推理阶段，输入的文本序列会经过多个译码层，执行自注意力等运算。译码层由 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 类表示，它将 <code class="language-plaintext highlighter-rouge">LlamaAttention</code> <code class="language-plaintext highlighter-rouge">LlamaRMSNorm</code> 等基件组合起来。上图所展示的架构就是一个译码层的架构。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaDecoderLayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
   <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">LlamaConfig</span><span class="p">):</span>
@@ -407,7 +411,7 @@
     <span class="bp">self</span><span class="p">.</span><span class="n">post_attention_layernorm</span> <span class="o">=</span> <span class="n">LlamaRMSNorm</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">rms_norm_eps</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>而其 forward 函数则完美展示了架构图内张量的执行情况：13 行先将输入执行一次 RMSNorm 归一，16-25行执行一次注意力运算，并加上了残差结构，27-33行将注意力结果输出到 MLP 中，最后返回结果👇</p>
+<p>上面的构造函数罗列了译码层的几个组件：自注意力层，MLP 层和两个 RMSNorm 层，而其 forward 函数则更详细地展示了架构图内张量的执行情况：13 行先将输入执行一次 RMSNorm 归一，16-25 行执行一次注意力运算，加上了残差结构，再执行一次 RMSNorm 归一，27-33 行将注意力结果输出到 MLP 中，最后返回结果👇。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
   <span class="bp">self</span><span class="p">,</span>
@@ -455,7 +459,25 @@
 
 <h3 id="llama-model">llama Model</h3>
 
-<p><code class="language-plaintext highlighter-rouge">LlamaModel</code> 由上面介绍的多个 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 堆叠而成。以之前的 llama-7b-hf 为例，<code class="language-plaintext highlighter-rouge">num_hidden_layers</code> 为32，意思是该模型一共堆叠了 32 层译码层。</p>
+<p><code class="language-plaintext highlighter-rouge">LlamaModel</code> 由上面介绍的多个 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 堆叠而成。以之前的 llama-7b-hf 参数为例，<code class="language-plaintext highlighter-rouge">num_hidden_layers</code> 为32，意思是该模型一共堆叠了 32 层译码层。</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"architecture"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"LlamaForCausalLM"</span><span class="p">],</span><span class="w">
+  </span><span class="nl">"hidden_act"</span><span class="p">:</span><span class="w"> </span><span class="s2">"silu"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"hidden_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"initializer_range"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.02</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"intermediate_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">11008</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"max_position_embeddings"</span><span class="p">:</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"model_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"llama"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"num_attention_heads"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"num_hidden_layers"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"num_key_value_heads"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"pretraining_tp"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rms_norm_eps"</span><span class="p">:</span><span class="w"> </span><span class="mi">1e-05</span><span class="p">,</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>除此之外，Llama 模型在输入的最前头加入了一个嵌入层（Embedding），最后又加了一层 RMSNorm 进行归一，下面是它的构造函数：</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaModel</span><span class="p">(</span><span class="n">LlamaPreTrainedModel</span><span class="p">):</span>
     <span class="s">"""
@@ -476,7 +498,7 @@
 </span>    <span class="bp">self</span><span class="p">.</span><span class="n">post_init</span><span class="p">()</span>
 </code></pre></div></div>
 
-<p>该类继承自 <code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code>，<code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code> 没有那么神秘，只不过是在 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 的基础上包裹了一些初始化操作而已：</p>
+<p><code class="language-plaintext highlighter-rouge">LlamaModel</code> 类继承自 <code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code>，<code class="language-plaintext highlighter-rouge">LlamaPreTrainedModel</code> 没有那么神秘，只不过是在 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer</code> 的基础上包裹了一些初始化操作而已：</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LlamaPreTrainedModel</span><span class="p">(</span><span class="n">PreTrainedModel</span><span class="p">):</span>
   <span class="n">config_class</span> <span class="o">=</span> <span class="n">LlamaConfig</span>
@@ -498,9 +520,13 @@
             <span class="n">module</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="n">module</span><span class="p">.</span><span class="n">padding_idx</span><span class="p">].</span><span class="n">zero_</span><span class="p">()</span>
 </code></pre></div></div>
 
-<h4 id="llamamodel的forward函数">LlamaModel的forward函数</h4>
+<h4 id="llama-模型的推理过程">Llama 模型的推理过程</h4>
 
-<p>可以简单地理解为，<code class="language-plaintext highlighter-rouge">LlamaModel::forward</code> 是整个大模型的“未封装的”入口。既然是个入口，首先关心一下它需要哪些变量输入：</p>
+<p>我们从 <code class="language-plaintext highlighter-rouge">LlamaModel</code> 代码中已经了解到，Llama 模型将 32 层译码层堆叠起来，输入的文本序列经过一层层译码被最终转化成输出序列。而 <code class="language-plaintext highlighter-rouge">LlamaModel::forward</code> 作为整个大模型“未封装的”入口，显得尤为重要。</p>
+
+<p><strong>参数一览</strong></p>
+
+<p>既然是个入口，我们首先从它的参数入手：</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
@@ -517,22 +543,27 @@
 </code></pre></div></div>
 
 <ul>
-  <li>input_ids 输入的文本序列</li>
-  <li>attention_mask 注意力掩码，1 表示未遮掩，0表示遮掩。通常会使用下三角矩阵对输出进行遮盖，防止模型作弊。</li>
-  <li>position_ids 输入文本序列的位置编号，从0开始</li>
-  <li>past_key_values 若use_cache为真则之前的kv值会被用于加速推理</li>
-  <li>inputs_embeds 模型支持直接传入input的嵌入张量，代替 input_ids</li>
-  <li>use_cache 是否使用KV cache加速推理，通过使用 cache 缓存权重等值加速推理</li>
+  <li>input_ids 可简单理解为输入的文本序列</li>
+  <li>attention_mask 注意力掩码，1 表示未遮掩，0 表示遮掩。通常会使用下三角矩阵对输出进行遮盖，防止模型作弊。</li>
+  <li>position_ids 输入文本序列的位置编号，从 0 开始</li>
+  <li>past_key_values 若 use_cache 为真则之前的kv值会被用于加速推理</li>
+  <li>inputs_embeds 模型支持直接传入 input 的嵌入张量，代替 input_ids</li>
+  <li>use_cache 是否使用 KV cache 加速推理，通过使用 cache 缓存权重等值加速推理</li>
   <li>output_attentions 是否要返回所有注意力层的注意力张量</li>
   <li>output_hidden_states 是否要返回所有层的隐藏层状态张量</li>
-  <li>return_dict 指示返回的类型是<code class="language-plaintext highlighter-rouge">~utils.ModelOutput</code> 还是 tuple</li>
+  <li>return_dict 指示返回的类型是 <code class="language-plaintext highlighter-rouge">~utils.ModelOutput</code> 还是 tuple</li>
 </ul>
 
-<p>接下来看看 forward 的实现。略去错误机制和准备过程代码，最关键的是 <code class="language-plaintext highlighter-rouge">attention_mask</code> 如何被准备的。回顾一下 transformers 机制里的注意力掩码，它是用来在训练和推理时遮挡后续部分的输出，防止模型看到未来的输出而“作弊”用的。这里不得不感慨代码更新速度之快：现在最新版本的 transformers 代码使用 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code>，而 4.37 之前的版本使用的函数还是 <code class="language-plaintext highlighter-rouge">_expand_mask</code>、<code class="language-plaintext highlighter-rouge">_make_causal_mask</code> 🙌：</p>
+<p><strong>masked Attention</strong></p>
+
+<p>接下来看看 forward 的实现。略去错误机制和其他准备过程，来看看神秘的 <code class="language-plaintext highlighter-rouge">attention_mask</code> 如何被准备的。回顾一下 transformers 机制里的注意力掩码，它是用来在训练和推理时遮挡后续部分的输出，防止模型看到未来的输出而“作弊”用的。从公式的角度看，$ MaskAttn=softmax(\frac{QK^T}{\sqrt{d_k}}+masked)V $ ，公式的前半部分主要在计算注意力矩阵，而 $V$是我们输入的矩阵，既然掩码是为了防止$V$偷看到未来输出的权重的，那么掩码就应该是下三角矩阵，右上部分应该置为很小的负数。</p>
+
+<p>这点从代码中也可以得到验证，在此不得不感慨代码更新速度之快：现在最新版本的 transformers 代码使用 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code>，而 4.37 之前的版本使用的函数还是 <code class="language-plaintext highlighter-rouge">_expand_mask</code>、<code class="language-plaintext highlighter-rouge">_make_causal_mask</code> 🙌：</p>
+
+<p><code class="language-plaintext highlighter-rouge">input_ids</code> 是我们输入的文本矩阵，维度通常是 <code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code>。因此代码前四行也是如此提取出 <code class="language-plaintext highlighter-rouge">batch_size</code> 和 <code class="language-plaintext highlighter-rouge">seq_len</code> 的。<code class="language-plaintext highlighter-rouge">position_ios</code> 给我们输入的文本单词从 0 或 <code class="language-plaintext highlighter-rouge">past_key_values_length</code> 开始编号。随后，15 行将 <code class="language-plaintext highlighter-rouge">input_ids</code> 推入嵌入层，推理正式开始。</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ... to be continued some are omitted
-</span>
-  <span class="n">input_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+</span>  <span class="n">input_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
     <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
   <span class="k">elif</span> <span class="n">inputs_embeds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
     <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">inputs_embeds</span><span class="p">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
@@ -561,7 +592,7 @@
 </span>  <span class="n">hidden_states</span> <span class="o">=</span> <span class="n">inputs_embeds</span>
 </code></pre></div></div>
 
-<p>那就让我们看看 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code> 葫芦里卖的什么药：</p>
+<p>再之后，代码开始使用库内函数准备注意力掩码了，行，那就让我们看看 <code class="language-plaintext highlighter-rouge">_prepare_4d_causal_attention_mask</code> 函数里到底卖的什么药：</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">_prepare_4d_causal_attention_mask</span><span class="p">(</span>
   <span class="n">attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">],</span>
@@ -612,7 +643,7 @@
   <span class="k">return</span> <span class="n">causal_4d_mask</span>
 </code></pre></div></div>
 
-<p>上面的函数输入是一个二维张量<code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code>，输出是一个四维<code class="language-plaintext highlighter-rouge">(batch_size, 1, seq_len, key_value_len)</code>。该函数会去调用 <code class="language-plaintext highlighter-rouge">AttentionMaskConverter</code> 的 <code class="language-plaintext highlighter-rouge">to_causal_4d</code> 或 <code class="language-plaintext highlighter-rouge">to_4d</code>，而它们俩最终绕不开 <code class="language-plaintext highlighter-rouge">_make_causal_mask</code>：</p>
+<p>上面的函数输入是一个二维张量<code class="language-plaintext highlighter-rouge">(batch_size, seq_len)</code>，输出是一个四维<code class="language-plaintext highlighter-rouge">(batch_size, 1, seq_len, key_value_len)</code>。该函数会去调用 <code class="language-plaintext highlighter-rouge">AttentionMaskConverter</code> 的 <code class="language-plaintext highlighter-rouge">to_causal_4d</code> 或 <code class="language-plaintext highlighter-rouge">to_4d</code>，而它们俩弯弯绕绕的，但最终仍离不开 <code class="language-plaintext highlighter-rouge">_make_causal_mask</code>：</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">_make_causal_mask</span><span class="p">(</span>
   <span class="n">input_ids_shape</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Size</span><span class="p">,</span>
@@ -650,7 +681,9 @@
   <span class="n">mask</span><span class="p">.</span><span class="n">masked_fill_</span><span class="p">(</span><span class="n">mask_cond</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">mask_cond</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="n">view</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>这里大家不妨思考一下：为什么 Mask 矩阵必须是下三角归零，而上三角全为最小值？简单地说，生成文本序列时只能参考之前的词，而不能参考未来生成的词。当 decoder 使用 masked 注意力机制生成输出时，计算 $ QK^T $ 的注意力权重时，我们允许 query 去查看之前生成词的信息，但不允许 query 查看之后生成的词（因为它们还未被产生）。对应到矩阵乘法中，就意味着 query 对应的行向量序号必须大于等于 key 的行向量序号。</p>
+<p>这里大家不妨思考一下：为什么 Mask 矩阵必须是下三角归零，而上三角全为最小值？上文只是简单地说是为了防止“作弊”。具体原因是：生成文本序列时，模型只能参考之前的词，而不能参考未来生成的词。当 decoder 使用 masked 注意力机制生成输出时，计算 $ QK^T $ 的注意力权重时，我们允许 query 去查看之前生成词的信息，但不允许 query 查看之后生成的词（因为它们还未被产生）。对应到矩阵乘法中，就意味着 query 对应的行向量序号必须大于等于 key 的行向量序号。</p>
+
+<p><strong>译码层</strong></p>
 
 <p>好，我们在注意力掩码这边花了太多功夫了。接下来继续看 <code class="language-plaintext highlighter-rouge">forward</code> 函数的实现👇：首先是初始化张量，然后就是 <code class="language-plaintext highlighter-rouge">llamaModel</code> 对译码层的具体处理。对于这个主 for 循环，先抛开使用检查点的逻辑部分，直接看调用 <code class="language-plaintext highlighter-rouge">decoder_layer</code> 部分，就会发现循环只是在不断地调用 <code class="language-plaintext highlighter-rouge">decoder_layer</code>（也就是 <code class="language-plaintext highlighter-rouge">LlamaDecoderLayer:forward</code>）来进行推理，然后把得到的输出结果再作为下一层的输入继续前推，直到所有子层的前推结束。循环退出后，<code class="language-plaintext highlighter-rouge">hidden_states</code> 会最后加一层归一化，最后通过 transformers 自带的 <code class="language-plaintext highlighter-rouge">BaseModelOutputWithPast</code> 将最后的输出张量和 kv 相关信息返回，该类是框架中包含 past kv 值的基础模型输出类，关于此类就不详细展开讲了。</p>
 
@@ -702,7 +735,7 @@
 
 <h2 id="最终成型">最终成型</h2>
 
-<p>由于篇幅关系（这篇博文已经是我写过的最长的博客了），这里仅介绍最常用的 <code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code>。</p>
+<p>由于篇幅关系，这里仅介绍最常用的 <code class="language-plaintext highlighter-rouge">LlamaForCausalLM</code>，该模型是因果类语言模型，可以根据用户给的上文来续写下文，也可以回答用户提出的问题。</p>
 
 <h3 id="llamaforcausallm">LlamaForCausalLM</h3>
 
@@ -964,7 +997,7 @@
     
     <h2 class="archive__item-title" itemprop="headline">
       
-        <a href="/ai/2023/10/22/transformer.html" rel="permalink">Transformers
+        <a href="/ai/2023/10/22/transformer.html" rel="permalink">大话 transformer 架构
 </a>
       
     </h2>
@@ -978,7 +1011,7 @@
 
 </p>
     
-    <p class="archive__item-excerpt" itemprop="description">总栏
+    <p class="archive__item-excerpt" itemprop="description">transformer 概要
 </p>
   </article>
 </div>

@@ -299,7 +299,7 @@ var store = [{
         "url": "/mpi&openmp/2023/09/10/cuda-mem.html",
         "teaser": "/assets/img/teaser.jpg"
       },{
-        "title": "Transformers",
+        "title": "大话 transformer 架构",
         "excerpt":"大话 transformer 架构 前言 去年 OpenAI 发布的 ChatGPT3 开启了新一轮对 AI 研究的热潮，不过，这一切的故事还要从 2017 年（甚至更早）说起。自从 deepMind 团队发表的 “Attention is all your need” 论文提出了 transformer 架构后，绝大部分有影响力模型的基础架构都基于的 transformer（比如基于 decode 的GPT、基于 encode 的 BERT、基于 encode-decode 的 T5 等等），具体有哪些模型可以来看看 huggingface 罗列的 故事的开始 与大多数博客一样，我们需要请出论文中最有名的架构图来解释 transformer： 上面的架构图可以简单地分成两个部分，encoder（左边）和 decoder（右边）。而组成他们的组件又有一些共通之处，因此 transformer 架构其实没有大家想的那样复杂。 虽然现在 transformer 被应用于非常多的 AI 领域，但起初它是在自然语言处理 (NLP) 中针对序列到序列 (seq2seq)...","categories": ["AI"],
         "tags": ["transformer","AI"],
         "url": "/ai/2023/10/22/transformer.html",
@@ -318,7 +318,7 @@ var store = [{
         "teaser": "/assets/img/teaser.jpg"
       },{
         "title": "huggingface下llama代码细读（下）",
-        "excerpt":"huggingface下llama代码细读（下） 前言 上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 llama 模型的层级搭建挪到了本篇博客中。 llama 模型 译码层 有了上面说的基本组件后，如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。LlamaDecoderLayer 类将 LlamaAttention LlamaRMSNorm 等基件组合起来，构成了 llama 的译码层。事实上，👆图所展示的架构就是一个译码层的架构。 class LlamaDecoderLayer(nn.Module): def __init__(self, config: LlamaConfig): super().__init__() self.hidden_size = config.hidden_size self.self_attn = ( LlamaAttention(config=config) if not getattr(config, \"_flash_attn_2_enabled\", False) else LlamaFlashAttention2(config=config) ) self.mlp = LlamaMLP(config) self.input_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps) self.post_attention_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)...","categories": ["AI"],
+        "excerpt":"huggingface下llama代码细读（下） 前言 上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 transformer llama 的代码解读下半部分移动到了本篇博客中，要想从头开始的读者们可以参考这篇博客。 llama 模型 译码层 在了解了构成 llama 的基本组件后，要如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。在大模型推理阶段，输入的文本序列会经过多个译码层，执行自注意力等运算。译码层由 LlamaDecoderLayer 类表示，它将 LlamaAttention LlamaRMSNorm 等基件组合起来。上图所展示的架构就是一个译码层的架构。 class LlamaDecoderLayer(nn.Module): def __init__(self, config: LlamaConfig): super().__init__() self.hidden_size = config.hidden_size self.self_attn = ( LlamaAttention(config=config) if not getattr(config, \"_flash_attn_2_enabled\", False) else LlamaFlashAttention2(config=config) ) self.mlp = LlamaMLP(config) self.input_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps) self.post_attention_layernorm =...","categories": ["AI"],
         "tags": ["Transformer","AI"],
         "url": "/ai/2023/11/30/huggingface2.html",
         "teaser": "/assets/img/teaser.jpg"

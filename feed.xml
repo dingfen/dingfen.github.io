@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.3">Jekyll</generator><link href="https://dingfen.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://dingfen.github.io/" rel="alternate" type="text/html" /><updated>2023-12-05T22:46:06+08:00</updated><id>https://dingfen.github.io/feed.xml</id><title type="html">峰子的乐园</title><subtitle>a small but pretty website for me</subtitle><author><name>Bill Ding</name></author><entry><title type="html">大模型推理优化技术之显存优化</title><link href="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html" rel="alternate" type="text/html" title="大模型推理优化技术之显存优化" /><published>2023-11-30T00:00:00+08:00</published><updated>2023-11-30T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/11/30/LLM-inference1</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html">&lt;h1 id=&quot;大模型推理优化技术之显存优化&quot;&gt;大模型推理优化技术之显存优化&lt;/h1&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.3">Jekyll</generator><link href="https://dingfen.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://dingfen.github.io/" rel="alternate" type="text/html" /><updated>2023-12-06T23:45:08+08:00</updated><id>https://dingfen.github.io/feed.xml</id><title type="html">峰子的乐园</title><subtitle>a small but pretty website for me</subtitle><author><name>Bill Ding</name></author><entry><title type="html">大模型推理优化技术之显存优化</title><link href="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html" rel="alternate" type="text/html" title="大模型推理优化技术之显存优化" /><published>2023-11-30T00:00:00+08:00</published><updated>2023-11-30T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/11/30/LLM-inference1</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html">&lt;h1 id=&quot;大模型推理优化技术之显存优化&quot;&gt;大模型推理优化技术之显存优化&lt;/h1&gt;
 
 &lt;h2 id=&quot;大模型推理可能会遇到的性能问题&quot;&gt;大模型推理可能会遇到的性能问题&lt;/h2&gt;
 
@@ -16,13 +16,17 @@
 
 &lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
-&lt;p&gt;上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 llama 模型的层级搭建挪到了本篇博客中。&lt;/p&gt;
+&lt;p&gt;上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 transformer llama 的代码解读下半部分移动到了本篇博客中，要想从头开始的读者们可以参考&lt;a href=&quot;https://dingfen.github.io/ai/2023/10/30/huggingface1.html&quot;&gt;这篇博客&lt;/a&gt;。&lt;/p&gt;
 
 &lt;h2 id=&quot;llama-模型&quot;&gt;llama 模型&lt;/h2&gt;
 
+&lt;center&gt;
+&lt;img src=&quot;/assets/img/LLM/llama.png&quot; /&gt;
+&lt;/center&gt;
+
 &lt;h3 id=&quot;译码层&quot;&gt;译码层&lt;/h3&gt;
 
-&lt;p&gt;有了上面说的基本组件后，如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaDecoderLayer&lt;/code&gt; 类将 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaAttention&lt;/code&gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaRMSNorm&lt;/code&gt; 等基件组合起来，构成了 llama 的译码层。事实上，👆图所展示的架构就是一个译码层的架构。&lt;/p&gt;
+&lt;p&gt;在了解了构成 llama 的基本组件后，要如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。在大模型推理阶段，输入的文本序列会经过多个译码层，执行自注意力等运算。译码层由 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaDecoderLayer&lt;/code&gt; 类表示，它将 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaAttention&lt;/code&gt; &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaRMSNorm&lt;/code&gt; 等基件组合起来。上图所展示的架构就是一个译码层的架构。&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;LlamaDecoderLayer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Module&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
   &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__init__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LlamaConfig&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
@@ -38,7 +42,7 @@
     &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;post_attention_layernorm&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LlamaRMSNorm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hidden_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;eps&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rms_norm_eps&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;而其 forward 函数则完美展示了架构图内张量的执行情况：13 行先将输入执行一次 RMSNorm 归一，16-25行执行一次注意力运算，并加上了残差结构，27-33行将注意力结果输出到 MLP 中，最后返回结果👇&lt;/p&gt;
+&lt;p&gt;上面的构造函数罗列了译码层的几个组件：自注意力层，MLP 层和两个 RMSNorm 层，而其 forward 函数则更详细地展示了架构图内张量的执行情况：13 行先将输入执行一次 RMSNorm 归一，16-25 行执行一次注意力运算，加上了残差结构，再执行一次 RMSNorm 归一，27-33 行将注意力结果输出到 MLP 中，最后返回结果👇。&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;forward&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
   &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
@@ -86,7 +90,25 @@
 
 &lt;h3 id=&quot;llama-model&quot;&gt;llama Model&lt;/h3&gt;
 
-&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaModel&lt;/code&gt; 由上面介绍的多个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaDecoderLayer&lt;/code&gt; 堆叠而成。以之前的 llama-7b-hf 为例，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;num_hidden_layers&lt;/code&gt; 为32，意思是该模型一共堆叠了 32 层译码层。&lt;/p&gt;
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaModel&lt;/code&gt; 由上面介绍的多个 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaDecoderLayer&lt;/code&gt; 堆叠而成。以之前的 llama-7b-hf 参数为例，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;num_hidden_layers&lt;/code&gt; 为32，意思是该模型一共堆叠了 32 层译码层。&lt;/p&gt;
+
+&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;architecture&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;LlamaForCausalLM&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;hidden_act&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;silu&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;hidden_size&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4096&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;initializer_range&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.02&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;intermediate_size&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;11008&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;max_position_embeddings&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4096&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;model_type&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;llama&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;num_attention_heads&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;num_hidden_layers&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;num_key_value_heads&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;pretraining_tp&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;rms_norm_eps&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1e-05&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;除此之外，Llama 模型在输入的最前头加入了一个嵌入层（Embedding），最后又加了一层 RMSNorm 进行归一，下面是它的构造函数：&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;LlamaModel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;LlamaPreTrainedModel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
     &lt;span class=&quot;s&quot;&gt;&quot;&quot;&quot;
@@ -107,7 +129,7 @@
 &lt;/span&gt;    &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;post_init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;该类继承自 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaPreTrainedModel&lt;/code&gt;，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaPreTrainedModel&lt;/code&gt; 没有那么神秘，只不过是在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaDecoderLayer&lt;/code&gt; 的基础上包裹了一些初始化操作而已：&lt;/p&gt;
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaModel&lt;/code&gt; 类继承自 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaPreTrainedModel&lt;/code&gt;，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaPreTrainedModel&lt;/code&gt; 没有那么神秘，只不过是在 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaDecoderLayer&lt;/code&gt; 的基础上包裹了一些初始化操作而已：&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;LlamaPreTrainedModel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PreTrainedModel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
   &lt;span class=&quot;n&quot;&gt;config_class&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;LlamaConfig&lt;/span&gt;
@@ -129,9 +151,13 @@
             &lt;span class=&quot;n&quot;&gt;module&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;weight&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;module&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;padding_idx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;zero_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;h4 id=&quot;llamamodel的forward函数&quot;&gt;LlamaModel的forward函数&lt;/h4&gt;
+&lt;h4 id=&quot;llama-模型的推理过程&quot;&gt;Llama 模型的推理过程&lt;/h4&gt;
 
-&lt;p&gt;可以简单地理解为，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaModel::forward&lt;/code&gt; 是整个大模型的“未封装的”入口。既然是个入口，首先关心一下它需要哪些变量输入：&lt;/p&gt;
+&lt;p&gt;我们从 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaModel&lt;/code&gt; 代码中已经了解到，Llama 模型将 32 层译码层堆叠起来，输入的文本序列经过一层层译码被最终转化成输出序列。而 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaModel::forward&lt;/code&gt; 作为整个大模型“未封装的”入口，显得尤为重要。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;参数一览&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;既然是个入口，我们首先从它的参数入手：&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;forward&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
     &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
@@ -148,22 +174,27 @@
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
 &lt;ul&gt;
-  &lt;li&gt;input_ids 输入的文本序列&lt;/li&gt;
-  &lt;li&gt;attention_mask 注意力掩码，1 表示未遮掩，0表示遮掩。通常会使用下三角矩阵对输出进行遮盖，防止模型作弊。&lt;/li&gt;
-  &lt;li&gt;position_ids 输入文本序列的位置编号，从0开始&lt;/li&gt;
-  &lt;li&gt;past_key_values 若use_cache为真则之前的kv值会被用于加速推理&lt;/li&gt;
-  &lt;li&gt;inputs_embeds 模型支持直接传入input的嵌入张量，代替 input_ids&lt;/li&gt;
-  &lt;li&gt;use_cache 是否使用KV cache加速推理，通过使用 cache 缓存权重等值加速推理&lt;/li&gt;
+  &lt;li&gt;input_ids 可简单理解为输入的文本序列&lt;/li&gt;
+  &lt;li&gt;attention_mask 注意力掩码，1 表示未遮掩，0 表示遮掩。通常会使用下三角矩阵对输出进行遮盖，防止模型作弊。&lt;/li&gt;
+  &lt;li&gt;position_ids 输入文本序列的位置编号，从 0 开始&lt;/li&gt;
+  &lt;li&gt;past_key_values 若 use_cache 为真则之前的kv值会被用于加速推理&lt;/li&gt;
+  &lt;li&gt;inputs_embeds 模型支持直接传入 input 的嵌入张量，代替 input_ids&lt;/li&gt;
+  &lt;li&gt;use_cache 是否使用 KV cache 加速推理，通过使用 cache 缓存权重等值加速推理&lt;/li&gt;
   &lt;li&gt;output_attentions 是否要返回所有注意力层的注意力张量&lt;/li&gt;
   &lt;li&gt;output_hidden_states 是否要返回所有层的隐藏层状态张量&lt;/li&gt;
-  &lt;li&gt;return_dict 指示返回的类型是&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;~utils.ModelOutput&lt;/code&gt; 还是 tuple&lt;/li&gt;
+  &lt;li&gt;return_dict 指示返回的类型是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;~utils.ModelOutput&lt;/code&gt; 还是 tuple&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;接下来看看 forward 的实现。略去错误机制和准备过程代码，最关键的是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;attention_mask&lt;/code&gt; 如何被准备的。回顾一下 transformers 机制里的注意力掩码，它是用来在训练和推理时遮挡后续部分的输出，防止模型看到未来的输出而“作弊”用的。这里不得不感慨代码更新速度之快：现在最新版本的 transformers 代码使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_prepare_4d_causal_attention_mask&lt;/code&gt;，而 4.37 之前的版本使用的函数还是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_expand_mask&lt;/code&gt;、&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_make_causal_mask&lt;/code&gt; 🙌：&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;masked Attention&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;接下来看看 forward 的实现。略去错误机制和其他准备过程，来看看神秘的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;attention_mask&lt;/code&gt; 如何被准备的。回顾一下 transformers 机制里的注意力掩码，它是用来在训练和推理时遮挡后续部分的输出，防止模型看到未来的输出而“作弊”用的。从公式的角度看，$ MaskAttn=softmax(\frac{QK^T}{\sqrt{d_k}}+masked)V $ ，公式的前半部分主要在计算注意力矩阵，而 $V$是我们输入的矩阵，既然掩码是为了防止$V$偷看到未来输出的权重的，那么掩码就应该是下三角矩阵，右上部分应该置为很小的负数。&lt;/p&gt;
+
+&lt;p&gt;这点从代码中也可以得到验证，在此不得不感慨代码更新速度之快：现在最新版本的 transformers 代码使用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_prepare_4d_causal_attention_mask&lt;/code&gt;，而 4.37 之前的版本使用的函数还是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_expand_mask&lt;/code&gt;、&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_make_causal_mask&lt;/code&gt; 🙌：&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;input_ids&lt;/code&gt; 是我们输入的文本矩阵，维度通常是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;(batch_size, seq_len)&lt;/code&gt;。因此代码前四行也是如此提取出 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;batch_size&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;seq_len&lt;/code&gt; 的。&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;position_ios&lt;/code&gt; 给我们输入的文本单词从 0 或 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;past_key_values_length&lt;/code&gt; 开始编号。随后，15 行将 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;input_ids&lt;/code&gt; 推入嵌入层，推理正式开始。&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c1&quot;&gt;# ... to be continued some are omitted
-&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;input_ids&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;input_ids&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;batch_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;seq_length&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input_ids&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
   &lt;span class=&quot;k&quot;&gt;elif&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inputs_embeds&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;is&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;not&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;batch_size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;seq_length&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inputs_embeds&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
@@ -192,7 +223,7 @@
 &lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;hidden_states&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inputs_embeds&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;那就让我们看看 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_prepare_4d_causal_attention_mask&lt;/code&gt; 葫芦里卖的什么药：&lt;/p&gt;
+&lt;p&gt;再之后，代码开始使用库内函数准备注意力掩码了，行，那就让我们看看 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_prepare_4d_causal_attention_mask&lt;/code&gt; 函数里到底卖的什么药：&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;_prepare_4d_causal_attention_mask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
   &lt;span class=&quot;n&quot;&gt;attention_mask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Optional&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;torch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Tensor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
@@ -243,7 +274,7 @@
   &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;causal_4d_mask&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;上面的函数输入是一个二维张量&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;(batch_size, seq_len)&lt;/code&gt;，输出是一个四维&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;(batch_size, 1, seq_len, key_value_len)&lt;/code&gt;。该函数会去调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AttentionMaskConverter&lt;/code&gt; 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;to_causal_4d&lt;/code&gt; 或 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;to_4d&lt;/code&gt;，而它们俩最终绕不开 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_make_causal_mask&lt;/code&gt;：&lt;/p&gt;
+&lt;p&gt;上面的函数输入是一个二维张量&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;(batch_size, seq_len)&lt;/code&gt;，输出是一个四维&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;(batch_size, 1, seq_len, key_value_len)&lt;/code&gt;。该函数会去调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AttentionMaskConverter&lt;/code&gt; 的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;to_causal_4d&lt;/code&gt; 或 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;to_4d&lt;/code&gt;，而它们俩弯弯绕绕的，但最终仍离不开 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_make_causal_mask&lt;/code&gt;：&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;_make_causal_mask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
   &lt;span class=&quot;n&quot;&gt;input_ids_shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;torch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
@@ -281,7 +312,9 @@
   &lt;span class=&quot;n&quot;&gt;mask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;masked_fill_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mask_cond&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mask_cond&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mask&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 
-&lt;p&gt;这里大家不妨思考一下：为什么 Mask 矩阵必须是下三角归零，而上三角全为最小值？简单地说，生成文本序列时只能参考之前的词，而不能参考未来生成的词。当 decoder 使用 masked 注意力机制生成输出时，计算 $ QK^T $ 的注意力权重时，我们允许 query 去查看之前生成词的信息，但不允许 query 查看之后生成的词（因为它们还未被产生）。对应到矩阵乘法中，就意味着 query 对应的行向量序号必须大于等于 key 的行向量序号。&lt;/p&gt;
+&lt;p&gt;这里大家不妨思考一下：为什么 Mask 矩阵必须是下三角归零，而上三角全为最小值？上文只是简单地说是为了防止“作弊”。具体原因是：生成文本序列时，模型只能参考之前的词，而不能参考未来生成的词。当 decoder 使用 masked 注意力机制生成输出时，计算 $ QK^T $ 的注意力权重时，我们允许 query 去查看之前生成词的信息，但不允许 query 查看之后生成的词（因为它们还未被产生）。对应到矩阵乘法中，就意味着 query 对应的行向量序号必须大于等于 key 的行向量序号。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;译码层&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;好，我们在注意力掩码这边花了太多功夫了。接下来继续看 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;forward&lt;/code&gt; 函数的实现👇：首先是初始化张量，然后就是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;llamaModel&lt;/code&gt; 对译码层的具体处理。对于这个主 for 循环，先抛开使用检查点的逻辑部分，直接看调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;decoder_layer&lt;/code&gt; 部分，就会发现循环只是在不断地调用 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;decoder_layer&lt;/code&gt;（也就是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaDecoderLayer:forward&lt;/code&gt;）来进行推理，然后把得到的输出结果再作为下一层的输入继续前推，直到所有子层的前推结束。循环退出后，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hidden_states&lt;/code&gt; 会最后加一层归一化，最后通过 transformers 自带的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;BaseModelOutputWithPast&lt;/code&gt; 将最后的输出张量和 kv 相关信息返回，该类是框架中包含 past kv 值的基础模型输出类，关于此类就不详细展开讲了。&lt;/p&gt;
 
@@ -333,7 +366,7 @@
 
 &lt;h2 id=&quot;最终成型&quot;&gt;最终成型&lt;/h2&gt;
 
-&lt;p&gt;由于篇幅关系（这篇博文已经是我写过的最长的博客了），这里仅介绍最常用的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaForCausalLM&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;由于篇幅关系，这里仅介绍最常用的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;LlamaForCausalLM&lt;/code&gt;，该模型是因果类语言模型，可以根据用户给的上文来续写下文，也可以回答用户提出的问题。&lt;/p&gt;
 
 &lt;h3 id=&quot;llamaforcausallm&quot;&gt;LlamaForCausalLM&lt;/h3&gt;
 
@@ -849,7 +882,7 @@
 
 &lt;h2 id=&quot;小结&quot;&gt;小结&lt;/h2&gt;
 
-&lt;p&gt;本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是用什么训练而成的。随后，我介绍了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。本博客重点分析了 llama 的各个基件和中间件，从底至上地分析了 hugginface llama 的实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。下一篇论文将介绍 llama 每一层的实现与组合，主要是利用本篇博客中介绍的组件搭建起译码层的故事，并借此说明大模型推理的主要流程。当然，我不可能面面俱到地介绍所有细节，但也能揭开大模型的神秘面纱，从中瞥见一些人工智能的奥秘。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">揭开它神秘的面纱</summary></entry><entry><title type="html">Transformers</title><link href="https://dingfen.github.io/ai/2023/10/22/transformer.html" rel="alternate" type="text/html" title="Transformers" /><published>2023-10-22T00:00:00+08:00</published><updated>2023-10-22T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/10/22/transformer</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/10/22/transformer.html">&lt;h1 id=&quot;大话-transformer-架构&quot;&gt;大话 transformer 架构&lt;/h1&gt;
+&lt;p&gt;本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是用什么训练而成的。随后，我介绍了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。本博客重点分析了 llama 的各个基件和中间件，从底至上地分析了 hugginface llama 的实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。下一篇论文将介绍 llama 每一层的实现与组合，主要是利用本篇博客中介绍的组件搭建起译码层的故事，并借此说明大模型推理的主要流程。当然，我不可能面面俱到地介绍所有细节，但也能揭开大模型的神秘面纱，从中瞥见一些人工智能的奥秘。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">揭开它神秘的面纱</summary></entry><entry><title type="html">大话 transformer 架构</title><link href="https://dingfen.github.io/ai/2023/10/22/transformer.html" rel="alternate" type="text/html" title="大话 transformer 架构" /><published>2023-10-22T00:00:00+08:00</published><updated>2023-10-22T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/10/22/transformer</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/10/22/transformer.html">&lt;h1 id=&quot;大话-transformer-架构&quot;&gt;大话 transformer 架构&lt;/h1&gt;
 
 &lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
@@ -927,7 +960,7 @@
 
 &lt;h3 id=&quot;masked-注意力机制&quot;&gt;Masked 注意力机制&lt;/h3&gt;
 
-&lt;h2 id=&quot;位置编码与嵌入技术&quot;&gt;位置编码与嵌入技术&lt;/h2&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="transformer" /><category term="AI" /><summary type="html">总栏</summary></entry><entry><title type="html">CUDA 进阶之内存优化</title><link href="https://dingfen.github.io/mpi&openmp/2023/09/10/cuda-mem.html" rel="alternate" type="text/html" title="CUDA 进阶之内存优化" /><published>2023-09-10T00:00:00+08:00</published><updated>2023-09-10T00:00:00+08:00</updated><id>https://dingfen.github.io/mpi&amp;openmp/2023/09/10/cuda-mem</id><content type="html" xml:base="https://dingfen.github.io/mpi&amp;openmp/2023/09/10/cuda-mem.html">&lt;h1 id=&quot;cuda-进阶之内存优化-关于主机与设备间的数据传输&quot;&gt;CUDA 进阶之内存优化 关于主机与设备间的数据传输&lt;/h1&gt;
+&lt;h2 id=&quot;位置编码与嵌入技术&quot;&gt;位置编码与嵌入技术&lt;/h2&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="transformer" /><category term="AI" /><summary type="html">transformer 概要</summary></entry><entry><title type="html">CUDA 进阶之内存优化</title><link href="https://dingfen.github.io/mpi&openmp/2023/09/10/cuda-mem.html" rel="alternate" type="text/html" title="CUDA 进阶之内存优化" /><published>2023-09-10T00:00:00+08:00</published><updated>2023-09-10T00:00:00+08:00</updated><id>https://dingfen.github.io/mpi&amp;openmp/2023/09/10/cuda-mem</id><content type="html" xml:base="https://dingfen.github.io/mpi&amp;openmp/2023/09/10/cuda-mem.html">&lt;h1 id=&quot;cuda-进阶之内存优化-关于主机与设备间的数据传输&quot;&gt;CUDA 进阶之内存优化 关于主机与设备间的数据传输&lt;/h1&gt;
 
 &lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
