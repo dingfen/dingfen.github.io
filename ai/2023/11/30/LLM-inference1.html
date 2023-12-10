@@ -212,7 +212,7 @@
 
 
 
-  less than 1 minutes read
+  1 minutes read
 
 </p>
       
@@ -358,7 +358,12 @@
   <li><a href="#大模型推理优化技术之显存优化">大模型推理优化技术之显存优化</a>
     <ul>
       <li><a href="#大模型推理可能会遇到的性能问题">大模型推理可能会遇到的性能问题</a></li>
-      <li><a href="#kv-cache">KV Cache</a></li>
+      <li><a href="#kv-cache">KV Cache</a>
+        <ul>
+          <li><a href="#原理">原理</a></li>
+          <li><a href="#代码">代码</a></li>
+        </ul>
+      </li>
     </ul>
   </li>
 </ul>
@@ -376,11 +381,53 @@
 
 <h2 id="kv-cache">KV Cache</h2>
 
-<p>这是大模型推理性能优化的最常用技术。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 <code class="language-plaintext highlighter-rouge">use_cache = True</code> 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？</p>
+<p>这是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 <code class="language-plaintext highlighter-rouge">use_cache = True</code> 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？</p>
 
-<p>###</p>
+<h3 id="原理">原理</h3>
 
-<p>该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。</p>
+<p>首先，<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html#forward-%E5%AE%9E%E7%8E%B0">回顾一下 transformer 中计算注意力权重的过程</a>：</p>
+
+\[Attn = softmax(\frac{QK^T}{\sqrt{d}})V\]
+
+<p>decoder 的输入在进入译码层后，就会分别经过 query key value 三个线性层，变为 Q K V 矩阵，然后进入 Masked multi head attention 做下图的运算。图中的 mask 是为了防止当前生成的 token 根据未来 token 的信息产生。</p>
+
+<center>
+<img src="/assets/img/LLM/kvcache.png" />
+</center>
+
+<p>注意到，Transformer 模型具有自回归推理的特点，即每次推理都会将上次推理输出的结果作为输入的一部分，而每次推理会输出下一个 token，反复执行多次后得到最终的输出。因此，推理时，Transformer 的前后两轮的输出只相差一个 token，存在重复计算！</p>
+
+<p>比如，图上例子中，若不使用 KV cache 技术，在推理生成“学”和“生”字时，前三行的 QK 矩阵和注意力矩阵的值都是<em>一样的</em>。以第一行为例，注意力矩阵的向量值取决于 Q 矩阵的第一行（K V 咱不关心）。每次计算得到的注意力矩阵向量，只有最后一行是<em>全新的</em>，用于产生新的 output。</p>
+
+<p>因此，KV Cache 的办法就是将之前已经计算过的张量保存下来，下次推理时直接计算一行 Q 矩阵就行了，前面的数据可以直接使用之前保存的张量，避免重复计算。</p>
+
+<h3 id="代码">代码</h3>
+
+<p>KV cache 技术已经应用在 huggingface transformer 库中：<a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py#L318C1-L331C97">代码</a>如下：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">head_dim</span><span class="p">)</span>
+<span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">head_dim</span><span class="p">)</span>
+<span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_split_heads</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_heads</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">head_dim</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">layer_past</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+  <span class="n">past_key</span><span class="p">,</span> <span class="n">past_value</span> <span class="o">=</span> <span class="n">layer_past</span>
+  <span class="n">key</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">((</span><span class="n">past_key</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+  <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">((</span><span class="n">past_value</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">use_cache</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
+  <span class="n">present</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="n">present</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">reorder_and_upcast_attn</span><span class="p">:</span>
+  <span class="n">attn_output</span><span class="p">,</span> <span class="n">attn_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_upcast_and_reordered_attn</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span> <span class="n">head_mask</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="n">attn_output</span><span class="p">,</span> <span class="n">attn_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">_attn</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span> <span class="n">head_mask</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>准备好 query key 和 value 矩阵后，当 <code class="language-plaintext highlighter-rouge">layer_past</code> 非空（事实上第一个词生成后就是非空的），那么直接将 <code class="language-plaintext highlighter-rouge">past_key</code> 和 <code class="language-plaintext highlighter-rouge">past_value</code> 取出，然后concat连接起来组成这次推理的 <code class="language-plaintext highlighter-rouge">key</code> 和 <code class="language-plaintext highlighter-rouge">value</code> 值。</p>
+
+<p>KV cache 可在内存空间充足的场景下使用，能有效地提升推理性能。但需要注意的是，如果生成的序列非常长（大于 2048 ）那么就很有可能出现 out of Memory。</p>
 
         
       </section>
