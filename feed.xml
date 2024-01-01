@@ -1,18 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.3">Jekyll</generator><link href="https://dingfen.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://dingfen.github.io/" rel="alternate" type="text/html" /><updated>2023-12-10T19:17:38+08:00</updated><id>https://dingfen.github.io/feed.xml</id><title type="html">峰子的乐园</title><subtitle>a small but pretty website for me</subtitle><author><name>Bill Ding</name></author><entry><title type="html">大模型推理优化技术之显存优化</title><link href="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html" rel="alternate" type="text/html" title="大模型推理优化技术之显存优化" /><published>2023-11-30T00:00:00+08:00</published><updated>2023-11-30T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/11/30/LLM-inference1</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html">&lt;h1 id=&quot;大模型推理优化技术之显存优化&quot;&gt;大模型推理优化技术之显存优化&lt;/h1&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2023-12-27T23:38:34+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">峰子的乐园</title><subtitle>a small but pretty website for me</subtitle><author><name>Bill Ding</name></author><entry><title type="html">大模型推理优化技术之显存优化</title><link href="http://localhost:4000/ai/2023/11/30/LLM-inference1.html" rel="alternate" type="text/html" title="大模型推理优化技术之显存优化" /><published>2023-11-30T00:00:00+08:00</published><updated>2023-11-30T00:00:00+08:00</updated><id>http://localhost:4000/ai/2023/11/30/LLM-inference1</id><content type="html" xml:base="http://localhost:4000/ai/2023/11/30/LLM-inference1.html">&lt;h1 id=&quot;大模型推理优化技术之-kv-cache&quot;&gt;大模型推理优化技术之 KV Cache&lt;/h1&gt;
 
-&lt;h2 id=&quot;大模型推理可能会遇到的性能问题&quot;&gt;大模型推理可能会遇到的性能问题&lt;/h2&gt;
-
-&lt;p&gt;推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。&lt;/p&gt;
-
-&lt;p&gt;计算给定 GPU 上每个字节可能的操作数，并将其与模型注意力层的算术强度进行比较，可以揭示瓶颈所在：计算或内存。我们可以利用这些信息来选择合适的 GPU 进行模型推理，如果我们的用例允许，还可以使用批处理等技术来更好地利用我们的 GPU 资源。&lt;/p&gt;
-
-&lt;h2 id=&quot;kv-cache&quot;&gt;KV Cache&lt;/h2&gt;
+&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
 &lt;p&gt;这是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;use_cache = True&lt;/code&gt; 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？&lt;/p&gt;
 
-&lt;h3 id=&quot;原理&quot;&gt;原理&lt;/h3&gt;
+&lt;h2 id=&quot;原理&quot;&gt;原理&lt;/h2&gt;
 
-&lt;p&gt;首先，&lt;a href=&quot;https://dingfen.github.io/ai/2023/10/30/huggingface1.html#forward-%E5%AE%9E%E7%8E%B0&quot;&gt;回顾一下 transformer 中计算注意力权重的过程&lt;/a&gt;：&lt;/p&gt;
+&lt;p&gt;要尝试理解 KV cache，就不得不提及当前大模型的一般推理过程。事实上，目前大多数热门的 LLM （例如 GPT-3）的推理部分本质上是一个译码器（decoder）。它们针对输入的序列文本，一个词一个词地输出文本。具体地说，这些 LLM 接受一系列 token 作为输入，并以自回归方式输出后续的 token，直到它们满足条件要求（例如，已达到生成的 token 数量或遇到停止词），或直到它生成特殊的&lt;end&gt;标记标志着生成过程的结束。此过程涉及两个阶段：预填充阶段（prefill phase）和译码阶段（decode phase）。&lt;/end&gt;&lt;/p&gt;
+
+&lt;p&gt;所谓 token 实际上描述模型中未被转化成人类语言的序列文本，参见下面的解释：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;tokens are the atomic parts of language that a model processes. One token is approximately four English characters. All inputs in natural language are converted to tokens before inputting into the model.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;预填充阶段&quot;&gt;预填充阶段&lt;/h3&gt;
+
+&lt;p&gt;在预填充阶段，LLM 处理输入 token 以计算 transformer 架构中 decoder 的 Key 和 Value 矩阵，此时 decoder 参与计算的 Query 矩阵为空（随机数）。根据 transformer 的计算过程（读者可参考网上海量介绍 transform 的文章），这些矩阵用于输出第一个 token。然后，每个新 token 都依赖于之前的所有的 token，但由于输入是完全已知的，因此从高层次看，这是一个可高度并行的矩阵运算，能充分发挥 GPU 的利用率。&lt;/p&gt;
+
+&lt;h3 id=&quot;译码阶段&quot;&gt;译码阶段&lt;/h3&gt;
+
+&lt;p&gt;在译码阶段，LLM 一次自回归生成一个输出 token，直到满足条件为止。每个连续输出 token 都需要知道先前迭代的所有输出 key 和 value。此时 Query 的序列长度是 1，而 key 和 value 的长度则是之前产生的所有输出长度，这就像是矩阵向量运算，与预填充阶段相比，它未充分利用 GPU 计算能力。GPU 的处理速度受限于数据（权重、键、值、激活）从内存传输到计算单元的速度。因此，这是个内存限制的运算阶段。&lt;/p&gt;
+
+&lt;p&gt;注意，不同的 LLM 可能会使用不同的 tokenizer ，而不同的 tokenizer 产生的 token 数量和其代表的含义也有区别。若要比较它们之间的输出 token 也并不简单。而我们容易犯的一个谬误是：&lt;u&gt;在比较推理吞吐量时，直接观察单位时间内产生的 token 数量。然而，即使两个 LLM 的每秒输出 token 相似，但如果它们使用不同的 tokenizer，那么它们真实的推理性能可能不相同&lt;/u&gt;。这是因为两者的 token 可能表示不同数量的字符。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://dingfen.github.io/ai/2023/10/30/huggingface1.html#forward-%E5%AE%9E%E7%8E%B0&quot;&gt;再回顾一下 transformer 中计算注意力权重的过程&lt;/a&gt;：&lt;/p&gt;
 
 \[Attn = softmax(\frac{QK^T}{\sqrt{d}})V\]
 
@@ -28,7 +40,7 @@
 
 &lt;p&gt;因此，KV Cache 的办法就是将之前已经计算过的张量保存下来，下次推理时直接计算一行 Q 矩阵就行了，前面的数据可以直接使用之前保存的张量，避免重复计算。&lt;/p&gt;
 
-&lt;h3 id=&quot;代码&quot;&gt;代码&lt;/h3&gt;
+&lt;h2 id=&quot;实现&quot;&gt;实现&lt;/h2&gt;
 
 &lt;p&gt;KV cache 技术已经应用在 huggingface transformer 库中：&lt;a href=&quot;https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py#L318C1-L331C97&quot;&gt;代码&lt;/a&gt;如下：&lt;/p&gt;
 
@@ -54,7 +66,107 @@
 
 &lt;p&gt;准备好 query key 和 value 矩阵后，当 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;layer_past&lt;/code&gt; 非空（事实上第一个词生成后就是非空的），那么直接将 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;past_key&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;past_value&lt;/code&gt; 取出，然后concat连接起来组成这次推理的 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;key&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;value&lt;/code&gt; 值。&lt;/p&gt;
 
-&lt;p&gt;KV cache 可在内存空间充足的场景下使用，能有效地提升推理性能。但需要注意的是，如果生成的序列非常长（大于 2048 ）那么就很有可能出现 out of Memory。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">在消费级显卡上运行大模型</summary></entry><entry><title type="html">huggingface下llama代码细读（下）</title><link href="https://dingfen.github.io/ai/2023/11/30/huggingface2.html" rel="alternate" type="text/html" title="huggingface下llama代码细读（下）" /><published>2023-11-30T00:00:00+08:00</published><updated>2023-11-30T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/11/30/huggingface2</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/11/30/huggingface2.html">&lt;h1 id=&quot;huggingface下llama代码细读下&quot;&gt;huggingface下llama代码细读（下）&lt;/h1&gt;
+&lt;p&gt;KV cache 可在内存空间充足的场景下使用，能有效地提升推理性能。但需要注意的是，如果生成的序列非常长（大于 2048 ）那么就很有可能出现 out of Memory。都说 LLM 训练和推理时内存开销巨大，那么到底有多大呢？程序员该如何快速评估一个 LLM 推理时大致需要消耗多少内存？&lt;/p&gt;
+
+&lt;h3 id=&quot;内存开销粗算&quot;&gt;内存开销粗算&lt;/h3&gt;
+
+&lt;p&gt;粗略地看，LLM 在 GPU 上推理时，有两样东西占用了最多的内存空间：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;模型权重：模型参数占用内存。以 Llama-2-7b 为例（70 亿参数），通常使用 FP16 加载时，那么显存大小约为 70 亿 × 2 字节（FP16）= 14 GB。&lt;/li&gt;
+  &lt;li&gt;KV cache：被缓存起来的自注意力张量。现在我们粗略计算一下 KV cache 占用的内存大小。首先，每一个 transformer 子层都含有一层注意力层，每层注意力都需要一个 KV cache，KV cache 中一个向量的维度是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hidden_size&lt;/code&gt;。再考虑 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;batch_size&lt;/code&gt; 和  &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;seq_len&lt;/code&gt;，每个输出的 token 都需要这样的 KV cache，而 GPU 通常会同时并行处理 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;batch_size&lt;/code&gt; 个这样的输入/输出，于是有：&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;KV cache size per token = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type)&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;第一个系数为 2 表示了 Key 和 Value 矩阵。以&lt;a href=&quot;https://dingfen.github.io/ai/2023/10/30/huggingface1.html&quot;&gt;之前博客&lt;/a&gt;中的 llama-2-7b 的配置文件为例：&lt;/p&gt;
+
+&lt;div class=&quot;language-json highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;architecture&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;LlamaForCausalLM&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;hidden_act&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;silu&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;hidden_size&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4096&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;initializer_range&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.02&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;intermediate_size&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;11008&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;max_position_embeddings&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;4096&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;model_type&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;llama&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;num_attention_heads&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;num_hidden_layers&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;num_key_value_heads&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;32&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;pretraining_tp&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+  &lt;/span&gt;&lt;span class=&quot;nl&quot;&gt;&quot;rms_norm_eps&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1e-05&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;当执行的输入 batch 大小是 2，输入序列的长度为 512 时，即输入 token 矩阵维度是 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;(bsz, seq_len, hidden_size) = (2, 512, 4096)&lt;/code&gt; ，权重数据类型为 FP16 时：&lt;/p&gt;
+
+&lt;p&gt;KV Cache 大小 = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type) = 2 * 2 * 512 * 32 * 4096 * 2 = 512 MB&lt;/p&gt;
+
+&lt;p&gt;额，遗憾的是，512 MB 大小已经不能称之为 Cache 了，这样大小的缓存显然无法放进当前任何一款显卡的 L2/3 Cache 中。现在英伟达最好的卡 H100 的 SRAM 缓存大概是 50MB，而 A100 则是 40MB，差的可不是一点半点。所以，我们对 KV Cache 的优化还未止步。&lt;/p&gt;
+
+&lt;h2 id=&quot;kv-cache-的推理优化&quot;&gt;KV Cache 的推理优化&lt;/h2&gt;
+
+&lt;p&gt;回到之前我们给出的公式：&lt;/p&gt;
+
+&lt;p&gt;KV Cache Size = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type)&lt;/p&gt;
+
+&lt;p&gt;上面的公式中，&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;batch_size&lt;/code&gt; 取决于用户输入，而 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;num_layers&lt;/code&gt; 和 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hidden_size&lt;/code&gt; 是架构的基本（擅自改动会影响模型表现），那么针对 KV cache 的进一步优化就只能从以下四方面入手：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;kv_heads：MQA/GQA 技术，减少 KV 的头数，进而减少显存占用&lt;/li&gt;
+  &lt;li&gt;seq_len： 通过减少序列长度, 以减少 KV Cache 大小，如使用循环队列管理窗口 KV&lt;/li&gt;
+  &lt;li&gt;KV-Cache：从操作系统的内存管理角度，减少碎片，如 Paged Attention&lt;/li&gt;
+  &lt;li&gt;data type: 从量化角度减少 KV cache 的宽度，如使用 LLM-QAT 进行量化&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;接下来，我们简要地介绍一下这四项优化技术。&lt;/p&gt;
+
+&lt;h3 id=&quot;gqamqa-优化技术&quot;&gt;GQA/MQA 优化技术&lt;/h3&gt;
+
+&lt;p&gt;在 transformer 中，最原始的是 MHA(Multi-Head Attention)，Query Key Value 三部分有相同数量的头，并一一对应。每次做注意力计算，每个头的这三个矩阵按上文所述的公式计算完成后，将所有头的结果拼接起来就行（见下图右上部分）。&lt;/p&gt;
+
+&lt;center&gt;
+&lt;img src=&quot;/assets/img/LLM/The-Transformers-architecture-Multi-Head-Attention-consists-of-several-attention-layers.ppm&quot; /&gt;
+&lt;/center&gt;
+
+&lt;p&gt;MQA(Multi Query Attention) 对此提出的改进是：保持 Query 的头数，但 Key 和 Value 只能有一个头，相当于所有的 Query 矩阵共享一组 Key 和 Value 矩阵。直观来看，这的确大幅减少了 KV Cache 大小，而实验结果表明，这样改进能提高 30%-40% 的吞吐，却只会稍微影响模型效果，具体可参看 &lt;a href=&quot;https://arxiv.org/abs/2307.09288&quot;&gt;Llama2 论文&lt;/a&gt;。&lt;/p&gt;
+
+&lt;center&gt;
+&lt;img src=&quot;https://pic3.zhimg.com/v2-69c2cc88b213a65d61cee7a9f31d844e_r.jpg&quot; /&gt;
+Table 18: Attention architecture ablations. We report 0-shot results for all tasks except MMLU(5-shot) and GSM8K(8-shot). For GSM8K and Human-Eval we report maj@1 and pass@1 results. For NQ and TriviaQA we report EM. For all other tasks we report accuracy.
+
+&lt;/center&gt;
+
+&lt;p&gt;由于 MQA 改变了注意力机制的结构，因此模型通常需要从训练开始就支持 MQA 。也可以通过对已经训练好的模型进行微调来添加多查询注意力支持，仅需要约 5% 的原始训练数据量就可以达到不错的效果。包括 Falcon、SantaCoder、StarCoder 等在内很多模型都采用了 MQA 机制。&lt;/p&gt;
+
+&lt;p&gt;GQA(Grouped Query Attention)是一种介于 MHA 和 MQA 的折中方案。它将 Query Heads 分组，并在每组中共享一个 Key 和 一个 Value，使得 GQA 既能缩小 KV Cache ，加快推理速度，又不会损失过多的模型效果。Llama2 采用了 GQA 机制。&lt;/p&gt;
+
+&lt;center&gt;
+&lt;img src=&quot;/assets/img/LLM/grouped-query attention.png&quot; /&gt;
+&lt;/center&gt;
+
+&lt;h3 id=&quot;序列长度优化&quot;&gt;序列长度优化&lt;/h3&gt;
+
+&lt;p&gt;仔细观察 LLM 推理时计算注意力的方式：token 的输出是串行的，上一个 token 的 Key 和 Value 可以被下一个 token 复用。若推理时的文本长度很长，那么我们可以牺牲模型的效果，舍弃掉过于久远的 token 以减少 KV Cache 的大小。至于舍弃的方式，又有几种不同的实现手段：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;固定窗口长度及其变种。如 &lt;a href=&quot;https://arxiv.org/pdf/2004.05150v2.pdf&quot;&gt;Longformer&lt;/a&gt;，该方法实现简单，而且空间复杂度被限制到了窗口最长大小上。实验表明该方法不论在时间和空间上相对原先的自注意力都有明显提升，但该方法对精度的影响较大。更多精彩内容可参加它的&lt;a href=&quot;https://arxiv.org/pdf/2004.05150v2.pdf&quot;&gt;论文&lt;/a&gt;和&lt;a href=&quot;https://www.geeksforgeeks.org/longformer/&quot;&gt;相关博客&lt;/a&gt;。
+&lt;img src=&quot;https://media.geeksforgeeks.org/wp-content/uploads/20231108170402/Longformer-attention-Mechanism-file.png&quot; alt=&quot;&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;带有 KV 重计算。该方法需要每次计算都重新计算从当前位置倒数一定长度 token 序列的 KV cache，由于重计算的存在，其精度可以保证，也能节省空间，但是性能提升就不明显了。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;箭型注意力窗口。该方法在 &lt;a href=&quot;https://arxiv.org/pdf/2308.16137.pdf&quot;&gt;LM-Infinit&lt;/a&gt; 和 &lt;a href=&quot;https://arxiv.org/pdf/2309.17453.pdf&quot;&gt;StreamingLLM&lt;/a&gt; 中均有提及。起因是因为大家发现了有趣的&lt;em&gt;注意力下沉&lt;/em&gt;现象，即保持初始 token 的 KV 将在很大程度上恢复固定窗口后的注意力效果。于是，在窗口注意力的基础上，初始 token 的 KV 将被保留，从而在图上形成了一个“箭型”的注意力窗口。更多精彩内容可参考&lt;a href=&quot;https://medium.com/@zamalbabar/streaming-llm-when-your-language-model-becomes-a-memory-magician-afc603fd01cd&quot;&gt;这篇博客&lt;/a&gt;。
+&lt;img src=&quot;https://www.kdnuggets.com/wp-content/uploads/wijaya_introduction_streamingllm_llms_infinitelength_inputs_1.png&quot; alt=&quot;&quot; /&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;https://zhuanlan.zhihu.com/p/659770503&lt;/p&gt;
+
+&lt;h3 id=&quot;pageattention-优化&quot;&gt;PageAttention 优化&lt;/h3&gt;
+
+&lt;h3 id=&quot;量化稀疏&quot;&gt;量化稀疏&lt;/h3&gt;
+
+&lt;h2 id=&quot;大模型推理过程以及可能会遇到的问题&quot;&gt;大模型推理过程以及可能会遇到的问题&lt;/h2&gt;
+
+&lt;p&gt;推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">在消费级显卡上运行大模型</summary></entry><entry><title type="html">huggingface下llama代码细读（下）</title><link href="http://localhost:4000/ai/2023/11/30/huggingface2.html" rel="alternate" type="text/html" title="huggingface下llama代码细读（下）" /><published>2023-11-30T00:00:00+08:00</published><updated>2023-11-30T00:00:00+08:00</updated><id>http://localhost:4000/ai/2023/11/30/huggingface2</id><content type="html" xml:base="http://localhost:4000/ai/2023/11/30/huggingface2.html">&lt;h1 id=&quot;huggingface下llama代码细读下&quot;&gt;huggingface下llama代码细读（下）&lt;/h1&gt;
 
 &lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
@@ -498,7 +610,7 @@
 
 &lt;h2 id=&quot;小结&quot;&gt;小结&lt;/h2&gt;
 
-&lt;p&gt;本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是如何被训练产生的。随后，我给出了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。然后，我从基础到上层逐个分析了 llama 的代码实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。另外，本篇博文必不可能覆盖 llama 乃至大模型的方方面面，我等还需继续努力，进一步揭开大模型的神秘面纱。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">揭开它神秘的面纱</summary></entry><entry><title type="html">huggingface下llama代码细读（上）</title><link href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html" rel="alternate" type="text/html" title="huggingface下llama代码细读（上）" /><published>2023-10-30T00:00:00+08:00</published><updated>2023-10-30T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/10/30/huggingface1</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">&lt;h1 id=&quot;huggingface下llama代码细读上&quot;&gt;huggingface下llama代码细读（上）&lt;/h1&gt;
+&lt;p&gt;本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是如何被训练产生的。随后，我给出了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。然后，我从基础到上层逐个分析了 llama 的代码实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。另外，本篇博文必不可能覆盖 llama 乃至大模型的方方面面，我等还需继续努力，进一步揭开大模型的神秘面纱。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">揭开它神秘的面纱</summary></entry><entry><title type="html">huggingface下llama代码细读（上）</title><link href="http://localhost:4000/ai/2023/10/30/huggingface1.html" rel="alternate" type="text/html" title="huggingface下llama代码细读（上）" /><published>2023-10-30T00:00:00+08:00</published><updated>2023-10-30T00:00:00+08:00</updated><id>http://localhost:4000/ai/2023/10/30/huggingface1</id><content type="html" xml:base="http://localhost:4000/ai/2023/10/30/huggingface1.html">&lt;h1 id=&quot;huggingface下llama代码细读上&quot;&gt;huggingface下llama代码细读（上）&lt;/h1&gt;
 
 &lt;h2 id=&quot;llama-是什么&quot;&gt;llama 是什么&lt;/h2&gt;
 
@@ -924,7 +1036,7 @@
 
 &lt;h2 id=&quot;小结&quot;&gt;小结&lt;/h2&gt;
 
-&lt;p&gt;本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是用什么训练而成的。随后，我介绍了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。本博客重点分析了 llama 的各个基件和中间件，从底至上地分析了 hugginface llama 的实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。下一篇论文将介绍 llama 每一层的实现与组合，主要是利用本篇博客中介绍的组件搭建起译码层的故事，并借此说明大模型推理的主要流程。当然，我不可能面面俱到地介绍所有细节，但也能揭开大模型的神秘面纱，从中瞥见一些人工智能的奥秘。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">揭开它神秘的面纱</summary></entry><entry><title type="html">大话 transformer 架构</title><link href="https://dingfen.github.io/ai/2023/10/22/transformer.html" rel="alternate" type="text/html" title="大话 transformer 架构" /><published>2023-10-22T00:00:00+08:00</published><updated>2023-10-22T00:00:00+08:00</updated><id>https://dingfen.github.io/ai/2023/10/22/transformer</id><content type="html" xml:base="https://dingfen.github.io/ai/2023/10/22/transformer.html">&lt;h1 id=&quot;大话-transformer-架构&quot;&gt;大话 transformer 架构&lt;/h1&gt;
+&lt;p&gt;本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是用什么训练而成的。随后，我介绍了 llama 的架构图，并简要说明了 llama1/2 和 transformer 框架的区别，以及为何要这样改进。本博客重点分析了 llama 的各个基件和中间件，从底至上地分析了 hugginface llama 的实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。下一篇论文将介绍 llama 每一层的实现与组合，主要是利用本篇博客中介绍的组件搭建起译码层的故事，并借此说明大模型推理的主要流程。当然，我不可能面面俱到地介绍所有细节，但也能揭开大模型的神秘面纱，从中瞥见一些人工智能的奥秘。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="Transformer" /><category term="AI" /><summary type="html">揭开它神秘的面纱</summary></entry><entry><title type="html">大话 transformer 架构</title><link href="http://localhost:4000/ai/2023/10/22/transformer.html" rel="alternate" type="text/html" title="大话 transformer 架构" /><published>2023-10-22T00:00:00+08:00</published><updated>2023-10-22T00:00:00+08:00</updated><id>http://localhost:4000/ai/2023/10/22/transformer</id><content type="html" xml:base="http://localhost:4000/ai/2023/10/22/transformer.html">&lt;h1 id=&quot;大话-transformer-架构&quot;&gt;大话 transformer 架构&lt;/h1&gt;
 
 &lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
@@ -1002,7 +1114,7 @@
 
 &lt;h3 id=&quot;masked-注意力机制&quot;&gt;Masked 注意力机制&lt;/h3&gt;
 
-&lt;h2 id=&quot;位置编码与嵌入技术&quot;&gt;位置编码与嵌入技术&lt;/h2&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="transformer" /><category term="AI" /><summary type="html">transformer 概要</summary></entry><entry><title type="html">CUDA 进阶之内存优化</title><link href="https://dingfen.github.io/mpi&openmp/2023/09/10/cuda-mem.html" rel="alternate" type="text/html" title="CUDA 进阶之内存优化" /><published>2023-09-10T00:00:00+08:00</published><updated>2023-09-10T00:00:00+08:00</updated><id>https://dingfen.github.io/mpi&amp;openmp/2023/09/10/cuda-mem</id><content type="html" xml:base="https://dingfen.github.io/mpi&amp;openmp/2023/09/10/cuda-mem.html">&lt;h1 id=&quot;cuda-进阶之内存优化-关于主机与设备间的数据传输&quot;&gt;CUDA 进阶之内存优化 关于主机与设备间的数据传输&lt;/h1&gt;
+&lt;h2 id=&quot;位置编码与嵌入技术&quot;&gt;位置编码与嵌入技术&lt;/h2&gt;</content><author><name>Bill Ding</name></author><category term="AI" /><category term="transformer" /><category term="AI" /><summary type="html">transformer 概要</summary></entry><entry><title type="html">CUDA 进阶之内存优化</title><link href="http://localhost:4000/mpi&openmp/2023/09/10/cuda-mem.html" rel="alternate" type="text/html" title="CUDA 进阶之内存优化" /><published>2023-09-10T00:00:00+08:00</published><updated>2023-09-10T00:00:00+08:00</updated><id>http://localhost:4000/mpi&amp;openmp/2023/09/10/cuda-mem</id><content type="html" xml:base="http://localhost:4000/mpi&amp;openmp/2023/09/10/cuda-mem.html">&lt;h1 id=&quot;cuda-进阶之内存优化-关于主机与设备间的数据传输&quot;&gt;CUDA 进阶之内存优化 关于主机与设备间的数据传输&lt;/h1&gt;
 
 &lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
 
@@ -1295,7 +1407,7 @@ Time for zero copy execute (ms): 0.039264
 
 &lt;h2 id=&quot;总结&quot;&gt;总结&lt;/h2&gt;
 
-&lt;p&gt;针对内存带宽的优化利用是高性能计算中永恒不变的主题。本博客主要罗列了几个CUDA中常用的针对内存优化的编程技术，主要包括了两方面：其一是使用固定内存来缩短设备获得数据的时间，这主要是通过优化内存地址转换实现的；其二是使用异步方法，这主要通过隐藏数据传输时间实现。当然，对于内存优化的方法不止一种，之后我会再更新其他的优化方法。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">主机与设备间的数据传输</summary></entry><entry><title type="html">推荐系统简介</title><link href="https://dingfen.github.io/miscellaneous/2023/02/06/recommender_systems.html" rel="alternate" type="text/html" title="推荐系统简介" /><published>2023-02-06T00:00:00+08:00</published><updated>2023-02-06T00:00:00+08:00</updated><id>https://dingfen.github.io/miscellaneous/2023/02/06/recommender_systems</id><content type="html" xml:base="https://dingfen.github.io/miscellaneous/2023/02/06/recommender_systems.html">&lt;h1 id=&quot;推荐系统简介对主要推荐算法的概述&quot;&gt;推荐系统简介——对主要推荐算法的概述&lt;/h1&gt;
+&lt;p&gt;针对内存带宽的优化利用是高性能计算中永恒不变的主题。本博客主要罗列了几个CUDA中常用的针对内存优化的编程技术，主要包括了两方面：其一是使用固定内存来缩短设备获得数据的时间，这主要是通过优化内存地址转换实现的；其二是使用异步方法，这主要通过隐藏数据传输时间实现。当然，对于内存优化的方法不止一种，之后我会再更新其他的优化方法。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="MPI&amp;OpenMP" /><category term="CUDA" /><summary type="html">主机与设备间的数据传输</summary></entry><entry><title type="html">推荐系统简介</title><link href="http://localhost:4000/miscellaneous/2023/02/06/recommender_systems.html" rel="alternate" type="text/html" title="推荐系统简介" /><published>2023-02-06T00:00:00+08:00</published><updated>2023-02-06T00:00:00+08:00</updated><id>http://localhost:4000/miscellaneous/2023/02/06/recommender_systems</id><content type="html" xml:base="http://localhost:4000/miscellaneous/2023/02/06/recommender_systems.html">&lt;h1 id=&quot;推荐系统简介对主要推荐算法的概述&quot;&gt;推荐系统简介——对主要推荐算法的概述&lt;/h1&gt;
 
 &lt;p&gt;本文翻译并整理自 Baptiste Rocca 的文章 &lt;a href=&quot;https://towardsdatascience.com/introduction-to-recommender-systems-6c66cf15ada&quot;&gt;Introduction to recommender systems&lt;/a&gt;.&lt;/p&gt;
 
@@ -1518,7 +1630,7 @@ Time for zero copy execute (ms): 0.039264
 
 &lt;p&gt;可解释性是推荐算法成功的另一个关键。事实上，事实证明，如果用户不理解为什么他们被推荐为特定的项目，他们往往会对推荐系统失去信心。所以，如果我们设计了一个可以清楚解释的模型，我们可以在推荐的时候添加一个小句子，说明一个商品被推荐的原因（“喜欢这个商品的人也喜欢这个”，“你喜欢这个商品，你可能会对这个感兴趣”）。&lt;/p&gt;
 
-&lt;p&gt;最后，除了多样性和可解释性本质上难以评估这一事实之外，我们注意到，评估不属于测试数据集的推荐的质量也相当困难：在实际向用户推荐一个新的推荐之前，如何知道它是否相关？由于所有这些原因，在“真实情况”中测试模型有时很有诱惑力。由于推荐系统的目标是生成一个动作(看电影、购买产品、阅读文章等)，我们确实可以评估它生成预期动作的能力。例如，系统可以按照A/B测试方法投入生产，也可以只在用户样本上进行测试。然而，这样的过程需要对模型有一定程度的信心。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Miscellaneous" /><category term="recommender systems" /><summary type="html">对主要推荐算法的概述</summary></entry><entry><title type="html">awk 从入门到入土</title><link href="https://dingfen.github.io/miscellaneous/2022/07/19/awk.html" rel="alternate" type="text/html" title="awk 从入门到入土" /><published>2022-07-19T00:00:00+08:00</published><updated>2022-07-19T00:00:00+08:00</updated><id>https://dingfen.github.io/miscellaneous/2022/07/19/awk</id><content type="html" xml:base="https://dingfen.github.io/miscellaneous/2022/07/19/awk.html">&lt;h1 id=&quot;awk-从入门到入土&quot;&gt;awk 从入门到入土&lt;/h1&gt;
+&lt;p&gt;最后，除了多样性和可解释性本质上难以评估这一事实之外，我们注意到，评估不属于测试数据集的推荐的质量也相当困难：在实际向用户推荐一个新的推荐之前，如何知道它是否相关？由于所有这些原因，在“真实情况”中测试模型有时很有诱惑力。由于推荐系统的目标是生成一个动作(看电影、购买产品、阅读文章等)，我们确实可以评估它生成预期动作的能力。例如，系统可以按照A/B测试方法投入生产，也可以只在用户样本上进行测试。然而，这样的过程需要对模型有一定程度的信心。&lt;/p&gt;</content><author><name>Bill Ding</name></author><category term="Miscellaneous" /><category term="recommender systems" /><summary type="html">对主要推荐算法的概述</summary></entry><entry><title type="html">awk 从入门到入土</title><link href="http://localhost:4000/miscellaneous/2022/07/19/awk.html" rel="alternate" type="text/html" title="awk 从入门到入土" /><published>2022-07-19T00:00:00+08:00</published><updated>2022-07-19T00:00:00+08:00</updated><id>http://localhost:4000/miscellaneous/2022/07/19/awk</id><content type="html" xml:base="http://localhost:4000/miscellaneous/2022/07/19/awk.html">&lt;h1 id=&quot;awk-从入门到入土&quot;&gt;awk 从入门到入土&lt;/h1&gt;
 
 &lt;h2 id=&quot;何为-awk-&quot;&gt;何为 awk ？&lt;/h2&gt;
 
@@ -1732,7 +1844,7 @@ Time for zero copy execute (ms): 0.039264
 &amp;gt; num=$(cat a.txt | wc -l)
 &amp;gt; awk -v n=$num &apos;BEGIN{print n}&apos; 或者
 &amp;gt; awk &apos;BEGIN{print &apos;&quot;$num&quot;&apos;}&apos;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Miscellaneous" /><category term="linux" /><summary type="html">初步入土计划</summary></entry><entry><title type="html">深入理解 Gem5 之五</title><link href="https://dingfen.github.io/cpp/2022/06/18/gem5-6.html" rel="alternate" type="text/html" title="深入理解 Gem5 之五" /><published>2022-06-18T00:00:00+08:00</published><updated>2022-06-18T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2022/06/18/gem5-6</id><content type="html" xml:base="https://dingfen.github.io/cpp/2022/06/18/gem5-6.html">&lt;h1 id=&quot;gem5-中的-cache&quot;&gt;Gem5 中的 Cache&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Miscellaneous" /><category term="linux" /><summary type="html">初步入土计划</summary></entry><entry><title type="html">深入理解 Gem5 之五</title><link href="http://localhost:4000/cpp/2022/06/18/gem5-6.html" rel="alternate" type="text/html" title="深入理解 Gem5 之五" /><published>2022-06-18T00:00:00+08:00</published><updated>2022-06-18T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2022/06/18/gem5-6</id><content type="html" xml:base="http://localhost:4000/cpp/2022/06/18/gem5-6.html">&lt;h1 id=&quot;gem5-中的-cache&quot;&gt;Gem5 中的 Cache&lt;/h1&gt;
 
 &lt;h2 id=&quot;cacheblock&quot;&gt;CacheBlock&lt;/h2&gt;
 
@@ -2052,7 +2164,7 @@ Time for zero copy execute (ms): 0.039264
     &lt;span class=&quot;cm&quot;&gt;/** List of all requests that match the address */&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;TargetList&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;targets&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
 &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">gem5中的Cache实现</summary></entry><entry><title type="html">深入理解 Gem5 之四</title><link href="https://dingfen.github.io/cpp/2022/04/02/gem5-4.html" rel="alternate" type="text/html" title="深入理解 Gem5 之四" /><published>2022-04-02T00:00:00+08:00</published><updated>2022-04-02T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2022/04/02/gem5-4</id><content type="html" xml:base="https://dingfen.github.io/cpp/2022/04/02/gem5-4.html">&lt;h1 id=&quot;gem5-中的内存系统&quot;&gt;Gem5 中的内存系统&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">gem5中的Cache实现</summary></entry><entry><title type="html">深入理解 Gem5 之四</title><link href="http://localhost:4000/cpp/2022/04/02/gem5-4.html" rel="alternate" type="text/html" title="深入理解 Gem5 之四" /><published>2022-04-02T00:00:00+08:00</published><updated>2022-04-02T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2022/04/02/gem5-4</id><content type="html" xml:base="http://localhost:4000/cpp/2022/04/02/gem5-4.html">&lt;h1 id=&quot;gem5-中的内存系统&quot;&gt;Gem5 中的内存系统&lt;/h1&gt;
 
 &lt;p&gt;本文部分内容参考官方文档中&lt;a href=&quot;https://www.gem5.org/documentation/general_docs/memory_system/&quot;&gt;关于内存系统的相关说明&lt;/a&gt;，&lt;a href=&quot;https://www.gem5.org/documentation/learning_gem5/part2/memoryobject/&quot;&gt;内存系统中创建 SimObjects&lt;/a&gt;&lt;/p&gt;
 
@@ -2842,7 +2954,7 @@ Time for zero copy execute (ms): 0.039264
         &lt;span class=&quot;n&quot;&gt;_contextId&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;context_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
         &lt;span class=&quot;n&quot;&gt;privateFlags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;VALID_CONTEXT_ID&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
     &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">gem5中的内存系统</summary></entry><entry><title type="html">深入理解 Gem5 之三</title><link href="https://dingfen.github.io/cpp/2022/03/13/gem5-3.html" rel="alternate" type="text/html" title="深入理解 Gem5 之三" /><published>2022-03-13T00:00:00+08:00</published><updated>2022-03-13T00:00:00+08:00</updated><id>https://dingfen.github.io/cpp/2022/03/13/gem5-3</id><content type="html" xml:base="https://dingfen.github.io/cpp/2022/03/13/gem5-3.html">&lt;h1 id=&quot;深入理解-gem5-之三simobject&quot;&gt;深入理解 Gem5 之三——SimObject&lt;/h1&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Bill Ding</name></author><category term="Cpp" /><category term="gem5" /><category term="Cpp" /><summary type="html">gem5中的内存系统</summary></entry><entry><title type="html">深入理解 Gem5 之三</title><link href="http://localhost:4000/cpp/2022/03/13/gem5-3.html" rel="alternate" type="text/html" title="深入理解 Gem5 之三" /><published>2022-03-13T00:00:00+08:00</published><updated>2022-03-13T00:00:00+08:00</updated><id>http://localhost:4000/cpp/2022/03/13/gem5-3</id><content type="html" xml:base="http://localhost:4000/cpp/2022/03/13/gem5-3.html">&lt;h1 id=&quot;深入理解-gem5-之三simobject&quot;&gt;深入理解 Gem5 之三——SimObject&lt;/h1&gt;
 
 &lt;p&gt;之前的两篇博文分别介绍了 gem5 的&lt;a href=&quot;https://dingfen.github.io/cpp/2022/02/24/gem5-1.html&quot;&gt;事件触发机制&lt;/a&gt;和&lt;a href=&quot;https://dingfen.github.io/cpp/2022/03/08/gem5-2.html&quot;&gt;序列化问题&lt;/a&gt;，它们都和 SimObject 类有密切的联系。正所谓万事俱备，只欠东风。基于目前的理解，我可以更深入地看看 SimObject 类的实现方式。&lt;/p&gt;
 

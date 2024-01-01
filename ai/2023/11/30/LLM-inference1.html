@@ -20,14 +20,14 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="峰子的乐园">
 <meta property="og:title" content="大模型推理优化技术之显存优化">
-<meta property="og:url" content="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html">
+<meta property="og:url" content="http://localhost:4000/ai/2023/11/30/LLM-inference1.html">
 
 
   <meta property="og:description" content="在消费级显卡上运行大模型">
 
 
 
-  <meta property="og:image" content="https://dingfen.github.io/assets/img/teaser4.jpg">
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser4.jpg">
 
 
 
@@ -44,7 +44,7 @@
   
 
 
-<link rel="canonical" href="https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html">
+<link rel="canonical" href="http://localhost:4000/ai/2023/11/30/LLM-inference1.html">
 
 
 
@@ -55,7 +55,7 @@
     
       "@type": "Person",
       "name": "Bill Ding",
-      "url": "https://dingfen.github.io/"
+      "url": "http://localhost:4000/"
     
   }
 </script>
@@ -212,7 +212,7 @@
 
 
 
-  1 minutes read
+  4 minutes read
 
 </p>
       
@@ -355,15 +355,29 @@
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
               <ul class="toc__menu">
-  <li><a href="#大模型推理优化技术之显存优化">大模型推理优化技术之显存优化</a>
+  <li><a href="#大模型推理优化技术之-kv-cache">大模型推理优化技术之 KV Cache</a>
     <ul>
-      <li><a href="#大模型推理可能会遇到的性能问题">大模型推理可能会遇到的性能问题</a></li>
-      <li><a href="#kv-cache">KV Cache</a>
+      <li><a href="#前言">前言</a></li>
+      <li><a href="#原理">原理</a>
         <ul>
-          <li><a href="#原理">原理</a></li>
-          <li><a href="#代码">代码</a></li>
+          <li><a href="#预填充阶段">预填充阶段</a></li>
+          <li><a href="#译码阶段">译码阶段</a></li>
         </ul>
       </li>
+      <li><a href="#实现">实现</a>
+        <ul>
+          <li><a href="#内存开销粗算">内存开销粗算</a></li>
+        </ul>
+      </li>
+      <li><a href="#kv-cache-的推理优化">KV Cache 的推理优化</a>
+        <ul>
+          <li><a href="#gqamqa-优化技术">GQA/MQA 优化技术</a></li>
+          <li><a href="#序列长度优化">序列长度优化</a></li>
+          <li><a href="#pageattention-优化">PageAttention 优化</a></li>
+          <li><a href="#量化稀疏">量化稀疏</a></li>
+        </ul>
+      </li>
+      <li><a href="#大模型推理过程以及可能会遇到的问题">大模型推理过程以及可能会遇到的问题</a></li>
     </ul>
   </li>
 </ul>
@@ -371,21 +385,33 @@
             </nav>
           </aside>
         
-        <h1 id="大模型推理优化技术之显存优化">大模型推理优化技术之显存优化</h1>
+        <h1 id="大模型推理优化技术之-kv-cache">大模型推理优化技术之 KV Cache</h1>
 
-<h2 id="大模型推理可能会遇到的性能问题">大模型推理可能会遇到的性能问题</h2>
-
-<p>推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。</p>
-
-<p>计算给定 GPU 上每个字节可能的操作数，并将其与模型注意力层的算术强度进行比较，可以揭示瓶颈所在：计算或内存。我们可以利用这些信息来选择合适的 GPU 进行模型推理，如果我们的用例允许，还可以使用批处理等技术来更好地利用我们的 GPU 资源。</p>
-
-<h2 id="kv-cache">KV Cache</h2>
+<h2 id="前言">前言</h2>
 
 <p>这是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 <code class="language-plaintext highlighter-rouge">use_cache = True</code> 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？</p>
 
-<h3 id="原理">原理</h3>
+<h2 id="原理">原理</h2>
 
-<p>首先，<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html#forward-%E5%AE%9E%E7%8E%B0">回顾一下 transformer 中计算注意力权重的过程</a>：</p>
+<p>要尝试理解 KV cache，就不得不提及当前大模型的一般推理过程。事实上，目前大多数热门的 LLM （例如 GPT-3）的推理部分本质上是一个译码器（decoder）。它们针对输入的序列文本，一个词一个词地输出文本。具体地说，这些 LLM 接受一系列 token 作为输入，并以自回归方式输出后续的 token，直到它们满足条件要求（例如，已达到生成的 token 数量或遇到停止词），或直到它生成特殊的<end>标记标志着生成过程的结束。此过程涉及两个阶段：预填充阶段（prefill phase）和译码阶段（decode phase）。</end></p>
+
+<p>所谓 token 实际上描述模型中未被转化成人类语言的序列文本，参见下面的解释：</p>
+
+<blockquote>
+  <p>tokens are the atomic parts of language that a model processes. One token is approximately four English characters. All inputs in natural language are converted to tokens before inputting into the model.</p>
+</blockquote>
+
+<h3 id="预填充阶段">预填充阶段</h3>
+
+<p>在预填充阶段，LLM 处理输入 token 以计算 transformer 架构中 decoder 的 Key 和 Value 矩阵，此时 decoder 参与计算的 Query 矩阵为空（随机数）。根据 transformer 的计算过程（读者可参考网上海量介绍 transform 的文章），这些矩阵用于输出第一个 token。然后，每个新 token 都依赖于之前的所有的 token，但由于输入是完全已知的，因此从高层次看，这是一个可高度并行的矩阵运算，能充分发挥 GPU 的利用率。</p>
+
+<h3 id="译码阶段">译码阶段</h3>
+
+<p>在译码阶段，LLM 一次自回归生成一个输出 token，直到满足条件为止。每个连续输出 token 都需要知道先前迭代的所有输出 key 和 value。此时 Query 的序列长度是 1，而 key 和 value 的长度则是之前产生的所有输出长度，这就像是矩阵向量运算，与预填充阶段相比，它未充分利用 GPU 计算能力。GPU 的处理速度受限于数据（权重、键、值、激活）从内存传输到计算单元的速度。因此，这是个内存限制的运算阶段。</p>
+
+<p>注意，不同的 LLM 可能会使用不同的 tokenizer ，而不同的 tokenizer 产生的 token 数量和其代表的含义也有区别。若要比较它们之间的输出 token 也并不简单。而我们容易犯的一个谬误是：<u>在比较推理吞吐量时，直接观察单位时间内产生的 token 数量。然而，即使两个 LLM 的每秒输出 token 相似，但如果它们使用不同的 tokenizer，那么它们真实的推理性能可能不相同</u>。这是因为两者的 token 可能表示不同数量的字符。</p>
+
+<p><a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html#forward-%E5%AE%9E%E7%8E%B0">再回顾一下 transformer 中计算注意力权重的过程</a>：</p>
 
 \[Attn = softmax(\frac{QK^T}{\sqrt{d}})V\]
 
@@ -401,7 +427,7 @@
 
 <p>因此，KV Cache 的办法就是将之前已经计算过的张量保存下来，下次推理时直接计算一行 Q 矩阵就行了，前面的数据可以直接使用之前保存的张量，避免重复计算。</p>
 
-<h3 id="代码">代码</h3>
+<h2 id="实现">实现</h2>
 
 <p>KV cache 技术已经应用在 huggingface transformer 库中：<a href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py#L318C1-L331C97">代码</a>如下：</p>
 
@@ -427,7 +453,108 @@
 
 <p>准备好 query key 和 value 矩阵后，当 <code class="language-plaintext highlighter-rouge">layer_past</code> 非空（事实上第一个词生成后就是非空的），那么直接将 <code class="language-plaintext highlighter-rouge">past_key</code> 和 <code class="language-plaintext highlighter-rouge">past_value</code> 取出，然后concat连接起来组成这次推理的 <code class="language-plaintext highlighter-rouge">key</code> 和 <code class="language-plaintext highlighter-rouge">value</code> 值。</p>
 
-<p>KV cache 可在内存空间充足的场景下使用，能有效地提升推理性能。但需要注意的是，如果生成的序列非常长（大于 2048 ）那么就很有可能出现 out of Memory。</p>
+<p>KV cache 可在内存空间充足的场景下使用，能有效地提升推理性能。但需要注意的是，如果生成的序列非常长（大于 2048 ）那么就很有可能出现 out of Memory。都说 LLM 训练和推理时内存开销巨大，那么到底有多大呢？程序员该如何快速评估一个 LLM 推理时大致需要消耗多少内存？</p>
+
+<h3 id="内存开销粗算">内存开销粗算</h3>
+
+<p>粗略地看，LLM 在 GPU 上推理时，有两样东西占用了最多的内存空间：</p>
+
+<ul>
+  <li>模型权重：模型参数占用内存。以 Llama-2-7b 为例（70 亿参数），通常使用 FP16 加载时，那么显存大小约为 70 亿 × 2 字节（FP16）= 14 GB。</li>
+  <li>KV cache：被缓存起来的自注意力张量。现在我们粗略计算一下 KV cache 占用的内存大小。首先，每一个 transformer 子层都含有一层注意力层，每层注意力都需要一个 KV cache，KV cache 中一个向量的维度是 <code class="language-plaintext highlighter-rouge">hidden_size</code>。再考虑 <code class="language-plaintext highlighter-rouge">batch_size</code> 和  <code class="language-plaintext highlighter-rouge">seq_len</code>，每个输出的 token 都需要这样的 KV cache，而 GPU 通常会同时并行处理 <code class="language-plaintext highlighter-rouge">batch_size</code> 个这样的输入/输出，于是有：</li>
+</ul>
+
+<p><strong>KV cache size per token = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type)</strong></p>
+
+<p>第一个系数为 2 表示了 Key 和 Value 矩阵。以<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">之前博客</a>中的 llama-2-7b 的配置文件为例：</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"architecture"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"LlamaForCausalLM"</span><span class="p">],</span><span class="w">
+  </span><span class="nl">"hidden_act"</span><span class="p">:</span><span class="w"> </span><span class="s2">"silu"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"hidden_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"initializer_range"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.02</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"intermediate_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">11008</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"max_position_embeddings"</span><span class="p">:</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"model_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"llama"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"num_attention_heads"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"num_hidden_layers"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"num_key_value_heads"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"pretraining_tp"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"rms_norm_eps"</span><span class="p">:</span><span class="w"> </span><span class="mi">1e-05</span><span class="p">,</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>当执行的输入 batch 大小是 2，输入序列的长度为 512 时，即输入 token 矩阵维度是 <code class="language-plaintext highlighter-rouge">(bsz, seq_len, hidden_size) = (2, 512, 4096)</code> ，权重数据类型为 FP16 时：</p>
+
+<p>KV Cache 大小 = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type) = 2 * 2 * 512 * 32 * 4096 * 2 = 512 MB</p>
+
+<p>额，遗憾的是，512 MB 大小已经不能称之为 Cache 了，这样大小的缓存显然无法放进当前任何一款显卡的 L2/3 Cache 中。现在英伟达最好的卡 H100 的 SRAM 缓存大概是 50MB，而 A100 则是 40MB，差的可不是一点半点。所以，我们对 KV Cache 的优化还未止步。</p>
+
+<h2 id="kv-cache-的推理优化">KV Cache 的推理优化</h2>
+
+<p>回到之前我们给出的公式：</p>
+
+<p>KV Cache Size = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type)</p>
+
+<p>上面的公式中，<code class="language-plaintext highlighter-rouge">batch_size</code> 取决于用户输入，而 <code class="language-plaintext highlighter-rouge">num_layers</code> 和 <code class="language-plaintext highlighter-rouge">hidden_size</code> 是架构的基本（擅自改动会影响模型表现），那么针对 KV cache 的进一步优化就只能从以下四方面入手：</p>
+
+<ul>
+  <li>kv_heads：MQA/GQA 技术，减少 KV 的头数，进而减少显存占用</li>
+  <li>seq_len： 通过减少序列长度, 以减少 KV Cache 大小，如使用循环队列管理窗口 KV</li>
+  <li>KV-Cache：从操作系统的内存管理角度，减少碎片，如 Paged Attention</li>
+  <li>data type: 从量化角度减少 KV cache 的宽度，如使用 LLM-QAT 进行量化</li>
+</ul>
+
+<p>接下来，我们简要地介绍一下这四项优化技术。</p>
+
+<h3 id="gqamqa-优化技术">GQA/MQA 优化技术</h3>
+
+<p>在 transformer 中，最原始的是 MHA(Multi-Head Attention)，Query Key Value 三部分有相同数量的头，并一一对应。每次做注意力计算，每个头的这三个矩阵按上文所述的公式计算完成后，将所有头的结果拼接起来就行（见下图右上部分）。</p>
+
+<center>
+<img src="/assets/img/LLM/The-Transformers-architecture-Multi-Head-Attention-consists-of-several-attention-layers.ppm" />
+</center>
+
+<p>MQA(Multi Query Attention) 对此提出的改进是：保持 Query 的头数，但 Key 和 Value 只能有一个头，相当于所有的 Query 矩阵共享一组 Key 和 Value 矩阵。直观来看，这的确大幅减少了 KV Cache 大小，而实验结果表明，这样改进能提高 30%-40% 的吞吐，却只会稍微影响模型效果，具体可参看 <a href="https://arxiv.org/abs/2307.09288">Llama2 论文</a>。</p>
+
+<center>
+<img src="https://pic3.zhimg.com/v2-69c2cc88b213a65d61cee7a9f31d844e_r.jpg" />
+Table 18: Attention architecture ablations. We report 0-shot results for all tasks except MMLU(5-shot) and GSM8K(8-shot). For GSM8K and Human-Eval we report maj@1 and pass@1 results. For NQ and TriviaQA we report EM. For all other tasks we report accuracy.
+
+</center>
+
+<p>由于 MQA 改变了注意力机制的结构，因此模型通常需要从训练开始就支持 MQA 。也可以通过对已经训练好的模型进行微调来添加多查询注意力支持，仅需要约 5% 的原始训练数据量就可以达到不错的效果。包括 Falcon、SantaCoder、StarCoder 等在内很多模型都采用了 MQA 机制。</p>
+
+<p>GQA(Grouped Query Attention)是一种介于 MHA 和 MQA 的折中方案。它将 Query Heads 分组，并在每组中共享一个 Key 和 一个 Value，使得 GQA 既能缩小 KV Cache ，加快推理速度，又不会损失过多的模型效果。Llama2 采用了 GQA 机制。</p>
+
+<center>
+<img src="/assets/img/LLM/grouped-query attention.png" />
+</center>
+
+<h3 id="序列长度优化">序列长度优化</h3>
+
+<p>仔细观察 LLM 推理时计算注意力的方式：token 的输出是串行的，上一个 token 的 Key 和 Value 可以被下一个 token 复用。若推理时的文本长度很长，那么我们可以牺牲模型的效果，舍弃掉过于久远的 token 以减少 KV Cache 的大小。至于舍弃的方式，又有几种不同的实现手段：</p>
+
+<ol>
+  <li>固定窗口长度及其变种。如 <a href="https://arxiv.org/pdf/2004.05150v2.pdf">Longformer</a>，该方法实现简单，而且空间复杂度被限制到了窗口最长大小上。实验表明该方法不论在时间和空间上相对原先的自注意力都有明显提升，但该方法对精度的影响较大。更多精彩内容可参加它的<a href="https://arxiv.org/pdf/2004.05150v2.pdf">论文</a>和<a href="https://www.geeksforgeeks.org/longformer/">相关博客</a>。
+<img src="https://media.geeksforgeeks.org/wp-content/uploads/20231108170402/Longformer-attention-Mechanism-file.png" alt="" /></li>
+  <li>
+    <p>带有 KV 重计算。该方法需要每次计算都重新计算从当前位置倒数一定长度 token 序列的 KV cache，由于重计算的存在，其精度可以保证，也能节省空间，但是性能提升就不明显了。</p>
+  </li>
+  <li>箭型注意力窗口。该方法在 <a href="https://arxiv.org/pdf/2308.16137.pdf">LM-Infinit</a> 和 <a href="https://arxiv.org/pdf/2309.17453.pdf">StreamingLLM</a> 中均有提及。起因是因为大家发现了有趣的<em>注意力下沉</em>现象，即保持初始 token 的 KV 将在很大程度上恢复固定窗口后的注意力效果。于是，在窗口注意力的基础上，初始 token 的 KV 将被保留，从而在图上形成了一个“箭型”的注意力窗口。更多精彩内容可参考<a href="https://medium.com/@zamalbabar/streaming-llm-when-your-language-model-becomes-a-memory-magician-afc603fd01cd">这篇博客</a>。
+<img src="https://www.kdnuggets.com/wp-content/uploads/wijaya_introduction_streamingllm_llms_infinitelength_inputs_1.png" alt="" /></li>
+</ol>
+
+<p>https://zhuanlan.zhihu.com/p/659770503</p>
+
+<h3 id="pageattention-优化">PageAttention 优化</h3>
+
+<h3 id="量化稀疏">量化稀疏</h3>
+
+<h2 id="大模型推理过程以及可能会遇到的问题">大模型推理过程以及可能会遇到的问题</h2>
+
+<p>推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。</p>
+
 
         
       </section>
@@ -490,11 +617,11 @@
     <h4 class="page__share-title">share</h4>
   
 
-  <a href="https://twitter.com/intent/tweet?text=%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%98%BE%E5%AD%98%E4%BC%98%E5%8C%96%20https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?text=%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96%E6%8A%80%E6%9C%AF%E4%B9%8B%E6%98%BE%E5%AD%98%E4%BC%98%E5%8C%96%20http%3A%2F%2Flocalhost%3A4000%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fdingfen.github.io%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fai%2F2023%2F11%2F30%2FLLM-inference1.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
@@ -723,7 +850,7 @@
     
   <script>
     var disqus_config = function () {
-      this.page.url = "https://dingfen.github.io/ai/2023/11/30/LLM-inference1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.url = "http://localhost:4000/ai/2023/11/30/LLM-inference1.html";  /* Replace PAGE_URL with your page's canonical URL variable */
       this.page.identifier = "/ai/2023/11/30/LLM-inference1"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
     };
     (function() { /* DON'T EDIT BELOW THIS LINE */
