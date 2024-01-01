@@ -533,21 +533,21 @@ Table 18: Attention architecture ablations. We report 0-shot results for all tas
 
 <h3 id="序列长度优化">序列长度优化</h3>
 
-<p>仔细观察 LLM 推理时计算注意力的方式：token 的输出是串行的，上一个 token 的 Key 和 Value 可以被下一个 token 复用。若推理时的文本长度很长，那么我们可以牺牲模型的效果，舍弃掉过于久远的 token 以减少 KV Cache 的大小。至于舍弃的方式，又有几种不同的实现手段：</p>
+<p>仔细观察 LLM 推理时计算注意力的方式：token 的输出是串行的，上一个 token 的 Key 和 Value 可以被下一个 token 复用。若推理的文本很长（远长于训练时最长序列），那么我们可以牺牲模型的效果，舍弃掉过于久远的 token 以减少 KV Cache 的大小。另外，这也可以降低计算量，自注意力的时间复杂度是 token 序列的 $ \mathcal{O}(N^2)$（因为是 $ QK^T $，其中 $ Q $ 和 $ K $ 的矩阵维度都是 seq_len）。至于舍弃的方式，又有几种不同的实现手段：</p>
 
 <ol>
-  <li>固定窗口长度及其变种。如 <a href="https://arxiv.org/pdf/2004.05150v2.pdf">Longformer</a>，该方法实现简单，而且空间复杂度被限制到了窗口最长大小上。实验表明该方法不论在时间和空间上相对原先的自注意力都有明显提升，但该方法对精度的影响较大。更多精彩内容可参加它的<a href="https://arxiv.org/pdf/2004.05150v2.pdf">论文</a>和<a href="https://www.geeksforgeeks.org/longformer/">相关博客</a>。
+  <li>固定窗口长度及其变种。如 <a href="https://arxiv.org/pdf/2004.05150v2.pdf">Longformer</a>，该方法实现简单：在注意力机制下，仅计算每个单词的前 w 个单词的注意力，其余单词对应的 Key 矩阵为零。每个单词仅计算前 w 个单词，类似于一个长 w 的窗口在序列上滑动（左二图）。于是空间复杂度被限制到了窗口最长大小上。此外，它还有很多变种，Dilated 滑动窗口间隔地计算单词注意力；Global 滑动窗口会间隔地计算单词的全局注意力，以尽可能消除对实验精度的影响。虽然实验表明该方法不论在时间和空间上相对原先的自注意力都有明显提升，但该方法对精度的影响较大。更多精彩内容可参加它的<a href="https://arxiv.org/pdf/2004.05150v2.pdf">论文</a>和<a href="https://www.geeksforgeeks.org/longformer/">相关博客</a>。
 <img src="https://media.geeksforgeeks.org/wp-content/uploads/20231108170402/Longformer-attention-Mechanism-file.png" alt="" /></li>
   <li>
-    <p>带有 KV 重计算。该方法需要每次计算都重新计算从当前位置倒数一定长度 token 序列的 KV cache，由于重计算的存在，其精度可以保证，也能节省空间，但是性能提升就不明显了。</p>
+    <p>带有 KV 重计算的滑动窗口。该方法需要每次计算都重新计算从当前位置倒数 L 长度 token 序列的 KV 张量，但重计算的复杂度是 $ \mathcal{O}(NL^2) $ 。由于重计算的存在，其精度可以保证，也能节省空间，但是性能提升就不明显了。</p>
   </li>
-  <li>箭型注意力窗口。该方法在 <a href="https://arxiv.org/pdf/2308.16137.pdf">LM-Infinit</a> 和 <a href="https://arxiv.org/pdf/2309.17453.pdf">StreamingLLM</a> 中均有提及。起因是因为大家发现了有趣的<em>注意力下沉</em>现象，即保持初始 token 的 KV 将在很大程度上恢复固定窗口后的注意力效果。于是，在窗口注意力的基础上，初始 token 的 KV 将被保留，从而在图上形成了一个“箭型”的注意力窗口。更多精彩内容可参考<a href="https://medium.com/@zamalbabar/streaming-llm-when-your-language-model-becomes-a-memory-magician-afc603fd01cd">这篇博客</a>。
+  <li>箭型注意力窗口。该方法在 <a href="https://arxiv.org/pdf/2308.16137.pdf">LM-Infinit</a> 和 <a href="https://arxiv.org/pdf/2309.17453.pdf">StreamingLLM</a> 中均有提及。起因是大家发现了有趣的<em>注意力下沉</em>现象，即保持初始 token 的 KV 将在很大程度上恢复固定窗口后的注意力效果。于是，在窗口注意力的基础上，初始 token 的 KV 将被保留，从而在图上形成了一个“箭型”的注意力窗口。更多精彩内容可参考相关论文和<a href="https://medium.com/@zamalbabar/streaming-llm-when-your-language-model-becomes-a-memory-magician-afc603fd01cd">博客</a>。
 <img src="https://www.kdnuggets.com/wp-content/uploads/wijaya_introduction_streamingllm_llms_infinitelength_inputs_1.png" alt="" /></li>
 </ol>
 
-<p>https://zhuanlan.zhihu.com/p/659770503</p>
-
 <h3 id="pageattention-优化">PageAttention 优化</h3>
+
+<p><a href="https://github.com/vllm-project/vllm">vLLM</a> 的 Paged Attention 优化技术从显存管理的角度出发，允许非连续的内存空间中存储 KV cache。</p>
 
 <h3 id="量化稀疏">量化稀疏</h3>
 
@@ -828,7 +828,7 @@ Table 18: Attention architecture ablations. We report 0-shot results for all tas
   </ul>
 </div>
 
-<div class="page__footer-copyright">&copy; 2023 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+<div class="page__footer-copyright">&copy; 2024 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
 
       </footer>
     </div>
