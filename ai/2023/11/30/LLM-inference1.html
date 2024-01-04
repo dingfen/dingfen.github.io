@@ -212,7 +212,7 @@
 
 
 
-  4 minutes read
+  5 minutes read
 
 </p>
       
@@ -377,7 +377,7 @@
           <li><a href="#量化稀疏">量化稀疏</a></li>
         </ul>
       </li>
-      <li><a href="#大模型推理过程以及可能会遇到的问题">大模型推理过程以及可能会遇到的问题</a></li>
+      <li><a href="#小结">小结</a></li>
     </ul>
   </li>
 </ul>
@@ -389,7 +389,9 @@
 
 <h2 id="前言">前言</h2>
 
-<p>这是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 <code class="language-plaintext highlighter-rouge">use_cache = True</code> 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？</p>
+<p>推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。而目前业内认为 LLM 模型的推理性能主要受限于内存。</p>
+
+<p>KV Cache 是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 <code class="language-plaintext highlighter-rouge">use_cache = True</code> 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？</p>
 
 <h2 id="原理">原理</h2>
 
@@ -547,13 +549,46 @@ Table 18: Attention architecture ablations. We report 0-shot results for all tas
 
 <h3 id="pageattention-优化">PageAttention 优化</h3>
 
-<p><a href="https://github.com/vllm-project/vllm">vLLM</a> 的 Paged Attention 优化技术从显存管理的角度出发，允许非连续的内存空间中存储 KV cache。</p>
+<p><a href="https://github.com/vllm-project/vllm">vLLM</a> 提出的 <a href="https://blog.vllm.ai/2023/06/20/vllm.html">Paged Attention</a> 技术从显存管理的角度出发，通过允许非连续的内存空间存储 KV cache 的方式高效地计算注意力。其灵感来自于操作系统中虚拟内存和分页的思想。</p>
+
+<p>通常，我们会采取批处理的方式完成深度学习模型的推理：同时处理 <code class="language-plaintext highlighter-rouge">batch_size</code> 个输入序列，从而更高效地利用了内存带宽，提高 GPU 利用率。然而，该传统的批处理方法不太适用于 LLM，因为它非常不灵活。前文提到，LLM 推理是迭代地输出一个个 token ，且每次输出产生多少 token 完全依赖于用户输入。于是批处理时会出现这样的情况：某些输入已经提前完成“回答”，产生了所有输出 token，但某些还在继续输出 token，见下右图。由于传统批处理方法非常不灵活，在最后一个序列未完成前，无法释放这些批处理的占用内存资源。于是，图中所示 GPU 在批次的处理中有很多内存空间和时间未被充分利用（序列1、3和4的序列末标记后的白色方块）。</p>
+
+<center>
+<img src="https://images.ctfassets.net/xjan103pcp94/1LJioEsEdQQpDCxYNWirU6/82b9fbfc5b78b10c1d4508b60e72fdcf/cb_02_diagram-static-batching.png" />
+</center>
+
+<blockquote>
+  <p>题外话，<a href="https://www.usenix.org/system/files/osdi22-yu.pdf">ORCA 这篇论文</a>
+也注意到了这一点，并认为是不灵活的批处理调度机制导致了这一问题：只要通过细粒度的调度机制将这些“白块”补齐了就行。于是，他们提出了迭代层级的批处理调度方式(iteration-level scheduling)和选择性批处理(selective batching)，让基于 FasterTransformer 的 GPT-3 175B 延迟和吞吐量都提高了约 37 倍。</p>
+</blockquote>
+
+<p>Paged Attention 将 KV cache 分割到不同的固定大小的“页”上。<a href="https://www.anyscale.com/blog/continuous-batching-llm-inference">然而，这也意味着，关于 KV cache 的分配是 just-in-time 的，而不是提前预分配好的</a>：当开始新一轮 token 生成时，框架不能分配固定大小的连续 cache 给 KV 张量。相反，在每次迭代开始前，调度器都可以决定是否需要为这一轮迭代动态地分配内存空间。</p>
+
+<p>一旦我们将 KV cache 的分配类比到操作系统中对内存的分配，我们就可以将 KV cache 内的每个固定长度的块当作虚拟内存中的页，token 可以看作字节，每个生成序列看作进程。通过一个映射表可将连续的逻辑块映射到非连续的物理块，而物理块可以根据新生成的 token 按需分配：</p>
+
+<p><img src="https://blog.vllm.ai/assets/figures/annimation0.gif" alt="" /></p>
+
+<p>上图的 gif 清晰地展示了生成 token 的过程，逻辑 KV cache 是连续的，当它被填满后会重新分配一个物理 KV 块来存放新的 token。在分块之后，只有最后一个块可能会浪费内存。这么做的好处很明显：系统可以在一个batch中同时输入更多的序列，提升GPU的利用率，显著地提升吞吐量。</p>
+
+<p>paged Attention 的另一个好处是高效内存共享。例如，在并行采样的时候，一个输入序列(prompt)需要生成多个输出序列。这种情况下，对于这个输入序列的计算和内存可以在输出序列之间共享。</p>
+
+<p><img src="https://blog.vllm.ai/assets/figures/annimation2.gif" alt="" /></p>
+
+<p>通过块表可以自然地实现内存共享。类似进程之间共享物理页，在 Paged Attention 中的不同序列通过映射便可实现共享。为了确保安全共享，Paged Attention 跟踪物理块的引用计数，并实现了 Copy-on-Write 机制。 内存共享减少了 55% 内存使用量，大大降低了采样算法的内存开销，同时提升了 2.2 倍的吞吐量。</p>
+
+<p><img src="https://blog.vllm.ai/assets/figures/annimation3.gif" alt="" /></p>
+
+<p>更多关于 Paged Attention 的相关细节和用法，可参考他们的<a href="https://arxiv.org/pdf/2309.06180.pdf">论文</a>与<a href="https://github.com/vllm-project/vllm">开源工程</a></p>
 
 <h3 id="量化稀疏">量化稀疏</h3>
 
-<h2 id="大模型推理过程以及可能会遇到的问题">大模型推理过程以及可能会遇到的问题</h2>
+<p>该类方法从数据类型入手，充分利用每一个 bit。通过量化与稀疏压缩 KV cache 的显存消耗。</p>
 
-<p>推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。</p>
+<p>当前主流推理框架都在逐步支持 KV cache 量化，一个典型的案例是 <a href="https://link.zhihu.com/?target=https%3A//github.com/InternLM/lmdeploy">lmdeploy</a>，</p>
+
+<h2 id="小结">小结</h2>
+
+<p>为完成本篇论文，本人学习参考了许多知乎文章、外文博客和相关论文（相关链接都在文中以超链接的方式给出）。我在此一并感谢这些文章的作者们，是他们的辛勤劳作、共享传播和源码开放推动了 AI 领域的蓬勃发展。</p>
 
 
         
@@ -661,6 +696,40 @@ Table 18: Attention architecture ablations. We report 0-shot results for all tas
     
     <h2 class="archive__item-title" itemprop="headline">
       
+        <a href="/2024/01/01/LLM-inference2.html" rel="permalink">Llm Inference2
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">Flash Attention
+
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
         <a href="/ai/2023/11/30/huggingface2.html" rel="permalink">huggingface下llama代码细读（下）
 </a>
       
@@ -742,39 +811,6 @@ Table 18: Attention architecture ablations. We report 0-shot results for all tas
 </p>
     
     <p class="archive__item-excerpt" itemprop="description">transformer 概要
-</p>
-  </article>
-</div>
-
-        
-          
-
-
-
-<div class="grid__item">
-  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
-    
-      <div class="archive__item-teaser">
-        <img src="/assets/img/teaser.jpg" alt="">
-      </div>
-    
-    <h2 class="archive__item-title" itemprop="headline">
-      
-        <a href="/mpi&openmp/2023/09/10/cuda-mem.html" rel="permalink">CUDA 进阶之内存优化
-</a>
-      
-    </h2>
-    
-      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
-
-
-
-
-  5 minutes read
-
-</p>
-    
-    <p class="archive__item-excerpt" itemprop="description">主机与设备间的数据传输
 </p>
   </article>
 </div>

@@ -312,7 +312,7 @@ var store = [{
         "teaser": "/assets/img/teaser.jpg"
       },{
         "title": "大模型推理优化技术之显存优化",
-        "excerpt":"大模型推理优化技术之 KV Cache 前言 这是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 use_cache = True 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？ 原理 要尝试理解 KV cache，就不得不提及当前大模型的一般推理过程。事实上，目前大多数热门的 LLM （例如 GPT-3）的推理部分本质上是一个译码器（decoder）。它们针对输入的序列文本，一个词一个词地输出文本。具体地说，这些 LLM 接受一系列 token 作为输入，并以自回归方式输出后续的 token，直到它们满足条件要求（例如，已达到生成的 token 数量或遇到停止词），或直到它生成特殊的标记标志着生成过程的结束。此过程涉及两个阶段：预填充阶段（prefill phase）和译码阶段（decode phase）。 所谓 token 实际上描述模型中未被转化成人类语言的序列文本，参见下面的解释： tokens are the atomic parts of language that a model processes. One...","categories": ["AI"],
+        "excerpt":"大模型推理优化技术之 KV Cache 前言 推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。而目前业内认为 LLM 模型的推理性能主要受限于内存。 KV Cache 是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 use_cache = True 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？ 原理 要尝试理解 KV cache，就不得不提及当前大模型的一般推理过程。事实上，目前大多数热门的 LLM （例如 GPT-3）的推理部分本质上是一个译码器（decoder）。它们针对输入的序列文本，一个词一个词地输出文本。具体地说，这些 LLM 接受一系列 token 作为输入，并以自回归方式输出后续的 token，直到它们满足条件要求（例如，已达到生成的 token 数量或遇到停止词），或直到它生成特殊的标记标志着生成过程的结束。此过程涉及两个阶段：预填充阶段（prefill phase）和译码阶段（decode phase）。 所谓 token 实际上描述模型中未被转化成人类语言的序列文本，参见下面的解释： tokens are the atomic parts...","categories": ["AI"],
         "tags": ["Transformer","AI"],
         "url": "/ai/2023/11/30/LLM-inference1.html",
         "teaser": "/assets/img/teaser.jpg"
@@ -321,5 +321,11 @@ var store = [{
         "excerpt":"huggingface下llama代码细读（下） 前言 上篇博客我们重点介绍了 llama 模型，并讨论了它的架构、基件和中间件等。碍于篇幅关系，我将 transformer llama 的代码解读下半部分移动到了本篇博客中，要想从头开始的读者们可以参考这篇博客。 llama 模型 译码层 在了解了构成 llama 的基本组件后，要如何搭建起大模型的“高楼大厦”？当然不能一步登天，而要步步为营。在大模型推理阶段，输入的文本序列会经过多个译码层，执行自注意力等运算。译码层由 LlamaDecoderLayer 类表示，它将 LlamaAttention LlamaRMSNorm 等基件组合起来。上图所展示的架构就是一个译码层的架构。 class LlamaDecoderLayer(nn.Module): def __init__(self, config: LlamaConfig): super().__init__() self.hidden_size = config.hidden_size self.self_attn = ( LlamaAttention(config=config) if not getattr(config, \"_flash_attn_2_enabled\", False) else LlamaFlashAttention2(config=config) ) self.mlp = LlamaMLP(config) self.input_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps) self.post_attention_layernorm =...","categories": ["AI"],
         "tags": ["Transformer","AI"],
         "url": "/ai/2023/11/30/huggingface2.html",
+        "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "Llm Inference2",
+        "excerpt":"Flash Attention   Softmax 分组计算   矩阵乘法的分组计算我们很熟悉，但注意力计算还涉及到 softmax 函数的分组计算，这就有点不太直观了，我们需要使用数学工具好好推理一番。   ","categories": [],
+        "tags": [],
+        "url": "/2024/01/01/LLM-inference2.html",
         "teaser": "/assets/img/teaser.jpg"
       }]
