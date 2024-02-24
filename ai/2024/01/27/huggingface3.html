@@ -1,0 +1,1192 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="zh" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>THUDM/chatglm代码细读 - 峰子的乐园</title>
+<meta name="description" content="a small but pretty website for me">
+
+
+  <meta name="author" content="Bill Ding">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:title" content="THUDM/chatglm代码细读">
+<meta property="og:url" content="http://localhost:4000/ai/2024/01/27/huggingface3.html">
+
+
+  <meta property="og:description" content="a small but pretty website for me">
+
+
+
+  <meta property="og:image" content="http://localhost:4000/assets/img/teaser4.jpg">
+
+
+
+
+
+  <meta property="article:published_time" content="2024-01-27T00:00:00+08:00">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="http://localhost:4000/ai/2024/01/27/huggingface3.html">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Bill Ding",
+      "url": "http://localhost:4000/"
+    
+  }
+</script>
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="峰子的乐园 Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      <!--输入Latex公式, 以HTML和CSS的形式显示输出 -->
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        <!--$表示行内元素，$$表示块状元素 -->
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+</script>
+  
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  </head>
+
+  <body class="layout--single categories">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          峰子的乐园
+          <span class="site-subtitle">合抱之木，生于毫末；九层之台，起于累土；千里之行，始于足下</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/">Home</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/about">About</a>
+            </li><li class="masthead__menu-item">
+              <a href="/home/blog">Blogs</a>
+            </li><li class="masthead__menu-item">
+              <a href="/categories">Categories</a>
+            </li><li class="masthead__menu-item">
+              <a href="https://google.com">External Link</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">切换菜单</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/img/teaser4.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          THUDM/chatglm代码细读
+
+        
+      </h1>
+      
+        <p class="page__lead">
+</p>
+      
+      
+        <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  10 minutes read
+
+</p>
+      
+      
+      
+    </div>
+  
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/img/avatar.jpg" alt="Bill Ding" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Bill Ding</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Programmer, Graduate majored in CS</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">Hefei, Anhui, China</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="THUDM/chatglm代码细读">
+    <meta itemprop="description" content="">
+    <meta itemprop="datePublished" content="2024-01-27T00:00:00+08:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> 目录</h4></header>
+              <ul class="toc__menu">
+  <li><a href="#thudmchatglm代码细读">THUDM/ChatGLM代码细读</a>
+    <ul>
+      <li><a href="#chatglm-是什么">ChatGLM 是什么</a></li>
+      <li><a href="#chatglm-架构">ChatGLM 架构</a></li>
+      <li><a href="#chatglm2-代码详解">ChatGLM2 代码详解</a>
+        <ul>
+          <li><a href="#chatglm-基件">ChatGLM 基件</a>
+            <ul>
+              <li><a href="#prefixencoder">PrefixEncoder</a></li>
+              <li><a href="#rotaryembedding">RotaryEmbedding</a></li>
+              <li><a href="#rmsnorm">RMSNorm</a></li>
+              <li><a href="#attention">Attention</a></li>
+              <li><a href="#mlp">MLP</a></li>
+            </ul>
+          </li>
+          <li><a href="#chatglm2-中间件">ChatGLM2 中间件</a></li>
+          <li><a href="#chatglm2-model">ChatGLM2 Model</a>
+            <ul>
+              <li><a href="#chatglmpretrainedmodel">ChatGLMPreTrainedModel</a></li>
+            </ul>
+          </li>
+          <li><a href="#总结">总结</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+            </nav>
+          </aside>
+        
+        <h1 id="thudmchatglm代码细读">THUDM/ChatGLM代码细读</h1>
+
+<h2 id="chatglm-是什么">ChatGLM 是什么</h2>
+
+<p>ChatGLM-6B 是一个基于 General Language Model (GLM) 架构的开源、支持中英双语的对话语言模型。
+由清华大学研发，截至笔者更新时已经发布了第三代 ChatGLM3。ChatGLM 模型使用了和 ChatGPT 相似的技术，使用约 1T 标识符的中英双语训练，再辅以监督微调、反馈自助、人类反馈强化学习等技术炼成。</p>
+
+<p>清华大学团队和智谱AI可以说浑身是肝，发布了许多大模型：</p>
+
+<ul>
+  <li>
+    <p><a href="https://github.com/thudm/chatglm2-6b">ChatGLM2-6B</a></p>
+
+    <ul>
+      <li>更强大的性能：升级了 ChatGLM2-6B 的基座模型。ChatGLM2-6B 使用了 GLM 的混合目标函数，经过了 1.4T 中英标识符的预训练与人类偏好对齐训练，评测结果显示，相比于初代模型，ChatGLM2-6B 在 MMLU（+23%）、CEval（+33%）、GSM8K（+571%） 、BBH（+60%）等数据集上的性能取得了大幅度的提升，在同尺寸开源模型中具有较强的竞争力。</li>
+      <li>更长的上下文：使用 FlashAttention 技术将基座模型的上下文长度（Context Length）由 ChatGLM-6B 的 2K 扩展到了 32K，并在对话阶段使用 8K 的上下文长度训练。对于更长的上下文，我们发布了 ChatGLM2-6B-32K 模型。LongBench 的测评结果表明，在等量级的开源模型中，ChatGLM2-6B-32K 有着较为明显的竞争优势。</li>
+      <li>更高效的推理：使用 Multi-Query Attention 技术获得了更快的推理速度和更低的显存占用：在官方的模型实现下，推理速度相比初代提升了 42%，INT4 量化下，6G 显存支持的对话长度由 1K 提升到了 8K。</li>
+    </ul>
+  </li>
+  <li>
+    <p><a href="https://github.com/THUDM/ChatGLM3">ChatGLM3</a></p>
+
+    <ul>
+      <li>更强大的基础模型： ChatGLM3-6B 的基础模型 ChatGLM3-6B-Base 采用了更多样的训练数据、更充分的训练步数和更合理的训练策略。在语义、数学、推理、代码、知识等不同角度的数据集上测评显示，<em>ChatGLM3-6B-Base 具有在 10B 以下的基础模型中最强的性能</em>。</li>
+      <li>更完整的功能支持： ChatGLM3-6B 采用了全新设计的 Prompt 格式 ，除正常的多轮对话外。同时原生支持工具调用（Function Call）、代码执行（Code Interpreter）和 Agent 任务等复杂场景。</li>
+      <li>更全面的开源序列： 除了对话模型 ChatGLM3-6B 外，还开源了基础模型 ChatGLM3-6B-Base 、长文本对话模型 ChatGLM3-6B-32K。</li>
+    </ul>
+  </li>
+</ul>
+
+<p>此外，还有以下模型，我不再详细介绍：</p>
+<ul>
+  <li><a href="https://github.com/THUDM/CodeGeeX2">CodeGeeX2</a></li>
+  <li><a href="https://github.com/THUDM/WebGLM">WebGLM</a></li>
+  <li><a href="https://github.com/THUDM/VisualGLM-6B">VisualGLM-6B</a></li>
+</ul>
+
+<h2 id="chatglm-架构">ChatGLM 架构</h2>
+
+<p>ChatGLM2 的架构如下图所示。可以看出来，与 llama 等其他基于 transformer 的模型没什么不同：</p>
+
+<p><img src="/assets/img/LLM/ChatGLM2.png" alt="" /></p>
+
+<h2 id="chatglm2-代码详解">ChatGLM2 代码详解</h2>
+
+<p>因工作原因，先做 ChatGLM2 代码的分析，其模型的 config 数据如下：</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"_name_or_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"THUDM/chatglm2-6b"</span><span class="p">,</span><span class="w">
+  </span><span class="err">#</span><span class="w"> </span><span class="err">....</span><span class="w">
+  </span><span class="nl">"add_bias_linear"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">                             </span><span class="err">#</span><span class="w"> </span><span class="err">是否在线性层添加偏移项，否</span><span class="w">
+  </span><span class="nl">"add_qkv_bias"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                                 </span><span class="err">#</span><span class="w"> </span><span class="err">是否添加</span><span class="w"> </span><span class="err">qkv</span><span class="w"> </span><span class="err">层的偏移项，是</span><span class="w">
+  </span><span class="nl">"apply_query_key_layer_scaling"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                </span><span class="err">#</span><span class="w"> </span><span class="err">是否对</span><span class="w"> </span><span class="err">qkv</span><span class="w"> </span><span class="err">层进行缩放，是</span><span class="w">
+  </span><span class="nl">"apply_residual_connection_post_layernorm"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">    </span><span class="err">#</span><span class="w"> </span><span class="err">是否在残差连接后进行层归一化，否</span><span class="w">
+  </span><span class="nl">"attention_dropout"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">                             </span><span class="err">#</span><span class="w"> </span><span class="err">attention</span><span class="w"> </span><span class="err">dropout</span><span class="w"> </span><span class="err">值，</span><span class="mi">0</span><span class="w">
+  </span><span class="nl">"attention_softmax_in_fp32"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                    </span><span class="err">#</span><span class="w"> </span><span class="err">是否在</span><span class="w"> </span><span class="err">fp</span><span class="mi">32</span><span class="w"> </span><span class="err">下计算</span><span class="w"> </span><span class="err">softmax，是</span><span class="w">
+  </span><span class="nl">"bias_dropout_fusion"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                          </span><span class="err">#</span><span class="w"> </span><span class="err">是否融合</span><span class="w"> </span><span class="err">bias</span><span class="w"> </span><span class="err">dropout，是</span><span class="w">
+  </span><span class="nl">"ffn_hidden_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">13696</span><span class="p">,</span><span class="w">                             </span><span class="err">#</span><span class="w"> </span><span class="err">ffn</span><span class="w"> </span><span class="err">层的隐藏层大小，</span><span class="mi">13696</span><span class="w">
+  </span><span class="nl">"fp32_residual_connection"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">                    </span><span class="err">#</span><span class="w"> </span><span class="err">是否在</span><span class="w"> </span><span class="err">fp</span><span class="mi">32</span><span class="w"> </span><span class="err">下进行残差连接，否</span><span class="w">
+  </span><span class="nl">"hidden_dropout"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">                                </span><span class="err">#</span><span class="w"> </span><span class="err">hidden</span><span class="w"> </span><span class="err">dropout</span><span class="w"> </span><span class="err">值，</span><span class="mi">0</span><span class="w">
+  </span><span class="nl">"hidden_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">4096</span><span class="p">,</span><span class="w">                                  </span><span class="err">#</span><span class="w"> </span><span class="err">隐藏层大小，</span><span class="mi">4096</span><span class="w">
+  </span><span class="nl">"kv_channels"</span><span class="p">:</span><span class="w"> </span><span class="mi">128</span><span class="p">,</span><span class="w">                                   </span><span class="err">#</span><span class="w"> </span><span class="err">kv</span><span class="w"> </span><span class="err">张量的通道数，</span><span class="mi">128</span><span class="w">
+  </span><span class="nl">"layernorm_epsilon"</span><span class="p">:</span><span class="w"> </span><span class="mi">1e-05</span><span class="p">,</span><span class="w">                           </span><span class="err">#</span><span class="w"> </span><span class="err">layernorm</span><span class="w"> </span><span class="err">层的最小值，</span><span class="mi">1e-05</span><span class="w">
+  </span><span class="nl">"multi_query_attention"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                        </span><span class="err">#</span><span class="w"> </span><span class="err">是否使用多查询注意力，是</span><span class="w">
+  </span><span class="nl">"multi_query_group_num"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">                           </span><span class="err">#</span><span class="w"> </span><span class="err">多查询注意力的组数，</span><span class="mi">2</span><span class="w">
+  </span><span class="nl">"num_attention_heads"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w">                            </span><span class="err">#</span><span class="w"> </span><span class="err">注意力头数，</span><span class="mi">32</span><span class="w">
+  </span><span class="nl">"num_layers"</span><span class="p">:</span><span class="w"> </span><span class="mi">28</span><span class="p">,</span><span class="w">                                     </span><span class="err">#</span><span class="w"> </span><span class="err">transformer层数，</span><span class="mi">28</span><span class="w">
+  </span><span class="nl">"original_rope"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                                </span><span class="err">#</span><span class="w"> </span><span class="err">是否使用原生</span><span class="w"> </span><span class="err">RoPE，是</span><span class="w">
+  </span><span class="nl">"padded_vocab_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">65024</span><span class="p">,</span><span class="w">                           </span><span class="err">#</span><span class="w"> </span><span class="err">填充后的词表大小，</span><span class="mi">65024</span><span class="w">
+  </span><span class="nl">"post_layer_norm"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                              </span><span class="err">#</span><span class="w"> </span><span class="err">是否在</span><span class="w"> </span><span class="err">transformer</span><span class="w"> </span><span class="err">层后进行层归一化，是</span><span class="w">
+  </span><span class="nl">"rmsnorm"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                                      </span><span class="err">#</span><span class="w"> </span><span class="err">是否使用</span><span class="w"> </span><span class="err">RMSNorm，是</span><span class="w">
+  </span><span class="nl">"seq_length"</span><span class="p">:</span><span class="w"> </span><span class="mi">32768</span><span class="p">,</span><span class="w">                                  </span><span class="err">#</span><span class="w"> </span><span class="err">支持的最长序列长度，</span><span class="mi">32768</span><span class="w">
+  </span><span class="nl">"use_cache"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">                                    </span><span class="err">#</span><span class="w"> </span><span class="err">是否使用</span><span class="w"> </span><span class="err">KV</span><span class="w"> </span><span class="err">cache，是</span><span class="w">
+  </span><span class="nl">"torch_dtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"float16"</span><span class="p">,</span><span class="w">                             </span><span class="err">#</span><span class="w"> </span><span class="err">模型的精度，float</span><span class="mi">16</span><span class="w">
+  </span><span class="nl">"transformers_version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"4.27.1"</span><span class="p">,</span><span class="w">                     </span><span class="err">#</span><span class="w"> </span><span class="err">transformers</span><span class="w"> </span><span class="err">版本，</span><span class="mf">4.27</span><span class="err">.</span><span class="mi">1</span><span class="w">
+  </span><span class="nl">"tie_word_embeddings"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">                         </span><span class="err">#</span><span class="w"> </span><span class="err">是否对词嵌入进行绑定，否</span><span class="w">
+  </span><span class="nl">"eos_token_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">                                    </span><span class="err">#</span><span class="w"> </span><span class="err">句子结束符</span><span class="w"> </span><span class="err">id，</span><span class="mi">2</span><span class="w">
+  </span><span class="nl">"pad_token_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w">                                     </span><span class="err">#</span><span class="w"> </span><span class="err">填充符</span><span class="w"> </span><span class="err">id，</span><span class="mi">0</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="chatglm-基件">ChatGLM 基件</h3>
+
+<p>与<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">先前的llama博客</a>套路一样，我们从底到顶，先从最基础的基件部分代码开始，一步步往上走，从而逐步理解整个模型的架构。</p>
+
+<h4 id="prefixencoder">PrefixEncoder</h4>
+
+<p>PrefixEncoder 是一个前缀编码器，ChatGLM 模型使用它对历史输入的文本序列进行嵌入编码。从源码中可知，该类结构随用户配置的 <code class="language-plaintext highlighter-rouge">config.prefix_projection</code> 而变化，如果为 True，则使用一个两层的 MLP 进行编码，否则直接使用 Embedding 层进行编码。Embedding 层的规模是 <code class="language-plaintext highlighter-rouge">config.pre_seq_len</code>，之前的文本长度，每个词的嵌入向量维度是 <code class="language-plaintext highlighter-rouge">config.num_layers * config.kv_channels * config.multi_query_group_num * 2 = 28 * 128 * 2 * 2 = 14336</code>。而加的两层 MLP 则是将其降维到 <code class="language-plaintext highlighter-rouge">config.hidden_size</code>，其 MLP 内部的参数可以存储更多的权重信息。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">PrefixEncoder</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""
+    The torch.nn model to encode the prefix
+    Input shape: (batch-size, prefix-length)
+    Output shape: (batch-size, prefix-length, 2*layers*hidden)
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ChatGLMConfig</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">prefix_projection</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">prefix_projection</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">prefix_projection</span><span class="p">:</span>
+            <span class="c1"># Use a two-layer MLP to encode the prefix
+</span>            <span class="n">kv_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">num_layers</span> <span class="o">*</span> <span class="n">config</span><span class="p">.</span><span class="n">kv_channels</span> <span class="o">*</span> <span class="n">config</span><span class="p">.</span><span class="n">multi_query_group_num</span> <span class="o">*</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">pre_seq_len</span><span class="p">,</span> <span class="n">kv_size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">trans</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">(</span>
+                <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">kv_size</span><span class="p">,</span> <span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">),</span>
+                <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Tanh</span><span class="p">(),</span>
+                <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">kv_size</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">pre_seq_len</span><span class="p">,</span>
+                                                <span class="n">config</span><span class="p">.</span><span class="n">num_layers</span> <span class="o">*</span> <span class="n">config</span><span class="p">.</span><span class="n">kv_channels</span> <span class="o">*</span> <span class="n">config</span><span class="p">.</span><span class="n">multi_query_group_num</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">prefix_projection</span><span class="p">:</span>
+            <span class="n">prefix_tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+            <span class="n">past_key_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">trans</span><span class="p">(</span><span class="n">prefix_tokens</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">past_key_values</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">past_key_values</span>
+</code></pre></div></div>
+
+<h4 id="rotaryembedding">RotaryEmbedding</h4>
+
+<p>旋转位置编码的原理在<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">先前的llama博客</a>中已经介绍过。但 <code class="language-plaintext highlighter-rouge">apply_rotary_pos_emb</code> 实现有所不同。先放几行公式供读者参考回忆：</p>
+
+\[\theta_i = 10000^{-2(i-1)/d}, i \in [1,2,...,d/2]\]
+
+<center>
+  <img src="/assets/img/LLM/RoPE3.png" />
+</center>
+
+<p>结合前后代码，<code class="language-plaintext highlighter-rouge">rope_cache</code> 是 ChatGLM 模型的 <code class="language-plaintext highlighter-rouge">RotaryEmbedding</code> 存储的 cos sin cache。其最低维中，0 存储了 cos 值，1 存储了 sin 值，所以 <code class="language-plaintext highlighter-rouge">apply_rotary_pos_emb</code> 的 9-15 行出现了一个令人费解的复杂公式。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ... code in __init__
+</span><span class="n">rotary_dim</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">RotaryEmbedding</span><span class="p">(</span><span class="n">rotary_dim</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">original_impl</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">original_rope</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">torch_dtype</span><span class="p">)</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">base</span> <span class="o">**</span> <span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_elem</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_elem</span><span class="p">))</span>
+    <span class="n">seq_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">idx_theta</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">outer</span><span class="p">(</span><span class="n">seq_idx</span><span class="p">,</span> <span class="n">theta</span><span class="p">).</span><span class="nb">float</span><span class="p">()</span>
+    <span class="c1"># compute cos &amp; sin  shape[seq_len, dim//4, 2]
+</span>    <span class="n">cache</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="p">.</span><span class="n">cos</span><span class="p">(</span><span class="n">idx_theta</span><span class="p">),</span> <span class="n">torch</span><span class="p">.</span><span class="n">sin</span><span class="p">(</span><span class="n">idx_theta</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">apply_rotary_pos_emb</code> 将 query tensor 最低维拆成两半，前半部分参与运算，张量是 <code class="language-plaintext highlighter-rouge">x: Shape[seq_len, bsz, num_heads, dim//2, 2]</code> 和 <code class="language-plaintext highlighter-rouge">rope cache: Shape[seq_len, bsz, 1, dim//2, 2]</code>，可见 cache 的第二维会进行 broadcast，随后将结果的三四维 flatten，变为 <code class="language-plaintext highlighter-rouge">Shape[seq_len, bsz, num_heads, dim//2]</code>，并连接上 query tensor 的后半部。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">apply_rotary_pos_emb</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">rope_cache</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># x: [sq, b, np, hn]
+</span>    <span class="n">sq</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">np</span><span class="p">,</span> <span class="n">hn</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">x</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">x</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">rot_dim</span> <span class="o">=</span> <span class="n">rope_cache</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">x_pass</span> <span class="o">=</span> <span class="n">x</span><span class="p">[...,</span> <span class="p">:</span><span class="n">rot_dim</span><span class="p">],</span> <span class="n">x</span><span class="p">[...,</span> <span class="n">rot_dim</span><span class="p">:]</span>
+    <span class="c1"># truncate to support variable sizes
+</span>    <span class="n">rope_cache</span> <span class="o">=</span> <span class="n">rope_cache</span><span class="p">[:</span><span class="n">sq</span><span class="p">]</span>
+    <span class="n">xshaped</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">sq</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="p">,</span> <span class="n">rot_dim</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">rope_cache</span> <span class="o">=</span> <span class="n">rope_cache</span><span class="p">.</span><span class="n">view</span><span class="p">(</span><span class="n">sq</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">xshaped</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">x_out2</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">stack</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">xshaped</span><span class="p">[...,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">rope_cache</span><span class="p">[...,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">xshaped</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">rope_cache</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">xshaped</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">rope_cache</span><span class="p">[...,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">xshaped</span><span class="p">[...,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">rope_cache</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">x_out2</span> <span class="o">=</span> <span class="n">x_out2</span><span class="p">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">((</span><span class="n">x_out2</span><span class="p">,</span> <span class="n">x_pass</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>读者可能觉得奇怪，为何前半部分的 query 参与了运算，后半部分的 query 直接就连接到后面了？事实上我一开始在读这一代码时认为这是个bug，<a href="https://zhuanlan.zhihu.com/p/647085112">知乎上也有人发现了这一点</a>，但经他人提醒，认为这是一个 trick 🤯。但其底层原理是啥我不太清楚了。</p>
+
+<h4 id="rmsnorm">RMSNorm</h4>
+
+<p>RMSNorm 归一层的作用和原理也在<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">先前的llama博客</a>中已经介绍过，仅列出相应的公式：$ RMS(a) = \sqrt{\frac{1}{n}\sum_i^n{a_i^2}} $，$ \bar{a}_i = \frac{a_i}{RMS(a)}g_i$。其源代码与 llama 的也高度相似，不再赘述。</p>
+
+<h4 id="attention">Attention</h4>
+
+<p>ChatGLM 模型的核心是 Attention 机制，其实现与 llama-2 相比有很大不同，但其架构是相似的。仍然是在实现如下公式计算：</p>
+
+\[softmax(\frac{QK^T}{\sqrt{d_k}})V\]
+
+<p>但从实现上看，我总结了以下几点不同：</p>
+
+<ol>
+  <li>有两个类实现 attention 机制，SelfAttention 和 CoreAttention 类。</li>
+  <li>参与运算的张量维度不同。ChatGLM2 实现与主流的张量维度不同，其 query 张量的维度是 <code class="language-plaintext highlighter-rouge">(seq_len, batch_size, num_heads, head_dim)</code>，而一般而言张量的维度是 <code class="language-plaintext highlighter-rouge">(batch_size, num_heads, seq_len, head_dim)</code>。这导致代码比较繁琐难懂，我也不理解为何实现要与主流相悖。</li>
+</ol>
+
+<p>现在，我们来看类 <code class="language-plaintext highlighter-rouge">CoreAttention</code> 的具体实现：ChatGLM2 模型的 transform 层中，Multi-Head Attention 有 32 个头，每个头的维度为 128，并且使用了 Grouped-Query Attention 优化技术，将 KV 张量分成了两组，减少权重的内存开销。特别注意到，与 llama 不同的是，ChatGLM2 模型打开了 <code class="language-plaintext highlighter-rouge">query_key_layer_scaling</code>，从代码实现上看，层号 <code class="language-plaintext highlighter-rouge">layer_number</code> 越大，<code class="language-plaintext highlighter-rouge">coeff</code> 越大，因此，<code class="language-plaintext highlighter-rouge">norm_factor</code> 也会随之增大。此外，还启用了注意力的 dropout 层。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CoreAttention</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ChatGLMConfig</span><span class="p">,</span> <span class="n">layer_number</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CoreAttention</span><span class="p">,</span> <span class="bp">self</span><span class="p">).</span><span class="n">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="p">.</span><span class="n">apply_query_key_layer_scaling</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">apply_query_key_layer_scaling</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">attention_softmax_in_fp32</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">attention_softmax_in_fp32</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">apply_query_key_layer_scaling</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">attention_softmax_in_fp32</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">layer_number</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">layer_number</span><span class="p">)</span>
+
+        <span class="n">projection_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">kv_channels</span> <span class="o">*</span> <span class="n">config</span><span class="p">.</span><span class="n">num_attention_heads</span>
+
+        <span class="c1"># Per attention head and per partition values.
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_partition</span> <span class="o">=</span> <span class="n">projection_size</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span> <span class="o">=</span> <span class="n">projection_size</span> <span class="o">//</span> <span class="n">config</span><span class="p">.</span><span class="n">num_attention_heads</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads_per_partition</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">num_attention_heads</span>
+
+        <span class="n">coeff</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">norm_factor</span> <span class="o">=</span> <span class="n">math</span><span class="p">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">apply_query_key_layer_scaling</span><span class="p">:</span>
+            <span class="n">coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">layer_number</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">norm_factor</span> <span class="o">*=</span> <span class="n">coeff</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">coeff</span> <span class="o">=</span> <span class="n">coeff</span>
+
+        <span class="bp">self</span><span class="p">.</span><span class="n">attention_dropout</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">attention_dropout</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>torch&gt;=2.0 有针对 Attention 机制的优化接口 <code class="language-plaintext highlighter-rouge">nn.functional.scaled_dot_product_attention</code>，因此，ChatGLM2 模型直接使用了该接口。由于上文所说的第一个不同点，在使用接口前，第四行 会对 QKV 张量进行重排。调用完接口后，还要将结果重排回去，得到最终的输出。但令人费解的是，之前说的 <code class="language-plaintext highlighter-rouge">query_key_layer_scaling</code> 以及 dropout 层的特性好像对 torch&gt;=2.0 不起作用 🤔（因为代码里压根没用上它们）。</p>
+
+<p>至于 torch-1 的对注意力机制的裸实现，emmm，代码太过复杂，就算花时间去理解也是白费功夫。总而言之，<code class="language-plaintext highlighter-rouge">CoreAttention</code> 类围绕着 torch-2 的 SDPA 接口包装了一下，就完事了。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_layer</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">):</span>
+    <span class="n">pytorch_major_version</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">__version__</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="s">'.'</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">pytorch_major_version</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">query_layer</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span><span class="p">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="n">query_layer</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">attention_mask</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">query_layer</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">key_layer</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+            <span class="n">context_layer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">scaled_dot_product_attention</span><span class="p">(</span><span class="n">query_layer</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">,</span>
+                                                                                <span class="n">is_causal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">attention_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">attention_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">attention_mask</span>
+            <span class="n">context_layer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="n">scaled_dot_product_attention</span><span class="p">(</span><span class="n">query_layer</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">,</span>
+                                                                                <span class="n">attention_mask</span><span class="p">)</span>
+        <span class="n">context_layer</span> <span class="o">=</span> <span class="n">context_layer</span><span class="p">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">new_context_layer_shape</span> <span class="o">=</span> <span class="n">context_layer</span><span class="p">.</span><span class="n">size</span><span class="p">()[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_partition</span><span class="p">,)</span>
+        <span class="n">context_layer</span> <span class="o">=</span> <span class="n">context_layer</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">new_context_layer_shape</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+</code></pre></div></div>
+
+<p>再来看 <code class="language-plaintext highlighter-rouge">SelfAttention</code> 的实现，SelfAttention 类包含了三个组成成分：一）将输入张量转换成 QKV 张量的线性层，二）CoreAttention 类，实现注意力计算。三）将 CoreAttention 的 SDPA 结果转换成输出张量的线性层。其中，线性层的输入维度是 <code class="language-plaintext highlighter-rouge">config.hidden_size</code>，输出维度是 <code class="language-plaintext highlighter-rouge">config.projection_size</code>。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SelfAttention</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""Parallel self-attention layer abstract class.
+    Self-attention layer takes input with size [s, b, h]
+    and returns output of the same size.
+    """</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ChatGLMConfig</span><span class="p">,</span> <span class="n">layer_number</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SelfAttention</span><span class="p">,</span> <span class="bp">self</span><span class="p">).</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">layer_number</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">layer_number</span><span class="p">)</span>
+        <span class="c1"># ......
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">multi_query_attention</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">multi_query_attention</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">qkv_hidden_size</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">projection_size</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">multi_query_attention</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">num_multi_query_groups_per_partition</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">multi_query_group_num</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">qkv_hidden_size</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="p">.</span><span class="n">projection_size</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span> <span class="o">*</span> <span class="n">config</span><span class="p">.</span><span class="n">multi_query_group_num</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">query_key_value</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">qkv_hidden_size</span><span class="p">,</span>
+                                         <span class="n">bias</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">add_bias_linear</span> <span class="ow">or</span> <span class="n">config</span><span class="p">.</span><span class="n">add_qkv_bias</span><span class="p">,</span>
+                                         <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">_config_to_kwargs</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+                                         <span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">.</span><span class="n">core_attention</span> <span class="o">=</span> <span class="n">CoreAttention</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">layer_number</span><span class="p">)</span>
+
+        <span class="c1"># Output.
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">dense</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">projection_size</span><span class="p">,</span> <span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">add_bias_linear</span><span class="p">,</span>
+                               <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="o">**</span><span class="n">_config_to_kwargs</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+                               <span class="p">)</span>
+</code></pre></div></div>
+
+<p>其 forward 函数的运算过程也可以分成三部分：</p>
+<ul>
+  <li>准备 QKV 张量。输入张量 <code class="language-plaintext highlighter-rouge">hidden_states</code> 经过线性层后，得到 QKV 混合张量，随后拆分：<code class="language-plaintext highlighter-rouge">mixed_x_layer</code> 的最后一维度是 <code class="language-plaintext highlighter-rouge">hidden_size + 2 * KV_dim</code>，因为使用了 Grouped-Query Attention 优化技术后，Key Value 张量的头数变少了。对应地，7-9 行也是按照 <code class="language-plaintext highlighter-rouge">hidden_size + 2 * KV_dim</code> 拆分出 QKV 张量。</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span> <span class="n">rotary_pos_emb</span><span class="p">,</span> <span class="n">kv_cache</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">):</span>
+    <span class="c1"># hidden_states: [sq, b, h]
+</span>
+    <span class="c1"># =================================================
+</span>    <span class="c1"># Pre-allocate memory for key-values for inference.
+</span>    <span class="c1"># =================================================
+</span>    <span class="c1"># =====================
+</span>    <span class="c1"># Query, Key, and Value
+</span>    <span class="c1"># =====================
+</span>
+    <span class="c1"># Attention heads [sq, b, h] --&gt; [sq, b, (np * 3 * hn)]
+</span>    <span class="n">mixed_x_layer</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">query_key_value</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">multi_query_attention</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">query_layer</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">)</span> <span class="o">=</span> <span class="n">mixed_x_layer</span><span class="p">.</span><span class="n">split</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads_per_partition</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">,</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">num_multi_query_groups_per_partition</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">,</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">num_multi_query_groups_per_partition</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+</code></pre></div></div>
+
+<ul>
+  <li>将 QKV 张量转变为 <code class="language-plaintext highlighter-rouge">Shape[sq, b, np, hn]</code></li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="n">query_layer</span> <span class="o">=</span> <span class="n">query_layer</span><span class="p">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="n">query_layer</span><span class="p">.</span><span class="n">size</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads_per_partition</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">key_layer</span> <span class="o">=</span> <span class="n">key_layer</span><span class="p">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="n">key_layer</span><span class="p">.</span><span class="n">size</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_multi_query_groups_per_partition</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">value_layer</span> <span class="o">=</span> <span class="n">value_layer</span><span class="p">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="n">value_layer</span><span class="p">.</span><span class="n">size</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_multi_query_groups_per_partition</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># ... no MQA part
+</span></code></pre></div></div>
+
+<ul>
+  <li>准备 RoPE，和 KV cache。QKV 先加入旋转位置编码，再连接上之前的 KV cache 张量。</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1"># apply relative positional encoding (rotary embedding)
+</span>    <span class="k">if</span> <span class="n">rotary_pos_emb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">query_layer</span> <span class="o">=</span> <span class="n">apply_rotary_pos_emb</span><span class="p">(</span><span class="n">query_layer</span><span class="p">,</span> <span class="n">rotary_pos_emb</span><span class="p">)</span>
+        <span class="n">key_layer</span> <span class="o">=</span> <span class="n">apply_rotary_pos_emb</span><span class="p">(</span><span class="n">key_layer</span><span class="p">,</span> <span class="n">rotary_pos_emb</span><span class="p">)</span>
+
+    <span class="c1"># adjust key and value for inference
+</span>    <span class="k">if</span> <span class="n">kv_cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">cache_k</span><span class="p">,</span> <span class="n">cache_v</span> <span class="o">=</span> <span class="n">kv_cache</span>
+        <span class="n">key_layer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">((</span><span class="n">cache_k</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">value_layer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">((</span><span class="n">cache_v</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
+        <span class="n">kv_cache</span> <span class="o">=</span> <span class="p">(</span><span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">kv_cache</span> <span class="o">=</span> <span class="bp">None</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Grouped-Query Attention 使得 KV 张量的数量只有 <code class="language-plaintext highlighter-rouge">num_multi_query_groups_per_partition</code>（两个），但却要对应 <code class="language-plaintext highlighter-rouge">num_attention_heads_per_partition</code> 个 Query，因此代码最后要将 KV 张量使用 <a href="https://pytorch.org/docs/stable/generated/torch.Tensor.expand.html">torch.expand</a> 将第三维扩展。</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">multi_query_attention</span><span class="p">:</span>
+        <span class="n">key_layer</span> <span class="o">=</span> <span class="n">key_layer</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">key_layer</span> <span class="o">=</span> <span class="n">key_layer</span><span class="p">.</span><span class="n">expand</span><span class="p">(</span>
+            <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads_per_partition</span> <span class="o">//</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_multi_query_groups_per_partition</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">key_layer</span> <span class="o">=</span> <span class="n">key_layer</span><span class="p">.</span><span class="n">contiguous</span><span class="p">().</span><span class="n">view</span><span class="p">(</span>
+            <span class="n">key_layer</span><span class="p">.</span><span class="n">size</span><span class="p">()[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads_per_partition</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">value_layer</span> <span class="o">=</span> <span class="n">value_layer</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">value_layer</span> <span class="o">=</span> <span class="n">value_layer</span><span class="p">.</span><span class="n">expand</span><span class="p">(</span>
+            <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads_per_partition</span> <span class="o">//</span> <span class="bp">self</span><span class="p">.</span><span class="n">num_multi_query_groups_per_partition</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">value_layer</span> <span class="o">=</span> <span class="n">value_layer</span><span class="p">.</span><span class="n">contiguous</span><span class="p">().</span><span class="n">view</span><span class="p">(</span>
+            <span class="n">value_layer</span><span class="p">.</span><span class="n">size</span><span class="p">()[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_attention_heads_per_partition</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">hidden_size_per_attention_head</span><span class="p">)</span>
+        <span class="p">)</span>
+</code></pre></div></div>
+
+<ul>
+  <li>执行注意力计算和最后的输出线性层计算，这里的代码就很简单了。</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1"># ==================================
+</span>    <span class="c1"># core attention computation
+</span>    <span class="c1"># ==================================
+</span>
+    <span class="n">context_layer</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">core_attention</span><span class="p">(</span><span class="n">query_layer</span><span class="p">,</span> <span class="n">key_layer</span><span class="p">,</span> <span class="n">value_layer</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">)</span>
+
+    <span class="c1"># =================
+</span>    <span class="c1"># Output. [sq, b, h]
+</span>    <span class="c1"># =================
+</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">dense</span><span class="p">(</span><span class="n">context_layer</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">kv_cache</span>
+</code></pre></div></div>
+
+<h4 id="mlp">MLP</h4>
+
+<p>ChatGLM2 的 MLP 层与 llama 的略有不同。但都有两层全连接层，以及中间的激活层 swiglu。代码比较平凡，就不细说了。</p>
+
+<p><img src="/assets/img/LLM/ChatGLM2MLP.png" alt="" /></p>
+
+<h3 id="chatglm2-中间件">ChatGLM2 中间件</h3>
+
+<p>ChatGLM2 中间件的核心是 <code class="language-plaintext highlighter-rouge">GLMBlock</code>，<code class="language-plaintext highlighter-rouge">GLMBlock</code> 包含了三个组成成分：一）在注意力前后的 LayerNorm 层，二）注意力层，三）在最后的 MLP 层：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">GLMBlock</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="s">"""A single transformer layer.
+    Transformer layer takes input with size [s, b, h] and returns an
+    output of the same size.
+    """</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ChatGLMConfig</span><span class="p">,</span> <span class="n">layer_number</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># ...
+</span>        <span class="n">LayerNormFunc</span> <span class="o">=</span> <span class="n">RMSNorm</span> <span class="k">if</span> <span class="n">config</span><span class="p">.</span><span class="n">rmsnorm</span> <span class="k">else</span> <span class="n">LayerNorm</span>
+        <span class="c1"># Layernorm on the input data.
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">input_layernorm</span> <span class="o">=</span> <span class="n">LayerNormFunc</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">layernorm_epsilon</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                                             <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">torch_dtype</span><span class="p">)</span>
+
+        <span class="c1"># Self attention.
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">self_attention</span> <span class="o">=</span> <span class="n">SelfAttention</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">layer_number</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">hidden_dropout</span> <span class="o">=</span> <span class="n">config</span><span class="p">.</span><span class="n">hidden_dropout</span>
+
+        <span class="c1"># Layernorm on the attention output
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">post_attention_layernorm</span> <span class="o">=</span> <span class="n">LayerNormFunc</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">layernorm_epsilon</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                                                      <span class="n">dtype</span><span class="o">=</span><span class="n">config</span><span class="p">.</span><span class="n">torch_dtype</span><span class="p">)</span>
+
+        <span class="c1"># MLP
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>多个 <code class="language-plaintext highlighter-rouge">GLMBlock</code> 堆叠起来，组成一个 <code class="language-plaintext highlighter-rouge">GLMTransformer</code> 层。<code class="language-plaintext highlighter-rouge">GLMTransformer</code> 层的最后还会额外附上一层 LayerNorm，这部分代码平凡。</p>
+
+<p><code class="language-plaintext highlighter-rouge">GLMBlock</code> 的 forward 函数很好地描述了 <code class="language-plaintext highlighter-rouge">GLMBlock</code> 架构以及数据流向：先是 layernorm 层，再是注意力层，旁路使用残差结构，随后跟上 dropout 层和 Layernorm 层，最后是 MLP 层和 dropout 层，这些数据通路在之前的 ChatGLM2 架构图上描绘得很清楚，读者可参见<a href="https://huggingface.co/THUDM/chatglm2-6b/blob/main/modeling_chatglm.py#L536">代码</a>。</p>
+
+<p><code class="language-plaintext highlighter-rouge">GLMTransformer</code> 类则是将若干个 <code class="language-plaintext highlighter-rouge">GLMBlock</code> 做堆叠封装，并在网络的最后加入一层 layernorm 层。其 forward 函数中包含了 checkpoint 相关的代码👇，之前在 <a href="https://dingfen.github.io/ai/2023/11/30/huggingface2.html">llama 详解的博客</a>中我们提到过，使用 gradient_checkpointing 可以有效节约显存，因为前推时程序不保存中间计算值。而 use_cache 是通过消耗空间换时间。因此若 gradient_checkpointing 和 use_cache 都打开，那么两者可能会互相抵消优化影响，故模型不支持两者同时为 True。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span> <span class="n">rotary_pos_emb</span><span class="p">,</span> <span class="n">kv_caches</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">use_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">output_hidden_states</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">kv_caches</span><span class="p">:</span>
+        <span class="n">kv_caches</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">num_layers</span><span class="p">)]</span>
+    <span class="n">presents</span> <span class="o">=</span> <span class="p">()</span> <span class="k">if</span> <span class="n">use_cache</span> <span class="k">else</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">gradient_checkpointing</span> <span class="ow">and</span> <span class="bp">self</span><span class="p">.</span><span class="n">training</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
+            <span class="n">logger</span><span class="p">.</span><span class="n">warning_once</span><span class="p">(</span>
+                <span class="s">"`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."</span>
+            <span class="p">)</span>
+            <span class="n">use_cache</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="c1"># ...
+</span></code></pre></div></div>
+
+<h3 id="chatglm2-model">ChatGLM2 Model</h3>
+
+<p><code class="language-plaintext highlighter-rouge">ChatGLMPreTrainedModel</code> 类是一个基抽象类，负责处理 mask 和 position_id 等。<code class="language-plaintext highlighter-rouge">ChatGLMModel</code> 继承了它，<code class="language-plaintext highlighter-rouge">ChatGLMModel</code> 能囊括了 <code class="language-plaintext highlighter-rouge">GLMTransformer</code> 类，以及输出层 output layer；增加了对输入 <code class="language-plaintext highlighter-rouge">input_ids</code> 使用 torch.nn.Embedding 嵌入编码，以及对历史对话使用 <code class="language-plaintext highlighter-rouge">PrefixEncoder</code> 编码的环节等。</p>
+
+<h4 id="chatglmpretrainedmodel">ChatGLMPreTrainedModel</h4>
+
+<p>处理 position_id：根据输入的 input_ids 的形状：(batch_size, seq_len)，每个batch都从零开始递增标号：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_position_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_ids</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span>
+    <span class="n">position_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">seq_length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">).</span>
+    <span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">repeat</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">position_ids</span>
+</code></pre></div></div>
+
+<p>处理 mask：attention mask 应当是一个下三角矩阵，</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_ids</span><span class="p">,</span> <span class="n">past_key_values</span><span class="p">,</span> <span class="n">padding_mask</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="c1"># 首先初始化单位阵 维度 (bsz, seq_len, seq_len)，并取 tril_
+</span>    <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">.</span><span class="n">shape</span>
+    <span class="n">full_attention_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">ones</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">input_ids</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">full_attention_mask</span><span class="p">.</span><span class="n">tril_</span><span class="p">()</span>
+
+    <span class="c1"># 接上 KV cache 的 attention mask
+</span>    <span class="k">if</span> <span class="n">past_key_values</span><span class="p">:</span>
+        <span class="n">past_length</span> <span class="o">=</span> <span class="n">past_key_values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">].</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">past_length</span><span class="p">:</span>
+        <span class="n">full_attention_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">cat</span><span class="p">((</span><span class="n">torch</span><span class="p">.</span><span class="n">ones</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_length</span><span class="p">,</span> <span class="n">past_length</span><span class="p">,</span>
+                                    <span class="n">device</span><span class="o">=</span><span class="n">input_ids</span><span class="p">.</span><span class="n">device</span><span class="p">),</span> <span class="n">full_attention_mask</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># padding_mask 是 bool tensor，两者相乘后，小于0.5的为 false
+</span>    <span class="k">if</span> <span class="n">padding_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">full_attention_mask</span> <span class="o">=</span> <span class="n">full_attention_mask</span> <span class="o">*</span> <span class="n">padding_mask</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">past_length</span> <span class="ow">and</span> <span class="n">padding_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">full_attention_mask</span> <span class="o">-=</span> <span class="n">padding_mask</span><span class="p">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">full_attention_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">full_attention_mask</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">).</span><span class="nb">bool</span><span class="p">()</span>
+    <span class="n">full_attention_mask</span><span class="p">.</span><span class="n">unsqueeze_</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">full_attention_mask</span>
+</code></pre></div></div>
+
+<hr />
+
+<p><code class="language-plaintext highlighter-rouge">ChatGLMForConditionalGeneration</code> 类和 <code class="language-plaintext highlighter-rouge">ChatGLMForSequenceClassification</code> 类是用户（指 transformer框架）真正调用到的模型，他们俩内部都包含了 <code class="language-plaintext highlighter-rouge">ChatGLMModel</code> 类。</p>
+
+<p>从架构层面看，<code class="language-plaintext highlighter-rouge">ChatGLMForConditionalGeneration</code> 在 ChatGLM 模型的最后上增加了损失函数 <code class="language-plaintext highlighter-rouge">CrossEntropyLoss</code>，以便训练；而 <code class="language-plaintext highlighter-rouge">ChatGLMForSequenceClassification</code> 类则在最后增加了一个线性层和 dropout 层用于 sequence classification，当然该类最后也会调用损失函数 <code class="language-plaintext highlighter-rouge">CrossEntropyLoss</code> 和 <code class="language-plaintext highlighter-rouge">BCEWithLogitsLoss</code>。</p>
+
+<p>在用户与大模型发生交谈时，ChatGLM 模型会使用 transformer 架构下控制 token 生成的工具：logits processor。它可以通过控制 logits 概率，改变大模型吐出的 token。一个很常用的场景是控制大模型不吐出“敏感词”，可以加一个敏感词列表，让大模型在吐出该词前换一个词或者干脆不产生敏感词。<a href="https://blog.csdn.net/yjh_SE007/article/details/132259230">这篇博客</a>里介绍了自定义 LogitsProcessor 的方法。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>至此，我有详有略地给大家展示了 chatglm2 模型的架构和代码实现。总的来说，该模型架构基本相似于其他主流的大模型。在看过 llama 模型的具体实现后，chatglm2 给我一种很熟悉又陌生的感觉。熟悉在于其架构和数据通路层面的相似感，而陌生在于 chatglm2 模型在具体计算注意力时采用了不同寻常的张量形状，不仅与其他大模型相异，也与 torch 的注意力函数接口不同。</p>
+
+<p>从使用体验上说，ChatGLM2 是一款非常不错的中英文对话大模型，几轮对话下来基本符合预期。其6B的大小对新手和个人玩家友好，值得有条件的各位试试😄。</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> tag: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/tags/#ai" class="page__taxonomy-item" rel="tag">AI</a><span class="sep">, </span>
+    
+      
+      
+      <a href="/tags/#transformer" class="page__taxonomy-item" rel="tag">Transformer</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+  
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> category: </strong>
+    <span itemprop="keywords">
+    
+      
+      
+      <a href="/categories/#ai" class="page__taxonomy-item" rel="tag">AI</a>
+    
+    </span>
+  </p>
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> update time:</strong> <time datetime="2024-01-27T00:00:00+08:00">January 27, 2024</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">share</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?text=THUDM%2Fchatglm%E4%BB%A3%E7%A0%81%E7%BB%86%E8%AF%BB%20http%3A%2F%2Flocalhost%3A4000%2Fai%2F2024%2F01%2F27%2Fhuggingface3.html" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4000%2Fai%2F2024%2F01%2F27%2Fhuggingface3.html" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Flocalhost%3A4000%2Fai%2F2024%2F01%2F27%2Fhuggingface3.html" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="share LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ai/2024/01/15/LLM-topp.html" class="pagination--pager" title="大模型采样方法与并行扫描算法
+">previous</a>
+    
+    
+      <a href="/mpi&openmp/2024/02/02/cuda-kernel-grid-size.html" class="pagination--pager" title="更好地设置 CUDA Kernel 执行配置
+">next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">related</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/mpi&openmp/2024/02/02/cuda-kernel-grid-size.html" rel="permalink">更好地设置 CUDA Kernel 执行配置
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2024/01/15/LLM-topp.html" rel="permalink">大模型采样方法与并行扫描算法
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">从一头到另一头
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/2024/01/01/LLM-inference2.html" rel="permalink">Llm Inference2
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">Flash Attention
+
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+      <div class="archive__item-teaser">
+        <img src="/assets/img/teaser.jpg" alt="">
+      </div>
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/ai/2023/11/30/huggingface2.html" rel="permalink">huggingface下llama代码细读（下）
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  8 minutes read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">揭开它神秘的面纱
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="输入您要搜索的关键词..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://github.com/dingfen" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> Github</a></li>
+        
+      
+        
+          <li><a href="df12138@mail.ustc.edu.cn" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i> Email</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2024 Bill Ding. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    
+  <script>
+    var disqus_config = function () {
+      this.page.url = "http://localhost:4000/ai/2024/01/27/huggingface3.html";  /* Replace PAGE_URL with your page's canonical URL variable */
+      this.page.identifier = "/ai/2024/01/27/huggingface3"; /* Replace PAGE_IDENTIFIER with your page's unique identifier variable */
+    };
+    (function() { /* DON'T EDIT BELOW THIS LINE */
+      var d = document, s = d.createElement('script');
+      s.src = 'https://https://dingfen.github.io/.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+  
+
+
+
+
+
+  </body>
+</html>

@@ -328,4 +328,22 @@ var store = [{
         "tags": [],
         "url": "/2024/01/01/LLM-inference2.html",
         "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "大模型采样方法与并行扫描算法",
+        "excerpt":"Top p 采样与并行扫描 top p 采样 在 transformers 算出下一个词的概率之后，从中选出一个好的输出 token 也是不可或缺的重要环节，但这一环节往往被架构中的“大明星” —— transformers 夺走了过多眼球，以至于少有人注意到，译码策略(decoding strategies)也有可能成为大模型推理的性能瓶颈。 本博客重点关注 huggingface transformer 框架上常用的采样方法—— top-p。 其采样的思路是：在选取每个输出的 token 时，从大到小地累积概率，选中 token，直至超过阈值 p ，再从被选中的 token 集合中进行随机采样。这种方法也被称为核采样（nucleus sampling），因为它只关注概率分布的核心部分，忽略其他的 token 。例如，如果 p=0.15，我们将 token 概率从大到小地累积，达到 0.15 时正好是前两个 token （如下图），于是我们会从这两个 token 中 选择一个 token，而不考虑其他 token。这样可以避免采样到一些不合适或不相关的单词，同时也可以保留一些有趣或有创意的单词。 top-p 值通常设置为比较高的值（如0.75），目的是限制低概率 token 的长尾。我们可以同时使用 top-k 和 top-p。如果...","categories": ["AI"],
+        "tags": ["Transformer","AI"],
+        "url": "/ai/2024/01/15/LLM-topp.html",
+        "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "THUDM/chatglm代码细读",
+        "excerpt":"THUDM/ChatGLM代码细读 ChatGLM 是什么 ChatGLM-6B 是一个基于 General Language Model (GLM) 架构的开源、支持中英双语的对话语言模型。 由清华大学研发，截至笔者更新时已经发布了第三代 ChatGLM3。ChatGLM 模型使用了和 ChatGPT 相似的技术，使用约 1T 标识符的中英双语训练，再辅以监督微调、反馈自助、人类反馈强化学习等技术炼成。 清华大学团队和智谱AI可以说浑身是肝，发布了许多大模型： ChatGLM2-6B 更强大的性能：升级了 ChatGLM2-6B 的基座模型。ChatGLM2-6B 使用了 GLM 的混合目标函数，经过了 1.4T 中英标识符的预训练与人类偏好对齐训练，评测结果显示，相比于初代模型，ChatGLM2-6B 在 MMLU（+23%）、CEval（+33%）、GSM8K（+571%） 、BBH（+60%）等数据集上的性能取得了大幅度的提升，在同尺寸开源模型中具有较强的竞争力。 更长的上下文：使用 FlashAttention 技术将基座模型的上下文长度（Context Length）由 ChatGLM-6B 的 2K 扩展到了 32K，并在对话阶段使用 8K 的上下文长度训练。对于更长的上下文，我们发布了 ChatGLM2-6B-32K 模型。LongBench 的测评结果表明，在等量级的开源模型中，ChatGLM2-6B-32K 有着较为明显的竞争优势。 更高效的推理：使用 Multi-Query Attention 技术获得了更快的推理速度和更低的显存占用：在官方的模型实现下，推理速度相比初代提升了 42%，INT4...","categories": ["AI"],
+        "tags": ["Transformer","AI"],
+        "url": "/ai/2024/01/27/huggingface3.html",
+        "teaser": "/assets/img/teaser.jpg"
+      },{
+        "title": "更好地设置 CUDA Kernel 执行配置",
+        "excerpt":"设置 CUDA Kernel 执行配置 CUDA kernel 函数调用说明 在调用 CUDA 核函数时，我们经常会遇到如下调用形式： kernel_fun1&lt;&lt;&lt;grid_size, block_size&gt;&gt;&gt;(arg1, arg2, arg3) kernel_fun2&lt;&lt;&lt;grid_size, block_size, shm_size, stream&gt;&gt;&gt;(arg1, arg2, arg3); 其中，&lt;&lt;&lt;grid_size, block_size, shm_size, stream&gt;&gt;&gt; 是 CUDA 对 C++ 的扩展，被称之为执行配置(Execution Configuration)。这四个参数的基本含义是： grid_size ：线程块网格(grid)的大小和维度，dim3 类型，grid_size.x * grid_size.y * grid_size.z 就是执行该核函数时的总线程块数。 block_size：线程块(block)的大小和维度，dim3 类型，block_size.x * block_size.y * block_size.z 就是执行该核函数时的一个线程块的线程数。 shm_size：每个线程块可用于动态分配的共享内存的大小（字节数），size_t 类型。该共享内存可以被外部变量使用。 stream：执行该核函数的 CUDA 流(stream)...","categories": ["MPI&OpenMP"],
+        "tags": ["CUDA"],
+        "url": "/mpi&openmp/2024/02/02/cuda-kernel-grid-size.html",
+        "teaser": "/assets/img/teaser.jpg"
       }]
