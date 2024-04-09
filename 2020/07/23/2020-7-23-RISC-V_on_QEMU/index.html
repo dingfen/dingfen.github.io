@@ -1,0 +1,775 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RISC-V Linux 内核配置的心路历程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="QEMU 上运行 RISC-V Linux 内核">
+<meta property="og:url" content="https://dingfen.github.io/2020/07/23/2020-7-23-RISC-V_on_QEMU/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="RISC-V Linux 内核配置的心路历程">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://risc-v-getting-started-guide.readthedocs.io/en/latest/_images/linux64-qemu.gif">
+<meta property="article:published_time" content="2020-07-23T04:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-09T15:13:54.895Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RISC-V">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://risc-v-getting-started-guide.readthedocs.io/en/latest/_images/linux64-qemu.gif">
+  
+  
+  
+  <title>QEMU 上运行 RISC-V Linux 内核 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="QEMU 上运行 RISC-V Linux 内核"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-07-23 12:00" pubdate>
+          2020年7月23日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          960 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          9 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">QEMU 上运行 RISC-V Linux 内核</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="QEMU-上运行-RISC-V-Linux-内核"><a href="#QEMU-上运行-RISC-V-Linux-内核" class="headerlink" title="QEMU 上运行 RISC-V Linux 内核"></a>QEMU 上运行 RISC-V Linux 内核</h1><p>最近这段时间我在研究 RISC-V 内核。作为计划的开始，首先要将它运行起来。配置过程有点复杂，在此做详细介绍。</p>
+<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><ul>
+<li>操作系统 Ubuntu 18.04</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/riscv/riscv-gnu-toolchain">RISC-V GNU 工具链</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/qemu/qemu">QEMU</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/">Linux</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/riscv/riscv-pk">Berkeley Boot Loader</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/michaeljclark/busybear-linux">Busybear Linux</a></li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">git clone --recursive https://github.com/riscv/riscv-gnu-toolchain<br>git clone https://github.com/qemu/qemu<br>git clone https://github.com/torvalds/linux<br>git clone https://github.com/riscv/riscv-pk<br>git clone https://github.com/michaeljclark/busybear-linux<br></code></pre></td></tr></table></figure>
+
+<p>顺带一提，为了构建过程顺利，请先试着安装以下依赖：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo apt install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev \<br>                 gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev git<br></code></pre></td></tr></table></figure>
+
+<h2 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h2><h3 id="riscv-gnu-toolchain"><a href="#riscv-gnu-toolchain" class="headerlink" title="riscv-gnu-toolchain"></a>riscv-gnu-toolchain</h3><p>首先，我们的主机环境需要有 RISC-V 的全套工具链，用于编译、链接、调试基于 RISC-V 架构的程序语言。一般来说，常见的主机环境都是 AMD-64 架构，Linux 操作系统自带的 gcc gdb等是无法编译 RISC-V 程序的。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd riscv-gnu-toolchain<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">pick an install path, e.g. /opt/riscv64</span><br>./configure --prefix=/opt/riscv64 <br>make newlib -j $(nproc)<br>make linux -j $(nproc)<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">export</span> variables</span><br>export PATH=&quot;$PATH:/opt/riscv64/bin&quot;<br>export RISCV=&quot;/opt/riscv64&quot;<br></code></pre></td></tr></table></figure>
+
+<p>由于网络问题，RISC-V 工具链难以全部下载完成，大家需要通过各种渠道获取<code>: )</code>。</p>
+<h3 id="QEMU"><a href="#QEMU" class="headerlink" title="QEMU"></a>QEMU</h3><p>然后，就是对大名鼎鼎的虚拟机 QEMU 进行构建了， 针对非常多不同的架构，QEMU 有相应的虚拟机，所以 configure 的时候需要自己指定，<code>--target-list</code> 就是在指定架构。riscv64-linux-user 为用户模式，可以运行基于RISC-V 指令集编译的程序文件，softmmu 为镜像模拟器，可以运行基于 RISC-V 指令集编译的 Linux 镜像。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd qemu<br>git checkout v3.0.0<br>./configure --target-list=riscv64-softmmu, riscv64-linux-user<br>make -j $(nproc)<br>sudo make install<br></code></pre></td></tr></table></figure>
+
+<p>接下来构建 Linux 。将下载下来的 Linux 内核（我这边使用的是 Linux-5.7.9）进行编译构建。但是要注意到，因为在 QEMU 上跑该内核时，我们计划用 busybear 文件系统镜像，因此 config 最好与 busybear 一致。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd linux-5.7.9<br>cp ../busybear-linux/conf/linux.config .config   # 直接拷贝 busybear 的 linux config<br>make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- olddefconfig<br><span class="hljs-meta prompt_"># </span><span class="language-bash">make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- nconfig  <span class="hljs-comment"># 配置内核 直接退出即可</span></span><br>make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- vmlinux -j $(nproc)<br></code></pre></td></tr></table></figure>
+
+<p>上面最后一句话是在构建 vmlinux ，这里需要等待一些时间。</p>
+<blockquote>
+<p>vmlinux is a <strong>statically linked executable</strong> file format based file which is the uncompressed version of kernel image which can be used for debugging.</p>
+</blockquote>
+<h3 id="BBL"><a href="#BBL" class="headerlink" title="BBL"></a>BBL</h3><p>BBL 是何物？全称为 Berkeley Boot Loader 。作为一个 boot 启动，装载内核。</p>
+<blockquote>
+<p>This package also contains the Berkeley Boot Loader, <code>bbl</code>, which is a supervisor execution environment for tethered RISC-V systems. It is designed to host the RISC-V Linux port.</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd riscv-pk<br>mkdir build &amp;&amp; cd build<br>../configure --enable-logo --host=riscv64-unknown-elf --with-payload=../../linux/vmlinux<br>make -j $(nproc)<br></code></pre></td></tr></table></figure>
+
+<h3 id="Busybear-Linux"><a href="#Busybear-Linux" class="headerlink" title="Busybear Linux"></a>Busybear Linux</h3><p>Busybear 又是什么东西？简而言之，是一个 RISC-V Linux 的文件系统镜像，而且是针对 virt 虚拟机使用的。</p>
+<blockquote>
+<p>busybear-linux is a tiny RISC-V Linux root filesystem image that targets the <code>virt</code> machine in riscv-qemu. As the name suggests, busybear-linux is a riscv-linux root image comprised of busybox and dropbear.</p>
+<p>The root image is intended to demonstrate <strong>virtio-net and virtio-block in riscv-qemu</strong> and features a dropbear ssh server which allows out-of-the-box ssh access to a RISC-V virtual machine.</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd busybear-linux<br>make -j $(nproc)<br></code></pre></td></tr></table></figure>
+
+<p>在构建期间，可能会遇到如下问题：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">/opt/riscv/sysroot/usr/include/gnu/stubs.h:14:11: fatal  error: gnu/stubs-lp64.h:  No such file or directory ...<br></code></pre></td></tr></table></figure>
+
+<p>解决该问题，只需要打开 conf&#x2F;busybear.config ，把 CROSS_COMPILE &#x3D; riscv64-unknown-linux-gnu- 修改为CROSS_COMPILE &#x3D; riscv64-unknown-elf-。</p>
+<h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p>接下来就是激动人心的运行时间了！到你的主目录下，运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo qemu-system-riscv64 -nographic -machine virt \<br>     -kernel riscv-pk/build/bbl -append &quot;root=/dev/vda ro console=ttyS0&quot; \<br>     -drive file=busybear-linux/busybear.bin,format=raw,id=hd0 \<br>     -device virtio-blk-device,drive=hd0<br></code></pre></td></tr></table></figure>
+
+<p>QEMU 会让你输入用户名和密码，如果你仔细看的话，busybear.config 里面有一个叫 ROOT_PASSWORD 的项。所以你的用户名密码就是：</p>
+<figure class="highlight avrasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs avrasm"><span class="hljs-symbol">username:</span> root<br><span class="hljs-symbol">password:</span> busybear<br></code></pre></td></tr></table></figure>
+
+<p>然后，让我来一一解释一下这么长的命令行在干什么。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo qemu-system-riscv64 -nographic -machine virt<br></code></pre></td></tr></table></figure>
+
+<p>这句话就是启动 QEMU 虚拟机，设置为不显示图形界面模式 <code>-nographic</code>，并指定机器为 <code>-machine virt</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">-kernel riscv-pk/build/bbl -append &quot;root=/dev/vda ro console=ttyS0&quot; <br></code></pre></td></tr></table></figure>
+
+<p>QEMU 指定 kernel 镜像为 bbl ， <code>-append</code> 指定了 kernel 命令行，指示 Linux Kernel 从这里启动。</p>
+<blockquote>
+<p>Use <code>-kernel</code> to provide the Linux kernel image and <code>-append</code> to give the kernel command line arguments. The <code>-initrd</code> option can be used to provide an INITRD image.</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">-drive file=busybear-linux/busybear.bin,format=raw,id=hd0 \<br></code></pre></td></tr></table></figure>
+
+<p>这里指定了文件系统镜像的路径、格式、以及它的 id 。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">-device virtio-blk-device,drive=hd0<br></code></pre></td></tr></table></figure>
+
+<p>注意到 busybear 的说明，其目的是验证<code>virtio-blk-device</code>。</p>
+<p>出现下图所示的情况，构建就算成功了！</p>
+<p><img src="https://risc-v-getting-started-guide.readthedocs.io/en/latest/_images/linux64-qemu.gif" srcset="/img/loading.gif" lazyload></p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://risc-v-getting-started-guide.readthedocs.io/en/latest/linux-qemu.html#running-64-and-32-bit-risc-v-linux-on-qemu">Running 64- and 32-bit RISC-V Linux on QEMU</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/javaIOException/p/7525828.html">qemu模拟器下编译运行基于riscv指令集的Linux操作系统</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RISC-V/" class="category-chain-item">RISC-V</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RISC-V/" class="print-no-link">#RISC-V</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>QEMU 上运行 RISC-V Linux 内核</div>
+      <div>https://dingfen.github.io/2020/07/23/2020-7-23-RISC-V_on_QEMU/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年7月23日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/07/24/2020-7-24-riscv-from-scratch-1/" title="RISC-V from Scratch 1">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">RISC-V from Scratch 1</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/07/16/2020-7-16-RI5CY/" title="RI5CY 介绍">
+                        <span class="hidden-mobile">RI5CY 介绍</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

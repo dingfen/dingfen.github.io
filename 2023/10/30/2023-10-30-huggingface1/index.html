@@ -1,0 +1,855 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="揭开它神秘的面纱">
+<meta property="og:type" content="article">
+<meta property="og:title" content="huggingface下llama代码细读（上）">
+<meta property="og:url" content="https://dingfen.github.io/2023/10/30/2023-10-30-huggingface1/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="揭开它神秘的面纱">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/RoPE.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/RoPE2.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/transformer.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/llama.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/RoPE3.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/RoPE4.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/RoPE1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/llamaMLP.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/MLPTP.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/The-Transformers-architecture-Multi-Head-Attention-consists-of-several-attention-layers.ppm">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/grouped-query%20attention.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/llama.png">
+<meta property="article:published_time" content="2023-10-30T04:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-09T15:21:10.565Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/RoPE.png">
+  
+  
+  
+  <title>huggingface下llama代码细读（上） - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="huggingface下llama代码细读（上）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-10-30 12:00" pubdate>
+          2023年10月30日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          40 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">huggingface下llama代码细读（上）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="huggingface下llama代码细读（上）"><a href="#huggingface下llama代码细读（上）" class="headerlink" title="huggingface下llama代码细读（上）"></a>huggingface下llama代码细读（上）</h1><h2 id="llama-是什么"><a href="#llama-是什么" class="headerlink" title="llama 是什么"></a>llama 是什么</h2><p>llama 是 meta 公司于 2023 年初发布的一个大语言模型。根据<a target="_blank" rel="noopener" href="https://ai.meta.com/blog/large-language-model-llama-meta-ai/">官网</a>上对llama的介绍，meta 公司发布的语言模型可以帮助那些无法拥有大量计算资源的研究人员小成本地进入 AI 大模型领域进行研究。也正因如此，llama 成为了除 ChatGPT 外最有名的大模型之一。为了满足不同级别的研究需要，meta 向全社会提供了经过初步训练的多个不同权重大小的模型数据（7B、13B、33B 和 65B）。</p>
+<p>从<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2302.13971">论文</a>中看，llama 使用了世界上高质量的文本数据进行训练，使用到的训练数据包括：</p>
+<ul>
+<li>English CommonCrawl [67%]</li>
+<li>C4 [15%]</li>
+<li>Github [4.5%]</li>
+<li>Wikipedia [4.5%]</li>
+<li>Gutenberg and Books3 [4.5%]</li>
+<li>ArXiv [2.5%]</li>
+<li>Stack Exchange [2%]</li>
+</ul>
+<p>llama 使用的分词（Tokenizer）算法是由 SentencePiece 实现的 Byte-pair-encoding(BPE) 算法，所有的训练数据大约包含了 1.4T 个 tokens。每个 token 在训练期间仅使用一次，但维基百科和图书等数据除外。在发布 llama 后不久，meta 又发布了 llama-2 模型，接下来，我们会对 llama 和 llama-2 模型架构和实现做详细的讨论。</p>
+<h2 id="llama-架构"><a href="#llama-架构" class="headerlink" title="llama 架构"></a>llama 架构</h2><p>从<a target="_blank" rel="noopener" href="https://research.facebook.com/publications/llama-open-and-efficient-foundation-language-models/">论文</a>中可知，llama 模型是由大名鼎鼎的 <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1706.03762">Transformer</a> 架构搭成的，但它也做了如下三点改进：</p>
+<ul>
+<li>Pre-Normalization Using <a target="_blank" rel="noopener" href="https://openreview.net/forum?id=BylmcHHgIB">RMSNorm</a>（使用 RMSNorm 前置归一）<ul>
+<li>What：在 Transformer 架构的基础上，将归一化操作前置到每层的输入前，并改用 Root Mean Square Normalization（RMSNorm）完成归一</li>
+<li>How：$ RMS(a) &#x3D; \sqrt{\frac{1}{n}\sum_i^n{a_i^2}} $，$ \bar{a}_i &#x3D; \frac{a_i}{RMS(a)}g_i$；而相比于 Transformer 使用的 layerNorm：$ \mu &#x3D; \frac{1}{n}\sum_i^n{a_i} $，$ \sigma &#x3D; \sqrt{\frac{1}{n}\sum_i^n{(a_i-\mu)^2}}$，$ \bar{a}_i &#x3D; \frac{a_i -\mu}{\sigma}g_i$</li>
+<li>Why：为了提升训练的稳定性，对每个 Transformer 子层的输入进行归一化，而不是像原 Transformer 仅对输出进行归一化；此外，相比 layerNorm，RMSNorm 仅支持 re-scaling 计算开销更低，因为<a target="_blank" rel="noopener" href="https://openreview.net/forum?id=BylmcHHgIB">研究</a>表明，归一化的主要贡献来自于 re-scaling 而非 re-centering。</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://paperswithcode.com/method/swiglu">SwiGLU</a> 激活函数<ul>
+<li>What：非线性处处可导的激活函数，相比原先 Transformer 架构采用的 ReLU 激活函数。</li>
+<li>How：SwiGLU 其实就是采用 Swish 函数作为激活函数的 GLU 变体，其公式为：$ SwiGLU(x, W, V, b, c) &#x3D; Swish_1(xW+b)\otimes(xV+c)$，其中 $ Swish_\beta(x) &#x3D; x\sigma(\beta x)$</li>
+<li>Why：该激活函数用科学系的参数，非线性且处处可导，有门控机制可以选择性地过滤部分输入，缓解梯度消失的问题，可以显著提高模型的训练效果。<blockquote>
+<p>GLU（Gated Linear Units）是一种门控机制的神经网络层，它由一个线性变换和一个激活函数组成。例如，若使用 sigmoid 函数作为门控机制，用于控制信息能够通过的“开关”，其公式为 $ GLU(x, W, V, b, c) &#x3D; \sigma(xW+b)\otimes (xV+c) $ 。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://paperswithcode.com/method/rope">Rotaty Embeddings</a> （旋转位置编码 RoPE）<ul>
+<li>What：一种相对位置编码，给输入和输出的文本序列做编号。因为 Transformer 没有保存文本语序的信息，因此需要在输入（输出）时添加位置编码以保证处理的语序结果是正确的</li>
+<li>How：具体的矩阵编码形式如下图：推理过程参考<a target="_blank" rel="noopener" href="https://kexue.fm/archives/8265">博采众长的旋转式位置编码</a>。由于从矢量旋转出发推理得到的旋转矩阵过于稀疏（下右图），因此在实际计算时，往往会采用左下图矩阵按位乘的方法并行计算。其中，$ \theta_i &#x3D; 10000^{-2(i-1)&#x2F;d}, i \in [1,2,…,d&#x2F;2] $</li>
+<li>Why：该位置编码有如下特性：上下文表示与旋转矩阵相乘来编码相对位置；可扩展到任意长度，适应任意长度的序列输入输出；可用于线性注意力机制；词间距离与依赖性相关。  <figure class="half">
+  <img src="/img/LLM/RoPE.png" srcset="/img/loading.gif" lazyload>
+  <img src="/img/LLM/RoPE2.png" srcset="/img/loading.gif" lazyload>
+  </figure></li>
+</ul>
+</li>
+</ul>
+<p>最后，我们来看一下 Transformer、llama、llama-2 模型基块的具体架构图：</p>
+<figure class="half">
+    <img src="/img/LLM/transformer.png" srcset="/img/loading.gif" lazyload>
+    <img src="/img/LLM/llama.png" srcset="/img/loading.gif" lazyload>
+</figure>
+
+<h2 id="llama-基件"><a href="#llama-基件" class="headerlink" title="llama 基件"></a>llama 基件</h2><p>随着大语言 AI 模型的不断发展，与之相关的开源社区和开源代码也在不断地丰富和壮大。本博客主要研究 <a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers">huggingface transformer</a> 开源框架，Huggingface 是一家在 NLP 社区做出杰出贡献的纽约创业公司，其所提供的大量预训练模型和代码等资源被广泛的应用于学术研究当中，现已经发展成为大语言 AI 模型领域中最大的开源社区之一。Huggingface 框架提供了数以千计针对各种任务的预训练模型，开发者可以根据自身的需要，选择模型进行训练或微调，也可参考相关文档和源码，从而快速开发新模型。</p>
+<p>本节开始带领大家深入理解 <a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers/tree/main/src/transformers/models/llama">transformers llama</a> 的核心实现。我们先从搭建 llama 的基础组件开始，一步一步从底到顶走过整个代码结构。</p>
+<h3 id="RMSNorm"><a href="#RMSNorm" class="headerlink" title="RMSNorm"></a>RMSNorm</h3><p>在对 RMSNorm 有一定了解后，我们来看一下 RMSNorm 的实现<a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py">代码</a>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">LlamaRMSNorm</span>(nn.Module):<br>  <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, hidden_size, eps=<span class="hljs-number">1e-6</span></span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    LlamaRMSNorm is equivalent to T5LayerNorm</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-built_in">super</span>().__init__()<br>    self.weight = nn.Parameter(torch.ones(hidden_size))<br>    self.variance_epsilon = eps<br><br>  <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, hidden_states</span>):<br>    input_dtype = hidden_states.dtype<br>    hidden_states = hidden_states.to(torch.float32)<br>    variance = hidden_states.<span class="hljs-built_in">pow</span>(<span class="hljs-number">2</span>).mean(-<span class="hljs-number">1</span>, keepdim=<span class="hljs-literal">True</span>)<br>    hidden_states = hidden_states * torch.rsqrt(variance + self.variance_epsilon)<br>    <span class="hljs-keyword">return</span> self.weight * hidden_states.to(input_dtype)<br></code></pre></td></tr></table></figure>
+
+<p><code>self.variance_epsilon</code> 是用来规避可能出现的协方差为0的情况而引入的极小值。<code>forward</code> 函数的代码对应了之前给出的公式：$ RMS(a) &#x3D; \sqrt{\frac{1}{n}\sum_i^n{a_i^2}} $ 以及 $ \bar{a}_i &#x3D; \frac{a_i}{RMS(a)}g_i$ 。第13、14行将输入的 <code>hidden_states</code>（隐藏状态张量）的最低维度元素，进行平方后取平均，再用 <code>rsqrt</code> 取倒数开根号，最后更新 <code>hidden_states</code> 的值。之后我们会了解到，所谓的最低维度就是张量的特征值 （即 feature 维度）。</p>
+<h3 id="激活函数"><a href="#激活函数" class="headerlink" title="激活函数"></a>激活函数</h3><p>transformers 的激活函数实现集中在另一个 <a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers/blob/main/src/transformers/activations.py">python 文件</a>中，离我们要讨论的 llama 比较远，实现也较为平凡，不细聊。这里只说明默认使用的是 <a target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/generated/torch.nn.SiLU.html"><code>nn.SiLU</code> 激活函数</a></p>
+<h3 id="RoPE"><a href="#RoPE" class="headerlink" title="RoPE"></a>RoPE</h3><center>
+  <img src="/img/LLM/RoPE3.png" srcset="/img/loading.gif" lazyload >
+</center>
+
+<p>从上节内容中，我们知道 RoPE 旋转位置编码在推理时的计算过程如上图（这里我们把 <code>x</code> 换成了 transformer 中更常用的 <code>q</code>）。那么关于旋转位置编码的运算，在实际代码中是如何完成的呢？</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">LlamaRotaryEmbedding</span>(nn.Module):<br>  <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, dim, max_position_embeddings=<span class="hljs-number">2048</span>, base=<span class="hljs-number">10000</span>, device=<span class="hljs-literal">None</span></span>):<br>    <span class="hljs-built_in">super</span>().__init__()<br><br>    self.dim = dim<br>    self.max_position_embeddings = max_position_embeddings<br>    self.base = base<br>    inv_freq = <span class="hljs-number">1.0</span> / (self.base ** (torch.arange(<span class="hljs-number">0</span>, self.dim, <span class="hljs-number">2</span>).<span class="hljs-built_in">float</span>().to(device) / self.dim))<br>    self.register_buffer(<span class="hljs-string">&quot;inv_freq&quot;</span>, inv_freq, persistent=<span class="hljs-literal">False</span>)<br><br>    <span class="hljs-comment"># Build here to make `torch.jit.trace` work.</span><br>    self._set_cos_sin_cache(<br>        seq_len=max_position_embeddings, device=self.inv_freq.device, dtype=torch.get_default_dtype()<br>    )<br></code></pre></td></tr></table></figure>
+
+<p>首先，<code>LlamaRotaryEmbedding</code> 在构造函数中就将公式中的 $ \theta_i $ 存入到 <code>nn.Module </code> 中的 <a target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.register_buffer">register_buffer</a>。然后调用内部函数将 cos 和 sin 值算出来👇：详细地，<a target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/generated/torch.einsum.html">torch.einsum</a> 计算了 $ m\theta_i $，就如论文中配图所示的过程那样（下图，代码中的 t 就是图里的 m），将角度与词的绝对位置相乘，就相当于在平面坐标系上转了一个小角度。最后，将这些值在最低维复制一次，拼接起来（<code>torch.cat</code>），便得到了制备的 cos 和 sin 值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_set_cos_sin_cache</span>(<span class="hljs-params">self, seq_len, device, dtype</span>):<br>  self.max_seq_len_cached = seq_len<br>  t = torch.arange(self.max_seq_len_cached, device=device, dtype=self.inv_freq.dtype)<br><br>  freqs = torch.einsum(<span class="hljs-string">&quot;i,j-&gt;ij&quot;</span>, t, self.inv_freq)<br>  <span class="hljs-comment"># Different from paper, but it uses a different permutation in order to obtain the same calculation</span><br>  emb = torch.cat((freqs, freqs), dim=-<span class="hljs-number">1</span>)<br>  self.register_buffer(<span class="hljs-string">&quot;cos_cached&quot;</span>, emb.cos().to(dtype), persistent=<span class="hljs-literal">False</span>)<br>  self.register_buffer(<span class="hljs-string">&quot;sin_cached&quot;</span>, emb.sin().to(dtype), persistent=<span class="hljs-literal">False</span>)<br></code></pre></td></tr></table></figure>
+
+<center>
+  <img src="/img/LLM/RoPE4.png" srcset="/img/loading.gif" lazyload >
+</center>
+
+
+<p>这样做的好处是，所有的 cos 和 sin 值都在程序构造该类时已经计算完成，推理时无需再次计算，加快了推理过程。那么，另一个问题是：在真实的推理中，llama 是如何使用这些已经制备的 cos 和 sin 的？来看下面的代码👇：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">rotate_half</span>(<span class="hljs-params">x</span>):<br>  <span class="hljs-string">&quot;&quot;&quot;Rotates half the hidden dims of the input.&quot;&quot;&quot;</span><br>  x1 = x[..., : x.shape[-<span class="hljs-number">1</span>] // <span class="hljs-number">2</span>]<br>  x2 = x[..., x.shape[-<span class="hljs-number">1</span>] // <span class="hljs-number">2</span> :]<br>  <span class="hljs-keyword">return</span> torch.cat((-x2, x1), dim=-<span class="hljs-number">1</span>)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">apply_rotary_pos_emb</span>(<span class="hljs-params">q, k, cos, sin, position_ids, unsqueeze_dim=<span class="hljs-number">1</span></span>):<br>  cos = cos[position_ids].unsqueeze(unsqueeze_dim)<br>  sin = sin[position_ids].unsqueeze(unsqueeze_dim)<br>  q_embed = (q * cos) + (rotate_half(q) * sin)<br>  k_embed = (k * cos) + (rotate_half(k) * sin)<br>  <span class="hljs-keyword">return</span> q_embed, k_embed<br><br><span class="hljs-comment"># forward for LlamaRotaryEmbedding</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, seq_len=<span class="hljs-literal">None</span></span>):<br>  <span class="hljs-comment"># x: [bs, num_attention_heads, seq_len, head_size]</span><br>  <span class="hljs-keyword">if</span> seq_len &gt; self.max_seq_len_cached:<br>      self._set_cos_sin_cache(seq_len=seq_len, device=x.device, dtype=x.dtype)<br><br>  <span class="hljs-keyword">return</span> (<br>      self.cos_cached[:seq_len].to(dtype=x.dtype),<br>      self.sin_cached[:seq_len].to(dtype=x.dtype),<br>  )<br></code></pre></td></tr></table></figure>
+
+<p>之后会提到，<code>apply_rotary_pos_emb</code> 函数在 <code>LlamaModel:forward</code> 中被调用，计算位置编码。下图公式的第一项和第二项对应代码里的 <code>(q * cos)</code>，注意到 <code>cos</code> 已通过 <a target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/generated/torch.unsqueeze.html#torch.unsqueeze">torch.unsqueeze</a> 列向排布。而公式中的第三项需要靠 <code>rotate_half</code> 获得，方法是切半，旋转，取负，于是得到了下图的运算过程。注意看，虽然论文中描述的公式与下图稍有不同，但其本质仍是一样的。而下图的运算过程能被处理得更加快捷。</p>
+<center>
+  <img src="/img/LLM/RoPE1.png" srcset="/img/loading.gif" lazyload >
+</center>
+
+<h4 id="RoPE-扩展"><a href="#RoPE-扩展" class="headerlink" title="RoPE 扩展"></a>RoPE 扩展</h4><h2 id="llama-中间件"><a href="#llama-中间件" class="headerlink" title="llama 中间件"></a>llama 中间件</h2><p>后续内容可能会涉及到 llama 的相关超参。下面的数据是 llama-7b-hf 的 config 数据，后续的内容会对这些参数做具体说明：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;architecture&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;LlamaForCausalLM&quot;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;hidden_act&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;silu&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;hidden_size&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">4096</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;initializer_range&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.02</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;intermediate_size&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">11008</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;max_position_embeddings&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">4096</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;model_type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;llama&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;num_attention_heads&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;num_hidden_layers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;num_key_value_heads&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;pretraining_tp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;rms_norm_eps&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1e-05</span><span class="hljs-punctuation">,</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="MLP"><a href="#MLP" class="headerlink" title="MLP"></a>MLP</h3><p>llama 内使用了两层深的 <a target="_blank" rel="noopener" href="https://www.3blue1brown.com/lessons/neural-networks">MLP</a> 来存储参数，相对简单。该网络先将维度从 <code>hidden_size</code> 映射到 <code>intermediate_size</code>，再将它降维映射到 <code>hidden_size</code>。具体流程和架构参考下图：</p>
+<center>
+  <img src="/img/LLM/llamaMLP.png" srcset="/img/loading.gif" lazyload >
+</center>
+
+<p>代码中需要注意的是 <code>pretraining_tp</code> 部分，它通过将<strong>张量的某一维度简单地均分</strong>以实现张量并行（Tensor Parallelism，TP）。例如，第13-17行将线性层的权重矩阵在 <code>intermediate_size</code> 维均分。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">LlamaMLP</span>(nn.Module):<br>  <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config</span>):<br>    <span class="hljs-built_in">super</span>().__init__()<br>    self.config = config<br>    self.hidden_size = config.hidden_size<br>    self.intermediate_size = config.intermediate_size<br>    self.gate_proj = nn.Linear(self.hidden_size, self.intermediate_size, bias=<span class="hljs-literal">False</span>)<br>    self.up_proj = nn.Linear(self.hidden_size, self.intermediate_size, bias=<span class="hljs-literal">False</span>)<br>    self.down_proj = nn.Linear(self.intermediate_size, self.hidden_size, bias=<span class="hljs-literal">False</span>)<br>    self.act_fn = ACT2FN[config.hidden_act]<br><br>  <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>    <span class="hljs-keyword">if</span> self.config.pretraining_tp &gt; <span class="hljs-number">1</span>:<br>        <span class="hljs-built_in">slice</span> = self.intermediate_size // self.config.pretraining_tp<br>        gate_proj_slices = self.gate_proj.weight.split(<span class="hljs-built_in">slice</span>, dim=<span class="hljs-number">0</span>)<br>        up_proj_slices = self.up_proj.weight.split(<span class="hljs-built_in">slice</span>, dim=<span class="hljs-number">0</span>)<br>        down_proj_slices = self.down_proj.weight.split(<span class="hljs-built_in">slice</span>, dim=<span class="hljs-number">1</span>)<br><br>        gate_proj = torch.cat(<br>            [F.linear(x, gate_proj_slices[i]) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.config.pretraining_tp)], dim=-<span class="hljs-number">1</span><br>        )<br>        up_proj = torch.cat([F.linear(x, up_proj_slices[i]) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.config.pretraining_tp)], dim=-<span class="hljs-number">1</span>)<br><br>        intermediate_states = (self.act_fn(gate_proj) * up_proj).split(<span class="hljs-built_in">slice</span>, dim=<span class="hljs-number">2</span>)<br>        down_proj = [<br>            F.linear(intermediate_states[i], down_proj_slices[i]) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.config.pretraining_tp)<br>        ]<br>        down_proj = <span class="hljs-built_in">sum</span>(down_proj)<br>    <span class="hljs-keyword">else</span>:<br>        down_proj = self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))<br><br>    <span class="hljs-keyword">return</span> down_proj<br></code></pre></td></tr></table></figure>
+
+<p>下面这张图展示了 TP 下计算过程，在 <code>intermediate_size</code> 较大时，使用TP对该维度进行均分，可以很好地加速推理过程：MLP 的输入张量 <code>x</code> 在 TP 模式下会在 <code>seq_len</code> 这个维度下被均分成若干子矩阵；每个子矩阵 <code>(seq_len / TP, hidden_size)</code> 都会参与 gate 和 up_proj 的线性层运算，与权重矩阵 <code>(intermediate_size / TP, hidden_size)^T</code> 相乘，得到结果经拼接后，再将分别按位相乘得到中间状态张量 <code>intermediate_states</code>；最后中间状态张量通过 down_proj 线性层得到输出张量。</p>
+<center>
+  <img src="/img/LLM/MLPTP.png" srcset="/img/loading.gif" lazyload>
+</center>
+
+<h3 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h3><p>注意力机制比较复杂，首先来看一下 <code>LlamaAttention</code> 的构造函数：<code>num_heads</code> 表示注意力头的数量，<code>head_dim</code> 表示注意力头的维度。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">LlamaAttention</span>(nn.Module):<br>  <span class="hljs-string">&quot;&quot;&quot;Multi-headed attention from &#x27;Attention Is All You Need&#x27; paper&quot;&quot;&quot;</span><br>  <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config: LlamaConfig</span>):<br>    <span class="hljs-built_in">super</span>().__init__()<br>    self.config = config<br>    self.hidden_size = config.hidden_size<br>    self.num_heads = config.num_attention_heads<br>    self.head_dim = self.hidden_size // self.num_heads<br>    self.num_key_value_heads = config.num_key_value_heads<br>    self.num_key_value_groups = self.num_heads // self.num_key_value_heads<br>    self.max_position_embeddings = config.max_position_embeddings<br>    self.rope_theta = config.rope_theta<br>    self.is_causal = <span class="hljs-literal">True</span><br><br>    <span class="hljs-keyword">if</span> (self.head_dim * self.num_heads) != self.hidden_size:<br>        <span class="hljs-keyword">raise</span> ValueError(<br>            <span class="hljs-string">f&quot;hidden_size must be divisible by num_heads (got `hidden_size`: <span class="hljs-subst">&#123;self.hidden_size&#125;</span>&quot;</span><br>            <span class="hljs-string">f&quot; and `num_heads`: <span class="hljs-subst">&#123;self.num_heads&#125;</span>).&quot;</span><br>        )<br>    self.q_proj = nn.Linear(self.hidden_size, self.num_heads * self.head_dim, bias=config.attention_bias)<br>    self.k_proj = nn.Linear(self.hidden_size, self.num_key_value_heads * self.head_dim, bias=config.attention_bias)<br>    self.v_proj = nn.Linear(self.hidden_size, self.num_key_value_heads * self.head_dim, bias=config.attention_bias)<br>    self.o_proj = nn.Linear(self.num_heads * self.head_dim, self.hidden_size, bias=config.attention_bias)<br>    self._init_rope()<br></code></pre></td></tr></table></figure>
+
+<p>注意到 <code>q_proj</code> <code>k_proj</code> <code>v_proj</code> <code>o_proj</code> 四个线性层的维度，之后的 TP 会将他们在 <code>hidden_size</code> 拆分，它们的权重张量分别是：</p>
+<ul>
+<li><code>q_proj</code>: <code>(num_heads * head_dim, hidden_size)^T</code></li>
+<li><code>k_proj</code>: <code>(num_key_value_heads * head_dim, hidden_size)^T</code></li>
+<li><code>v_proj</code>: <code>(num_key_value_heads * head_dim, hidden_size)^T</code></li>
+<li><code>o_proj</code>: <code>(hidden_size, num_heads * head_dim)^T</code></li>
+</ul>
+<p>在咱们的 llama-7b-hf 的例子中，注意力头数量较少，因此只有一组注意力头。若注意力头数量较多，llama2 使用分组和 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2305.13245">grouped-query attention</a> 机制，使得同一组的 Q 共享一个 KV 权重，减少内存使用，进一步优化推理性能。</p>
+<p><img src="/img/LLM/The-Transformers-architecture-Multi-Head-Attention-consists-of-several-attention-layers.ppm" srcset="/img/loading.gif" lazyload></p>
+<h4 id="forward-实现"><a href="#forward-实现" class="headerlink" title="forward 实现"></a>forward 实现</h4><p>forward 函数的实现通常比较复杂，但也有一些简单的小技巧：每次在阅读 <code>forward</code> 函数前，都需要问问自己：正在执行运算的张量维度是什么？张量的维度能很好地帮助我们找到代码中隐藏的蛛丝马迹，更好地读懂这些 python 代码，不迷失在细节之海中。</p>
+<p>首先，确认我们的输入张量 <code>hidden_states</code> 的维度：<code>(batch_size, seq_len, hidden_size)</code>。而 QKV 三个权重矩阵的维度也可以从上节线性层初始化中确认，分别是 <code>(num_heads*head_dim, hidden_size)</code>、<code>(num_key_value_heads*head_dim, hidden_size)</code> 和 <code>(num_key_value_heads*head_dim, hidden_size)</code>。在我们的例子中，kv_groups 为1，因此这三个权重矩阵的维度是一样的。</p>
+<p><strong>qkv 状态张量</strong></p>
+<p>现在来细看一下 咱们是如何切分这些状态张量以实现 TP 的，其实与上文的 MLP 实现极为类似，都是将输入张量的高维均分进行并行计算。第15-17行，query 在最高维度将权重一切为二，18-19 行 key 和 value 也是如此；21-28行，将 <code>hidden_states</code>（就是输入）与 query 权重相乘，TP 并行计算完后在最后一个维度上合并，同理于 key 和 value。忽略最高维的 <code>batch_size</code>，具体运算公式如下：</p>
+<p>$$<br>query &#x3D; H_{seq_ len, hidden_size} Q_{num_heads*head_dim, hidden_size}^T<br>$$</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params"></span><br><span class="hljs-params">    self,</span><br><span class="hljs-params">    hidden_states: torch.Tensor,</span><br><span class="hljs-params">    attention_mask: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    position_ids: <span class="hljs-type">Optional</span>[torch.LongTensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    past_key_value: <span class="hljs-type">Optional</span>[<span class="hljs-type">Tuple</span>[torch.Tensor]] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    output_attentions: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">False</span>,</span><br><span class="hljs-params">    use_cache: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">False</span>,</span><br><span class="hljs-params">    **kwargs,</span><br><span class="hljs-params"></span>) -&gt; <span class="hljs-type">Tuple</span>[torch.Tensor, <span class="hljs-type">Optional</span>[torch.Tensor], <span class="hljs-type">Optional</span>[<span class="hljs-type">Tuple</span>[torch.Tensor]]]:<br>  bsz, q_len, _ = hidden_states.size()<br><br>  <span class="hljs-keyword">if</span> self.config.pretraining_tp &gt; <span class="hljs-number">1</span>:<br>    key_value_slicing = (self.num_key_value_heads * self.head_dim) // self.config.pretraining_tp<br>    query_slices = self.q_proj.weight.split(<br>        (self.num_heads * self.head_dim) // self.config.pretraining_tp, dim=<span class="hljs-number">0</span><br>    )<br>    key_slices = self.k_proj.weight.split(key_value_slicing, dim=<span class="hljs-number">0</span>)<br>    value_slices = self.v_proj.weight.split(key_value_slicing, dim=<span class="hljs-number">0</span>)<br><br>    query_states = [F.linear(hidden_states, query_slices[i]) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.config.pretraining_tp)]<br>    query_states = torch.cat(query_states, dim=-<span class="hljs-number">1</span>)<br><br>    key_states = [F.linear(hidden_states, key_slices[i]) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.config.pretraining_tp)]<br>    key_states = torch.cat(key_states, dim=-<span class="hljs-number">1</span>)<br><br>    value_states = [F.linear(hidden_states, value_slices[i]) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.config.pretraining_tp)]<br>    value_states = torch.cat(value_states, dim=-<span class="hljs-number">1</span>)<br><br>  <span class="hljs-keyword">else</span>:<br>    query_states = self.q_proj(hidden_states)<br>    key_states = self.k_proj(hidden_states)<br>    value_states = self.v_proj(hidden_states)<br></code></pre></td></tr></table></figure>
+
+<p><strong>RoPE 位置编码</strong></p>
+<p>准备好 <code>query_states</code>、<code>key_states</code>、<code>value_states</code> 线性层后，紧接着就是将输入张量加上旋转矩阵位置编码。但在一切开始之前，注意到 1-3 行将张量的维度做了很大的变化。以 <code>query_states</code> 为例，原先的维度是 <code>(num_heads*head_dim, hidden_size)</code>，现在将维度 view 后接转置成了 <code>(batch_size, num_heads, seq_len, head_dim)</code>。同理与其他 states，于是下一行的 <code>kv_seq_len</code> 为何取 <code>shape[-2]</code> 就可以理解了。上文提及过，位置编码的余弦值和正弦值计算完成后，<code>apply_rotary_pos_emb</code> 在这里被调用。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># ... to be continued</span><br>query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br>key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br>value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)<br><br>kv_seq_len = key_states.shape[-<span class="hljs-number">2</span>]<br><span class="hljs-comment"># ...</span><br>cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)<br>query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)<br></code></pre></td></tr></table></figure>
+
+<p>注意，不同于原先的 transformer 架构，<code>LlamaAttention</code> 在每次前推注意力机制时都会加上位置编码。</p>
+<p><strong>Grouped-Query Attention</strong></p>
+<p>接着往下看，抛开 <code>past_key_value</code> 的部分，直接跳到第9-10行，注意此时 kv 状态张量的维度是 <code>(batch_size, num_kv_heads, kv_seq_len, head_dim)</code>，而经过 <code>repeat_kv</code> 函数的操作后，kv 状态张量变成了 <code>(batch_size, num_kv_heads*num_kv_groups, kv_seq_len, head_dim)</code>，也就是说，内部的权重被复制了 <code>num_kv_groups</code> 遍。具体过程会在后续列出。而再对比一下 <code>query_states</code> 的维度，这意味着同一组的 query 会共享同一个 kv 权重。这就是 llama2 提出的 Grouped-Query Attention 技术，这可以减少权重的内存开销，而实验表明，这样处理后模型的精度不会差很多。</p>
+<p>最后，在第 12 行完成了 <code>torch.matmul</code> 执行 QK 矩阵相乘，得到注意力机制权重。从QK两者的维度我们不难得出，<code>attn_weights</code> 的维度是 <code>(batch_size, num_heads, seq_len, kv_seq_len)</code>。这一步完成了公式 $ \frac{QK^T}{\sqrt{d_k}} $ 的计算。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> past_key_value <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>  <span class="hljs-comment"># reuse k, v, self_attention</span><br>  key_states = torch.cat([past_key_value[<span class="hljs-number">0</span>], key_states], dim=<span class="hljs-number">2</span>)<br>  value_states = torch.cat([past_key_value[<span class="hljs-number">1</span>], value_states], dim=<span class="hljs-number">2</span>)<br><br>past_key_value = (key_states, value_states) <span class="hljs-keyword">if</span> use_cache <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br><br>key_states = repeat_kv(key_states, self.num_key_value_groups)<br>value_states = repeat_kv(value_states, self.num_key_value_groups)<br><br>attn_weights = torch.matmul(query_states, key_states.transpose(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>)) / math.sqrt(self.head_dim)<br></code></pre></td></tr></table></figure>
+
+<p>这里有 <code>repeat_kv</code> 函数实现：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">repeat_kv</span>(<span class="hljs-params">hidden_states: torch.Tensor, n_rep: <span class="hljs-built_in">int</span></span>) -&gt; torch.Tensor:<br>  <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">  This is the equivalent of torch.repeat_interleave(x, dim=1, repeats=n_rep). The hidden states go from (batch,</span><br><span class="hljs-string">  num_key_value_heads, seqlen, head_dim) to (batch, num_attention_heads, seqlen, head_dim)</span><br><span class="hljs-string">  &quot;&quot;&quot;</span><br>  batch, num_key_value_heads, slen, head_dim = hidden_states.shape<br>  <span class="hljs-keyword">if</span> n_rep == <span class="hljs-number">1</span>:<br>    <span class="hljs-keyword">return</span> hidden_states<br>  hidden_states = hidden_states[:, :, <span class="hljs-literal">None</span>, :, :].expand(batch, num_key_value_heads, n_rep, slen, head_dim)<br>  <span class="hljs-keyword">return</span> hidden_states.reshape(batch, num_key_value_heads * n_rep, slen, head_dim)<br></code></pre></td></tr></table></figure>
+
+<p>输入的张量在2维度复制了一份，因此所有比2维度低的数据（即 <code>None</code> 后低维度的数据）都复制了 <code>n_rep</code> 遍，最后这些数据会被合并到1维度上。因而最后得到的张量维度是 <code>(batch_size, num_kv_heads*num_kv_groups, seq_len, head_dim)</code>，其中2、3维度的数据被复制了 <code>n_rep</code> 遍。就如同下图所示的那样。</p>
+<center>
+  <img src="/img/LLM/grouped-query attention.png" srcset="/img/loading.gif" lazyload>
+</center>
+
+<p><strong>收尾</strong></p>
+<p>接着往下看：第7行表示若存在 <code>attention_mask</code> 则需要将其加到权重上，这与 transformer decoder 的行为一致。因为咱们这次仅关注 forward 过程，不涉及训练，在推理生成文本序列时，<code>attention_mask</code> 的作用就是防止 decoder 受到未生成张量的影响。10 行将得到的权重放入 <code>softmax</code> 激活函数，11 行再将注意力权重与 v 状态张量相乘，从而完成了 $ softmax(\frac{QK^T}{\sqrt{d_k}})V $ 运算。这就完成了该子层的运算，该子层的输出就是下一层的输入。因此输出张量的维度必然与输入维度一致，所以16行将原先被转置的矩阵重新拨回来，17行又将张量变成了 <code>(batch_size, seq_len, hidden_size)</code>。</p>
+<p>最后在 19-22 行，因为上面的计算步骤其实是 TP 的，因此最后还要将结果合并。注意，21行还会经过一个线性层。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> attention_mask <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>  <span class="hljs-comment"># if attention_mask.size() != (bsz, 1, q_len, kv_seq_len):</span><br>  attn_weights = attn_weights + attention_mask<br><br><span class="hljs-comment"># upcast attention to fp32</span><br>attn_weights = nn.functional.softmax(attn_weights, dim=-<span class="hljs-number">1</span>, dtype=torch.float32).to(query_states.dtype)<br>attn_output = torch.matmul(attn_weights, value_states)<br><br><span class="hljs-keyword">if</span> attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):<br>  <span class="hljs-comment"># raise ValueError</span><br><br>attn_output = attn_output.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>).contiguous()<br>attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)<br><br><span class="hljs-keyword">if</span> self.config.pretraining_tp &gt; <span class="hljs-number">1</span>:<br>    attn_output = attn_output.split(self.hidden_size // self.config.pretraining_tp, dim=<span class="hljs-number">2</span>)<br>    o_proj_slices = self.o_proj.weight.split(self.hidden_size // self.config.pretraining_tp, dim=<span class="hljs-number">1</span>)<br>    attn_output = <span class="hljs-built_in">sum</span>([F.linear(attn_output[i], o_proj_slices[i]) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.config.pretraining_tp)])<br><span class="hljs-keyword">else</span>:<br>    attn_output = self.o_proj(attn_output)<br><br><span class="hljs-keyword">return</span> attn_output, attn_weights, past_key_value<br></code></pre></td></tr></table></figure>
+
+<p>至此，咱们已经分析完 llama 所有的基本组件。让我们再次回到这个架构图，细细回味一下张量在前推过程中经历的所有。</p>
+<center>
+<img src="/img/LLM/llama.png" srcset="/img/loading.gif" lazyload>
+</center>
+
+<h4 id="关于-FlashAttention2"><a href="#关于-FlashAttention2" class="headerlink" title="关于 FlashAttention2"></a>关于 FlashAttention2</h4><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>本文从 llama 是什么出发，深入解读了 huggingface 框架对 llama 的代码实现。我先从 llama 论文开始解读，试图让所有未接触过大模型的外行人能理解大模型是用什么训练而成的。随后，我介绍了 llama 的架构图，并简要说明了 llama1&#x2F;2 和 transformer 框架的区别，以及为何要这样改进。本博客重点分析了 llama 的各个基件和中间件，从底至上地分析了 hugginface llama 的实现，由于我也是第一次如此细致地阅读大模型的代码，因此很多地方可能会比较啰嗦。但万事开头难，在研究的最初阶段尽可能搞清楚最基本的东西，步步为营方能豁然开朗。下一篇论文将介绍 llama 每一层的实现与组合，主要是利用本篇博客中介绍的组件搭建起译码层的故事，并借此说明大模型推理的主要流程。当然，我不可能面面俱到地介绍所有细节，但也能揭开大模型的神秘面纱，从中瞥见一些人工智能的奥秘。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Transformer/" class="print-no-link">#Transformer</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>huggingface下llama代码细读（上）</div>
+      <div>https://dingfen.github.io/2023/10/30/2023-10-30-huggingface1/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年10月30日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/11/30/2023-11-30-huggingface2/" title="huggingface下llama代码细读（下）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">huggingface下llama代码细读（下）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/10/22/2023-10-22-transformer/" title="大话 transformer 架构">
+                        <span class="hidden-mobile">大话 transformer 架构</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

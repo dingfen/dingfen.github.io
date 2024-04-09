@@ -1,0 +1,830 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="为了解 Cyber RT 的数据通信情况，对组件进行深入的研究">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apollo Cyber RT 组件">
+<meta property="og:url" content="https://dingfen.github.io/2020/10/25/2020-10-25-CyberComponent/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="为了解 Cyber RT 的数据通信情况，对组件进行深入的研究">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/Component.png">
+<meta property="article:published_time" content="2020-10-25T04:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-09T15:16:31.585Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Apollo">
+<meta property="article:tag" content="Cyber RT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/Component.png">
+  
+  
+  
+  <title>Apollo Cyber RT 组件 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Apollo Cyber RT 组件"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-10-25 12:00" pubdate>
+          2020年10月25日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          36 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Apollo Cyber RT 组件</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Apollo-Cyber-RT-组件"><a href="#Apollo-Cyber-RT-组件" class="headerlink" title="Apollo Cyber RT 组件"></a>Apollo Cyber RT 组件</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>今天，我来给大家介绍一下 Apollo Cyber RT 中组件（Component）的相关知识。老规矩，在这之前，先回顾一下之前的内容。根据课题组的安排，我这段时间一直在研究 <a target="_blank" rel="noopener" href="https://apollo.auto/">Apollo</a> 系统，它是百度开发的自动驾驶开源框架，具有高性能和高灵活性的特点，我主要介绍 <a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo">Apollo 5.5</a> 版本。其中的 Apollo Cyber RT 是 Apollo 团队在注意到 ROS 无法满足自动驾驶系统的鲁棒性和性能要求后，专门为自动驾驶场景设计的开源、高性能<strong>运行时框架</strong>。在<a href="https://dingfen.github.io/apollo/2020/10/21/CyberTimer.html">之前的博客中</a>，我介绍了 Cyber RT 中定时器的相关知识，主要介绍了定时器的算法、实现以及定时器组件如何使用定时器。由此引发了我对组件实现的兴趣，那么这篇博客就详细地介绍一下组件吧。</p>
+<h2 id="组件-Component"><a href="#组件-Component" class="headerlink" title="组件 Component"></a>组件 Component</h2><p>根据百度 Apollo 团队提供的 Cyber RT 文档<sup>1</sup>，<strong>组件</strong>（Component）是 Cyber RT 用于构建应用模块的基本类。每个特定的应用模块都可以继承 <code>Component</code> 类并定义自己的函数 <code>Init()</code> 和 <code>Proc()</code> ，之后，该模块就可以被装载入 Cyber RT 框架中。</p>
+<p>一般来说，用户有两种选择来使用 Cyber RT 框架：</p>
+<ul>
+<li>基于二进制。应用被分别编译成二进制文件，并使用自己创建的 <code>Reader</code> 和 <code>Writer</code> 来与其他 Cyber RT 模块进行通信</li>
+<li>基于组件。应用被编译成一个共享库（Shared library），通过继承 <code>Component</code> 类并写好相应的 dag 文件，Cyber RT 框架会自动装载并运行该应用</li>
+</ul>
+<p>不难看出，使用基于组件的方案有明显的优点：</p>
+<ul>
+<li>组件可以被不同的进程装载，部署非常灵活</li>
+<li>当需要改变接受信道的名字（或者其他属性），可以直接更改 dag 文件，不需要重新编译</li>
+<li>组件支持接收多种类型的数据</li>
+<li>组件支持提供多种混合策略</li>
+</ul>
+<h3 id="用户自定义组件"><a href="#用户自定义组件" class="headerlink" title="用户自定义组件"></a>用户自定义组件</h3><p>要创建并启动一个算法组件<sup>2</sup>，需要通过以下 4 个步骤：</p>
+<ul>
+<li>初如化组件的文件结构</li>
+<li>实现组件类</li>
+<li>设置配置文件</li>
+<li>启动组件</li>
+</ul>
+<p>官方文档介绍的很详细，在这里我就不啰嗦了。</p>
+<h2 id="组件类"><a href="#组件类" class="headerlink" title="组件类"></a>组件类</h2><p>在开始前，为更方便大家的理解，建议阅读 <a href="https://dingfen.github.io/apollo/2020/10/14/apollo-intro.html">Cyber RT 的术语解释</a> 和 <a target="_blank" rel="noopener" href="https://cyber-rt.readthedocs.io/en/latest/CyberRT_Terms.html">Cyber RT Terms</a> ，因为我会反复提到其中的某些术语。</p>
+<p>从代码上看，组件基类 <code>ComponentBase</code> 是组件类 <code>Component</code> 和时间组件类 <code>TimerComponent</code> 的基类。仔细看下图（淡蓝色为背景表示它是 <code>private</code> 或 <code>protected</code> 的），有几点发现：</p>
+<center>
+<img src="/img/Component.png" srcset="/img/loading.gif" lazyload />
+</center>
+
+<ul>
+<li>一个 <code>Component</code> 类只含有一个 <code>Node</code> ，但可以有多个 <code>Reader</code></li>
+<li><code>Init()</code> 和 <code>Proc()</code> 这两个用户自己定义的函数，都是不可以被直接调用的</li>
+<li>用户只能使用 <code>Initialize()</code> 和 <code>Process()</code> 函数来调用自己写的 <code>Init()</code> 和 <code>Proc()</code></li>
+</ul>
+<p>根据代码，<code>Component</code> 类最多可以处理 4 个<strong>消息信道</strong>（ channels of messages），这些信道——即 <code>Reader</code> 对象，最后都会被放入到 <code>ComponentBase::readers_</code> 变量中，没错，这些所谓的信道在代码实现中就是 <strong>Reader</strong> ，Apollo 团队并没有设计出 <code>Channel</code> 这样的类🐶。</p>
+<p>先从简单的 <code>Process()</code> 函数抓起吧。<code>Process()</code> 非常好理解，就是先判断一下有没有关闭该 <code>Component</code> 类，再调用 <code>Proc()</code> 函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M0, <span class="hljs-keyword">typename</span> M1&gt;<br><span class="hljs-type">bool</span> Component&lt;M0, M1, NullType, NullType&gt;::<span class="hljs-built_in">Process</span>(<br>    <span class="hljs-type">const</span> std::shared_ptr&lt;M0&gt;&amp; msg0, <span class="hljs-type">const</span> std::shared_ptr&lt;M1&gt;&amp; msg1) &#123;<br>  <span class="hljs-keyword">if</span> (is_shutdown_.<span class="hljs-built_in">load</span>())<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Proc</span>(msg0, msg1);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>我最关心的就是 <code>Component</code> 类的初始化过程，即 <code>Initialize()</code> 函数，一旦搞清楚了这一点，那么我们就可以更好地理解其他 Cyber RT 部分在整个系统中的作用。经过对代码的详细了解后，我总结出了以下过程：</p>
+<ol>
+<li>创建 <code>Node</code>  节点</li>
+<li>读取配置文件</li>
+<li>调用用户定义的函数 <code>Init()</code> </li>
+<li>创建信道对象，或者说读者 <code>Reader&lt;M&gt;&gt;</code><ol>
+<li>根据配置文件的相关内容，填充信道的相关配置信息 <code>reader_cfg</code></li>
+<li>创建消息收到时，就会触发的<strong>激活函数</strong> <code>invoke func</code></li>
+<li>如果 <code>is_reality_mode</code> 为真 ，那么直接根据配置信息 <code>reader_cfg</code> 创建信道，不加入激活函数；若不是，需要再加入<code>invoke func</code> 创建信道</li>
+</ol>
+</li>
+<li>当 <code>is_reality_mode</code> 为真，那么就需要创建数据访问类 <code>DataVisitor</code> 、 协程工厂、调度器，并创建调度任务。</li>
+</ol>
+<p>看完我的语言描述后，我觉得是时候上代码给你们看一下它的真面目了。为确保代码简单而又不失一般性，我选择了一个<strong>含有两个信道</strong>的 <code>Component</code> 类初始化函数。这部分代码非常重要，后文我们会反复使用。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M0, <span class="hljs-keyword">typename</span> M1&gt;		<span class="hljs-comment">// 消息的类型 表示 这里有两个信道</span><br><span class="hljs-type">bool</span> Component&lt;M0, M1, NullType, NullType&gt;::<span class="hljs-built_in">Initialize</span>(<span class="hljs-type">const</span> ComponentConfig&amp; config) &#123;<br>  <span class="hljs-comment">// 1. 创建 Node 节点</span><br>  node_.<span class="hljs-built_in">reset</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Node</span>(config.<span class="hljs-built_in">name</span>()));<br>  <span class="hljs-comment">// 2. 读取配置文件</span><br>  <span class="hljs-built_in">LoadConfigFiles</span>(config);<br>  <span class="hljs-keyword">if</span> (config.<span class="hljs-built_in">readers_size</span>() &lt; <span class="hljs-number">2</span>)<br>    	<span class="hljs-comment">/* 错误处理  */</span><br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">Init</span>())<br>        <span class="hljs-comment">/* 错误处理  */</span><br>  <span class="hljs-type">bool</span> is_reality_mode = GlobalData::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">IsRealityMode</span>();<br>  <span class="hljs-comment">//  信道的配置信息</span><br>  ReaderConfig reader_cfg;<br>  reader_cfg.channel_name = config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">channel</span>();<br>  reader_cfg.qos_profile.<span class="hljs-built_in">CopyFrom</span>(config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">qos_profile</span>());<br>  reader_cfg.pending_queue_size = config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">pending_queue_size</span>();<br>  <span class="hljs-comment">// 第 1 个 读信道已经创建</span><br>  <span class="hljs-keyword">auto</span> reader1 = node_-&gt;<span class="hljs-keyword">template</span> <span class="hljs-built_in">CreateReader</span>&lt;M1&gt;(reader_cfg);<br>    <br>  reader_cfg.channel_name = config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">0</span>).<span class="hljs-built_in">channel</span>();<br>  reader_cfg.qos_profile.<span class="hljs-built_in">CopyFrom</span>(config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">0</span>).<span class="hljs-built_in">qos_profile</span>());<br>  reader_cfg.pending_queue_size = config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">0</span>).<span class="hljs-built_in">pending_queue_size</span>();<br>  <span class="hljs-comment">// 第 0 个读信道要根据是否 is_reality_mode   来决定使用何种函数创建</span><br>  std::shared_ptr&lt;Reader&lt;M0&gt;&gt; reader0 = <span class="hljs-literal">nullptr</span>;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">cyber_likely</span>(is_reality_mode)) &#123;<br>    reader0 = node_-&gt;<span class="hljs-keyword">template</span> <span class="hljs-built_in">CreateReader</span>&lt;M0&gt;(reader_cfg);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    std::weak_ptr&lt;Component&lt;M0, M1&gt;&gt; self =<br>        std::dynamic_pointer_cast&lt;Component&lt;M0, M1&gt;&gt;(<span class="hljs-built_in">shared_from_this</span>());<br><br>    <span class="hljs-keyword">auto</span> blocker1 = blocker::BlockerManager::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">GetBlocker</span>&lt;M1&gt;(<br>        config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">channel</span>());<br><br>    <span class="hljs-keyword">auto</span> func = [self, blocker1](<span class="hljs-type">const</span> std::shared_ptr&lt;M0&gt;&amp; msg0) &#123;<br>      <span class="hljs-keyword">auto</span> ptr = self.<span class="hljs-built_in">lock</span>();<br>      <span class="hljs-keyword">if</span> (ptr) &#123;<br>        <span class="hljs-keyword">if</span> (!blocker1-&gt;<span class="hljs-built_in">IsPublishedEmpty</span>()) &#123;<br>          <span class="hljs-keyword">auto</span> msg1 = blocker1-&gt;<span class="hljs-built_in">GetLatestPublishedPtr</span>();<br>          ptr-&gt;<span class="hljs-built_in">Process</span>(msg0, msg1);<br>        &#125;<br>      &#125; <span class="hljs-keyword">else</span><br>           <span class="hljs-comment">/*   错误处理   */</span><br>    &#125;;<br>    reader0 = node_-&gt;<span class="hljs-keyword">template</span> <span class="hljs-built_in">CreateReader</span>&lt;M0&gt;(reader_cfg, func);<br>  &#125;<br>  <span class="hljs-keyword">if</span> (reader0 == <span class="hljs-literal">nullptr</span> || reader1 == <span class="hljs-literal">nullptr</span>)<br>        <span class="hljs-comment">/*  错误处理  */</span><br>  <span class="hljs-comment">// 信道创建完毕，全部存入到 readers_ 数组中</span><br>  readers_.<span class="hljs-built_in">push_back</span>(std::<span class="hljs-built_in">move</span>(reader0));<br>  readers_.<span class="hljs-built_in">push_back</span>(std::<span class="hljs-built_in">move</span>(reader1));<br>    <br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">cyber_unlikely</span>(!is_reality_mode)) &#123;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>  &#125;<br>  <span class="hljs-comment">// 创建 scheduler</span><br>  <span class="hljs-keyword">auto</span> sched = scheduler::<span class="hljs-built_in">Instance</span>();<br>  std::weak_ptr&lt;Component&lt;M0, M1&gt;&gt; self =<br>      std::dynamic_pointer_cast&lt;Component&lt;M0, M1&gt;&gt;(<span class="hljs-built_in">shared_from_this</span>());<br>  <span class="hljs-keyword">auto</span> func = [self](<span class="hljs-type">const</span> std::shared_ptr&lt;M0&gt;&amp; msg0, <span class="hljs-type">const</span> std::shared_ptr&lt;M1&gt;&amp; msg1) &#123;<br>    <span class="hljs-keyword">auto</span> ptr = self.<span class="hljs-built_in">lock</span>();<br>    <span class="hljs-keyword">if</span> (ptr) &#123;<br>      ptr-&gt;<span class="hljs-built_in">Process</span>(msg0, msg1);<br>    &#125; <span class="hljs-keyword">else</span> <br>         <span class="hljs-comment">/*  错误处理  */</span><br>  &#125;;<br>  <span class="hljs-comment">// 创建 DataVisitor 和 RoutineFactory   最后创建任务</span><br>  std::vector&lt;data::VisitorConfig&gt; config_list;<br>  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; reader : readers_)<br>    config_list.<span class="hljs-built_in">emplace_back</span>(reader-&gt;<span class="hljs-built_in">ChannelId</span>(), reader-&gt;<span class="hljs-built_in">PendingQueueSize</span>());<br>  <span class="hljs-keyword">auto</span> dv = std::make_shared&lt;data::DataVisitor&lt;M0, M1&gt;&gt;(config_list);<br>  croutine::RoutineFactory factory = croutine::<span class="hljs-built_in">CreateRoutineFactory</span>&lt;M0, M1&gt;(func, dv);<br>  <span class="hljs-keyword">return</span> sched-&gt;<span class="hljs-built_in">CreateTask</span>(factory, node_-&gt;<span class="hljs-built_in">Name</span>());<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>不得不承认，初始化的过程复杂度超乎我的想象。看完代码，你应该明白之前的只言片语只是对这一复杂过程的笼统概括😅。接下来，我还需要对上述过程中提到的术语做一些解释。<strong>如果你不想看这些繁杂的细节，可以直接跳过</strong>。</p>
+<h3 id="Node-节点"><a href="#Node-节点" class="headerlink" title="Node 节点"></a>Node 节点</h3><p>在 <code>Initialize()</code> 函数一开始，<code>Component</code> 类就创建了 <code>Node</code> 类对象。那么什么是 <code>Node</code> 类？根据官方文档给出的解释<sup>3</sup>，<code>Node</code> 节点类是 Cyber RT 的基本组成部分；每个 <code>Component</code> 对象都包含一个节点，可通过节点进行通信。通过定义节点中的 read&#x2F;write 和&#x2F;或 service&#x2F;client，模块可以具有不同类型的通信模式。<code>Node</code> 对象负责创建 <code>Reader</code> 、<code>Writer</code> 、<code>Service</code> 、<code>Client</code> <strong>信道对象</strong>来帮该组件获取或传输信息。</p>
+<p>这么说好像有点抽象？那我们再来看一下上文的类继承图以及下面的代码块。从类成员的角度看，<code>Node</code> 对象有</p>
+<ul>
+<li><code>std::string node_name_</code> 它的名字</li>
+<li><code>std::string name_space_</code>命名空间</li>
+<li><code>map&lt;string, ReaderBase&gt;</code> 类型的 <code>readers_</code> ，它其实就是一个表格，负责保存信道名字 <code>channel_name</code> 与对应的 <code>Reader</code> 读者对象</li>
+<li>一个 <code>NodeChannelImpl</code> 指针。 <code>NodeChannelImpl</code> 类是 <code>Node</code> 用来创建与信道相关的 <code>Reader</code> 和 <code>Writer</code> 对象的类，在真实模式下（下文会介绍），创建的对象是 <code>Reader</code> 和 <code>Writer</code>，而在模拟模式下，创建的是 <code>IntraReader</code> 、<code>IntraWriter</code> 对象，创建后向通信拓扑注册当前节点</li>
+<li>一个 <code>NodeServiceImpl</code> 指针。和<code>NodeChannelImpl</code>类似，只不过它创建的是 <code>Service</code> 和 <code>Client</code> 对象，创建后也会注册 <code>service</code></li>
+<li>上面提到的两个指针，都指向创建之前提到的四种信道对象的<strong>创建器</strong></li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Node</span> &#123;<br> <span class="hljs-keyword">public</span>:<br>    <span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M0, <span class="hljs-keyword">typename</span> M1, <span class="hljs-keyword">typename</span> M2, <span class="hljs-keyword">typename</span> M3&gt;<br>    <span class="hljs-keyword">friend</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Component</span>;<br>    <span class="hljs-keyword">friend</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">TimerComponent</span>;<br> <span class="hljs-keyword">private</span>:<br>    <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Node</span><span class="hljs-params">(<span class="hljs-type">const</span> std::string&amp; node_name,</span></span><br><span class="hljs-params"><span class="hljs-function">                <span class="hljs-type">const</span> std::string&amp; name_space = <span class="hljs-string">&quot;&quot;</span>)</span></span>;<br><br>    std::string node_name_;<br>    std::string name_space_;<br>    <br>    std::map&lt;std::string, std::shared_ptr&lt;ReaderBase&gt;&gt; readers_;<br>    std::unique_ptr&lt;NodeChannelImpl&gt; node_channel_impl_ = <span class="hljs-literal">nullptr</span>;<br>    std::unique_ptr&lt;NodeServiceImpl&gt; node_service_impl_ = <span class="hljs-literal">nullptr</span>;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>回到 <code>Initialize()</code> 函数，<code>Node</code> 类创建完后，其主要任务就是创建读者信道：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">reader0 = node_-&gt;<span class="hljs-keyword">template</span> <span class="hljs-built_in">CreateReader</span>&lt;M0&gt;(reader_cfg, func);<br></code></pre></td></tr></table></figure>
+
+<h3 id="信道与配置信息"><a href="#信道与配置信息" class="headerlink" title="信道与配置信息"></a>信道与配置信息</h3><p>接下来的两步，读取配置文件和调用 <code>Init()</code> 函数都非常直白，我们直接来看读者信息的配置，或者说，看它配置了哪些读者信息。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++">ReaderConfig reader_cfg;<br>reader_cfg.channel_name = config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">channel</span>();<br>reader_cfg.qos_profile.<span class="hljs-built_in">CopyFrom</span>(config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">qos_profile</span>());<br>reader_cfg.pending_queue_size = config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">pending_queue_size</span>();<br></code></pre></td></tr></table></figure>
+
+<p>一共三个变量被赋值（事实上 <code>ReaderConfig</code> 也只有这三个变量）</p>
+<ul>
+<li><code>string channel_name</code> 信道的名字。要求信道的名字不能重复</li>
+<li><code>QosProfile qos_profile</code> <a target="_blank" rel="noopener" href="https://baike.baidu.com/item/QoS">qos</a> 属性，通信的服务质量</li>
+<li><code>uint32_t pending_queue_size</code> 信道缓冲区的长度，如果溢出了，会丢弃较早的消息</li>
+</ul>
+<p>在真实模式（下文会提到）中，会调用 <code>node_-&gt;template CreateReader&lt;M1&gt;(reader_cfg)</code> 创建一个 <code>Reader</code> 对象，不加入激活函数。而若要仔细检视如何创建 <code>Reader</code> 对象，需要看一下 <code>Node Channel Impl::CreateReader</code> 。这里简单说一下，主要步骤有：</p>
+<ol>
+<li>设定 RoleAttribute 的相关信息，包括信道名字，qos_file ，host_id，node_id 等等</li>
+<li>将新的属性（Attr），激活函数和缓冲区大小作为参数，构造出 <code>Reader&lt;MessageT&gt;</code> 的对象</li>
+</ol>
+<p>当然，这里面的故事还没有结束，如果有时间的话，可以进一步研究一下 Cyber RT 的通信模式。</p>
+<h3 id="真实模式与模拟模式"><a href="#真实模式与模拟模式" class="headerlink" title="真实模式与模拟模式"></a>真实模式与模拟模式</h3><p>接下来，解决一下 <code>is_reality_mode</code> 的问题。通过 <code>GlobalData::Instance()-&gt;IsRealityMode()</code> 猜测，它是一个全局数据，再进一步调查发现，它只有两个值：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">enum</span> <span class="hljs-title class_">RunMode</span> &#123;<br>  MODE_REALITY = <span class="hljs-number">0</span>;<br>  MODE_SIMULATION = <span class="hljs-number">1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>那么，什么时候它是 reality，什么时候是 simulation 呢？一般来说，simulation 模式多用于测试，多出现在测试文件中。其默认值为 reality 模式，但如果在测试文件（_test.cc）中，调用了如下函数，就会切换为<strong>模拟模式</strong>(simulation 模式）。而 reality 模式，即<strong>真实模式</strong>，根据我的理解，可能就是在系统真实运作、控制自动驾驶系统时的运行模式。在真实模式下，初始化工作非常的明确：为每个信道创建一个 <code>Reader</code>，然后创建回调函数用于调用 <code>Process()</code>，最后创建出对应的协程，让 <code>Scheduler</code> 来运行管理。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">GlobalData::EnableSimulationMode</span><span class="hljs-params">()</span> </span>&#123;<br>  run_mode_ = RunMode::MODE_SIMULATION;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>模拟模式与真实模式的最大差别就是，数据来源不是真实传感器实时获取的数据了。那么，模拟模式的数据从哪获得呢？在代码中，模拟模式的信道由 <code>IntraReader</code> 和 <code>IntraWriter</code> 类实现，这些类获取的数据也不是从协程中获得，而是通过 <code>Blocker</code> 类获得模拟数据（或历史数据）。为方便说明，把 <code>Component::Initialize()</code> 函数的模拟模式部分截取过来👇：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">if</span> (is_reality_mode) &#123;<br>    <span class="hljs-comment">// ...</span><br>&#125; <span class="hljs-keyword">else</span> &#123;<br>	std::weak_ptr&lt;Component&lt;M0, M1&gt;&gt; self =<br>        std::dynamic_pointer_cast&lt;Component&lt;M0, M1&gt;&gt;(<span class="hljs-built_in">shared_from_this</span>());<br>    <span class="hljs-keyword">auto</span> blocker1 = blocker::BlockerManager::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">GetBlocker</span>&lt;M1&gt;(<br>        config.<span class="hljs-built_in">readers</span>(<span class="hljs-number">1</span>).<span class="hljs-built_in">channel</span>());<br>    <span class="hljs-comment">// 特殊的回调函数</span><br>    <span class="hljs-keyword">auto</span> func = [self, blocker1](<span class="hljs-type">const</span> std::shared_ptr&lt;M0&gt;&amp; msg0) &#123;<br>      <span class="hljs-keyword">auto</span> ptr = self.<span class="hljs-built_in">lock</span>();<br>      <span class="hljs-keyword">if</span> (ptr) &#123;<br>        <span class="hljs-keyword">if</span> (!blocker1-&gt;<span class="hljs-built_in">IsPublishedEmpty</span>()) &#123;<br>          <span class="hljs-keyword">auto</span> msg1 = blocker1-&gt;<span class="hljs-built_in">GetLatestPublishedPtr</span>();<br>          ptr-&gt;<span class="hljs-built_in">Process</span>(msg0, msg1);<br>        &#125;<br>      &#125; <span class="hljs-keyword">else</span> &#123;<br>        AERROR &lt;&lt; <span class="hljs-string">&quot;Component object has been destroyed.&quot;</span>;<br>      &#125;<br>    &#125;;<br>    reader0 = node_-&gt;<span class="hljs-keyword">template</span> <span class="hljs-built_in">CreateReader</span>&lt;M0&gt;(reader_cfg, func);<br>&#125;<br><br>NodeChannelImpl::<span class="hljs-built_in">CreateReader</span>() &#123;<br>    <span class="hljs-comment">// ....</span><br>    <span class="hljs-keyword">if</span> (!is_reality_mode_) &#123;<br>    reader_ptr =<br>        std::make_shared&lt;blocker::IntraReader&lt;MessageT&gt;&gt;(new_attr, reader_func);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-comment">// ...</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到，<strong>在模拟模式下</strong>，如果有 n 个信道（这里 n &#x3D; 2），初始化程序会先给后 n-1 个信道创建 <code>IntraReader</code> 对象（日后我们再讨论这些东西），然后对于 <code>Reader&lt;M0&gt;</code> 信道，它会创建一个特殊的回调函数，该回调函数的基本情况如下：</p>
+<ul>
+<li>在信道 0 接收到消息时触发</li>
+<li>触发时，函数会从其他 n-1 个信道的 <code>IntraReader</code> 的 <code>Blocker::published_msg_queue_</code> 队列中各拿出 1 个消息，并把这些消息一起交给 <code>Process()</code> 函数执行</li>
+<li>该函数在创建 <code>IntraReader</code> 对象时，就被当成参数传入，并在<code>IntraReader::init()</code> 中被注册到该 <code>Blocker</code> 对象内的回调函数表中（日后讨论+1）</li>
+</ul>
+<p>接下来看看初始化函数的最后一部分，我们现在<strong>只考虑真实模式</strong>，因为此部分代码只有在真实模式下进行。首先，获取了调度器单例对象，并建立的 <code>func</code> ，而 <code>func</code> 内容也很简单，就是在线程安全的前提下直接调用 <code>Porcess()</code> ，<code>Process()</code> 会调用用户自己定义的函数 <code>Proc()</code>，进而处理组件接收到的所有消息。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">auto</span> func = [self](<span class="hljs-type">const</span> std::shared_ptr&lt;M0&gt;&amp; msg0,<br>                     <span class="hljs-type">const</span> std::shared_ptr&lt;M1&gt;&amp; msg1) &#123;<br>    <span class="hljs-keyword">auto</span> ptr = self.<span class="hljs-built_in">lock</span>();<br>    <span class="hljs-keyword">if</span> (ptr) &#123;<br>      ptr-&gt;<span class="hljs-built_in">Process</span>(msg0, msg1);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      AERROR &lt;&lt; <span class="hljs-string">&quot;Component object has been destroyed.&quot;</span>;<br>    &#125;<br>  &#125;;<br></code></pre></td></tr></table></figure>
+
+<p><code>func</code> 会被当做参数传给 <code>CRoutine::CreateRoutineFactory</code> ，看这名字就知道，该函数用于创建协程工厂（<a target="_blank" rel="noopener" href="https://www.runoob.com/design-pattern/factory-pattern.html">工厂模式</a>），此外该函数还涉及了消息融合，数据访问和数据分发等等，我们先略过不说。复杂的代码理解不了，还是看一个简单点的代码吧：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Function&gt;<br><span class="hljs-function">RoutineFactory <span class="hljs-title">CreateRoutineFactory</span><span class="hljs-params">(Function&amp;&amp; f)</span> </span>&#123;<br>  RoutineFactory factory;<br>  factory.create_routine = [f = std::forward&lt;Function&amp;&amp;&gt;(f)]() &#123; <span class="hljs-keyword">return</span> f; &#125;;<br>  <span class="hljs-keyword">return</span> factory;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>很简单的代码，只是设定了一下 <code>factory.create_routine</code>。在返回 <code>factory</code> 后，调用了 <code>Scheduler::CreateTask</code>。此后，又继续调用一个函数，注意：<code>CreateTask</code> 的第一个参数 <code>func</code> 就是在 <code>Component::Initialize()</code> 中创建的原函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Scheduler::CreateTask</span><span class="hljs-params">(<span class="hljs-type">const</span> RoutineFactory&amp; factory, <span class="hljs-type">const</span> std::string&amp; name)</span> </span>&#123;<br>  <span class="hljs-keyword">return</span> <span class="hljs-built_in">CreateTask</span>(factory.<span class="hljs-built_in">create_routine</span>(), name, factory.<span class="hljs-built_in">GetDataVisitor</span>());<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Scheduler::CreateTask</span><span class="hljs-params">(std::function&lt;<span class="hljs-type">void</span>()&gt;&amp;&amp; func,</span></span><br><span class="hljs-params"><span class="hljs-function">                           <span class="hljs-type">const</span> std::string&amp; name,</span></span><br><span class="hljs-params"><span class="hljs-function">                           std::shared_ptr&lt;DataVisitorBase&gt; visitor)</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">cyber_unlikely</span>(stop_.<span class="hljs-built_in">load</span>())) &#123;<br>      <span class="hljs-comment">/*  错误处理  */</span><br>  &#125;<br>  <span class="hljs-keyword">auto</span> task_id = GlobalData::<span class="hljs-built_in">RegisterTaskName</span>(name);<br>  <span class="hljs-keyword">auto</span> cr = std::<span class="hljs-built_in">make_shared</span>&lt;CRoutine&gt;(func);		<span class="hljs-comment">// 看这里！！！！</span><br>  cr-&gt;<span class="hljs-built_in">set_id</span>(task_id);<br>  cr-&gt;<span class="hljs-built_in">set_name</span>(name);<br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">DispatchTask</span>(cr))<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>  <span class="hljs-keyword">if</span> (visitor != <span class="hljs-literal">nullptr</span>) &#123;<br>    visitor-&gt;<span class="hljs-built_in">RegisterNotifyCallback</span>([<span class="hljs-keyword">this</span>, task_id]() &#123;<br>      <span class="hljs-keyword">if</span> (<span class="hljs-built_in">cyber_unlikely</span>(stop_.<span class="hljs-built_in">load</span>()))<br>        <span class="hljs-keyword">return</span>;<br>      <span class="hljs-keyword">this</span>-&gt;<span class="hljs-built_in">NotifyProcessor</span>(task_id);<br>    &#125;);<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>哇哈，终于抓住你了，看来 <code>Component::Initialize()</code> 中建立的 <code>func</code> ，最终会被 Cyber RT 用来创建一个协程。然后放入到 <code>Scheduler</code> 中，并根据我之前介绍的 <a href="https://dingfen.github.io/apollo/2020/10/17/Cyber-RT.html#processor">Cyber RT 调度策略</a>运行。在真实模式下，组件创建了一个特殊的回调函数，该函数对从信道接受来的消息进行处理。该函数最终会被封装为一个协程，并在 <code>Scheduler</code> 类的安排下执行。</p>
+<h2 id="定时组件类"><a href="#定时组件类" class="headerlink" title="定时组件类"></a>定时组件类</h2><p>定时组件类与组件类有所不同，它比组件类多了定时器，这部分内容我在 <a href="https://dingfen.github.io/apollo/2020/10/21/CyberTimer.html">Cyber RT 定时器</a>中已经提过，为了这篇博客的完整性，我再次强调一下。</p>
+<p><code>Process()</code> 函数和组件类一样，平平无奇。重点看一下 <code>Initialize()</code> 函数</p>
+<ol>
+<li>创建 <code>Node</code> 类对象</li>
+<li>读取配置文件</li>
+<li>创建定时器对象，并开始计时</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">TimerComponent::Initialize</span><span class="hljs-params">(<span class="hljs-type">const</span> TimerComponentConfig&amp; config)</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (!config.<span class="hljs-built_in">has_name</span>() || !config.<span class="hljs-built_in">has_interval</span>()) &#123;<br>		<span class="hljs-comment">/* 错误处理 */</span><br>  &#125;<br>  node_.<span class="hljs-built_in">reset</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Node</span>(config.<span class="hljs-built_in">name</span>()));<br>  <span class="hljs-built_in">LoadConfigFiles</span>(config);<br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">Init</span>())<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>  std::shared_ptr&lt;TimerComponent&gt; self =<br>      std::<span class="hljs-built_in">dynamic_pointer_cast</span>&lt;TimerComponent&gt;(<span class="hljs-built_in">shared_from_this</span>());<br>  <span class="hljs-keyword">auto</span> func = [self]() &#123; self-&gt;<span class="hljs-built_in">Proc</span>(); &#125;;<br>  timer_.<span class="hljs-built_in">reset</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Timer</span>(config.<span class="hljs-built_in">interval</span>(), func, <span class="hljs-literal">false</span>));<br>  timer_-&gt;<span class="hljs-built_in">Start</span>();<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>注意到，与组件类不同，定时组件类在 <code>Initialize()</code> 中没有创建任何的 <code>Reader</code> 读者，也没有搞出调度器、协程工厂、创建任务等一系列复杂的操作。你可能有这样的疑问：既然定时组件类并没有创建出任务和协程，那么定时组件类的处理函数需要如何被调用呢？<a href="https://dingfen.github.io/apollo/2020/10/21/CyberTimer.html">Cyber RT 定时器</a>中其实已经有解答了🤪。简单来说，所有的定时器会把任务全部交给时间轮处理，过一段时间后，当时间轮发现需要执行某些定时任务时，就会把它们全部取出，然后调用 <code>cyber::Async</code> 异步地执行。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>今天我重点研究了组件类，分析了组件类的继承图关系以及它们的成员变量，并着重探究了组件类的初始化过程，进而对：信道与读者类、节点类与 <code>NodeChannelImpl</code> 类、调度器、数据访问类、协程、协程工厂函数等等有了一个大致的了解。</p>
+<p>在组件类中，最重要的两个可调用函数就是 <code>Process()</code> 和 <code>Initialize()</code> ，然而用户不可以对它们直接进行更改，必须通过重载 <code>Proc()</code> 和 <code>Init()</code> 才能操控组件。对于如何创建一个组件类，官方的解释非常详细<sup>2</sup>。在对 <code>Initialize()</code> 函数的进一步的研究中，我发现在真实模式下，初始化工作主要有：为每个信道创建一个 <code>Reader</code> 对象，然后创建回调函数用于调用 <code>Process()</code>，最后创建出对应的协程，让 <code>Scheduler</code> 来运行管理，而在模拟模式下，数据主要是从 <code>Blocker</code> 类中取得的历史数据，而非感知器获得的真实数据。</p>
+<p>我承认这篇博客很多地方没有解释很清楚，这一方面是因为篇幅限制，另一方面是因为我还未对 Cyber RT 理解透彻（尤其是通信部分），相信在课题组其他成员的帮助下，了解 Apollo 系统的真面目已经不远了。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>[1] <a target="_blank" rel="noopener" href="https://cyber-rt.readthedocs.io/en/latest/">Cyber RT Documents</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber/CyberRT_Quick_Start_cn.md">如何使用 Cyber RT 来创建一个新的组件</a></p>
+<p>[3] <a target="_blank" rel="noopener" href="https://cyber-rt.readthedocs.io/en/latest/CyberRT_Terms.html">Cyber RT Terms</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Apollo/" class="category-chain-item">Apollo</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Apollo/" class="print-no-link">#Apollo</a>
+      
+        <a href="/tags/Cyber-RT/" class="print-no-link">#Cyber RT</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Apollo Cyber RT 组件</div>
+      <div>https://dingfen.github.io/2020/10/25/2020-10-25-CyberComponent/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年10月25日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/11/03/2020-11-3-CyberCommu1/" title="Apollo Cyber RT 通信（上）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Apollo Cyber RT 通信（上）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/10/21/2020-10-21-CyberTimer/" title="Apollo Cyber RT 定时器">
+                        <span class="hidden-mobile">Apollo Cyber RT 定时器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

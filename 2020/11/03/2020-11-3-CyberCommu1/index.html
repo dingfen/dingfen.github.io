@@ -1,0 +1,818 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="对 Cyber RT 的通信架构的深入研究">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apollo Cyber RT 通信（上）">
+<meta property="og:url" content="https://dingfen.github.io/2020/11/03/2020-11-3-CyberCommu1/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="对 Cyber RT 的通信架构的深入研究">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/Apollo_3.0_diagram.png">
+<meta property="og:image" content="https://dingfen.github.io/img/Apollo_5_5_Architecture.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CyberLayer.png">
+<meta property="article:published_time" content="2020-11-03T04:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-09T15:16:39.025Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Apollo">
+<meta property="article:tag" content="Cyber RT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/Apollo_3.0_diagram.png">
+  
+  
+  
+  <title>Apollo Cyber RT 通信（上） - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Apollo Cyber RT 通信（上）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-11-03 12:00" pubdate>
+          2020年11月3日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          36 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Apollo Cyber RT 通信（上）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Apollo-Cyber-RT-通信（上）"><a href="#Apollo-Cyber-RT-通信（上）" class="headerlink" title="Apollo Cyber RT 通信（上）"></a>Apollo Cyber RT 通信（上）</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在<a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html">之前的博客</a>中，我和大家讨论了 Apollo Cyber RT 组件的相关内容，在介绍组件的内容时，我们谈到每个组件都有自己的读者信道 <code>Reader&lt;M&gt;</code> 和 <code>Node</code> 节点类对象， <code>DataVisitor</code> 数据访问类在创建协程工厂时也起到了关键作用。由此可见，通信问题已经成为了在学习 Cyber RT 过程中绕不过去的槛儿，那么，Cyber RT 怎么保证这么多的组件能够齐心协力，高效地完成一件件任务呢？今天我就来带领大家探讨一下这类问题。由于通信部分的内容过多，写在一篇博客里太长，所以我把它分成了两部分。</p>
+<h3 id="ROS-的历史遗留"><a href="#ROS-的历史遗留" class="headerlink" title="ROS 的历史遗留"></a>ROS 的历史遗留</h3><p>之前在研究 Apollo 时，我了解到 Apollo 3.5 版本前，各个模块直接通过一个简单的运行时框架，构建在 ROS 之上。</p>
+<p><img src="/img/Apollo_3.0_diagram.png" srcset="/img/loading.gif" lazyload></p>
+<p>而之后的版本，都加上了 Cyber RT，它不仅仅是一个运行时框架，还承担了数据通信和任务调度，以及记录日志等任务。但是从软件工程的角度出发，对底层的大改必然会牵动上层，为了尽可能地不影响上层代码，Cyber RT 不得不依照 ROS 的“规矩”，提供有相同名称的功能近似的接口，这之后我们可以将 ROS 与 Cyber RT 进行比较。</p>
+<p><img src="/img/Apollo_5_5_Architecture.png" srcset="/img/loading.gif" lazyload></p>
+<p>于是我就发现，与 ROS &amp; ROS2 中类似的是，Cyber RT 也支持两种通信方式，详情见<a href="https://dingfen.github.io/apollo/2020/10/14/apollo-intro.html#%E7%9B%B8%E5%85%B3%E6%9C%AF%E8%AF%AD%E4%BB%8B%E7%BB%8D">术语介绍</a>：</p>
+<ul>
+<li><strong>发布—订阅通信方式</strong>（Publish-Subscribe），也叫基于信道的通信方式，常用于数据流处理中节点间通信。即<strong>发布者</strong>（Publisher）在信道（channel，ROS 中对应地称为 topic）上发布消息，相应的<strong>订阅者</strong>（Subscriber）便会收到消息数据</li>
+<li><strong>服务—客户通信方式</strong>（Service-Client），也叫基于服务的通信方式，常用于双向的、需要有请求和应答的通信场景。</li>
+</ul>
+<h2 id="三种通信模型7"><a href="#三种通信模型7" class="headerlink" title="三种通信模型7"></a>三种通信模型<sup>7</sup></h2><p>在 Cyber RT 中提供了不同的通信方式，以应对各类自动驾驶需求。根据上层模块所处的进程，可以将模块间的关系分为：</p>
+<ul>
+<li>同一进程内。在同一个进程节点之间的相互通信，对于进程内的数据，<strong>直接传递消息对象的指针</strong>，可以避免消息数据复制的开销，尤其是一些较大的消息，如点云和图像等</li>
+<li>同主机进程间。在不同进程之间的节点传播或交换信息，可以利用<strong>共享内存传输</strong>，这样不仅可以减少传输中的数据复制，显著提升传输效率，还能够满足一对多的传输场景</li>
+<li>跨主机。跨主机的数据利用 socket 传输，跨主机通信采用了第三方的开源库 <a target="_blank" rel="noopener" href="https://www.eprosima.com/index.php/resources-all/rtps">Fast RTPS</a>（Real Time Publish Subscribe Protocol，实时发布订阅协议），是 DDS（Data Distribution Service）标准的一个非常流行的开源实现，支持 RTPS 协议版本的一个订阅发布消息组件，具有高性能，实时性高，多平台支持等优点</li>
+</ul>
+<h2 id="通信架构"><a href="#通信架构" class="headerlink" title="通信架构"></a>通信架构</h2><span id="l" />
+<center>
+<img src="/img/CyberLayer.png" srcset="/img/loading.gif" lazyload />
+</center>
+
+<p>首先来看一下通信的层级划分（上图）<sup>2</sup>，再重复一遍，自动驾驶系统中的各个模块基本都由 <code>Component</code> 类实现，而一个 <code>Component</code> 对象包含一个 <code>Node</code> 对象。<code>Node</code> 对象会根据需要创建和管理 <code>Writer</code>，<code>Reader</code>，<code>Service</code> 和 <code>Client</code> 对象。而在通信类下面， <code>Trasmitter</code> 和 <code>Receiver</code> 类。前者用于数据发送，后者用于数据接收。它们是数据传输层的抽象，而底下还有多个用于<strong>不同场景下的传输实现类</strong>，比如对于 <code>Trasmitter</code> 类，就有 <code>IntraTransmitter</code> 类，<code>ShmTransmitter</code> 类，<code>RtpsTransmitter</code> 类和 <code>HybridTransmitter</code> 类。同样地， <code>Receiver</code> 类也有类似的情况 。在这里我就简单地说明一下这些底层类的作用，因为这些东西过于细节，我往后也不会重点研究，但是还是有必要稍微了解一下的😀：</p>
+<ul>
+<li>RTPS 基于 <a target="_blank" rel="noopener" href="https://www.eprosima.com/index.php/">eProsimar</a> 的 Fast RTPS，介绍同上</li>
+<li>Shared memory 共享内存模式</li>
+<li>Intra-Process 用于进程内通信</li>
+<li>Hybrid 混合使用以上几种通信模式</li>
+</ul>
+<p>OK，接下来，我们放慢脚步，一层一层地剥开通信的实现情况🐶。</p>
+<h3 id="节点-Node"><a href="#节点-Node" class="headerlink" title="节点 Node"></a>节点 Node</h3><p><code>Node</code> 是整个数据拓扑网络中的基本单元。<code>Node</code> 对象会根据需要创建和管理 <code>Writer</code>，<code>Reader</code>，<code>Service</code> 和 <code>Client</code> 对象。<code>Reader</code> 和 <code>Writer</code>，用于发布—订阅模式。<code>Service</code> 和 <code>Client</code>，用于服务—客户模式。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Node</span> &#123;<br> 	<span class="hljs-keyword">private</span><br>        std::string node_name_;<br>     	std::string name_space_;<br>     	std::map&lt;std::string, std::shared_ptr&lt;ReaderBase&gt;&gt; readers_;<br>     	std::unique_ptr&lt;NodeChannelImpl&gt; node_channel_impl_ = <span class="hljs-literal">nullptr</span>;<br>     	std::unique_ptr&lt;NodeServiceImpl&gt; node_service_impl_ = <span class="hljs-literal">nullptr</span>;<br>&#125;;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-function"><span class="hljs-keyword">auto</span> <span class="hljs-title">Node::CreateReader</span><span class="hljs-params">(<span class="hljs-type">const</span> ReaderConfig&amp; config, <span class="hljs-type">const</span> CallbackFunc&lt;MessageT&gt;&amp; reader_func)</span></span><br><span class="hljs-function">    -&gt; std::shared_ptr&lt;cyber::Reader&lt;MessageT&gt;&gt; </span>&#123;<br>  <span class="hljs-comment">/* ....  */</span><br>  <span class="hljs-keyword">auto</span> reader =<br>      node_channel_impl_-&gt;<span class="hljs-keyword">template</span> <span class="hljs-built_in">CreateReader</span>&lt;MessageT&gt;(config, reader_func);<br>  <span class="hljs-comment">/* ....  */</span><br>  <span class="hljs-keyword">return</span> reader;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>其中 <code>Node</code> 类的成员变量：<code>NodeChannelImpl</code> 指针和 <code>NodeServiceImpl</code> 指针，对于我们进一步了解通信非常重要，因为在 <code>Node::CreateReader</code> 函数中，<code>Node</code> 使用了 <code>NodeChannelImpl</code> 指针创建 <code>Reader</code> 对象。同理于其他三个，<code>Node</code> 类都是使用相应的指针来创建对象，没错，它们才是幕后黑手。</p>
+<h3 id="NodeChannelImpl-与-NodeServiceImpl-——幕后创建者"><a href="#NodeChannelImpl-与-NodeServiceImpl-——幕后创建者" class="headerlink" title="NodeChannelImpl 与 NodeServiceImpl ——幕后创建者"></a>NodeChannelImpl 与 NodeServiceImpl ——幕后创建者</h3><p>为方便讨论，我以 <code>NodeChannelImpl</code> 类为例，并从 <code>CreateReader</code> 函数出发，在 <code>Node</code> 类中调用了 <code>NodeChannelImpl::CreateReader()</code> 后，</p>
+<ol>
+<li>创建 <code>RoleAttributes</code> 对象，把该对象的一些配置数据全部填好（如果你对该对象包含了什么很感兴趣，那么请看 <code>cyber/proto/role_attributes.proto</code>）</li>
+<li>根据现在的模式（真实模式还是模拟模式），来决定如何创建读者类。根据代码，真实模式时使用 <code>Reader&lt;M&gt;</code> ，模拟模式使用 <code>IntraReader&lt;M&gt;</code></li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 为方便说明，对代码进行裁减 真实代码情况见 cyber/node/node_channel_impl.h 文件</span><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-function"><span class="hljs-keyword">auto</span> <span class="hljs-title">NodeChannelImpl::CreateReader</span><span class="hljs-params">(<span class="hljs-type">const</span> proto::RoleAttributes&amp; role_attr,</span></span><br><span class="hljs-params"><span class="hljs-function">                                   <span class="hljs-type">const</span> CallbackFunc&lt;MessageT&gt;&amp; reader_func,</span></span><br><span class="hljs-params"><span class="hljs-function">                                   <span class="hljs-type">uint32_t</span> pending_queue_size)</span></span><br><span class="hljs-function">    -&gt; std::shared_ptr&lt;Reader&lt;MessageT&gt;&gt; </span>&#123;<br>  <span class="hljs-comment">/*  ....  */</span><br>  <span class="hljs-function">proto::RoleAttributes <span class="hljs-title">new_attr</span><span class="hljs-params">(role_attr)</span></span>;<br>  <span class="hljs-built_in">FillInAttr</span>&lt;MessageT&gt;(&amp;new_attr);<br>  std::shared_ptr&lt;Reader&lt;MessageT&gt;&gt; reader_ptr = <span class="hljs-literal">nullptr</span>;<br>  <span class="hljs-keyword">if</span> (!is_reality_mode_)<br>    reader_ptr =<br>        std::make_shared&lt;blocker::IntraReader&lt;MessageT&gt;&gt;(new_attr, reader_func);<br>  <span class="hljs-keyword">else</span> <br>    reader_ptr = std::make_shared&lt;Reader&lt;MessageT&gt;&gt;(new_attr, reader_func,<br>                                                    pending_queue_size);<br>  <span class="hljs-keyword">return</span> reader_ptr;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>令人感到安心的是，<code>NodeChannelImpl</code> 类在创建 <code>Write</code> 对象时，步骤与 <code>Reader</code> 几乎一致，甚至可以说，他们只是把几个关键词换了一下而已。</p>
+<p>那么，对于 <code>NodeServiceImpl</code> 类，情况有没有改变呢？emm……情况稍有变化：（以 <code>Service</code> 类为例）</p>
+<ol>
+<li>直接创建 <code>Service</code> 对象，并进行初始化（初始化里干的事情日后再聊）</li>
+<li>将创建好的 <code>Service</code> 指针放入到数组 <code>serivce_list_</code> 中</li>
+<li>调用服务发现的拓扑管理类 <code>service_discovery::TopologyManager</code> 中的 <code>Join()</code> 函数（这边是个大坑，日后再聊+1 🐶）</li>
+</ol>
+<h3 id="Reader-Writer"><a href="#Reader-Writer" class="headerlink" title="Reader &amp;&amp; Writer"></a>Reader &amp;&amp; Writer</h3><p>比起服务—客户的通信模式，我更关注发布—订阅模式；比起模拟模式，我更关注真实模式，因此先作重点介绍。</p>
+<h4 id="Reader-类"><a href="#Reader-类" class="headerlink" title="Reader 类"></a>Reader 类</h4><p>那么兜兜转转，我们终于来到了读者类。首先来看一下 <code>Reader</code> 的基本情况。唔，它继承自 <code>ReaderBase</code> 类，它包含一个 <code>Blocker</code> 和一个 <code>Receiver</code> 对象，它们是我们要重点关注的。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Reader</span> : <span class="hljs-keyword">public</span> ReaderBase &#123;<br> <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Reader</span><span class="hljs-params">(<span class="hljs-type">const</span> proto::RoleAttributes&amp; role_attr,</span></span><br><span class="hljs-params"><span class="hljs-function">              <span class="hljs-type">const</span> CallbackFunc&lt;MessageT&gt;&amp; reader_func = <span class="hljs-literal">nullptr</span>,</span></span><br><span class="hljs-params"><span class="hljs-function">              <span class="hljs-type">uint32_t</span> pending_queue_size = DEFAULT_PENDING_QUEUE_SIZE)</span></span>;<br> <span class="hljs-keyword">protected</span>:<br>  <span class="hljs-type">double</span> latest_recv_time_sec_;			<span class="hljs-comment">// 接受消息的最近时间</span><br>  <span class="hljs-type">double</span> second_to_lastest_recv_time_sec_ = <span class="hljs-number">-1.0</span>;		<span class="hljs-comment">// 接受消息的第二近时间</span><br>  <span class="hljs-type">uint32_t</span> pending_queue_size_;			<span class="hljs-comment">// 消息缓冲区的最大值</span><br> <span class="hljs-keyword">private</span>:<br>  CallbackFunc&lt;MessageT&gt; reader_func_;<br>  ReceiverPtr receiver_ = <span class="hljs-literal">nullptr</span>;<br>  std::string croutine_name_;<br>  BlockerPtr blocker_ = <span class="hljs-literal">nullptr</span>;<br>  ChangeConnection change_conn_;<br>  service_discovery::ChannelManagerPtr channel_manager_ = <span class="hljs-literal">nullptr</span>;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>根据我们在上一小节的理解，<code>Reader</code> 对象只会在<strong>真实模式</strong>下被创建。既然已经说到了创建，我们就先来看一下 <code>Reader</code> 的创建过程吧😀。在 <code>Reader</code> 类的构造函数中，其类的 <code>Blocker</code> 成员也进行构造，这边的过程很简单。而进一步对 <code>Reader</code> 进行初始化，调用 <code>Reader::Init()</code> 函数时，情况就复杂了起来：</p>
+<ol>
+<li>创建回调函数。用 <code>Reader::Enqueue()</code> + 传入的回调函数封装出一个新的回调函数 <code>func</code> </li>
+<li><a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html#%E7%9C%9F%E5%AE%9E%E6%A8%A1%E5%BC%8F%E4%B8%8E%E6%A8%A1%E6%8B%9F%E6%A8%A1%E5%BC%8F">与组件的初始化过程的最后几步相似</a>，<code>Reader</code> 类的初始化中，也拿出了 <code>Scheduler</code> 类，创建了 <code>DataVisitor</code> 对象（通信下篇会对其详细阐述）和协程工厂对象，并用它们创建了一个任务，目的就是将第一步中封装好的回调函数 <code>func</code> 包装为协程，最后根据调度算法的安排，在合适的时候调用。此外还把对应的协程名字记录到 <code>croutine_name_</code> 中</li>
+<li>根据 <code>Reader</code> 对象的属性，从接收器管理类 <code>ReceiverManager&lt;M&gt;</code> 中取出相对应的 <code>Receiver</code> 对象，该对象用于接受消息</li>
+<li>从 <code>service_discovery::TopologyManager</code> 那里拿到信道管理器 <code>channel_manager</code> ，最后把这个 <code>Reader</code> 对象加入到拓扑结构中</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 为方便说明，对代码进行裁减 真实代码情况见 cyber/node/reader.h 文件</span><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;  <span class="hljs-type">bool</span> Reader&lt;MessageT&gt;::<span class="hljs-built_in">Init</span>() &#123;<br> <span class="hljs-comment">/*  ....  */</span><br>    <span class="hljs-comment">// 第一步</span><br>  std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">const</span> std::shared_ptr&lt;MessageT&gt;&amp;)&gt; func;<br>    func = [<span class="hljs-keyword">this</span>](<span class="hljs-type">const</span> std::shared_ptr&lt;MessageT&gt;&amp; msg) &#123;<br>      <span class="hljs-keyword">this</span>-&gt;<span class="hljs-built_in">Enqueue</span>(msg);<br>      <span class="hljs-keyword">this</span>-&gt;<span class="hljs-built_in">reader_func_</span>(msg);<br>    &#125;;<br>    <span class="hljs-comment">// 第二步</span><br>  <span class="hljs-keyword">auto</span> sched = scheduler::<span class="hljs-built_in">Instance</span>();<br>  croutine_name_ = role_attr_.<span class="hljs-built_in">node_name</span>() + <span class="hljs-string">&quot;_&quot;</span> + role_attr_.<span class="hljs-built_in">channel_name</span>();<br>  <span class="hljs-keyword">auto</span> dv = std::make_shared&lt;data::DataVisitor&lt;MessageT&gt;&gt;(<br>      role_attr_.<span class="hljs-built_in">channel_id</span>(), pending_queue_size_);<br>  croutine::RoutineFactory factory =<br>      croutine::<span class="hljs-built_in">CreateRoutineFactory</span>&lt;MessageT&gt;(std::<span class="hljs-built_in">move</span>(func), dv);<br>  sched-&gt;<span class="hljs-built_in">CreateTask</span>(factory, croutine_name_);<br><span class="hljs-comment">// 第三步</span><br>  receiver_ = ReceiverManager&lt;MessageT&gt;::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">GetReceiver</span>(role_attr_);<br>  <span class="hljs-keyword">this</span>-&gt;role_attr_.<span class="hljs-built_in">set_id</span>(receiver_-&gt;<span class="hljs-built_in">id</span>().<span class="hljs-built_in">HashValue</span>());<br> <span class="hljs-comment">// 第四步</span><br>  channel_manager_ = service_discovery::TopologyManager::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">channel_manager</span>();<br>  <span class="hljs-built_in">JoinTheTopology</span>();<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>好，那么 <code>Reader</code> 主要功能是什么呢？根据官方文档<sup>6</sup>，<code>Reader</code> 类订阅了一个信道，然后就有两个主要功能，这些都牵扯到后面要介绍的类，因此在这里就简单说明一下：</p>
+<ul>
+<li>传入一个回调函数 <code>CallbackFunc</code> ，用来处理刚刚到达的消息。“处理消息”的意思就是把消息压入 <code>Blocker</code> 类的队列中，然后用回调函数处理。</li>
+<li>可以观察到 <code>Blocker</code> 类中的缓存消息。用户可以使用函数 <code>Observe()</code> 将消息从发布队列取出，放入到观察队列中。一个 <code>Reader</code> 使用一个 <code>ChannelBuffer</code> ，处理了的消息会被存放在这里。</li>
+</ul>
+<p>好，除了初始化和主要的功能，暂时不讨论其他 <code>Reader</code> 相关的函数，因为它们要么过于平凡，要么涉及到了服务发现的内容（我无法在一篇博客中讨论这么多东西），接下来，我们可以去看看 <code>Reader</code> 类的反面，<code>Writer</code> 类是怎么做的。</p>
+<h4 id="Writer-类"><a href="#Writer-类" class="headerlink" title="Writer 类"></a>Writer 类</h4><p>同样，从 <code>Writer</code> 类的组成开始，它继承 <code>WriterBase</code> 类，但组成比 <code>Reader</code> 类简单很多，只有一个 <code>Transmitter</code> 需要我们重点关注。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Writer</span> : <span class="hljs-keyword">public</span> WriterBase &#123;<br> <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Writer</span><span class="hljs-params">(<span class="hljs-type">const</span> proto::RoleAttributes&amp; role_attr)</span></span>;<br> <span class="hljs-keyword">private</span>:<br>  TransmitterPtr transmitter_;<br>  ChangeConnection change_conn_;<br>  service_discovery::ChannelManagerPtr channel_manager_;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>也一样，<code>Writer</code> 类只会在真实模式下被创建，其构建和初始化过程比 <code>Reader</code> 类对象简单：</p>
+<ol>
+<li>构建好 <code>WriterBase::role_attr</code> ，把基本的属性数据填充好</li>
+<li>创建 <code>Transmitter</code> 对象（下文会提到）</li>
+<li>从 <code>service_discovery::TopologyManager</code> 那里拿到信道管理器 <code>channel_manager</code> ，最后把该 <code>Writer</code> 对象加入到拓扑结构中</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br>Writer&lt;MessageT&gt;::<span class="hljs-built_in">Writer</span>(<span class="hljs-type">const</span> proto::RoleAttributes&amp; role_attr)<br>    : <span class="hljs-built_in">WriterBase</span>(role_attr), <span class="hljs-built_in">transmitter_</span>(<span class="hljs-literal">nullptr</span>), <span class="hljs-built_in">channel_manager_</span>(<span class="hljs-literal">nullptr</span>) &#123;&#125;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-type">bool</span> Writer&lt;MessageT&gt;::<span class="hljs-built_in">Init</span>() &#123;<br>   <span class="hljs-comment">/*  ....   */</span><br>    transmitter_ =<br>        transport::Transport::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">CreateTransmitter</span>&lt;MessageT&gt;(role_attr_);<br>    <span class="hljs-comment">/*  ....  */</span><br>  <span class="hljs-keyword">this</span>-&gt;role_attr_.<span class="hljs-built_in">set_id</span>(transmitter_-&gt;<span class="hljs-built_in">id</span>().<span class="hljs-built_in">HashValue</span>());<br>  channel_manager_ =<br>      service_discovery::TopologyManager::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">channel_manager</span>();<br>  <span class="hljs-built_in">JoinTheTopology</span>();<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code> Writer</code> 类的主要功能想必大家也猜得到：向对应的信道写数据，其 <code>Write()</code> 函数会调用 <code>transport::Transmitter-&gt;Transmit()</code> 函数，每个 <code>Writer</code> 只能向一个信道写东西，但一个信道可以有多个 <code>Writer</code> 对象。</p>
+<h3 id="Blocker——缓存者"><a href="#Blocker——缓存者" class="headerlink" title="Blocker——缓存者"></a>Blocker——缓存者</h3><p><code>Blocker</code> 类是 <code>Reader</code> 的一个成员，它继承自 <code>BlockerBase</code> 类，还是和之前一样，我们先来看一下 <code>Blocker</code> 类的组成。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Blocker</span> : <span class="hljs-keyword">public</span> BlockerBase &#123; <br>  BlockerAttr attr_;		<span class="hljs-comment">// Blocker的配置属性</span><br>  MessageQueue observed_msg_queue_;		<span class="hljs-comment">// 观察队列</span><br>  MessageQueue published_msg_queue_;	<span class="hljs-comment">// 发布队列</span><br><br>  CallbackMap published_callbacks_;		<span class="hljs-comment">// id 与 回调函数的表 其实就是 unordered_map</span><br>  MessageType dummy_msg_;	<span class="hljs-comment">// 假消息 常用于空值返回</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>前面我提到，<code>Reader</code> 类中有成员 <code>Blocker</code> ，用于缓存消息，因此有一个发布队列。当调用 <code>Blocker::Enqueue()</code> 函数时，<code>Blocker</code> 会将得到的新消息推入到队首，当队列已满时，就自动把队尾的旧消息移除。而为了用户能观察到队列中的消息，<code>Blocker</code> 类又加上了一个观察队列。当调用 <code>Blocker::Observe()</code> 时，就将发布队列拷贝一份给了观察队列。</p>
+<p>对于每一个 <code>Blocker</code> 类，它保存了一张 <code>callback_id</code> 和回调函数指针的一一对应关系表 <code>published_callbacks_</code>，记录了其所在 <code>Reader</code> 对象的一些回调函数。之所以是<strong>一些</strong>，是因为 <code>Blocker</code> 的主要功能应该是提供一个管理者获取数据的入口，方便调试、记录日志、运行模拟环境和监控整个系统，所以在 <code>Blocker</code> 类里注册的回调函数应该都是管理员注册的监控函数，和系统主逻辑没关系<sup>3</sup>😅。<em>其实在<strong>真实模式</strong>下，主逻辑完全都没有到过这里，这是我花了很多时间反复确认的。</em></p>
+<p>好，这时候结合 <code>Reader</code> 类的部分内容，就可以更好地理解 <code>Blocker</code> 类的作用了。<code>Reader</code> 类调用 <code>Enqueue()</code> 函数时，先更新时间参数，再调用 <code>Blocker::Publish()</code> 函数，其中 <code>Enqueue()</code> 将消息推入到发布队列中，然后 <code>Notify()</code> 函数用 <code>published_callbacks_</code> 内的所有的回调函数去处理消息。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-type">void</span> Blocker&lt;T&gt;::<span class="hljs-built_in">Publish</span>(<span class="hljs-type">const</span> MessagePtr&amp; msg) &#123;<br>  <span class="hljs-built_in">Enqueue</span>(msg);<br>  <span class="hljs-built_in">Notify</span>(msg);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>这个 <code>Publish()</code> 函数非常重要，在讨论下文的 <code>BlockerManager</code> 会用到。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-type">void</span> Blocker&lt;T&gt;::<span class="hljs-built_in">Enqueue</span>(<span class="hljs-type">const</span> MessagePtr&amp; msg) &#123;<br>  <span class="hljs-comment">/*  ....  */</span><br>  published_msg_queue_.<span class="hljs-built_in">push_front</span>(msg);<br>  <span class="hljs-keyword">while</span> (published_msg_queue_.<span class="hljs-built_in">size</span>() &gt; attr_.capacity)<br>    published_msg_queue_.<span class="hljs-built_in">pop_back</span>();<br>&#125;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-type">void</span> Blocker&lt;T&gt;::<span class="hljs-built_in">Notify</span>(<span class="hljs-type">const</span> MessagePtr&amp; msg) &#123;<br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">const</span> <span class="hljs-keyword">auto</span>&amp; item : published_callbacks_)<br>    item.<span class="hljs-built_in">second</span>(msg);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>那么 <code>published_callbacks_</code> 是如何得到的呢？答案是，通过 <code>Subscribe()</code> 函数加入的。只需要调用 <code>Blocker::Subscribe()</code> 函数，就可以将回调函数 id 和回调函数指针一同放入到这张表中。</p>
+<h4 id="BlockerManager——模拟模式助手"><a href="#BlockerManager——模拟模式助手" class="headerlink" title="BlockerManager——模拟模式助手"></a>BlockerManager——模拟模式助手</h4><p>好，接下来我们将目光暂时转移到模拟模式下。先再次介绍一下 <code>IntraReader</code> 类与 <code>IntraWriter</code> 类。它们俩都是在<strong>模拟模式</strong>下才会出现的对象。代码文件位于 <code>cyber/blocker/intra_reader.h</code> 和 <code>cyber/bolcker/intra_writer.h</code>，它们的实现与 <code>BlockerManager</code> 类关系密切，这也是为何它们的代码文件会位于 <code>cyber/blocker</code> 而不是和 <code>Reader</code> 一样位于 <code>cyber/node</code> 的重要原因（也是为什么我选择在这里讲它们俩的原因😅）。它们分别继承自 <code>Reader</code> 和 <code>Writer</code> 。因为这是模拟模式下创建的对象，所以它们不会去创建协程，去获取传感器的数据。</p>
+<p>老规矩，我们先看看 <code>IntraReader</code> 和 <code>IntraWriter</code> “肚子里有什么东西”👇。看来货不多，<code>IntraReader</code> 类只有一个回调函数，<code>IntraWriter</code> 类只有个 <code>BlockerManager</code> 类的指针。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">IntraReader</span> : <span class="hljs-keyword">public</span> apollo::cyber::Reader&lt;MessageT&gt; &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-built_in">IntraReader</span>(<span class="hljs-type">const</span> proto::RoleAttributes&amp; attr, <span class="hljs-type">const</span> Callback&amp; callback);<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Init</span><span class="hljs-params">()</span> <span class="hljs-keyword">override</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Enqueue</span><span class="hljs-params">(<span class="hljs-type">const</span> std::shared_ptr&lt;MessageT&gt;&amp; msg)</span> <span class="hljs-keyword">override</span></span>;<br> <span class="hljs-keyword">private</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">OnMessage</span><span class="hljs-params">(<span class="hljs-type">const</span> MessagePtr&amp; msg_ptr)</span></span>;<br>  Callback msg_callback_;<br>&#125;;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">IntraWriter</span> : <span class="hljs-keyword">public</span> apollo::cyber::Writer&lt;MessageT&gt; &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">IntraWriter</span><span class="hljs-params">(<span class="hljs-type">const</span> proto::RoleAttributes&amp; attr)</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Init</span><span class="hljs-params">()</span> <span class="hljs-keyword">override</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Write</span><span class="hljs-params">(<span class="hljs-type">const</span> MessagePtr&amp; msg_ptr)</span> <span class="hljs-keyword">override</span></span>;<br> <span class="hljs-keyword">private</span>:<br>  BlockerManagerPtr blocker_manager_;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>再来看看为什么称 <code>BlockerManager</code> 为模拟模式的助手。因为 <code>IntraReader</code> 和 <code>IntraWriter</code> 都或多或少与它有点关系。看看它们的初始化，<code>IntraReader</code> 类重载了 <code>Reader::Init()</code> 函数。在初始化中，它不会创建协程，而是直接调用 <code>BlockerManager::Subscribe()</code>，把 <code>IntraReader::OnMessage()</code> 函数（记录时间并调用 <code>IntraReader</code> 创建时传入的回调函数）注册为该信道对应 <code>Blocker</code> 的回调函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++">BlockerManager::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">Subscribe</span>&lt;MessageT&gt;(<br>      <span class="hljs-keyword">this</span>-&gt;role_attr_.<span class="hljs-built_in">channel_name</span>(), <span class="hljs-keyword">this</span>-&gt;role_attr_.<span class="hljs-built_in">qos_profile</span>().<span class="hljs-built_in">depth</span>(),<br>      <span class="hljs-keyword">this</span>-&gt;role_attr_.<span class="hljs-built_in">node_name</span>(),<br>      std::<span class="hljs-built_in">bind</span>(&amp;IntraReader&lt;MessageT&gt;::OnMessage, <span class="hljs-keyword">this</span>,<br>                std::placeholders::_1));<br></code></pre></td></tr></table></figure>
+
+<p>对于 <code>IntraWriter</code> 类，就更直接了，在初始化时它直接用 <code>BlockManager</code> 创建了一个 <code>Blocker</code> 对象。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-type">bool</span> IntraWriter&lt;MessageT&gt;::<span class="hljs-built_in">Init</span>() &#123;<br>    blocker_manager_ = BlockerManager::<span class="hljs-built_in">Instance</span>();<br>    blocker_manager_-&gt;<span class="hljs-built_in">GetOrCreateBlocker</span>&lt;MessageT&gt;(<br>        <span class="hljs-built_in">BlockerAttr</span>(<span class="hljs-keyword">this</span>-&gt;role_attr_.<span class="hljs-built_in">channel_name</span>()));<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>BlockerManager</code> 类（单例模式）在模拟模式下发挥了非常大的作用！还是老样子，看看它有什么东西，哦，只有一个 <code>BlockerMap</code> ，它将信道名字与对应 <code>Blocker</code> 记录了下来。 <code>IntraReader::Enqueue()</code> 和 <code>IntraWriter::Write()</code> 都调用了 <code>BlockerManager::Publish()</code> 函数</p>
+<p>再来看看它们工作时会怎么干吧。先来看一下 <code>IntraReader::Enqueue()</code> 函数，它会调用 <code>BlockerManager::Publish()</code> 函数，<code>IntraReader::Observe()</code> 函数也是从 <code>BlockerManager</code> 中取出一个 <code>Blocker</code> 对象，后调用 <code>Observe()</code> 。对于 <code>IntraWriter</code> 类，其 <code>Write()</code> 函数也是直接调用 <code>BlockerManager::Publish()</code> 函数来放入数据，而 <code>BlockerManager::Publish()</code> 函数👇会先选取（或构造）出对应信道的 <code>Blocker</code> 对象，然后调用 <code>Blocker::Publish()</code> 函数，这个函数我在前文已经讨论过了，<code>Blocker::Publish()</code> 函数会先调用 <code>Enqueue()</code> 将消息推入到发布队列中，然后 <code>Notify()</code> 函数通知 <code>published_callbacks_</code> 内的所有的回调函数去处理消息。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">BlockerManager</span> &#123;<br>  <span class="hljs-function"><span class="hljs-type">static</span> <span class="hljs-type">const</span> std::shared_ptr&lt;BlockerManager&gt;&amp; <span class="hljs-title">Instance</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-type">static</span> <span class="hljs-keyword">auto</span> instance =<br>        std::<span class="hljs-built_in">shared_ptr</span>&lt;BlockerManager&gt;(<span class="hljs-keyword">new</span> <span class="hljs-built_in">BlockerManager</span>());<br>    <span class="hljs-keyword">return</span> instance;<br>  &#125;<br> <span class="hljs-keyword">private</span>:<br>  BlockerMap blockers_;<br>  std::mutex blocker_mutex_;<br>&#125;;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">BlockerManager::Publish</span><span class="hljs-params">(<span class="hljs-type">const</span> std::string&amp; channel_name,</span></span><br><span class="hljs-params"><span class="hljs-function">                             <span class="hljs-type">const</span> <span class="hljs-keyword">typename</span> Blocker&lt;T&gt;::MessagePtr&amp; msg)</span> </span>&#123;<br>  <span class="hljs-keyword">auto</span> blocker = <span class="hljs-built_in">GetOrCreateBlocker</span>&lt;T&gt;(<span class="hljs-built_in">BlockerAttr</span>(channel_name));<br>  blocker-&gt;<span class="hljs-built_in">Publish</span>(msg);<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>在这篇博客中，我先介绍了一下 Cyber RT 的通信架构和三种通信模型，然后，开始一层层地介绍涉及到通信的类。在下篇博客中，我会将剩下的东西介绍清楚，最后我会给出一个更加完整的总结。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>[1] <a target="_blank" rel="noopener" href="https://github.com/daohu527/Dig-into-Apollo/tree/master/cyber">Dig into Apollo - Cyber</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://blog.csdn.net/jinzhuojun/article/details/108066714">自动驾驶平台Apollo 5.5阅读手记：Cyber RT中的通信传输</a></p>
+<p>[3] <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_25762163/article/details/103803032">百度Apollo系统学习-Cyber RT 通信-上层</a></p>
+<p>[4] <a target="_blank" rel="noopener" href="https://blog.csdn.net/kesalin/article/details/88914029">百度 Apollo Cyber RT简介、基本概念以及与 ROS 对照</a></p>
+<p>[5] <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_25762163/article/details/103895527">百度Apollo系统学习-Cyber RT 通信-底层</a></p>
+<p>[6] <a target="_blank" rel="noopener" href="https://cyber-rt.readthedocs.io/en/latest/api/cppapi.html#cyber-node-reader-h">cyber-rt.readthedocs.io</a></p>
+<p>[7] 自动驾驶汽车平台技术基础&#x2F;杨世春等编著. —北京：清华大学出版社</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Apollo/" class="category-chain-item">Apollo</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Apollo/" class="print-no-link">#Apollo</a>
+      
+        <a href="/tags/Cyber-RT/" class="print-no-link">#Cyber RT</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Apollo Cyber RT 通信（上）</div>
+      <div>https://dingfen.github.io/2020/11/03/2020-11-3-CyberCommu1/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年11月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/11/07/2020-11-7-CyberCommu2/" title="Apollo Cyber RT 通信（下）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Apollo Cyber RT 通信（下）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/10/25/2020-10-25-CyberComponent/" title="Apollo Cyber RT 组件">
+                        <span class="hidden-mobile">Apollo Cyber RT 组件</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,865 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="规划模块：生成车辆运动轨迹">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apollo Planning 规划模块">
+<meta property="og:url" content="https://dingfen.github.io/2020/11/11/2020-11-11-ApolloPlanning/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="规划模块：生成车辆运动轨迹">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/Apollo_3_5_software_architecture.png">
+<meta property="og:image" content="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/Planning_default.png">
+<meta property="og:image" content="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/unprotected1.png">
+<meta property="og:image" content="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/parking2.png">
+<meta property="og:image" content="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/pull_over1.png">
+<meta property="og:image" content="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/park_and_go.png">
+<meta property="og:image" content="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/emergency.png">
+<meta property="og:image" content="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/architecture_5.5.png">
+<meta property="article:published_time" content="2020-11-11T04:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-09T15:16:55.735Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Apollo">
+<meta property="article:tag" content="Cyber RT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/Apollo_3_5_software_architecture.png">
+  
+  
+  
+  <title>Apollo Planning 规划模块 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Apollo Planning 规划模块"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-11-11 12:00" pubdate>
+          2020年11月11日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          36 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Apollo Planning 规划模块</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Apollo-Planning-模块"><a href="#Apollo-Planning-模块" class="headerlink" title="Apollo Planning 模块"></a>Apollo Planning 模块</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇博客对 Apollo 的规划（Planning）模块做详细介绍。根据官方文档<sup>1</sup>，规划模块的主要功能是对自动驾驶车辆未来的时空轨迹进行规划。为了让读者对规划模块在整个 Apollo 系统中的位置有一个大致的印象，我特意从官网上截取此图👇。可以看到规划模块的数据上游是定位（Localization），预测（Prediction），感知（Perception）模块，而下游是控制（Control）模块。</p>
+<p><img src="/img/Apollo_3_5_software_architecture.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><p>规划模块中，Apollo 设计团队引入了场景的概念，每个驾驶案例都被当做为一个不同的驾驶场景，这使得规划模块更具模块化，且更有针对性。更重要的是，对一个特定场景的修改不会影响其他场景。Apollo 5.5 主要注重于城市道路上的沿车道线自动驾驶，并引入了两种新的规划场景<sup>2</sup>。这里主要介绍 5 种驾驶场景，由于篇幅原因，我就在这里做简要介绍，详细内容可以点击<a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/r5.5.0/modules/planning/README.md">参考文献 [2]</a>。</p>
+<h3 id="沿车道线行驶"><a href="#沿车道线行驶" class="headerlink" title="沿车道线行驶"></a>沿车道线行驶</h3><p>默认场景模式，该场景包括但不限于遵守基本交通规则，或者基本转弯的单车道（例如巡航）或变道。</p>
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/Planning_default.png" srcset="/img/loading.gif" lazyload width="80%"/>
+</center>
+
+<h3 id="会车"><a href="#会车" class="headerlink" title="会车"></a>会车</h3><p>该场景包括了在有停:stop_sign: 标志的、有交通灯 :traffic_light: 的、什么都没有的十字路口上的会车情况。总的来说，自动驾驶车辆在遇到这些十字路口时，都会先抵达十字路口边，然后注意观察来往车辆并小心前进，最终通过十字路口</p>
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/unprotected1.png" srcset="/img/loading.gif" lazyload width="80%"/>
+</center>
+
+<h3 id="停车"><a href="#停车" class="headerlink" title="停车"></a>停车</h3><p>停车场景中采用了一个令 Apollo 团队感到非常骄傲的 <a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md">Open Space Planner</a> 算法，该规划算法尤其适用于停车场景。文档中，一共介绍了两个子场景：</p>
+<ul>
+<li><p>Valet 场景，用于将车辆停放在一个目标车位中</p>
+  <center>
+      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/parking2.png" srcset="/img/loading.gif" lazyload width="80%"/>
+  </center>
+</li>
+<li><p>Pull Over 场景，用于到达目的地后，完成的路边停车任务。</p>
+  <center>
+      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/pull_over1.png" srcset="/img/loading.gif" lazyload width="80%"/>
+  </center></li>
+</ul>
+<h3 id="即停即走（Park-and-go）"><a href="#即停即走（Park-and-go）" class="headerlink" title="即停即走（Park-and-go）"></a>即停即走（Park-and-go）</h3><p>即停即走场景用于路边停车，并开始生成到达下一个目的地的新路径，有点像出租车放下一名乘客后的场景，对于路边交付，乘客接送或下车等情况非常有用。该场景将 Open Space Planner 算法与其他传统的轨迹规划算法结合在一起，以确保汽车不仅安全停车，而且还能够按照生成的轨迹驶出停车位。</p>
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/park_and_go.png" srcset="/img/loading.gif" lazyload width="80%"/>
+</center>
+
+<h3 id="紧急状况"><a href="#紧急状况" class="headerlink" title="紧急状况"></a>紧急状况</h3><p>紧急场景是为确保在给定触发事件的情况下（通过人工输入或由于一个或多个软硬件故障）让车辆能安全停下。 该场景对于城市驾驶极为重要，因为在道路上经常会遇到几种无法预料的情况，要求车辆完全停车。例如，有两种类型的紧急停车：</p>
+<ul>
+<li>靠边停车，自动驾驶车辆使用 Open Space Planner 靠边停车</li>
+<li>在车道停止，自动驾驶汽车在充分意识到周遭安全的情况下，在车道内停车</li>
+</ul>
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/emergency.png" srcset="/img/loading.gif" lazyload width="80%"/>
+</center>
+
+
+
+<h2 id="规划模块的体系结构"><a href="#规划模块的体系结构" class="headerlink" title="规划模块的体系结构"></a>规划模块的体系结构</h2><p>在 Apollo 5.5 版本中，Apollo 团队对规划模块的体系结构进行了修改，以纳入城市道路上的新驾驶方案。 如下图所示，因为新加入了有两种复杂方案：紧急情况和即停即走。为了有效地使用这些方案，团队引入了 2 个新的决策器—路径重用决策器（Path Reuse Decider）和限速决策器（Speed Bound Decider），并更新了现有决策器，使规划体系结构既强大又灵活，足以应付许多不同类型的城市道路驾驶方案。</p>
+<p>每个驾驶场景都有其独特的驾驶参数集，使其更安全，高效，更易于自定义和调试，也更加灵活。</p>
+<center>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/architecture_5.5.png" srcset="/img/loading.gif" lazyload />
+</center>
+## 规划模块之组件类
+
+<p>如果你认真了解了 <a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html">Apollo Cyber RT 组件</a>的相关知识，就明白模块的起点就是 <code>Component</code> 类，一切的模块都是继承 <code>Component</code> 类而来的。自然地，我把这它作为全面认识规划模块的切入点。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">PlanningComponent</span> <span class="hljs-keyword">final</span><br>    : <span class="hljs-keyword">public</span> cyber::Component&lt;prediction::PredictionObstacles, canbus::Chassis,<br>                              localization::LocalizationEstimate&gt; &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Init</span><span class="hljs-params">()</span> <span class="hljs-keyword">override</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Proc</span><span class="hljs-params">(<span class="hljs-type">const</span> std::shared_ptr&lt;prediction::PredictionObstacles&gt;&amp;</span></span><br><span class="hljs-params"><span class="hljs-function">                prediction_obstacles,</span></span><br><span class="hljs-params"><span class="hljs-function">            <span class="hljs-type">const</span> std::shared_ptr&lt;canbus::Chassis&gt;&amp; chassis,</span></span><br><span class="hljs-params"><span class="hljs-function">            <span class="hljs-type">const</span> std::shared_ptr&lt;localization::LocalizationEstimate&gt;&amp;</span></span><br><span class="hljs-params"><span class="hljs-function">                localization_estimate)</span> <span class="hljs-keyword">override</span></span>;<br> <span class="hljs-keyword">private</span>:<br>  std::shared_ptr&lt;cyber::Reader&lt;perception::TrafficLightDetection&gt;&gt;<br>      traffic_light_reader_;<br>  std::shared_ptr&lt;cyber::Reader&lt;routing::RoutingResponse&gt;&gt; routing_reader_;<br>  std::shared_ptr&lt;cyber::Reader&lt;planning::PadMessage&gt;&gt; pad_msg_reader_;<br>  std::shared_ptr&lt;cyber::Reader&lt;relative_map::MapMsg&gt;&gt; relative_map_reader_;<br>  std::shared_ptr&lt;cyber::Reader&lt;storytelling::Stories&gt;&gt; story_telling_reader_;<br><br>  std::shared_ptr&lt;cyber::Writer&lt;ADCTrajectory&gt;&gt; planning_writer_;<br>  std::shared_ptr&lt;cyber::Writer&lt;routing::RoutingRequest&gt;&gt; rerouting_writer_;<br>  std::shared_ptr&lt;cyber::Writer&lt;PlanningLearningData&gt;&gt;<br>      planning_learning_data_writer_;<br><span class="hljs-comment">/*   ....   */</span><br> <span class="hljs-comment">// 与 Reader 一一对应的私有变量</span><br>  perception::TrafficLightDetection traffic_light_;<br>  routing::RoutingResponse routing_;<br>  planning::PadMessage pad_msg_;<br>  relative_map::MapMsg relative_map_;<br>  storytelling::Stories stories_;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<p>我们一条条地看，<code>PlanningComponent</code> 类继承的是 <code>Component&lt;prediction::PredictionObstacles, canbus::Chassis,  localization::LocalizationEstimate&gt;</code> 类，简单地说，从名字上看，<code>PlanningComponent</code> 类需要处理三类消息：</p>
+<ul>
+<li><code>prediction::PredictionObstacles</code> 预测的障碍物行为</li>
+<li><code>canbus::Chassis</code>  canbus 总线传来的底盘状态</li>
+<li><code>localization::LocalizationEstimate</code> 来自定位模块的定位信息</li>
+</ul>
+<p>但是，<code>PlanningComponent</code> 类内部有非常多的不同类型的订阅者 <code>Reader</code> 和发布者 <code>Writer</code> 。这些订阅者和发布者的用途，大都可以通过名称猜出个大概。值得注意的是，类的成员变量中，存在与 <code>Reader</code> 一一对应的变量，看起来它们是用于存放对应的 <code>Reader</code> 接收的消息，很快下文就证实了我的猜想:smiley:。</p>
+<span id="Init" >
+
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><p><code>Init()</code> 函数实现了模块初始化，在 <code>modules/</code> 中的代码不论取名、类型还是函数实现都非常长，这点不同于 Cyber RT，因此在大多数情况下，我选择部分截取代码，如果想要看完整的代码，移步 <code>modules/planning/planning_component.cc::Init()</code> 。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++">injector_ = std::<span class="hljs-built_in">make_shared</span>&lt;DependencyInjector&gt;();<br><span class="hljs-keyword">if</span> (FLAGS_use_navigation_mode)<br>  planning_base_ = std::<span class="hljs-built_in">make_unique</span>&lt;NaviPlanning&gt;(injector_);<br><span class="hljs-keyword">else</span><br>  planning_base_ = std::<span class="hljs-built_in">make_unique</span>&lt;OnLanePlanning&gt;(injector_);<br><br><span class="hljs-built_in">ACHECK</span>(ComponentBase::<span class="hljs-built_in">GetProtoConfig</span>(&amp;config_))<br>    &lt;&lt; <span class="hljs-string">&quot;failed to load planning config file &quot;</span><br>    &lt;&lt; ComponentBase::<span class="hljs-built_in">ConfigFilePath</span>();<br><br><span class="hljs-keyword">if</span> (FLAGS_planning_offline_learning ||<br>    config_.<span class="hljs-built_in">learning_mode</span>() != PlanningConfig::NO_LEARNING)<br>  <span class="hljs-keyword">if</span> (!message_process_.<span class="hljs-built_in">Init</span>(config_, injector_))<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br><br>planning_base_-&gt;<span class="hljs-built_in">Init</span>(config_);<br></code></pre></td></tr></table></figure>
+
+<p>上面代码首先创建了一个 <code>DependencyInjector</code> 类的指针，然后根据 <code>FLAGS_use_navigation_mode</code> 模式的不同，选择创建不同的 <code>PlanningBase</code> 的子类，然后就是读取配置文件路径，再就是 <code>PlanningBase</code> 子类的初始化。先来说说这些规划子类的区别。</p>
+<ul>
+<li><code>OpenSpacePlanning</code>  主要的应用场景是自主泊车和狭窄路段的掉头，<a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md">官方文档参考</a>，但很奇怪的是，我没有找到相应的实现代码:confused:</li>
+<li><code>NaviPlanning</code>   主要用于在确定了导航路线的情况下的自动驾驶</li>
+<li><code>OnLanePlanning</code>   主要的应用于开放道路下沿车道线的自动驾驶。</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++">  routing_reader_ = node_-&gt;<span class="hljs-built_in">CreateReader</span>&lt;RoutingResponse&gt;(<br>      config_.<span class="hljs-built_in">topic_config</span>().<span class="hljs-built_in">routing_response_topic</span>(),<br>      [<span class="hljs-keyword">this</span>](<span class="hljs-type">const</span> std::shared_ptr&lt;RoutingResponse&gt;&amp; routing) &#123;<br>        AINFO &lt;&lt; <span class="hljs-string">&quot;Received routing data: run routing callback.&quot;</span><br>              &lt;&lt; routing-&gt;<span class="hljs-built_in">header</span>().<span class="hljs-built_in">DebugString</span>();<br>        std::lock_guard&lt;std::mutex&gt; <span class="hljs-built_in">lock</span>(mutex_);<br>        routing_.<span class="hljs-built_in">CopyFrom</span>(*routing);<br>      &#125;);<br><span class="hljs-comment">// 接下来几个 Reader 类似的写法</span><br>  planning_writer_ = node_-&gt;<span class="hljs-built_in">CreateWriter</span>&lt;ADCTrajectory&gt;(<br>      config_.<span class="hljs-built_in">topic_config</span>().<span class="hljs-built_in">planning_trajectory_topic</span>());<br><span class="hljs-comment">// 接下来的 Writer 类似的写法</span><br></code></pre></td></tr></table></figure>
+
+<p>紧接着，<code>Init()</code> 函数就用<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">我之前博文中介绍的方式</a>创建订阅者 <code>Reader</code> 和发布者 <code>Writer</code> 。仔细看上面给出的代码，<code>CreateReader</code> 函数的参数，一个是从配置文件中取得相应的配置信息，另一个是构建的回调函数。</p>
+<p>咱们先来看一下后者：构建函数。根据我在<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">这篇博客中所讲的流程</a>，传入的回调函数是在 <code>Reader</code> 接收到消息后就会被调用的，从内容来看，<code>Reader</code> 在收到对应的消息后，调用 <code>CopyFrom()</code> 函数，把消息拷贝到自己的私有变量中。至于 <code>Writer</code> 就比较平凡了，就是获取了配置文件里相应的信息:man_shrugging:。</p>
+<p>那么这个“配置文件中的相应信息”到底是什么信息呢:confused:？打开 <code>modules/planning/conf/planning_config.pb.txt</code>，你就会恍然大悟:point_down:，原来上面代码中的 <code>config_.topic_config().planning_trajectory_topic()</code>  就是一个字符串，对应的就是信道的名字。</p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-title class_">topic_config</span> <span class="hljs-punctuation">&#123;</span><br><span class="hljs-symbol">  chassis_topic:</span> <span class="hljs-string">&quot;/apollo/canbus/chassis&quot;</span><br><span class="hljs-symbol">  hmi_status_topic:</span> <span class="hljs-string">&quot;/apollo/hmi/status&quot;</span><br><span class="hljs-symbol">  localization_topic:</span> <span class="hljs-string">&quot;/apollo/localization/pose&quot;</span><br><span class="hljs-symbol">  planning_pad_topic:</span> <span class="hljs-string">&quot;/apollo/planning/pad&quot;</span><br><span class="hljs-symbol">  planning_trajectory_topic:</span> <span class="hljs-string">&quot;/apollo/planning&quot;</span><br><span class="hljs-symbol">  prediction_topic:</span> <span class="hljs-string">&quot;/apollo/prediction&quot;</span><br><span class="hljs-symbol">  relative_map_topic:</span> <span class="hljs-string">&quot;/apollo/relative_map&quot;</span><br><span class="hljs-symbol">  routing_request_topic:</span> <span class="hljs-string">&quot;/apollo/routing_request&quot;</span><br><span class="hljs-symbol">  routing_response_topic:</span> <span class="hljs-string">&quot;/apollo/routing_response&quot;</span><br><span class="hljs-symbol">  story_telling_topic:</span> <span class="hljs-string">&quot;/apollo/storytelling&quot;</span><br><span class="hljs-symbol">  traffic_light_detection_topic:</span> <span class="hljs-string">&quot;/apollo/perception/traffic_light&quot;</span><br><span class="hljs-symbol">  planning_learning_data_topic:</span> <span class="hljs-string">&quot;/apollo/planning/learning_data&quot;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>这就是初始化函数的全部内容了。</p>
+<h3 id="处理"><a href="#处理" class="headerlink" title="处理"></a>处理</h3><p>再来看 <code>PlanningComponent::Proc()</code> 函数，之前的博客中我说过，<code>Proc()</code> 函数是可以由用户自己编写完成的，而之后，该函数会被封装处理，最终让对应的协程开始执行。不同于在 Cyber RT 中的精雕细琢，我这次采用不同的办法，先快速过一遍 <code>Proc()</code> 函数，然后找出自己感兴趣的，进而深入研究。那么先来看 <code>Proc()</code> 函数的第一部分：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 函数头前面已经给出了 这里就不放了 并去掉了一些错误诊断语句</span><br><span class="hljs-comment">// check and process possible rerouting request</span><br>  <span class="hljs-built_in">CheckRerouting</span>();<br><br><span class="hljs-comment">// process fused input data</span><br>  local_view_.prediction_obstacles = prediction_obstacles;<br>  local_view_.chassis = chassis;<br>  local_view_.localization_estimate = localization_estimate;<br>  &#123;<br>    <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(mutex_)</span></span>;<br>    <span class="hljs-keyword">if</span> (!local_view_.routing ||<br>        hdmap::PncMap::<span class="hljs-built_in">IsNewRouting</span>(*local_view_.routing, routing_)) &#123;<br>      local_view_.routing =<br>          std::<span class="hljs-built_in">make_shared</span>&lt;routing::RoutingResponse&gt;(routing_);<br>    &#125;<br>  &#125;<br>  &#123;<br>    <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(mutex_)</span></span>;<br>    local_view_.traffic_light =<br>        std::<span class="hljs-built_in">make_shared</span>&lt;TrafficLightDetection&gt;(traffic_light_);<br>    local_view_.relative_map = std::<span class="hljs-built_in">make_shared</span>&lt;MapMsg&gt;(relative_map_);<br>  &#125;<br>  &#123;<br>    <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(mutex_)</span></span>;<br>    local_view_.pad_msg = std::<span class="hljs-built_in">make_shared</span>&lt;PadMessage&gt;(pad_msg_);<br>  &#125;<br>  &#123;<br>    <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(mutex_)</span></span>;<br>    local_view_.stories = std::<span class="hljs-built_in">make_shared</span>&lt;Stories&gt;(stories_);<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<p>首先，<code>Proc()</code> 函数调用 <code>CheckRerouting()</code> 检查并处理了可能的重新路由需求，然后就是构建自己对象内的成员 <code>local_view_</code> ，没错，为了防止多线程竞争，使用了非常多次的互斥锁:lock: 。该成员变量包含了所有规划模块需要的输入，这些输入信息非常重要，可能会经常使用，详细情况在下文的<a href="#input">输入</a>部分。</p>
+<p>我们先把诸多疑问抛置脑后，直接来看 <code>Proc()</code> 函数的第二部分。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">if</span> (config_.<span class="hljs-built_in">learning_mode</span>() != PlanningConfig::NO_LEARNING) &#123;<br>  <span class="hljs-comment">// data process for online training</span><br>  message_process_.<span class="hljs-built_in">OnChassis</span>(*local_view_.chassis);<br>  message_process_.<span class="hljs-built_in">OnPrediction</span>(*local_view_.prediction_obstacles);<br>  message_process_.<span class="hljs-built_in">OnRoutingResponse</span>(*local_view_.routing);<br>  message_process_.<span class="hljs-built_in">OnStoryTelling</span>(*local_view_.stories);<br>  message_process_.<span class="hljs-built_in">OnTrafficLightDetection</span>(*local_view_.traffic_light);<br>  message_process_.<span class="hljs-built_in">OnLocalization</span>(*local_view_.localization_estimate);<br>&#125;<br><span class="hljs-comment">// publish learning data frame for RL test</span><br><span class="hljs-keyword">if</span> (config_.<span class="hljs-built_in">learning_mode</span>() == PlanningConfig::RL_TEST) &#123;<br>  PlanningLearningData planning_learning_data;<br>  LearningDataFrame* learning_data_frame =<br>      injector_-&gt;<span class="hljs-built_in">learning_based_data</span>()-&gt;<span class="hljs-built_in">GetLatestLearningDataFrame</span>();<br>  <span class="hljs-keyword">if</span> (learning_data_frame) &#123;<br>    planning_learning_data.<span class="hljs-built_in">mutable_learning_data_frame</span>()<br>                          -&gt;<span class="hljs-built_in">CopyFrom</span>(*learning_data_frame);<br>    common::util::<span class="hljs-built_in">FillHeader</span>(node_-&gt;<span class="hljs-built_in">Name</span>(), &amp;planning_learning_data);<br>    planning_learning_data_writer_-&gt;<span class="hljs-built_in">Write</span>(planning_learning_data);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    AERROR &lt;&lt; <span class="hljs-string">&quot;fail to generate learning data frame&quot;</span>;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>从注释中看出，<code>MessageProcess</code> 类有用于线上训练的功能，在 <code>learning_mode</code> 打开时，它会收集刚刚输入得到信息。之后，<code>injector_</code> 获得最新的学习数据帧（frame），并通过 <code>planning_learning_data_writer_</code> 发布者发布，用于强化学习（Reinforcement Learning）测试。</p>
+<p>同样，跳过学习部分（这不是我所关心的重点），再来看第三部分代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++">ADCTrajectory adc_trajectory_pb;<br>planning_base_-&gt;<span class="hljs-built_in">RunOnce</span>(local_view_, &amp;adc_trajectory_pb);<br>common::util::<span class="hljs-built_in">FillHeader</span>(node_-&gt;<span class="hljs-built_in">Name</span>(), &amp;adc_trajectory_pb);<br><br><span class="hljs-comment">// modify trajectory relative time due to the timestamp change in header</span><br><span class="hljs-keyword">auto</span> start_time = adc_trajectory_pb.<span class="hljs-built_in">header</span>().<span class="hljs-built_in">timestamp_sec</span>();<br><span class="hljs-type">const</span> <span class="hljs-type">double</span> dt = start_time - adc_trajectory_pb.<span class="hljs-built_in">header</span>().<span class="hljs-built_in">timestamp_sec</span>();<br><span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; p : *adc_trajectory_pb.<span class="hljs-built_in">mutable_trajectory_point</span>()) &#123;<br>  p.<span class="hljs-built_in">set_relative_time</span>(p.<span class="hljs-built_in">relative_time</span>() + dt);<br>&#125;<br>planning_writer_-&gt;<span class="hljs-built_in">Write</span>(adc_trajectory_pb);<br><br><span class="hljs-comment">// record in history</span><br><span class="hljs-keyword">auto</span>* history = injector_-&gt;<span class="hljs-built_in">history</span>();<br>history-&gt;<span class="hljs-built_in">Add</span>(adc_trajectory_pb);<br><br><span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br></code></pre></td></tr></table></figure>
+
+<p>在第三部分代码中，首先调用 <code>RunOnce()</code> 函数生成了自动驾驶轨迹，放在了 <code>ADCTrajectory</code> 类的消息中，看来这就是生产规划路径的关键逻辑，这是我比较关心的。然后，根据注释，我推断，程序修改了轨迹中所有点的相对时间，并通过发布者 <code>planning_writer_</code> 发送消息，最后进行历史记录。至此，<code>PlanningComponent::Proc()</code> 函数结束。</p>
+<span id="input">
+### 输入数据
+
+<p>前文说到，<code>Proc()</code> 函数先检查路由情况，再收集输入数据到 <code>local_view_</code> 这个私有变量中。为了弄清模块的输入输出信息，进而了解整个 Apollo 系统的数据流通情况，我需要对输入数据做一个全面的解读。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">struct</span> <span class="hljs-title class_">LocalView</span> &#123;<br>  std::shared_ptr&lt;prediction::PredictionObstacles&gt; prediction_obstacles;<br>  std::shared_ptr&lt;canbus::Chassis&gt; chassis;<br>  std::shared_ptr&lt;localization::LocalizationEstimate&gt; localization_estimate;<br>  std::shared_ptr&lt;perception::TrafficLightDetection&gt; traffic_light;<br>  std::shared_ptr&lt;routing::RoutingResponse&gt; routing;<br>  std::shared_ptr&lt;relative_map::MapMsg&gt; relative_map;<br>  std::shared_ptr&lt;PadMessage&gt; pad_msg;<br>  std::shared_ptr&lt;storytelling::Stories&gt; stories;<br>&#125;;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>prediction_obstacles 从信道中获得的指针，类型为 <code>PredictionObstacles</code>，代码文件在 <code>modules/prediction/proto/prediction_obstacle.proto</code> 中，该类型的消息来自<strong>预测模块</strong>，包含了以下信息：<ul>
+<li><code>Header</code> 头结构：包含了这条消息<strong>发布的时刻</strong>（以秒为单位），目前位置的模块名，该消息的序列号（每个模块各自维护的）等，几乎每个消息都包含有这个头结构，下面就不提及了。</li>
+<li><code>PredictionObstacle</code> 预测模块中的若干个障碍物行为：有感知模块中的障碍物（<code>PerceptionObstacle</code>），它包括障碍物的 id，它的三维坐标、速度加速度、边界大小（长高宽）、特殊的形状、类型（行人、非机动车、机动车）、运动轨迹等；还有时间戳，记录 GPS 给出的时刻；还有预测的时间长度；多种可能的运动轨迹；障碍物的运动趋势、优先级等。</li>
+<li>开始的时间戳：记录预测开始的时刻</li>
+<li>结束时间戳：预测结束的时刻</li>
+<li>自动驾驶车辆的运动趋势，停止、正常行驶还是正在变道等</li>
+<li><code>Scenery</code>  现在的场景</li>
+</ul>
+</li>
+<li>chassis 从信道获得的指针，类型为 <code>Chassis</code>，这条消息直接来自<strong>总线 CanBus</strong>，代码文件在 <code>modules/canbus/proto/chassis.proto</code> 中，该类包含了很多信息，主要是汽车底盘所给出的机械状态信息，比如：<ul>
+<li>驾驶模式，有手动驾驶、自动驾驶、仅控制方向、仅控制速度以及紧急模式</li>
+<li>档位情况、引擎转速、车辆速度、里程表、燃油情况、电池电量等</li>
+<li>刹车、油门踏板的力度，方向盘的旋转角度，车轮转速</li>
+<li>转向灯、雾灯、大灯的工作情况</li>
+</ul>
+</li>
+<li>localization_estimate 从信道中获得的指针，类型为 <code>LocalizationEstimate</code>，代码文件在 <code>modules/localization/proto/localization.proto</code> 中，这条消息来自<strong>定位模块</strong>，该类主要包含了：<ul>
+<li><code>Pose</code> 位置姿势，包括车头朝向，在地图上的线速度、线加速度和相对位置，角速度、仰角度等</li>
+<li>测量上述姿势的时刻</li>
+<li>车辆已经经过的轨迹点列</li>
+<li>MSF 定位状态与质量</li>
+</ul>
+</li>
+</ul>
+<p>上面的三条消息都是通过 <code>Proc()</code> 函数的参数传来的，回顾一下<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">在通信里讲过的过程</a>，这三条信息会被融合起来，随后程序会唤醒封装了 <code>Component::Process()</code> 的协程，让协程处于 Ready 状态，最后通过调度算法会让某个线程对它进行执行。而以下介绍的五条消息，与上三条不一样，这些消息，是通过 <code>Reader</code> 获得的，回顾<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html#reader-%E7%B1%BB">在这篇博客里讲的订阅者内容</a>，这些消息到来后，程序会唤醒封装了<em>入队操作</em>和 <em><code>Reader</code> 回调函数</em>的协程，让它处于 Ready 状态，最后调度算法调度某个线程进行执行。接下来，我们就详细看一下这五条消息吧：</p>
+<ul>
+<li>traffic_light 获得现在的交通信号灯情况，类型为 <code>TrafficLightDetection</code> ，来自<strong>感知模块</strong>，该类在 <code>modules/perception/camera/lib/traffic_light/detector/detection/detection.h</code> 中定义，主要是从摄像机拍摄的图片中获得目前的信号灯情况</li>
+<li>routing 导航路线，类型为 <code>RoutingResponse</code> ，来自<strong>路由模块</strong>，从 <code>RoutingComponent</code> 类看出，<code>RoutingResponse</code> 就是该组件发布的消息类，类在 <code>modules/routing/proto/routing.proto</code> 文件中定义，<code>RoutingResponse</code> 包含有：<ul>
+<li>导航中要通过的道路，以及总路程等</li>
+<li><code>RoutingRequest</code> 可理解为要响应的路由请求</li>
+<li>地图版本和现在的状态等</li>
+</ul>
+</li>
+<li>relative_map 相对地图，类型为 <code>MapMsg</code>，是<code>RelativeMapComponent</code> 类发出的一个相对地图消息，在 <code>modules/map/relative_map/proto/navigation.proto</code> 文件中定义，包含<ul>
+<li><code>Header</code> 头结构</li>
+<li>车辆的高清的三维坐标，定位信息</li>
+<li>系统中的编号与对应的路名、车道表</li>
+<li>从感知模块中获得的车道线标记</li>
+</ul>
+</li>
+<li>pad_msg 便笺，类在 <code>modules/planning/proto/pad_msg.proto</code> 定义，除了一个头结构外，仅包含了驾驶动作，比如直行跟随，左右变道，靠边停车等。</li>
+</ul>
+<h3 id="生成轨迹"><a href="#生成轨迹" class="headerlink" title="生成轨迹"></a>生成轨迹</h3><p>在<a href="#Init">初始化</a>小节中，根据 <code>FLAGS_use_navigation_mode</code> 的设置， <code>planning_base_</code> 会指向不同的子类，或 <code>NaviPlanning</code> 类或是 <code>OnLanePlanning</code> 类，然后调用 <code>RunOnce()</code> 函数。</p>
+<p>首先来看一下默认的规划类的 <code>OnLanePlanning::RunOnce()</code> 函数，回顾一下 <code>Component::Proc()</code> 函数的调用和组件的相关知识，你应该就会明白它是<strong>事件触发</strong>的，而不是时间触发的。该函数很长很复杂，很多地方我也并不关心（而且也看不懂），若有机会，可以细致地研究一下，大体上，它完成了以下步骤：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">OnLanePlanning::RunOnce</span><span class="hljs-params">(<span class="hljs-type">const</span> LocalView&amp; local_view,</span></span><br><span class="hljs-params"><span class="hljs-function">                             ADCTrajectory* <span class="hljs-type">const</span> ptr_trajectory_pb)</span> </span>&#123;<br>    <span class="hljs-comment">//  更新汽车状态和参考线的状态，如果状态无效，直接返回</span><br>    <span class="hljs-comment">//  ...  </span><br>    <span class="hljs-comment">// 是否为出现导航路线变换，如果是 初始化 planner</span><br>    <span class="hljs-comment">//  加上预估的规划触发的周期 得到 stitchingTrajectory</span><br>  <span class="hljs-comment">// planning is triggered by prediction data, but we can still use an estimated</span><br>  <span class="hljs-comment">// cycle time for stitching</span><br>  status = <span class="hljs-built_in">InitFrame</span>(frame_num, stitching_trajectory.<span class="hljs-built_in">back</span>(), vehicle_state);<br>    <span class="hljs-comment">//  判断是否符合交通规则</span><br>    <span class="hljs-comment">//  开始正在的规划 planner 开始规划</span><br>  status = <span class="hljs-built_in">Plan</span>(start_timestamp, stitching_trajectory, ptr_trajectory_pb);<br>    <span class="hljs-comment">//  记录规划所花费的时间</span><br>    <span class="hljs-comment">//  ...</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>那么 <code>Planner</code> 又是什么东西呢？事实上才 <code>OnLanePlanning::Init()</code> 函数中就已经根据配置文件，由 <code>PlannerDispatcher</code> 指定了。我一共发现 4 种用于不同场景的 <code>Planner</code> ：</p>
+<ul>
+<li><code>RTKReplayPlanner</code>  根据录制的轨迹来规划行车路线</li>
+<li><code>PublicRoadPlanner</code> 开放道路的轨迹规划器</li>
+<li><code>LatticePlanner</code>  基于网格算法的轨迹规划器</li>
+<li><code>NaviPlanner</code>  基于实时相对地图的规划器</li>
+</ul>
+<p>未完待续……</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>[1] <a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/">Github Apollo</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/r5.5.0/modules/planning/README.md">Apollo Planning Docs</a></p>
+<p>[3] <a target="_blank" rel="noopener" href="https://github.com/daohu527/Dig-into-Apollo/tree/master/modules/planning">apollo介绍之planning模块</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Apollo/" class="category-chain-item">Apollo</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Apollo/" class="print-no-link">#Apollo</a>
+      
+        <a href="/tags/Cyber-RT/" class="print-no-link">#Cyber RT</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Apollo Planning 规划模块</div>
+      <div>https://dingfen.github.io/2020/11/11/2020-11-11-ApolloPlanning/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年11月11日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/11/18/2020-11-18-CyberServiceDiscovery/" title="Apollo Cyber RT 服务与服务发现">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Apollo Cyber RT 服务与服务发现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/11/07/2020-11-7-CyberCommu2/" title="Apollo Cyber RT 通信（下）">
+                        <span class="hidden-mobile">Apollo Cyber RT 通信（下）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
