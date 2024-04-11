@@ -43,6 +43,8 @@
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
 
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
 
 
 <!-- 主题依赖的图标库，不要自行修改 -->
@@ -220,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          804 字
+          803 字
         
       </span>
     
@@ -283,18 +285,18 @@
             
               <div class="markdown-body">
                 
-                <p><a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> 是个非常好用且好看的个人博客搭建工具! </p>
-<h2 id="博客切换过程"><a href="#博客切换过程" class="headerlink" title="博客切换过程"></a>博客切换过程</h2><h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><ul>
+                <p><a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> 是个非常好用且好看的个人博客搭建工具!</p>
+<h2 id="博客切换过程">博客切换过程</h2>
+<h3 id="准备工作">准备工作</h3>
+<ul>
 <li>安装 Git 和 NodeJs</li>
 <li>安装 Hexo（命令为 <code>npm i -g hexo</code>）</li>
 <li>安装插件 <code>npm install hexo-deployer-git --save</code></li>
 </ul>
 <p>随后新建一个空的文件夹：比如新建了文件夹 my_blog，使用 <code>hexo init</code> 命令初始化博客：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> my_blog &amp;&amp; <span class="hljs-built_in">cd</span> my_blog<br>hexo init<br></code></pre></td></tr></table></figure>
-
 <p>初始化后的文件夹结构如下：</p>
 <figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs 1c">.<br>├── _config.yml<br>├── package.json<br>├── scaffolds<br>├── source<br><span class="hljs-string">|   ├── _drafts</span><br><span class="hljs-string">|   └── _posts</span><br>└── themes<br></code></pre></td></tr></table></figure>
-
 <p>上述文件说明如下：</p>
 <ul>
 <li>_config.yml 网站的配置信息，您可以在此配置大部分的参数。</li>
@@ -304,35 +306,33 @@
 <li>themes：主题文件夹。hexo 会根据主题来生成静态页面。</li>
 </ul>
 <p>另外，如果你还没有专门为自己博客搭建一个仓库的话，需要创建新的 github 仓库，建议命名为 &lt;username.github.io&gt; 的空仓库，然后按照 <a target="_blank" rel="noopener" href="https://pages.github.com/">github 官网指导</a> 或者从网上随便找一篇博客来搭建自己的博客网页。</p>
-<h3 id="生成个人博客网站"><a href="#生成个人博客网站" class="headerlink" title="生成个人博客网站"></a>生成个人博客网站</h3><p>打开 <code>_config.yml</code> 文件，找到 <code># Deployment</code> 的配置信息，并修改如下：</p>
+<h3 id="生成个人博客网站">生成个人博客网站</h3>
+<p>打开 <code>_config.yml</code> 文件，找到 <code># Deployment</code> 的配置信息，并修改如下：</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># Deployment</span><br><span class="hljs-comment">## Docs: https://hexo.io/docs/deployment.html</span><br><span class="hljs-attr">deploy:</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">git</span><br>  <span class="hljs-attr">repo:</span> <span class="hljs-string">git@github.com:&lt;your-github-username&gt;/&lt;github-username.github.io.git&gt;</span> <span class="hljs-comment"># Recommend: ssh-key login</span><br>  <span class="hljs-comment"># repo: https://github.com/&lt;your-github-username&gt;/&lt;github-username.github.io.git&gt; # passwd login</span><br>  <span class="hljs-attr">branch:</span> <span class="hljs-string">master</span><br></code></pre></td></tr></table></figure>
-
 <p>安装插件 <code>npm install hexo-deployer-git --save</code> 后，运行如下命令：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">hexo clean	<span class="hljs-comment"># 清除数据</span><br>hexo d -g	<span class="hljs-comment"># 生成博客</span><br></code></pre></td></tr></table></figure>
-
 <p>这时候，会看到 hexo 会帮你自动提交至 github repo 的过程，因此第一步创建的空仓库也有了提交内容。至此，在 hexo 的全自动帮助下，博客搭建完毕，访问网址为：<a target="_blank" rel="noopener" href="https://github-username.github.io/%E3%80%82">https://github-username.github.io/。</a></p>
 <p>然后，我就把之前 Jekyll 维护的博客 markdown 文档和大量文档内的图片全都移动到了 hexo，过程丝滑，轻松方便。</p>
-<h3 id="博客维护"><a href="#博客维护" class="headerlink" title="博客维护"></a>博客维护</h3><p>hexo 提供了一套维护博客的优雅的办法。笔者在此仅介绍如何新建一篇博客。新建博客格式为 markdown 格式，比如我想创建一篇名为 大模型推理流程介绍 的博客，可以使用以下命令：</p>
+<h3 id="博客维护">博客维护</h3>
+<p>hexo 提供了一套维护博客的优雅的办法。笔者在此仅介绍如何新建一篇博客。新建博客格式为 markdown 格式，比如我想创建一篇名为 大模型推理流程介绍 的博客，可以使用以下命令：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">hexo new 大模型推理流程介绍<br></code></pre></td></tr></table></figure>
-
-<p>hexo 会自动帮助你在当前目录下的 <code>source/_posts</code> 下新建名为 大模型推理流程介绍.md，其中内容如下：</p>
+<p>hexo 会自动帮助你在当前目录下的 <code>source/_posts</code> 下新建名为 <a target="_blank" rel="noopener" href="http://xn--xmq16sk9am8vx0hhzeu8njwlink.md">大模型推理流程介绍.md</a>，其中内容如下：</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">title:</span> <span class="hljs-string">大模型推理流程介绍</span><br><span class="hljs-attr">date:</span> <span class="hljs-number">2024-04-10 22:42:19</span><br><span class="hljs-attr">tags:</span><br><span class="hljs-meta">---</span><br></code></pre></td></tr></table></figure>
-
 <p>写完博客内容后，执行</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">hexo s<br></code></pre></td></tr></table></figure>
-
 <p>可在本地查看写的博客网页，若确认没问题，执行</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">hexo d -g<br></code></pre></td></tr></table></figure>
-
 <p>就会更新博客到网站上。</p>
-<h3 id="主题切换"><a href="#主题切换" class="headerlink" title="主题切换"></a>主题切换</h3><p>hexo 提供的默认主题为 landscape，但太难看。我想使用 Fluid，切换主题的步骤如下：</p>
+<h3 id="主题切换">主题切换</h3>
+<p>hexo 提供的默认主题为 landscape，但太难看。我想使用 Fluid，切换主题的步骤如下：</p>
 <ol>
 <li>通过 npm 直接安装：<code>cd my_blog &amp;&amp; npm install --save hexo-theme-fluid</code></li>
-<li>将 node_modules&#x2F;hexo-theme-fluid 复制到 themes 文件夹，并重名为fluid：<code>cp -r node_modules/hexo-theme-fluid themes/fluid</code></li>
+<li>将 node_modules/hexo-theme-fluid 复制到 themes 文件夹，并重名为fluid：<code>cp -r node_modules/hexo-theme-fluid themes/fluid</code></li>
 <li>在博客目录下创建 <code>_config.fluid.yml</code>，将  <code>themes/fluid/_config.yml</code> 内容复制进去，并将 <code>_config.yml</code> 的主题修改为 <code>theme: fluid</code></li>
 <li>使用 <code>hexo s</code> 进行本地部署，如无问题，则使用命令 <code>hexo d -g</code> 进行远程部署</li>
 </ol>
-<h3 id="附上：hexo-fluid-配置帮助文档"><a href="#附上：hexo-fluid-配置帮助文档" class="headerlink" title="附上：hexo fluid 配置帮助文档"></a>附上：<a target="_blank" rel="noopener" href="https://fluid-dev.github.io/hexo-fluid-docs/guide/">hexo fluid 配置帮助文档</a></h3>
+<h3 id="附上：hexo-fluid-配置帮助文档">附上：<a target="_blank" rel="noopener" href="https://fluid-dev.github.io/hexo-fluid-docs/guide/">hexo fluid 配置帮助文档</a></h3>
+
                 
               </div>
             
@@ -473,7 +473,6 @@
 
   
   
-
 
 
 
@@ -695,49 +694,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

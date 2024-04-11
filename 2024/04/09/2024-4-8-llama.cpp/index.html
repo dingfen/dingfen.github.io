@@ -16,17 +16,19 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="llama.cpp源码解析首先，我们先简单介绍一下llama.cpp：该项目是开发者 Georgi Gerganov 基于 Meta 的 LLaMA 模型 手写的纯 C&#x2F;C++ 版本：支持CPU推理,当然也支持CUDA&#x2F;OpenCL推理、具有 FP16 和 FP32 的混合精度、支持8-bit&#x2F;4bit量化… , 截止当前github stars 数42.2k ，反正">
+    <meta name="description" content="llama.cpp源码解析 首先，我们先简单介绍一下llama.cpp：该项目是开发者 Georgi Gerganov 基于 Meta 的 LLaMA 模型 手写的纯 C&#x2F;C++ 版本：支持CPU推理,当然也支持CUDA&#x2F;OpenCL推理、具有 FP16 和 FP32 的混合精度、支持8-bit&#x2F;4bit量化… , 截止当前github stars 数42.2k ，反正火爆的不行，所以本文就记录一">
 <meta property="og:type" content="article">
 <meta property="og:title" content="llama.cpp源码解析">
 <meta property="og:url" content="https://dingfen.github.io/2024/04/09/2024-4-8-llama.cpp/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="llama.cpp源码解析首先，我们先简单介绍一下llama.cpp：该项目是开发者 Georgi Gerganov 基于 Meta 的 LLaMA 模型 手写的纯 C&#x2F;C++ 版本：支持CPU推理,当然也支持CUDA&#x2F;OpenCL推理、具有 FP16 和 FP32 的混合精度、支持8-bit&#x2F;4bit量化… , 截止当前github stars 数42.2k ，反正">
+<meta property="og:description" content="llama.cpp源码解析 首先，我们先简单介绍一下llama.cpp：该项目是开发者 Georgi Gerganov 基于 Meta 的 LLaMA 模型 手写的纯 C&#x2F;C++ 版本：支持CPU推理,当然也支持CUDA&#x2F;OpenCL推理、具有 FP16 和 FP32 的混合精度、支持8-bit&#x2F;4bit量化… , 截止当前github stars 数42.2k ，反正火爆的不行，所以本文就记录一">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-04-09T14:37:51.166Z">
-<meta property="article:modified_time" content="2024-04-09T15:22:08.635Z">
+<meta property="article:modified_time" content="2024-04-10T15:32:59.398Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="CUDA">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="LLM">
 <meta name="twitter:card" content="summary_large_image">
   
   
@@ -42,6 +44,8 @@
   <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
 
 
 
@@ -220,7 +224,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          110 字
+          107 字
         
       </span>
     
@@ -273,7 +277,7 @@
               <p id="updated-time" class="note note-info" style="display: none">
                 
                   
-                    本文最后更新于 2024-04-09T23:22:08+08:00
+                    本文最后更新于 2024-04-10T23:32:59+08:00
                   
                   
 
@@ -283,7 +287,8 @@
             
               <div class="markdown-body">
                 
-                <h1 id="llama-cpp源码解析"><a href="#llama-cpp源码解析" class="headerlink" title="llama.cpp源码解析"></a>llama.cpp源码解析</h1><p>首先，我们先简单介绍一下llama.cpp：该项目是开发者 Georgi Gerganov 基于 Meta 的 LLaMA 模型 手写的纯 C&#x2F;C++ 版本：支持CPU推理,当然也支持CUDA&#x2F;OpenCL推理、具有 FP16 和 FP32 的混合精度、支持8-bit&#x2F;4bit量化… , 截止当前github stars 数42.2k ，反正火爆的不行，所以本文就记录一下笔者在阅读llama.cpp源码时的一些理解。</p>
+                <h1>llama.cpp源码解析</h1>
+<p>首先，我们先简单介绍一下llama.cpp：该项目是开发者 Georgi Gerganov 基于 Meta 的 LLaMA 模型 手写的纯 C/C++ 版本：支持CPU推理,当然也支持CUDA/OpenCL推理、具有 FP16 和 FP32 的混合精度、支持8-bit/4bit量化… , 截止当前github stars 数42.2k ，反正火爆的不行，所以本文就记录一下笔者在阅读llama.cpp源码时的一些理解。</p>
 
                 
               </div>
@@ -302,7 +307,7 @@
     
       <span class="category-chain">
         
-  <a href="/categories/MPI-OpenMP/" class="category-chain-item">MPI&amp;OpenMP</a>
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
   
   
 
@@ -318,6 +323,10 @@
       <i class="iconfont icon-tags"></i>
       
         <a href="/tags/CUDA/" class="print-no-link">#CUDA</a>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
       
     </div>
   
@@ -429,7 +438,6 @@
 
   
   
-
 
 
 
@@ -651,49 +659,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

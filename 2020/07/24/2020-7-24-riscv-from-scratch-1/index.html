@@ -43,6 +43,8 @@
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
 
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
 
 
 <!-- 主题依赖的图标库，不要自行修改 -->
@@ -283,44 +285,51 @@
             
               <div class="markdown-body">
                 
-                <h1 id="RISC-V-from-Scratch-1"><a href="#RISC-V-from-Scratch-1" class="headerlink" title="RISC-V from Scratch 1"></a>RISC-V from Scratch 1</h1><p>译自：<a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html">RISC-V from scratch 1: Introduction, toolchain setup, and hello world!</a></p>
+                <h1>RISC-V from Scratch 1</h1>
+<p>译自：<a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html">RISC-V from scratch 1: Introduction, toolchain setup, and hello world!</a></p>
 <p>最近在尝试完成一个 RISC-V 内核，在搜索资料的时不经感叹 RISC-V 的中文相关内容少且不精，而当我读完这系列英文博客后感觉受益匪浅，故将其翻译为中文，既方便接下来的研究，也方便更多朋友学习。<a target="_blank" rel="noopener" href="https://github.com/twilco/riscv-from-scratch">这是</a>系列 github 库。</p>
-<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>通过 <em>RISC-V from scratch</em>，我会给你介绍一些很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。</p>
+<h2 id="简介">简介</h2>
+<p>通过 <em>RISC-V from scratch</em>，我会给你介绍一些很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。</p>
 <p>在第一篇博文中，我将简短的讨论一下 RISC-V 以及为什么它很重要，并搭建起 RISC-V 的工具链，最后在 RISC-V 模拟器中构建并运行一个简单的 C 程序。</p>
-<h2 id="什么是-RISC-V"><a href="#什么是-RISC-V" class="headerlink" title="什么是 RISC-V"></a>什么是 RISC-V</h2><p>RISC-V 是一个开源免费的 ISA，始于2010年在 UC-Berkeley 的一个项目。不得不承认，免费使用对其成功起到了重要作用，也使之与其他体系结构形成了鲜明的对比。以 ARM 为例——为创作一个兼容 ARM 的处理器，你必须支付<a target="_blank" rel="noopener" href="https://www.anandtech.com/show/7112/the-arm-diaries-part-1-how-arms-business-model-works/2">100万美元至1000万美元的前期费用，以及每片0.5％-2％的特许权使用费</a>。这种免费、开放的模型使 RISC-V 对许多人来说都是有吸引力的，这是因为很多硬件初创公司无力负担许可处理器，以及学术机构、开源社区的费用。</p>
+<h2 id="什么是-RISC-V">什么是 RISC-V</h2>
+<p>RISC-V 是一个开源免费的 ISA，始于2010年在 UC-Berkeley 的一个项目。不得不承认，免费使用对其成功起到了重要作用，也使之与其他体系结构形成了鲜明的对比。以 ARM 为例——为创作一个兼容 ARM 的处理器，你必须支付<a target="_blank" rel="noopener" href="https://www.anandtech.com/show/7112/the-arm-diaries-part-1-how-arms-business-model-works/2">100万美元至1000万美元的前期费用，以及每片0.5％-2％的特许权使用费</a>。这种免费、开放的模型使 RISC-V 对许多人来说都是有吸引力的，这是因为很多硬件初创公司无力负担许可处理器，以及学术机构、开源社区的费用。</p>
 <p>RISC-V 的迅速崛起在当时并没有引起人们的注意。ARM 推出了一个现在被淘汰的网站，该网站试图（但没有成功）强调 ARM 相对于 RISC-V 的假定优势。现如今 RISC-V 得到了包括 Google，Nvidia 和Western Digital 在内的众多主要公司的支持。</p>
-<h2 id="QEMU-and-RISC-V-toolchain-setup"><a href="#QEMU-and-RISC-V-toolchain-setup" class="headerlink" title="QEMU and RISC-V toolchain setup"></a>QEMU and RISC-V toolchain setup</h2><p>除非我们有一个适合的环境，否则我们肯定无法在 RISC-V 处理器上跑任何代码。当然，在 <a target="_blank" rel="noopener" href="https://www.qemu.org/">qemu</a> 的帮助下，我们也不需要真的买一个 RISC-V 的处理器来完成这个实验。在 Mac 下，安装 <code>qemu</code>是非常简单的（其余操作系统看<a target="_blank" rel="noopener" href="https://www.qemu.org/download">这里</a>)：</p>
+<h2 id="QEMU-and-RISC-V-toolchain-setup">QEMU and RISC-V toolchain setup</h2>
+<p>除非我们有一个适合的环境，否则我们肯定无法在 RISC-V 处理器上跑任何代码。当然，在 <a target="_blank" rel="noopener" href="https://www.qemu.org/">qemu</a> 的帮助下，我们也不需要真的买一个 RISC-V 的处理器来完成这个实验。在 Mac 下，安装 <code>qemu</code>是非常简单的（其余操作系统看<a target="_blank" rel="noopener" href="https://www.qemu.org/download">这里</a>)：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">brew install qemu<br></code></pre></td></tr></table></figure>
-
 <p>我们刚刚安装的<code>qemu</code> 内有若干台的机器（可通过 <code>qemu-system-riscv32 -machine </code>选项指定），这非常方便。</p>
 <p>接下来，让我们安装 <a target="_blank" rel="noopener" href="http://openocd.org/">OpenOCD</a> 的 RISC-V 兼容副本和 RISC-V 工具链。</p>
 <ol>
-<li><p>从此处下载 RISC-V OpenOCD 和 RISC-V 工具链的预构建版本：</p>
+<li>
+<p>从此处下载 RISC-V OpenOCD 和 RISC-V 工具链的预构建版本：</p>
 </li>
-<li><p>将这些文件移动并解压缩到某个目录中。我为这个和其他 RISC-V 工具链 QEMU 等创建一个名为<code>~/usys/riscv</code> 的文件夹。请记住你选择的目录，因为我们将在本文和下一篇文章中使用它。</p>
+<li>
+<p>将这些文件移动并解压缩到某个目录中。我为这个和其他 RISC-V 工具链 QEMU 等创建一个名为<code>~/usys/riscv</code> 的文件夹。请记住你选择的目录，因为我们将在本文和下一篇文章中使用它。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">mkdir -p ~/usys/riscv<br>cd ~/Downloads<br>cp openocd-&lt;date&gt;-&lt;platform&gt;.tar.gz ~/usys/riscv<br>cp riscv64-unknown-elf-gcc-&lt;date&gt;-&lt;platform&gt;.tar.gz ~/usys/riscv<br>cd ~/usys/riscv<br>tar -xvf openocd-&lt;date&gt;-&lt;platform&gt;.tar.gz<br>tar -xvf riscv64-unknown-elf-gcc-&lt;date&gt;-&lt;platform&gt;.tar.gz<br></code></pre></td></tr></table></figure>
 </li>
-<li><p>设置环境变量：<code>RSICV_OPENOCD_PATH</code> 和 <code>RISCV_PATH</code> ，方便其他程序找到我们的工具链。在不同操作系统下，该操作会明显不同，在 Mac 上，可以这样做：</p>
+<li>
+<p>设置环境变量：<code>RSICV_OPENOCD_PATH</code> 和 <code>RISCV_PATH</code> ，方便其他程序找到我们的工具链。在不同操作系统下，该操作会明显不同，在 Mac 上，可以这样做：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">I put these two exports directly <span class="hljs-keyword">in</span> my ~/.zshenv file</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">If you use a different shell or OS you may have to <span class="hljs-keyword">do</span> something <span class="hljs-keyword">else</span>.</span><br>export RISCV_OPENOCD_PATH=&quot;$HOME/usys/riscv/openocd-&lt;date&gt;-&lt;version&gt;&quot;<br>export RISCV_PATH=&quot;$HOME/usys/riscv/riscv64-unknown-elf-gcc-&lt;date&gt;-&lt;version&gt;&quot;<br><span class="hljs-meta prompt_"># </span><span class="language-bash">Reload .zshenv with our new environment variables.</span>  <br><span class="hljs-meta prompt_"># </span><span class="language-bash">Restarting your shell will have a similar effect.</span><br>source ~/.zshenv<br></code></pre></td></tr></table></figure>
 </li>
-<li><p>接下来，我们要给这些可执行文件创建一个软链接到 <code>/usr/local/bin</code> ，这样我们就可以不必每次都把完整的路径打出来了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Symbolically <span class="hljs-built_in">link</span> our gcc executable into /usr/local/bin.</span>  <br><span class="hljs-meta prompt_"># </span><span class="language-bash">Repeat this process <span class="hljs-keyword">for</span> any other executables you want to quickly access.</span><br>ln -s ~/usys/riscv/riscv64-unknown-elf-gcc-8.2.0-&lt;date&gt;-&lt;version&gt;/bin/riscv64-unknown-elf-gcc /usr/local/bin<br></code></pre></td></tr></table></figure></li>
+<li>
+<p>接下来，我们要给这些可执行文件创建一个软链接到 <code>/usr/local/bin</code> ，这样我们就可以不必每次都把完整的路径打出来了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Symbolically <span class="hljs-built_in">link</span> our gcc executable into /usr/local/bin.</span>  <br><span class="hljs-meta prompt_"># </span><span class="language-bash">Repeat this process <span class="hljs-keyword">for</span> any other executables you want to quickly access.</span><br>ln -s ~/usys/riscv/riscv64-unknown-elf-gcc-8.2.0-&lt;date&gt;-&lt;version&gt;/bin/riscv64-unknown-elf-gcc /usr/local/bin<br></code></pre></td></tr></table></figure>
+</li>
 </ol>
 <p>好啦，我们已经装好了 RISC-V 工具链。这些可执行文件（例如 <code>riscv64-unknown-elf-gcc</code>, <code>riscv64-unknown-elf-gdb</code>, <code>riscv64-unknown-elf-ld</code> 等都放在 <code>~/usys/riscv/riscv64-unknown-elf-gcc-&lt;date&gt;-&lt;version&gt;/bin/</code>。</p>
-<h2 id="Hello-RISC-V"><a href="#Hello-RISC-V" class="headerlink" title="Hello, RISC-V!"></a>Hello, RISC-V!</h2><p><strong>于2019年5月26日更新</strong></p>
+<h2 id="Hello-RISC-V">Hello, RISC-V!</h2>
+<p><strong>于2019年5月26日更新</strong></p>
 <p>很不幸的是，因为 RISC-V QEMU 出现了一个 bug ，导致在 QEMU 上运行 <a target="_blank" rel="noopener" href="https://github.com/sifive/freedom-e-sdk">freedom-e-sdk</a> “hello world” 程序无法跑通。补丁已经加上，但接下来的部分你们是无法跑通的，不过，你不必担心，因为接下来的部分可以跳过，不会影响后续的实验结果。</p>
 <p>更多信息，请看这里: <a target="_blank" rel="noopener" href="https://github.com/sifive/freedom-e-sdk/issues/260#issuecomment-496037827">https://github.com/sifive/freedom-e-sdk/issues/260#issuecomment-496037827</a></p>
 <hr>
 <p>现在我们已经有了工具链，让我们运行一个示例 RISC-V 程序。之前，我链接了一个名为 <a target="_blank" rel="noopener" href="https://github.com/sifive/freedom-e-sdk">freedom-e-sdk</a> 的 SiFive 库，该库提供了我们可以尝试的各种程序。首先以递归方式 clone 此库：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd ~/wherever/you/want/to/clone/this<br>git clone --recursive https://github.com/sifive/freedom-e-sdk.git<br>cd freedom-e-sdk<br></code></pre></td></tr></table></figure>
-
 <p><a target="_blank" rel="noopener" href="https://stackoverflow.com/a/12785204">传统技能</a>，运行一个 freedom-e-sdk 提供的 hello world 程序吧！首先，使用 <code>Makefile</code>来编译他们提供的程序，并指定编译后的目标。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">make PROGRAM=hello TARGET=sifive-hifive1 CONFIGURATION=debug software<br></code></pre></td></tr></table></figure>
-
 <p>然后，在 QEMU 上运行：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">qemu-system-riscv32 -nographic -machine sifive_e -kernel software/hello/debug/hello.elf<br>Hello, World!<br></code></pre></td></tr></table></figure>
-
-<h2 id="下一步"><a href="#下一步" class="headerlink" title="下一步"></a>下一步</h2><p>这是一个很好的开始，但是我的目标是 <a target="_blank" rel="noopener" href="https://seths.blog/2005/03/dont_shave_that/">shave the yak</a>，尽管已经确认我们有一个行之有效的工具链，但<code>freedom-e-sdk</code> 示例却隐藏了很多有趣的细节。请注意，我们不必设置任何链接器文件或启动代码——SiFive 提供板级支持的链接器脚本，各种<code>Makefile</code>和 <a target="_blank" rel="noopener" href="https://github.com/sifive/freedom-metal">freedom-metal library</a> 为我们解决这些问题。</p>
+<h2 id="下一步">下一步</h2>
+<p>这是一个很好的开始，但是我的目标是 <a target="_blank" rel="noopener" href="https://seths.blog/2005/03/dont_shave_that/">shave the yak</a>，尽管已经确认我们有一个行之有效的工具链，但<code>freedom-e-sdk</code> 示例却隐藏了很多有趣的细节。请注意，我们不必设置任何链接器文件或启动代码——SiFive 提供板级支持的链接器脚本，各种<code>Makefile</code>和 <a target="_blank" rel="noopener" href="https://github.com/sifive/freedom-metal">freedom-metal library</a> 为我们解决这些问题。</p>
 <p>在本系列的第二部分中，我们将摆脱<code>freedom-e-sdk</code>的束缚，走自己的路。我们将使用<code>dtc</code>检查 <code>qemu </code>虚拟机的硬件布局，设计并检查链接器脚本，创建基本运行时以设置我们的堆栈，了解一些基本的 RISC-V 装配，等等。</p>
 
                 
@@ -490,7 +499,6 @@
 
   
   
-
 
 
 
@@ -712,49 +720,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

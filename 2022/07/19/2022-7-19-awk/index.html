@@ -45,6 +45,8 @@
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
 
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
 
 
 <!-- 主题依赖的图标库，不要自行修改 -->
@@ -222,7 +224,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.5k 字
+          2.4k 字
         
       </span>
     
@@ -285,67 +287,76 @@
             
               <div class="markdown-body">
                 
-                <h1 id="awk-从入门到入土"><a href="#awk-从入门到入土" class="headerlink" title="awk 从入门到入土"></a>awk 从入门到入土</h1><h2 id="何为-awk-？"><a href="#何为-awk-？" class="headerlink" title="何为 awk ？"></a>何为 awk ？</h2><p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/gawk/manual/gawk.html">awk</a> 是一种用于文本处理、数据提取分析和报告常用的 linux 工具（命令）。与 sed 和 grep 一样，在日常编程和使用 linux 操作系统中，它是提升效率的法宝。</p>
-<p>awk 处理的数据可以来自标准输入(stdin)、文件，或其它命令的输出。它支持用户自定义函数和动态正则表达式等功能，是linux&#x2F;unix下的一个强大编程工具。它在命令行中使用，但更多是作为脚本来使用。awk 内有完备的“语言”，可以写出数组、函数、分支等复杂结构，且语法与 C 语言的相通之处。相比 sed grep 命令，灵活性是 awk 最大的优势，但其包含了复杂语法、正则表达式、内置变量（函数）也让很多人望而生畏。</p>
+                <h1>awk 从入门到入土</h1>
+<h2 id="何为-awk-？">何为 awk ？</h2>
+<p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/gawk/manual/gawk.html">awk</a> 是一种用于文本处理、数据提取分析和报告常用的 linux 工具（命令）。与 sed 和 grep 一样，在日常编程和使用 linux 操作系统中，它是提升效率的法宝。</p>
+<p>awk 处理的数据可以来自标准输入(stdin)、文件，或其它命令的输出。它支持用户自定义函数和动态正则表达式等功能，是linux/unix下的一个强大编程工具。它在命令行中使用，但更多是作为脚本来使用。awk 内有完备的“语言”，可以写出数组、函数、分支等复杂结构，且语法与 C 语言的相通之处。相比 sed grep 命令，灵活性是 awk 最大的优势，但其包含了复杂语法、正则表达式、内置变量（函数）也让很多人望而生畏。</p>
 <p>另外，该工具之所以叫 AWK 是因为其取了三位创始人 Alfred Aho，Peter Weinberger, 和 Brian Kernighan 的 Family Name 的首字符。</p>
-<h2 id="awk-到底能做什么？"><a href="#awk-到底能做什么？" class="headerlink" title="awk 到底能做什么？"></a>awk 到底能做什么？</h2><p>awk 功能强大，特点繁杂，若开篇介绍用法会让该博文显得杂乱无章，让人毫无阅读兴趣。我尝试抛开复杂的语法和命令格式，先利用几个例子让读者了解一下 awk 的工作方式和功能是怎样的。相信你一定会被 awk 强大的信息提取能力所折服。当你熟练掌握 awk 后，就再也不会烦恼于数据的格式化输出和信息提取了😄。</p>
-<h3 id="awk-对文件操作"><a href="#awk-对文件操作" class="headerlink" title="awk 对文件操作"></a>awk 对文件操作</h3><ol>
-<li><p><strong>逐行扫描文件</strong>。awk 的基本功能是搜索&#x2F;匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
+<h2 id="awk-到底能做什么？">awk 到底能做什么？</h2>
+<p>awk 功能强大，特点繁杂，若开篇介绍用法会让该博文显得杂乱无章，让人毫无阅读兴趣。我尝试抛开复杂的语法和命令格式，先利用几个例子让读者了解一下 awk 的工作方式和功能是怎样的。相信你一定会被 awk 强大的信息提取能力所折服。当你熟练掌握 awk 后，就再也不会烦恼于数据的格式化输出和信息提取了😄。</p>
+<h3 id="awk-对文件操作">awk 对文件操作</h3>
+<ol>
+<li>
+<p><strong>逐行扫描文件</strong>。awk 的基本功能是搜索/匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
  <figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例1：打印文件的每行的第一列(域)<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;&#123;print $1&#125;&#x27;</span> filename</span><br><br>例2：打印文件的每一行<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;&#123;print $0&#125;&#x27;</span> filename</span><br></code></pre></td></tr></table></figure>
-
-<p> print 是 awk 中最常用的操作，可打印出后面的字符，若有多个变量，用’,’连接。虽然脚本中<strong>只写了对一行的操作</strong>，但由于 awk 会以逐行的方式遍历整个文本，因此最终该命令会打印出每一行的结果。</p>
+<p>print 是 awk 中最常用的操作，可打印出后面的字符，若有多个变量，用’,'连接。虽然脚本中<strong>只写了对一行的操作</strong>，但由于 awk 会以逐行的方式遍历整个文本，因此最终该命令会打印出每一行的结果。</p>
 </li>
-<li><p><strong>将每一行输入拆分为字段</strong>。awk 逐行扫描文件后，再对行中的列（域）做匹配。可以使用 $n 来表示第n列的字符，而 $0 表示整一行。内置变量 $NF 表示字段总数，因此 $NF 可表示倒数第一列。对列的分割默认是空格，但也可以通过改变内置变量 FS 来改变分割符号。</p>
+<li>
+<p><strong>将每一行输入拆分为字段</strong>。awk 逐行扫描文件后，再对行中的列（域）做匹配。可以使用 $n 来表示第n列的字符，而 $0 表示整一行。内置变量 $NF 表示字段总数，因此 $NF 可表示倒数第一列。对列的分割默认是空格，但也可以通过改变内置变量 FS 来改变分割符号。</p>
  <figure class="highlight nsis"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs nsis">例<span class="hljs-number">3</span>：从 /etc/passwd 文件中，按照<span class="hljs-string">&quot;:&quot;</span>分割打印出第<span class="hljs-number">2</span>列和倒数第一列、倒数第二列：<br>&gt; awk -F<span class="hljs-string">&quot;:&quot;</span> <span class="hljs-string">&#x27;&#123;print <span class="hljs-variable">$2</span>,<span class="hljs-variable">$(NF)</span>,<span class="hljs-variable">$(NF-1)</span>&#125;&#x27;</span> /etc/passwd （或）<br>&gt; awk <span class="hljs-string">&#x27;BEGIN&#123;FS=&quot;:&quot;&#125; &#123;print <span class="hljs-variable">$2</span>,<span class="hljs-variable">$(NF)</span>,<span class="hljs-variable">$(NF-1)</span>&#125;&#x27;</span> /etc/passwd<br></code></pre></td></tr></table></figure>
-
-<p> BEGIN 块表示该脚本块需要在 awk 逐行遍历文件前就执行，且只执行一次，通常用于初始化内部变量或计算数据。与之相反，END 块只能在awk 逐行遍历文件后执行，且执行一次</p>
+<p>BEGIN 块表示该脚本块需要在 awk 逐行遍历文件前就执行，且只执行一次，通常用于初始化内部变量或计算数据。与之相反，END 块只能在awk 逐行遍历文件后执行，且执行一次</p>
 </li>
-<li><p><strong>比较输入行&#x2F;字段与模式</strong>。比较或匹配模式通常要涉及到正则表达式的相关知识，关于正则表达式可参考<a target="_blank" rel="noopener" href="https://www.runoob.com/regexp/regexp-syntax.html">菜鸟教程</a>。但 awk 还提供了类似 C 语言中的判断指令，从而做出更复杂的条件判断和算术逻辑。甚至可以完全抛弃文件，单独做一些复杂计算。</p>
+<li>
+<p><strong>比较输入行/字段与模式</strong>。比较或匹配模式通常要涉及到正则表达式的相关知识，关于正则表达式可参考<a target="_blank" rel="noopener" href="https://www.runoob.com/regexp/regexp-syntax.html">菜鸟教程</a>。但 awk 还提供了类似 C 语言中的判断指令，从而做出更复杂的条件判断和算术逻辑。甚至可以完全抛弃文件，单独做一些复杂计算。</p>
  <figure class="highlight wasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs wasm">例<span class="hljs-number">4</span>：找到 test.txt 中最后一列大于 <span class="hljs-number">5000</span> 的列并打印出来：<br>&gt; awk &#x27;&#123;<span class="hljs-keyword">if</span> <span class="hljs-punctuation">(</span><span class="hljs-variable">$NF</span> &gt; <span class="hljs-number">5000</span><span class="hljs-punctuation">)</span> print <span class="hljs-variable">$NF</span>&#125;&#x27; test.txt<br><br>例<span class="hljs-number">5</span>：使用 awk 命令计算 exp<span class="hljs-punctuation">(</span><span class="hljs-number">5</span><span class="hljs-punctuation">)</span>：<br>&gt; awk &#x27;BEGIN &#123;<span class="hljs-keyword">param</span> = <span class="hljs-number">5</span>; <span class="hljs-keyword">result</span> = exp<span class="hljs-punctuation">(</span><span class="hljs-keyword">param</span><span class="hljs-punctuation">)</span>; printf <span class="hljs-string">&quot;Result is %f.\n&quot;</span>, <span class="hljs-keyword">result</span>&#125;&#x27;<br></code></pre></td></tr></table></figure>
-
-<p> awk 有大量的内置变量和内置函数，具体介绍在后小节。</p>
+<p>awk 有大量的内置变量和内置函数，具体介绍在后小节。</p>
 </li>
-<li><p><strong>对匹配的行执行动作</strong>。awk主要的操作就是print，将数据按规定的格式打印出来。但需要注意，awk 命令一般不直接修改文件，只能将输出信息重定向到某一个文件中（非源文件）。</p>
+<li>
+<p><strong>对匹配的行执行动作</strong>。awk主要的操作就是print，将数据按规定的格式打印出来。但需要注意，awk 命令一般不直接修改文件，只能将输出信息重定向到某一个文件中（非源文件）。</p>
 </li>
 </ol>
 <center>
 <img src="/img/awk.png" srcset="/img/loading.gif" lazyload width="80%"/>
 </center>
-
 <p>可用此图再回顾一下 awk 的四步流程。总结一下，awk 适用于数据文件转换和编制格式报告，并且能做到：1、格式化地输出信息。2、各种复杂的算术逻辑运算和字符串操作。3、配合逐行特性，实现条件和循环结构。</p>
-<h2 id="awk-命令格式和选项"><a href="#awk-命令格式和选项" class="headerlink" title="awk 命令格式和选项"></a>awk 命令格式和选项</h2><h3 id="语法形式"><a href="#语法形式" class="headerlink" title="语法形式"></a>语法形式</h3><p>使用 awk 命令时，一般遵循下面两种形式书写：</p>
+<h2 id="awk-命令格式和选项">awk 命令格式和选项</h2>
+<h3 id="语法形式">语法形式</h3>
+<p>使用 awk 命令时，一般遵循下面两种形式书写：</p>
 <figure class="highlight delphi"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs delphi">&gt; awk [options] <span class="hljs-string">&#x27;script&#x27;</span> [<span class="hljs-keyword">var</span>=value] [<span class="hljs-keyword">file</span>(s) <span class="hljs-keyword">name</span>]<br>&gt; awk [options] -f scriptfile [<span class="hljs-keyword">var</span>=value] [<span class="hljs-keyword">file</span>(s) <span class="hljs-keyword">name</span>]<br></code></pre></td></tr></table></figure>
-
 <p>接下来的几个小节开始介绍 awk 各个部分的使用规则：</p>
-<h3 id="常用命令选项-——-options"><a href="#常用命令选项-——-options" class="headerlink" title="常用命令选项 —— [options]"></a>常用命令选项 —— [options]</h3><ul>
-<li>-F &lt;fs&gt; 或 –field-separator &lt;fs&gt; ：fs 为指定输入分隔符，也可以是字符串或正则表达式。默认的分隔符是连续的空格或制表符</li>
-<li>-v &lt;var&gt;&#x3D;&lt;value&gt; 赋值一个用户定义变量，将外部变量传递给 awk</li>
+<h3 id="常用命令选项-——-options">常用命令选项 —— [options]</h3>
+<ul>
+<li>-F &lt;fs&gt; 或 --field-separator &lt;fs&gt; ：fs 为指定输入分隔符，也可以是字符串或正则表达式。默认的分隔符是连续的空格或制表符</li>
+<li>-v &lt;var&gt;=&lt;value&gt; 赋值一个用户定义变量，将外部变量传递给 awk</li>
 <li>-f &lt;scripfile&gt; 从脚本文件中读取awk命令</li>
 <li>-m[fr] &lt;val]&gt; 对 val 值设置内在限制，-mf选项限制分配给val的最大块数目；-mr选项限制记录的最大数目。这两个功能是Bell实验室版awk的扩展功能，在标准awk中不适用。</li>
 </ul>
-<h3 id="awk-模式和操作-——-‘script’"><a href="#awk-模式和操作-——-‘script’" class="headerlink" title="awk 模式和操作 —— ‘script’"></a>awk 模式和操作 —— ‘script’</h3><p>首先回顾一下前文所说：</p>
+<h3 id="awk-模式和操作-——-‘script’">awk 模式和操作 —— ‘script’</h3>
+<p>首先回顾一下前文所说：</p>
 <blockquote>
-<p>awk 的基本功能是搜索&#x2F;匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
+<p>awk 的基本功能是搜索/匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
 </blockquote>
 <p><strong>模式</strong>和<strong>操作</strong>无疑是 awk 命令中最重要的部分，而它们都会在 ‘script’ 处集中表达，其中</p>
-<h4 id="模式"><a href="#模式" class="headerlink" title="模式"></a>模式</h4><p>模式可以是以下任意一个：</p>
+<h4 id="模式">模式</h4>
+<p>模式可以是以下任意一个：</p>
 <ul>
-<li><p>正则表达式：使用通配符的扩展集。</p>
+<li>
+<p>正则表达式：使用通配符的扩展集。</p>
 <figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例6：从 employee.txt 文件中找到含有 manager 的行并打印<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;/manager/ &#123;print&#125;&#x27;</span> employee.<span class="hljs-property">txt</span> </span><br></code></pre></td></tr></table></figure>
-
-<p>‘&#x2F;manager&#x2F;‘ 即要匹配字符串中含有 manager 的子串。找到后打印文件所在行，{print} 默认打印一行的所有列。</p>
+<p>‘/manager/’ 即要匹配字符串中含有 manager 的子串。找到后打印文件所在行，{print} 默认打印一行的所有列。</p>
 </li>
-<li><p>关系表达式：使用运算符进行操作，可以是字符串或数字的比较测试。</p>
+<li>
+<p>关系表达式：使用运算符进行操作，可以是字符串或数字的比较测试。</p>
 <figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs dart">例<span class="hljs-number">7</span>：打印 log.txt 中第一列大于<span class="hljs-number">2</span>并且第二列等于 <span class="hljs-string">&#x27;Are&#x27;</span> 的行的前三列：<br>&gt; awk <span class="hljs-string">&#x27;<span class="hljs-subst">$1</span>&gt;2 &amp;&amp; <span class="hljs-subst">$2</span>==&quot;Are&quot; &#123;print <span class="hljs-subst">$1</span>,<span class="hljs-subst">$2</span>,<span class="hljs-subst">$3</span>&#125;&#x27;</span> log.txt<br></code></pre></td></tr></table></figure>
-
-<p>$1&gt;2 &amp;&amp; $2&#x3D;&#x3D;”Are” 表示第一列大于2且第二列为 ‘Are’，可以仅写一个条件，也可以完整地写出 if 语句结构，见下例。</p>
+<p>$1&gt;2 &amp;&amp; $2==“Are” 表示第一列大于2且第二列为 ‘Are’，可以仅写一个条件，也可以完整地写出 if 语句结构，见下例。</p>
 </li>
-<li><p>模式匹配表达式：用运算符<del>（匹配）和!</del>（不匹配）。</p>
+<li>
+<p>模式匹配表达式：用运算符~（匹配）和!~（不匹配）。</p>
 <figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例8：打印 test.txt 文件中第二列，并匹配以80开头并以80结束的行：<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;&#123;if ($2 ~ /^80$/) print&#125;&#x27;</span> test.<span class="hljs-property">txt</span></span><br></code></pre></td></tr></table></figure>
 </li>
-<li><p>BEGIN 语句块、pattern 语句块、END 语句块。</p>
+<li>
+<p>BEGIN 语句块、pattern 语句块、END 语句块。</p>
 <figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs maxima">例<span class="hljs-number">9</span>：找到 test.txt 文件中最长行的所占的字符数<br>&gt; awk &#x27;BEGIN&#123;<span class="hljs-built_in">max</span>=<span class="hljs-number">0</span>&#125; &#123;<span class="hljs-keyword">if</span> (<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>) &gt; <span class="hljs-built_in">max</span>) <span class="hljs-built_in">max</span>=<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>)&#125; END&#123;<span class="hljs-built_in">print</span> <span class="hljs-built_in">max</span>&#125;&#x27; test.txt<br></code></pre></td></tr></table></figure>
-
 <p>由三个语句块组成的模式甚至可看成一个简单 C 程序。length() 是 awk 的内置函数。更多函数可见<a target="_blank" rel="noopener" href="https://www.runoob.com/w3cnote/awk-built-in-functions.html">菜鸟教程的整理</a></p>
 </li>
 </ul>
@@ -357,7 +368,8 @@
 <th>含义</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>NF</td>
 <td>字段个数，（读取的列数）</td>
 </tr>
@@ -389,21 +401,22 @@
 <td>FILENAME</td>
 <td>输入的文件名</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs swift">例<span class="hljs-number">10</span>：读出 <span class="hljs-regexp">/etc/</span>passwd 文件的第三和第四列，并用等号连接打印出来<span class="hljs-operator">。</span><br><span class="hljs-operator">&gt;</span> awk <span class="hljs-operator">-</span><span class="hljs-type">F</span>&#x27;:&#x27; &#x27;<span class="hljs-type">BEGIN</span>&#123;<span class="hljs-type">OFS</span><span class="hljs-operator">=</span><span class="hljs-string">&quot;=&quot;</span>;&#125; &#123;print <span class="hljs-variable">$3</span>,<span class="hljs-variable">$4</span>;&#125;&#x27; <span class="hljs-regexp">/etc/</span>passwd<br></code></pre></td></tr></table></figure>
-
-
-<h4 id="操作"><a href="#操作" class="headerlink" title="操作"></a>操作</h4><p>操作由一个或多个命令、函数、表达式组成，之间由换行符或分号隔开，并位于大括号内，主要部分是：</p>
-<p>变量或数组赋值<br>输出命令<br>内置函数<br>控制流语句</p>
-<h3 id="awk-的变量-——-var-value"><a href="#awk-的变量-——-var-value" class="headerlink" title="awk 的变量 —— [var&#x3D;value]"></a>awk 的变量 —— [var&#x3D;value]</h3><p>除了之前提到的内置变量外，用户在使用 awk 时也可以自定义变量：<code>var=value</code>。当然也可以直接使用 awk 语言定义</p>
+<h4 id="操作">操作</h4>
+<p>操作由一个或多个命令、函数、表达式组成，之间由换行符或分号隔开，并位于大括号内，主要部分是：</p>
+<p>变量或数组赋值<br>
+输出命令<br>
+内置函数<br>
+控制流语句</p>
+<h3 id="awk-的变量-——-var-value">awk 的变量 —— [var=value]</h3>
+<p>除了之前提到的内置变量外，用户在使用 awk 时也可以自定义变量：<code>var=value</code>。当然也可以直接使用 awk 语言定义</p>
 <figure class="highlight golo"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs golo">例<span class="hljs-number">11</span>：定义变量<span class="hljs-keyword">var</span>并将其打印出来<br>&gt; awk -v <span class="hljs-keyword">var</span>=<span class="hljs-string">&quot;test&quot;</span> &#x27;BEGIN&#123;<span class="hljs-keyword">print</span> <span class="hljs-keyword">var</span>&#125;&#x27;<br><br>例<span class="hljs-number">12</span>：直接在操作中给变量赋值<br>&gt; awk &#x27;BEGIN&#123;<span class="hljs-keyword">var</span>=<span class="hljs-string">&quot;test&quot;</span>; <span class="hljs-keyword">print</span> <span class="hljs-keyword">var</span>&#125;&#x27;<br></code></pre></td></tr></table></figure>
-
 <p>回顾例9，变量的设置可以帮助程序员用类C的语法完成更加复杂的任务。</p>
 <figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs maxima">例<span class="hljs-number">9</span>：找到 test.txt 文件中最长行的所占的字符数<br>&gt; awk &#x27;BEGIN&#123;<span class="hljs-built_in">max</span>=<span class="hljs-number">0</span>&#125; &#123;<span class="hljs-keyword">if</span> (<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>) &gt; <span class="hljs-built_in">max</span>) <span class="hljs-built_in">max</span>=<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>)&#125; END&#123;<span class="hljs-built_in">print</span> <span class="hljs-built_in">max</span>&#125;&#x27; test.txt<br></code></pre></td></tr></table></figure>
-
 <p>awk 常常与其他 shell 指令合用，在传递数据时也需要通过变量：</p>
 <figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例13：读取文件 a.txt 的行数，并用 awk 打印出来<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">num=$(cat a.<span class="hljs-property">txt</span> | wc -l)</span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk -v n=$num <span class="hljs-string">&#x27;BEGIN&#123;print n&#125;&#x27;</span> 或者</span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;BEGIN&#123;print &#x27;</span><span class="hljs-string">&quot;$num&quot;</span><span class="hljs-string">&#x27;&#125;&#x27;</span></span><br></code></pre></td></tr></table></figure>
-
 
                 
               </div>
@@ -572,7 +585,6 @@
 
   
   
-
 
 
 
@@ -794,49 +806,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

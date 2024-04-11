@@ -16,12 +16,12 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="设置 CUDA Kernel 执行配置CUDA kernel 函数调用说明在调用 CUDA 核函数时，我们经常会遇到如下调用形式： 12kernel_fun1&lt;&lt;&lt;grid_size, block_size&gt;&gt;&gt;(arg1, arg2, arg3)kernel_fun2&lt;&lt;&lt;grid_size, block_size, shm_size, st">
+    <meta name="description" content="设置 CUDA Kernel 执行配置 CUDA kernel 函数调用说明 在调用 CUDA 核函数时，我们经常会遇到如下调用形式： 12kernel_fun1&lt;&lt;&lt;grid_size, block_size&gt;&gt;&gt;(arg1, arg2, arg3)kernel_fun2&lt;&lt;&lt;grid_size, block_size, shm_size,">
 <meta property="og:type" content="article">
 <meta property="og:title" content="更好地设置 CUDA Kernel 执行配置">
 <meta property="og:url" content="https://dingfen.github.io/2024/02/02/2024-2-2-cuda-kernel-grid-size/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="设置 CUDA Kernel 执行配置CUDA kernel 函数调用说明在调用 CUDA 核函数时，我们经常会遇到如下调用形式： 12kernel_fun1&lt;&lt;&lt;grid_size, block_size&gt;&gt;&gt;(arg1, arg2, arg3)kernel_fun2&lt;&lt;&lt;grid_size, block_size, shm_size, st">
+<meta property="og:description" content="设置 CUDA Kernel 执行配置 CUDA kernel 函数调用说明 在调用 CUDA 核函数时，我们经常会遇到如下调用形式： 12kernel_fun1&lt;&lt;&lt;grid_size, block_size&gt;&gt;&gt;(arg1, arg2, arg3)kernel_fun2&lt;&lt;&lt;grid_size, block_size, shm_size,">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-02-02T04:00:00.000Z">
 <meta property="article:modified_time" content="2024-04-09T15:22:15.125Z">
@@ -42,6 +42,8 @@
   <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
 
 
 
@@ -283,9 +285,10 @@
             
               <div class="markdown-body">
                 
-                <h1 id="设置-CUDA-Kernel-执行配置"><a href="#设置-CUDA-Kernel-执行配置" class="headerlink" title="设置 CUDA Kernel 执行配置"></a>设置 CUDA Kernel 执行配置</h1><h2 id="CUDA-kernel-函数调用说明"><a href="#CUDA-kernel-函数调用说明" class="headerlink" title="CUDA kernel 函数调用说明"></a>CUDA kernel 函数调用说明</h2><p>在调用 CUDA 核函数时，我们经常会遇到如下调用形式：</p>
+                <h1>设置 CUDA Kernel 执行配置</h1>
+<h2 id="CUDA-kernel-函数调用说明">CUDA kernel 函数调用说明</h2>
+<p>在调用 CUDA 核函数时，我们经常会遇到如下调用形式：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++">kernel_fun1&lt;&lt;&lt;grid_size, block_size&gt;&gt;&gt;(arg1, arg2, arg3)<br>kernel_fun2&lt;&lt;&lt;grid_size, block_size, shm_size, stream&gt;&gt;&gt;(arg1, arg2, arg3);<br></code></pre></td></tr></table></figure>
-
 <p>其中，<code>&lt;&lt;&lt;grid_size, block_size, shm_size, stream&gt;&gt;&gt;</code> 是 CUDA 对 C++ 的扩展，被称之为执行配置(Execution Configuration)。这四个参数的基本含义是：</p>
 <ul>
 <li>grid_size ：线程块网格(grid)的大小和维度，<code>dim3</code> 类型，<code>grid_size.x * grid_size.y * grid_size.z</code> 就是执行该核函数时的总线程块数。</li>
@@ -294,11 +297,12 @@
 <li>stream：执行该核函数的 CUDA 流(stream) <code>cudaStream_t</code>，通常为0。</li>
 </ul>
 <p>接下来我们讨论一下这两个值一般应该取什么值。</p>
-<h2 id="线程块的大小"><a href="#线程块的大小" class="headerlink" title="线程块的大小"></a>线程块的大小</h2><p>在我使用的 RTX3060TI 上，根据<a target="_blank" rel="noopener" href="https://github.com/dingfen/cuda10/blob/master/src/cudaDeviceProp/deviceprop.cu">代码</a>中打印出来的数据，</p>
+<h2 id="线程块的大小">线程块的大小</h2>
+<p>在我使用的 RTX3060TI 上，根据<a target="_blank" rel="noopener" href="https://github.com/dingfen/cuda10/blob/master/src/cudaDeviceProp/deviceprop.cu">代码</a>中打印出来的数据，</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">---</span> <span class="hljs-string">MP</span> <span class="hljs-string">Information</span> <span class="hljs-string">for</span> <span class="hljs-string">device</span> <span class="hljs-number">0</span> <span class="hljs-string">---</span><br><span class="hljs-attr">Multiprocessor count:</span>  <span class="hljs-number">38</span><br><span class="hljs-attr">Shared mem per mp:</span>  <span class="hljs-number">49152</span><br><span class="hljs-attr">Registers per mp:</span>  <span class="hljs-number">49152</span><br><span class="hljs-attr">Threads in wrap:</span>  <span class="hljs-number">32</span><br><span class="hljs-attr">Max threads per block:</span>  <span class="hljs-number">1024</span><br><span class="hljs-attr">Max threads per MP:</span> <span class="hljs-number">1536</span><br><span class="hljs-attr">Max size of shared mem per MP:</span> <span class="hljs-number">102400</span><br><span class="hljs-attr">Max threads dimensions:</span>  <span class="hljs-string">(1024,</span> <span class="hljs-number">1024</span><span class="hljs-string">,</span> <span class="hljs-number">64</span><span class="hljs-string">)</span><br><span class="hljs-attr">Max grid dimensions:</span>  <span class="hljs-string">(2147483647,</span> <span class="hljs-number">65535</span><span class="hljs-string">,</span> <span class="hljs-number">65535</span><span class="hljs-string">)</span><br></code></pre></td></tr></table></figure>
-
 <p>其每个线程块最多可以有 1024 个线程</p>
-<h2 id="线程网格大小"><a href="#线程网格大小" class="headerlink" title="线程网格大小"></a>线程网格大小</h2>
+<h2 id="线程网格大小">线程网格大小</h2>
+
                 
               </div>
             
@@ -443,7 +447,6 @@
 
   
   
-
 
 
 
@@ -665,49 +668,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

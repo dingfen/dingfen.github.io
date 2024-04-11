@@ -45,6 +45,8 @@
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
 
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
 
 
 <!-- 主题依赖的图标库，不要自行修改 -->
@@ -222,7 +224,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          960 字
+          957 字
         
       </span>
     
@@ -233,7 +235,7 @@
         
         
         
-          9 分钟
+          8 分钟
         
       </span>
     
@@ -285,8 +287,10 @@
             
               <div class="markdown-body">
                 
-                <h1 id="QEMU-上运行-RISC-V-Linux-内核"><a href="#QEMU-上运行-RISC-V-Linux-内核" class="headerlink" title="QEMU 上运行 RISC-V Linux 内核"></a>QEMU 上运行 RISC-V Linux 内核</h1><p>最近这段时间我在研究 RISC-V 内核。作为计划的开始，首先要将它运行起来。配置过程有点复杂，在此做详细介绍。</p>
-<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><ul>
+                <h1>QEMU 上运行 RISC-V Linux 内核</h1>
+<p>最近这段时间我在研究 RISC-V 内核。作为计划的开始，首先要将它运行起来。配置过程有点复杂，在此做详细介绍。</p>
+<h2 id="准备">准备</h2>
+<ul>
 <li>操作系统 Ubuntu 18.04</li>
 <li><a target="_blank" rel="noopener" href="https://github.com/riscv/riscv-gnu-toolchain">RISC-V GNU 工具链</a></li>
 <li><a target="_blank" rel="noopener" href="https://github.com/qemu/qemu">QEMU</a></li>
@@ -295,66 +299,59 @@
 <li><a target="_blank" rel="noopener" href="https://github.com/michaeljclark/busybear-linux">Busybear Linux</a></li>
 </ul>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">git clone --recursive https://github.com/riscv/riscv-gnu-toolchain<br>git clone https://github.com/qemu/qemu<br>git clone https://github.com/torvalds/linux<br>git clone https://github.com/riscv/riscv-pk<br>git clone https://github.com/michaeljclark/busybear-linux<br></code></pre></td></tr></table></figure>
-
 <p>顺带一提，为了构建过程顺利，请先试着安装以下依赖：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo apt install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev \<br>                 gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev git<br></code></pre></td></tr></table></figure>
-
-<h2 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h2><h3 id="riscv-gnu-toolchain"><a href="#riscv-gnu-toolchain" class="headerlink" title="riscv-gnu-toolchain"></a>riscv-gnu-toolchain</h3><p>首先，我们的主机环境需要有 RISC-V 的全套工具链，用于编译、链接、调试基于 RISC-V 架构的程序语言。一般来说，常见的主机环境都是 AMD-64 架构，Linux 操作系统自带的 gcc gdb等是无法编译 RISC-V 程序的。</p>
+<h2 id="构建">构建</h2>
+<h3 id="riscv-gnu-toolchain">riscv-gnu-toolchain</h3>
+<p>首先，我们的主机环境需要有 RISC-V 的全套工具链，用于编译、链接、调试基于 RISC-V 架构的程序语言。一般来说，常见的主机环境都是 AMD-64 架构，Linux 操作系统自带的 gcc gdb等是无法编译 RISC-V 程序的。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd riscv-gnu-toolchain<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">pick an install path, e.g. /opt/riscv64</span><br>./configure --prefix=/opt/riscv64 <br>make newlib -j $(nproc)<br>make linux -j $(nproc)<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-built_in">export</span> variables</span><br>export PATH=&quot;$PATH:/opt/riscv64/bin&quot;<br>export RISCV=&quot;/opt/riscv64&quot;<br></code></pre></td></tr></table></figure>
-
 <p>由于网络问题，RISC-V 工具链难以全部下载完成，大家需要通过各种渠道获取<code>: )</code>。</p>
-<h3 id="QEMU"><a href="#QEMU" class="headerlink" title="QEMU"></a>QEMU</h3><p>然后，就是对大名鼎鼎的虚拟机 QEMU 进行构建了， 针对非常多不同的架构，QEMU 有相应的虚拟机，所以 configure 的时候需要自己指定，<code>--target-list</code> 就是在指定架构。riscv64-linux-user 为用户模式，可以运行基于RISC-V 指令集编译的程序文件，softmmu 为镜像模拟器，可以运行基于 RISC-V 指令集编译的 Linux 镜像。</p>
+<h3 id="QEMU">QEMU</h3>
+<p>然后，就是对大名鼎鼎的虚拟机 QEMU 进行构建了， 针对非常多不同的架构，QEMU 有相应的虚拟机，所以 configure 的时候需要自己指定，<code>--target-list</code> 就是在指定架构。riscv64-linux-user 为用户模式，可以运行基于RISC-V 指令集编译的程序文件，softmmu 为镜像模拟器，可以运行基于 RISC-V 指令集编译的 Linux 镜像。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd qemu<br>git checkout v3.0.0<br>./configure --target-list=riscv64-softmmu, riscv64-linux-user<br>make -j $(nproc)<br>sudo make install<br></code></pre></td></tr></table></figure>
-
 <p>接下来构建 Linux 。将下载下来的 Linux 内核（我这边使用的是 Linux-5.7.9）进行编译构建。但是要注意到，因为在 QEMU 上跑该内核时，我们计划用 busybear 文件系统镜像，因此 config 最好与 busybear 一致。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd linux-5.7.9<br>cp ../busybear-linux/conf/linux.config .config   # 直接拷贝 busybear 的 linux config<br>make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- olddefconfig<br><span class="hljs-meta prompt_"># </span><span class="language-bash">make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- nconfig  <span class="hljs-comment"># 配置内核 直接退出即可</span></span><br>make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- vmlinux -j $(nproc)<br></code></pre></td></tr></table></figure>
-
 <p>上面最后一句话是在构建 vmlinux ，这里需要等待一些时间。</p>
 <blockquote>
 <p>vmlinux is a <strong>statically linked executable</strong> file format based file which is the uncompressed version of kernel image which can be used for debugging.</p>
 </blockquote>
-<h3 id="BBL"><a href="#BBL" class="headerlink" title="BBL"></a>BBL</h3><p>BBL 是何物？全称为 Berkeley Boot Loader 。作为一个 boot 启动，装载内核。</p>
+<h3 id="BBL">BBL</h3>
+<p>BBL 是何物？全称为 Berkeley Boot Loader 。作为一个 boot 启动，装载内核。</p>
 <blockquote>
 <p>This package also contains the Berkeley Boot Loader, <code>bbl</code>, which is a supervisor execution environment for tethered RISC-V systems. It is designed to host the RISC-V Linux port.</p>
 </blockquote>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd riscv-pk<br>mkdir build &amp;&amp; cd build<br>../configure --enable-logo --host=riscv64-unknown-elf --with-payload=../../linux/vmlinux<br>make -j $(nproc)<br></code></pre></td></tr></table></figure>
-
-<h3 id="Busybear-Linux"><a href="#Busybear-Linux" class="headerlink" title="Busybear Linux"></a>Busybear Linux</h3><p>Busybear 又是什么东西？简而言之，是一个 RISC-V Linux 的文件系统镜像，而且是针对 virt 虚拟机使用的。</p>
+<h3 id="Busybear-Linux">Busybear Linux</h3>
+<p>Busybear 又是什么东西？简而言之，是一个 RISC-V Linux 的文件系统镜像，而且是针对 virt 虚拟机使用的。</p>
 <blockquote>
 <p>busybear-linux is a tiny RISC-V Linux root filesystem image that targets the <code>virt</code> machine in riscv-qemu. As the name suggests, busybear-linux is a riscv-linux root image comprised of busybox and dropbear.</p>
 <p>The root image is intended to demonstrate <strong>virtio-net and virtio-block in riscv-qemu</strong> and features a dropbear ssh server which allows out-of-the-box ssh access to a RISC-V virtual machine.</p>
 </blockquote>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">cd busybear-linux<br>make -j $(nproc)<br></code></pre></td></tr></table></figure>
-
 <p>在构建期间，可能会遇到如下问题：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">/opt/riscv/sysroot/usr/include/gnu/stubs.h:14:11: fatal  error: gnu/stubs-lp64.h:  No such file or directory ...<br></code></pre></td></tr></table></figure>
-
-<p>解决该问题，只需要打开 conf&#x2F;busybear.config ，把 CROSS_COMPILE &#x3D; riscv64-unknown-linux-gnu- 修改为CROSS_COMPILE &#x3D; riscv64-unknown-elf-。</p>
-<h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p>接下来就是激动人心的运行时间了！到你的主目录下，运行：</p>
+<p>解决该问题，只需要打开 conf/busybear.config ，把 CROSS_COMPILE = riscv64-unknown-linux-gnu- 修改为CROSS_COMPILE = riscv64-unknown-elf-。</p>
+<h2 id="运行">运行</h2>
+<p>接下来就是激动人心的运行时间了！到你的主目录下，运行：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo qemu-system-riscv64 -nographic -machine virt \<br>     -kernel riscv-pk/build/bbl -append &quot;root=/dev/vda ro console=ttyS0&quot; \<br>     -drive file=busybear-linux/busybear.bin,format=raw,id=hd0 \<br>     -device virtio-blk-device,drive=hd0<br></code></pre></td></tr></table></figure>
-
 <p>QEMU 会让你输入用户名和密码，如果你仔细看的话，busybear.config 里面有一个叫 ROOT_PASSWORD 的项。所以你的用户名密码就是：</p>
 <figure class="highlight avrasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs avrasm"><span class="hljs-symbol">username:</span> root<br><span class="hljs-symbol">password:</span> busybear<br></code></pre></td></tr></table></figure>
-
 <p>然后，让我来一一解释一下这么长的命令行在干什么。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">sudo qemu-system-riscv64 -nographic -machine virt<br></code></pre></td></tr></table></figure>
-
 <p>这句话就是启动 QEMU 虚拟机，设置为不显示图形界面模式 <code>-nographic</code>，并指定机器为 <code>-machine virt</code></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">-kernel riscv-pk/build/bbl -append &quot;root=/dev/vda ro console=ttyS0&quot; <br></code></pre></td></tr></table></figure>
-
 <p>QEMU 指定 kernel 镜像为 bbl ， <code>-append</code> 指定了 kernel 命令行，指示 Linux Kernel 从这里启动。</p>
 <blockquote>
 <p>Use <code>-kernel</code> to provide the Linux kernel image and <code>-append</code> to give the kernel command line arguments. The <code>-initrd</code> option can be used to provide an INITRD image.</p>
 </blockquote>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">-drive file=busybear-linux/busybear.bin,format=raw,id=hd0 \<br></code></pre></td></tr></table></figure>
-
 <p>这里指定了文件系统镜像的路径、格式、以及它的 id 。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">-device virtio-blk-device,drive=hd0<br></code></pre></td></tr></table></figure>
-
 <p>注意到 busybear 的说明，其目的是验证<code>virtio-blk-device</code>。</p>
 <p>出现下图所示的情况，构建就算成功了！</p>
-<p><img src="https://risc-v-getting-started-guide.readthedocs.io/en/latest/_images/linux64-qemu.gif" srcset="/img/loading.gif" lazyload></p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<p><img src="https://risc-v-getting-started-guide.readthedocs.io/en/latest/_images/linux64-qemu.gif" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="参考">参考</h2>
+<ul>
 <li><a target="_blank" rel="noopener" href="https://risc-v-getting-started-guide.readthedocs.io/en/latest/linux-qemu.html#running-64-and-32-bit-risc-v-linux-on-qemu">Running 64- and 32-bit RISC-V Linux on QEMU</a></li>
 <li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/javaIOException/p/7525828.html">qemu模拟器下编译运行基于riscv指令集的Linux操作系统</a></li>
 </ul>
@@ -526,7 +523,6 @@
 
   
   
-
 
 
 
@@ -748,49 +744,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

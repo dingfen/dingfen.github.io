@@ -16,12 +16,12 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Flash AttentionSoftmax 分组计算矩阵乘法的分组计算我们很熟悉，但注意力计算还涉及到 softmax 函数的分组计算，这就有点不太直观了，我们需要使用数学工具好好推理一番。">
+    <meta name="description" content="Flash Attention Softmax 分组计算 矩阵乘法的分组计算我们很熟悉，但注意力计算还涉及到 softmax 函数的分组计算，这就有点不太直观了，我们需要使用数学工具好好推理一番。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="峰子的乐园">
 <meta property="og:url" content="https://dingfen.github.io/2024/04/09/2024-1-1-LLM-inference2/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="Flash AttentionSoftmax 分组计算矩阵乘法的分组计算我们很熟悉，但注意力计算还涉及到 softmax 函数的分组计算，这就有点不太直观了，我们需要使用数学工具好好推理一番。">
+<meta property="og:description" content="Flash Attention Softmax 分组计算 矩阵乘法的分组计算我们很熟悉，但注意力计算还涉及到 softmax 函数的分组计算，这就有点不太直观了，我们需要使用数学工具好好推理一番。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-04-09T14:37:51.166Z">
 <meta property="article:modified_time" content="2024-04-09T14:58:43.656Z">
@@ -41,6 +41,8 @@
   <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
 
 
 
@@ -282,7 +284,9 @@
             
               <div class="markdown-body">
                 
-                <h1 id="Flash-Attention"><a href="#Flash-Attention" class="headerlink" title="Flash Attention"></a>Flash Attention</h1><h3 id="Softmax-分组计算"><a href="#Softmax-分组计算" class="headerlink" title="Softmax 分组计算"></a>Softmax 分组计算</h3><p>矩阵乘法的分组计算我们很熟悉，但注意力计算还涉及到 <code>softmax</code> 函数的分组计算，这就有点不太直观了，我们需要使用数学工具好好推理一番。</p>
+                <h1>Flash Attention</h1>
+<h3 id="Softmax-分组计算">Softmax 分组计算</h3>
+<p>矩阵乘法的分组计算我们很熟悉，但注意力计算还涉及到 <code>softmax</code> 函数的分组计算，这就有点不太直观了，我们需要使用数学工具好好推理一番。</p>
 
                 
               </div>
@@ -400,7 +404,6 @@
 
   
   
-
 
 
 
@@ -622,49 +625,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

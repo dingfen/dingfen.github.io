@@ -16,12 +16,12 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="👋 Hi, I’m @dingfen. Now I am a undergraduadte in USTC.👀 I’m interested in Computer Architecture and System Software etc. Also, I am eager to try some new wonderful tech.🌱 I’m currently majoring a m">
+    <meta name="description" content="👋 Hi, I’m @dingfen. Now I am a undergraduadte in USTC. 👀 I’m interested in Computer Architecture and System Software etc. Also, I am eager to try some new wonderful tech. 🌱 I’m currently majoring a">
 <meta property="og:type" content="website">
 <meta property="og:title" content="关于">
 <meta property="og:url" content="https://dingfen.github.io/about/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="👋 Hi, I’m @dingfen. Now I am a undergraduadte in USTC.👀 I’m interested in Computer Architecture and System Software etc. Also, I am eager to try some new wonderful tech.🌱 I’m currently majoring a m">
+<meta property="og:description" content="👋 Hi, I’m @dingfen. Now I am a undergraduadte in USTC. 👀 I’m interested in Computer Architecture and System Software etc. Also, I am eager to try some new wonderful tech. 🌱 I’m currently majoring a">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-04-09T15:45:47.000Z">
 <meta property="article:modified_time" content="2024-04-10T13:03:13.477Z">
@@ -41,6 +41,8 @@
   <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
 
 
 
@@ -263,7 +265,10 @@
 
 <article class="about-content page-content mt-5">
   <div class="markdown-body">
-    <p>👋 Hi, I’m @dingfen. Now I am a undergraduadte in USTC.<br>👀 I’m interested in Computer Architecture and System Software etc. Also, I am eager to try some new wonderful tech.<br>🌱 I’m currently majoring a master degree in USTC.<br>📫 How to reach me : here is the email : <a href="mailto:&#100;&#x66;&#x31;&#50;&#49;&#51;&#56;&#x40;&#109;&#x61;&#x69;&#x6c;&#46;&#117;&#115;&#x74;&#99;&#x2e;&#x65;&#100;&#117;&#x2e;&#x63;&#110;">&#100;&#x66;&#x31;&#50;&#49;&#51;&#56;&#x40;&#109;&#x61;&#x69;&#x6c;&#46;&#117;&#115;&#x74;&#99;&#x2e;&#x65;&#100;&#117;&#x2e;&#x63;&#110;</a></p>
+    <p>👋 Hi, I’m @dingfen. Now I am a undergraduadte in USTC.<br>
+👀 I’m interested in Computer Architecture and System Software etc. Also, I am eager to try some new wonderful tech.<br>
+🌱 I’m currently majoring a master degree in USTC.<br>
+📫 How to reach me : here is the email : <a href="mailto:df12138@mail.ustc.edu.cn">df12138@mail.ustc.edu.cn</a></p>
 
   </div>
 
@@ -295,7 +300,6 @@
 
   
   
-
 
 
 
@@ -453,49 +457,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

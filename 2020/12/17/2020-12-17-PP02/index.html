@@ -47,6 +47,8 @@
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
 
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
 
 
 <!-- 主题依赖的图标库，不要自行修改 -->
@@ -287,38 +289,36 @@
             
               <div class="markdown-body">
                 
-                <h1 id="并行求和算法实现"><a href="#并行求和算法实现" class="headerlink" title="并行求和算法实现"></a>并行求和算法实现</h1><h2 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h2><p>有 $N$ 个处理器，现对 $N$ 个数求和，要求每个处理器中都保持全和。有两个算法可以实现：</p>
+                <h1>并行求和算法实现</h1>
+<h2 id="题目描述">题目描述</h2>
+<p>有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 个处理器，现对 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 个数求和，要求每个处理器中都保持全和。有两个算法可以实现：</p>
 <ul>
-<li>蝶式求和算法：重复计算元素的求和，共需要 $logN$ 步。在每个阶段，处理器都会将数据发给指定的其他处理器，然后进行求和。</li>
-<li>二叉树求和算法，累计求和，在广播给其他节点，需要 $2logN$ 步</li>
+<li>蝶式求和算法：重复计算元素的求和，共需要 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi><mi>o</mi><mi>g</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">logN</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 步。在每个阶段，处理器都会将数据发给指定的其他处理器，然后进行求和。</li>
+<li>二叉树求和算法，累计求和，在广播给其他节点，需要 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>l</mi><mi>o</mi><mi>g</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">2logN</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 步</li>
 </ul>
-<h2 id="蝶式算法实现"><a href="#蝶式算法实现" class="headerlink" title="蝶式算法实现"></a>蝶式算法实现</h2><p>首先需要假定：数据均匀地分布在每一个处理器中，特别地，每个处理器中只有一个数字。但求和必然要求<strong>所有的数据</strong>，蝶式算法就是将数据从少到多，一步一步地累加起来。编程时，可按照蝶式算法一步一步按阶段地实现。接下来，对照下图，仔细地品读一下算法，了解其中的规律，以便代码实现。</p>
+<h2 id="蝶式算法实现">蝶式算法实现</h2>
+<p>首先需要假定：数据均匀地分布在每一个处理器中，特别地，每个处理器中只有一个数字。但求和必然要求<strong>所有的数据</strong>，蝶式算法就是将数据从少到多，一步一步地累加起来。编程时，可按照蝶式算法一步一步按阶段地实现。接下来，对照下图，仔细地品读一下算法，了解其中的规律，以便代码实现。</p>
 <center>
     <img src="/img/PP/dieshi.png" srcset="/img/loading.gif" lazyload/>
 </center>
-
 <p>在第一阶段，每个处理器与其相邻的处理器交换它们的数据。注意一下它们的编号：<code>Proc#0</code> 和 <code>Proc#1</code> ，<code>Proc#2</code> 和 <code>Proc#3</code>，……如果我们把这些编号全部写成二进制，规律就更加明显了 :smile:。这些互相交流的处理器的编号，除了倒数第一位是不一致的，其他都是一致的！</p>
 <p>第二个阶段，处理器0与2号处理器交流，1号与3号交流，4号与6号交流……在二进制表示中，也是只有一个位的差别，这里是倒数第二位。第三阶段，0号处理器与4号交流，是倒数第三位的差别。</p>
 <p>得到规律：在第 <code>i</code> 个阶段，处理器 <code>Proc#n</code> 会与处理器 <code>Proc#(n ^ (1 &lt;&lt; (i-1)))</code> 交换数据（发送和接收都要），然后相加就行了:laughing:。如此一来，代码就呼之欲出了。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">2</span>; i &lt;= num_procs; i &lt;&lt;= <span class="hljs-number">1</span>) &#123;<br>    <span class="hljs-type">int</span> tag = i &gt;&gt; <span class="hljs-number">1</span>;<br>    <span class="hljs-type">int</span> dest = id_procs ^ tag;<br>    MPI_Send(&amp;data, <span class="hljs-number">1</span>, MPI_INT, dest, tag, MPI_COMM_WORLD);<br>    MPI_Recv(&amp;recvdata, <span class="hljs-number">1</span>, MPI_INT, dest, tag, MPI_COMM_WORLD, &amp;status);<br>    data += recvdata;<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<h2 id="二叉树求和实现"><a href="#二叉树求和实现" class="headerlink" title="二叉树求和实现"></a>二叉树求和实现</h2><p>二叉树求和的过程非常好理解：先将相邻的处理器数据收集起来，求和后再次重复，直到求出总和，最后沿着二叉树的路径将求和结果往下传导。</p>
+<h2 id="二叉树求和实现">二叉树求和实现</h2>
+<p>二叉树求和的过程非常好理解：先将相邻的处理器数据收集起来，求和后再次重复，直到求出总和，最后沿着二叉树的路径将求和结果往下传导。</p>
 <center>
     <img src="/img/PP/ercha.png" srcset="/img/loading.gif" lazyload />
 </center>
-
 <p>虽然二叉树求和算法的实现相较于蝶式求和更容易理解，但实现起来却相对吃力，并且还会更加耗时。因为它还要求将数据从根部传下来，多了一个要实现的阶段。</p>
-<p>还是找规律，第一个阶段，0号处理器与1号处理器相加，<code>Proc#2</code> 与 <code>Proc#3</code>  相加，我假设求和后的数据都存放在较小编号的处理器中，那么第二阶段，就是 <code>Proc#0</code> 与 <code>Proc#2</code>  相加，第三阶段（如果有的话），就是 <code>Proc#0</code> 与<code>Proc#4</code>  相加。同样从二进制入手，找到如下规律：<strong>在第 <code>i</code> 个阶段，相互之间通信的处理器中仅第 <code>i</code> 位不一致。</strong>还需要注意的是，编号较小的处理器接收数据，较大的发送数据。好，现在理解计算这部分代码就没有难度了 :yum:。</p>
+<p>还是找规律，第一个阶段，0号处理器与1号处理器相加，<code>Proc#2</code> 与 <code>Proc#3</code>  相加，我假设求和后的数据都存放在较小编号的处理器中，那么第二阶段，就是 <code>Proc#0</code> 与 <code>Proc#2</code>  相加，第三阶段（如果有的话），就是 <code>Proc#0</code> 与<code>Proc#4</code>  相加。同样从二进制入手，找到如下规律：**在第 <code>i</code> 个阶段，相互之间通信的处理器中仅第 <code>i</code> 位不一致。**还需要注意的是，编号较小的处理器接收数据，较大的发送数据。好，现在理解计算这部分代码就没有难度了 :yum:。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">2</span>; i &lt;= num_procs; i &lt;&lt;= <span class="hljs-number">1</span>) &#123;<br>    <span class="hljs-type">int</span> tag = i &gt;&gt; <span class="hljs-number">1</span>;<br>    <span class="hljs-type">int</span> diff = id_procs &amp; tag;<br>    <span class="hljs-keyword">if</span> (diff) &#123;<br>        MPI_Send(&amp;data, <span class="hljs-number">1</span>, MPI_INT, id_procs-tag, tag, MPI_COMM_WORLD);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        MPI_Recv(&amp;recvdata, <span class="hljs-number">1</span>, MPI_INT, id_procs+tag, tag, MPI_COMM_WORLD, &amp;status);<br>    &#125;<br>    data += recvdata;<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<p>然后就是将 <code>Proc#0</code> 处理器中的计算结果分发给其他处理器。当然，使用 <code>MPI_Bcast()</code> 函数直接将数据广播出去会更加方便，但是这样做不符合算法的要求 :man_shrugging:。我们需要弄清楚两点：哪一个处理器接收？哪一个处理器发送？第一步，当然是 <code>Proc#0</code> 处理器发送，让 <code>Proc#N/2</code> 处理器接收。第二步，<code>Proc#0</code> 与 <code>Proc#N/4</code> 通信，<code>Proc#N/2</code>与 <code>Proc#3N/4</code> 通信……emm，看起来我们需要拿出纸笔，好好算一算。每次发送&#x2F;接收消息，处理器编号的差都是 $i&#x2F;2$，而且只有编号是 i 的倍数的处理器才能发送消息。把循环变量当做处理器总数，并每次除 2，可以方便我们对处理器编号的计算。</p>
+<p>然后就是将 <code>Proc#0</code> 处理器中的计算结果分发给其他处理器。当然，使用 <code>MPI_Bcast()</code> 函数直接将数据广播出去会更加方便，但是这样做不符合算法的要求 :man_shrugging:。我们需要弄清楚两点：哪一个处理器接收？哪一个处理器发送？第一步，当然是 <code>Proc#0</code> 处理器发送，让 <code>Proc#N/2</code> 处理器接收。第二步，<code>Proc#0</code> 与 <code>Proc#N/4</code> 通信，<code>Proc#N/2</code>与 <code>Proc#3N/4</code> 通信……emm，看起来我们需要拿出纸笔，好好算一算。每次发送/接收消息，处理器编号的差都是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">i/2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">i</span><span class="mord">/2</span></span></span></span>，而且只有编号是 i 的倍数的处理器才能发送消息。把循环变量当做处理器总数，并每次除 2，可以方便我们对处理器编号的计算。</p>
 <center>
     <img src="/img/PP/jisuan.png" srcset="/img/loading.gif" lazyload />
 </center>
-
 <p>计算完后，在编写代码，就可以一步到位，省去了很多调试的烦恼！如果大家没看懂代码，或许上图可以帮助大家理解。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = num_procs; i &gt;= <span class="hljs-number">2</span>; i &gt;&gt;= <span class="hljs-number">1</span>) &#123;<br>    <span class="hljs-type">int</span> tag = i;<br>    <span class="hljs-keyword">if</span> (id_procs % i == <span class="hljs-number">0</span>) &#123;<br>        MPI_Send(&amp;data, <span class="hljs-number">1</span>, MPI_INT, id_procs+(i&gt;&gt;<span class="hljs-number">1</span>), tag, MPI_COMM_WORLD);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(id_procs % (i &gt;&gt; <span class="hljs-number">1</span>) == <span class="hljs-number">0</span>) &#123;<br>         MPI_Recv(&amp;data, <span class="hljs-number">1</span>, MPI_INT, id_procs-(i&gt;&gt;<span class="hljs-number">1</span>), tag, MPI_COMM_WORLD, &amp;status);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
-
 <p>所有算法的代码实现请见我的 <a target="_blank" rel="noopener" href="https://github.com/dingfen/ParallelComputing/tree/master/PP_02">github仓库</a></p>
 <head>
     <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
@@ -498,7 +498,6 @@
 
   
   
-
 
 
 
@@ -720,49 +719,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

@@ -47,6 +47,8 @@
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
 
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
 
 
 <!-- 主题依赖的图标库，不要自行修改 -->
@@ -287,9 +289,12 @@
             
               <div class="markdown-body">
                 
-                <h1 id="Introduction-of-RI5CY-CV32E40P"><a href="#Introduction-of-RI5CY-CV32E40P" class="headerlink" title="Introduction of RI5CY(CV32E40P)"></a>Introduction of RI5CY(CV32E40P)</h1><h2 id="什么是-RI5CY"><a href="#什么是-RI5CY" class="headerlink" title="什么是 RI5CY"></a>什么是 RI5CY</h2><ul>
+                <h1>Introduction of RI5CY(CV32E40P)</h1>
+<h2 id="什么是-RI5CY">什么是 RI5CY</h2>
+<ul>
 <li>4阶段流水线，顺序的 32-bit 的 RISC-V 处理核，后改名为 CV32E40P，但为方便叙述，以下均称之为 RI5CY。</li>
-<li>RI5CY 支持的最基础的 RISC-V 指令集版本（最新）的是 <a target="_blank" rel="noopener" href="https://github.com/riscv/riscv-isa-manual/releases/tag/archive">RV32I Base Integer Instruction Set version 2.1</a>。除此之外，它还支持以下 RISC-V 指令集：<ul>
+<li>RI5CY 支持的最基础的 RISC-V 指令集版本（最新）的是 <a target="_blank" rel="noopener" href="https://github.com/riscv/riscv-isa-manual/releases/tag/archive">RV32I Base Integer Instruction Set version 2.1</a>。除此之外，它还支持以下 RISC-V 指令集：
+<ul>
 <li>C : Standard Extension for Compressed Instructions 2.0</li>
 <li>M : Standard Extension for Integer Multiplication and Division 2.0</li>
 <li>Zicsr : Control and Status Register Instructions 2.0</li>
@@ -297,7 +302,8 @@
 <li>F : Single-Precision Floating-Point 2.2</li>
 </ul>
 </li>
-<li>它的 ISA 不仅支持最基本的 RISC-V 指令集，还增添了如下指令：<ul>
+<li>它的 ISA 不仅支持最基本的 RISC-V 指令集，还增添了如下指令：
+<ul>
 <li>乘加指令 (multiple additional instructions)</li>
 <li>硬件循环 (hardware loops)</li>
 <li>后累加装载指令 (post-increment load-store instructions)</li>
@@ -306,13 +312,16 @@
 </li>
 <li>由 OpenHW Group 开发，这里是它的<a target="_blank" rel="noopener" href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/">用户手册</a>，会有更多详细的介绍，以及它的<a target="_blank" rel="noopener" href="https://github.com/openhwgroup/cv32e40p">源代码</a>。</li>
 </ul>
-<h2 id="OpenHW-Group-是什么来头"><a href="#OpenHW-Group-是什么来头" class="headerlink" title="OpenHW Group 是什么来头"></a>OpenHW Group 是什么来头</h2><p><a target="_blank" rel="noopener" href="https://www.openhwgroup.org/">OpenHw</a> 是一个非盈利的国际组织。该组织的软硬件开发人员在开源核 (open-source core)，相关IP (related IP)，工具和软件等开发方面进行协作。OpenHW 提供了一个基础架构，用于托管符合行业最佳实践的高质量开源硬件开发。</p>
+<h2 id="OpenHW-Group-是什么来头">OpenHW Group 是什么来头</h2>
+<p><a target="_blank" rel="noopener" href="https://www.openhwgroup.org/">OpenHw</a> 是一个非盈利的国际组织。该组织的软硬件开发人员在开源核 (open-source core)，相关IP (related IP)，工具和软件等开发方面进行协作。OpenHW 提供了一个基础架构，用于托管符合行业最佳实践的高质量开源硬件开发。</p>
 <p>OpenHW 组织属于 CORE-V Family。CORE-V 是一系列基于RISC-V，以及为电子系统设计师提供相关的处理器子系统 IP，工具和软件的开源核项目。CORE-V Family 在硅片和 FPGA 优化实现中提供符合行业的高质量核心 IP。</p>
 <p>OpenHW 组织的<a target="_blank" rel="noopener" href="https://www.openhwgroup.org/working-groups/">主要技术负责人</a>都在国内外非常有名的研究机构或企业任职。该组织的<a target="_blank" rel="noopener" href="https://www.openhwgroup.org/about-us/">董事会</a>主席 Rob同时还是 RISC-V International 董事会成员。 Rob也是IEEE的高级成员，兼任 Southern Methodist University 和 the University of Texas 的兼职教授。</p>
-<h2 id="从-RI5CY-到-CV32E40P"><a href="#从-RI5CY-到-CV32E40P" class="headerlink" title="从 RI5CY 到 CV32E40P"></a>从 RI5CY 到 CV32E40P</h2><p>从官方<a target="_blank" rel="noopener" href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/intro.html">用户手册</a>上可以了解到，CV32E40P 最初是基于 OpenRISC ISA 的 OR10N CPU 核的分支。在去年我开始了解该处理核的这个时候，其正式名字还是 RI5CY，到了今年就更名为 CV32E40P，项目更名一定程度上伴随着组织关系的变化。之前 RI5CY 的项目主要是由 <a target="_blank" rel="noopener" href="https://pulp-platform.org/">PULP Platform</a> 负责。</p>
+<h2 id="从-RI5CY-到-CV32E40P">从 RI5CY 到 CV32E40P</h2>
+<p>从官方<a target="_blank" rel="noopener" href="https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/intro.html">用户手册</a>上可以了解到，CV32E40P 最初是基于 OpenRISC ISA 的 OR10N CPU 核的分支。在去年我开始了解该处理核的这个时候，其正式名字还是 RI5CY，到了今年就更名为 CV32E40P，项目更名一定程度上伴随着组织关系的变化。之前 RI5CY 的项目主要是由 <a target="_blank" rel="noopener" href="https://pulp-platform.org/">PULP Platform</a> 负责。</p>
 <p>PULP Platform 的全称为 Parallel Ultra Low Power Platform。该组织的主要工作是开发开源的、可扩展的软硬件研究开发平台，以突破毫瓦功率级别的能效墙，并满足需要灵活处理数据流的 loT 应用的计算需求，例如加速度计，低分辨率摄像头，麦克风阵列和生命体征监视器。</p>
 <p>在 OpenHW Group 成立之初，PULP加入了这个组织，并将一些有关 RISC-V 核的实现工程转移到了 OpenHW Group 组织之下，其中 RI5CY 便是其中之一。</p>
-<h2 id="RI5CY-的特点"><a href="#RI5CY-的特点" class="headerlink" title="RI5CY 的特点"></a>RI5CY 的特点</h2><p>之前提到，RI5CY 是一个顺序的4阶段流水线 32-bit 的 RISC-V 处理核。它的流水线设计图如下：</p>
+<h2 id="RI5CY-的特点">RI5CY 的特点</h2>
+<p>之前提到，RI5CY 是一个顺序的4阶段流水线 32-bit 的 RISC-V 处理核。它的流水线设计图如下：</p>
 <p><img src="/img/RISC-V_core.png" srcset="/img/loading.gif" lazyload alt="Block Diagram of CV32E40P(RI5CY) core"></p>
 <p>RI5CY 是一个非常好的自定义处理核的起点，这也是它在科研圈较受欢迎的原因之一。当然这相当程度上归功于 1）开发组人员对它的良好维护，2）非常清晰明确的源代码，3）能被综合或仿真工具实例化，4）有 <a target="_blank" rel="noopener" href="https://www.veripool.org/wiki/verilator">Verilator</a> 模型的测试平台，5）可在 FPGA 和 ASIC 上高效实例化。</p>
 <p>在最初开发 RI5CY 的过程中 <a target="_blank" rel="noopener" href="https://pulp-platform.org/">PULP Platform</a> 就制定了一个设计目标，追求高能效的信号处理。为此，它们添加了乘加指令 (multiple additional instructions)、硬件循环 (hardware loops)、后累加装载指令 (post-increment load-store instructions)和额外的 ALU 运算指令(min, max, absolute value)。这样一来，可以减少要处理的指令，减少能耗。</p>
@@ -496,7 +505,6 @@
 
   
   
-
 
 
 
@@ -718,49 +726,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

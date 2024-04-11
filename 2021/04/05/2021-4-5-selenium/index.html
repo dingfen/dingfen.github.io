@@ -47,6 +47,8 @@
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
 
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
 
 
 <!-- 主题依赖的图标库，不要自行修改 -->
@@ -287,99 +289,97 @@
             
               <div class="markdown-body">
                 
-                <h1 id="python-自动化——获取学生提交的作业"><a href="#python-自动化——获取学生提交的作业" class="headerlink" title="python 自动化——获取学生提交的作业"></a>python 自动化——获取学生提交的作业</h1><p>我这学期担任本科的操作系统助教。课程要求所有学生的作业都提交到“网络教学平台上”给助教批改，但学生数量众多，一个一个点击下载压缩包十分麻烦，还容易遗漏。我注意到网站没有批量下载解压的功能，为提高工作效率，想试着使用python来一键完成下载解压。</p>
-<h2 id="关于-selenium-webdriver"><a href="#关于-selenium-webdriver" class="headerlink" title="关于 selenium.webdriver"></a>关于 selenium.webdriver</h2><p>Selenium 通过使用 <a target="_blank" rel="noopener" href="https://www.selenium.dev/documentation/zh-cn/webdriver/"><em>webdriver</em></a> 支持市场上所有主流浏览器的自动化。 Webdriver 是一个 API 和协议，它支持多种语言，有python、java、C#、Ruby、JavaScript等。Webdriver 用于控制 web 浏览器的行为，且每个主流的浏览器都有一个特定的 WebDriver 实现，称为驱动程序。 驱动程序是负责委派给浏览器的组件，并处理与 Selenium 和浏览器之间的通信。</p>
+                <h1>python 自动化——获取学生提交的作业</h1>
+<p>我这学期担任本科的操作系统助教。课程要求所有学生的作业都提交到“网络教学平台上”给助教批改，但学生数量众多，一个一个点击下载压缩包十分麻烦，还容易遗漏。我注意到网站没有批量下载解压的功能，为提高工作效率，想试着使用python来一键完成下载解压。</p>
+<h2 id="关于-selenium-webdriver">关于 selenium.webdriver</h2>
+<p>Selenium 通过使用 <a target="_blank" rel="noopener" href="https://www.selenium.dev/documentation/zh-cn/webdriver/"><em>webdriver</em></a> 支持市场上所有主流浏览器的自动化。 Webdriver 是一个 API 和协议，它支持多种语言，有python、java、C#、Ruby、JavaScript等。Webdriver 用于控制 web 浏览器的行为，且每个主流的浏览器都有一个特定的 WebDriver 实现，称为驱动程序。 驱动程序是负责委派给浏览器的组件，并处理与 Selenium 和浏览器之间的通信。</p>
 <p>Selenium 框架通过一个面向用户的界面将所有这些部分连接在一起， 该界面支持不同的浏览器后端， 从而实现跨浏览器和跨平台自动化。</p>
-<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>可以使用 <a target="_blank" rel="noopener" href="https://docs.conda.io/en/latest/miniconda.html">miniconda</a> :</p>
+<h3 id="安装">安装</h3>
+<p>可以使用 <a target="_blank" rel="noopener" href="https://docs.conda.io/en/latest/miniconda.html">miniconda</a> :</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">conda install -c conda-forge --name myenv selenium <br></code></pre></td></tr></table></figure>
-
 <p>或者 pip ：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install selenium<br></code></pre></td></tr></table></figure>
-
 <p>然后，根据你使用的浏览器，安装<a target="_blank" rel="noopener" href="https://www.selenium.dev/documentation/zh-cn/getting_started_with_webdriver/browsers/">特定于浏览器的 WebDriver 二进制文件</a>：</p>
 <table>
 <thead>
 <tr>
-<th align="left">浏览器</th>
-<th align="left">维护者</th>
-<th align="left">支持的版本</th>
+<th style="text-align:left">浏览器</th>
+<th style="text-align:left">维护者</th>
+<th style="text-align:left">支持的版本</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="left">Chrome</td>
-<td align="left"><a target="_blank" rel="noopener" href="https://sites.google.com/a/chromium.org/chromedriver/">Chromium</a></td>
-<td align="left">所有版本</td>
+<tbody>
+<tr>
+<td style="text-align:left">Chrome</td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://sites.google.com/a/chromium.org/chromedriver/">Chromium</a></td>
+<td style="text-align:left">所有版本</td>
 </tr>
 <tr>
-<td align="left">Firefox</td>
-<td align="left"><a target="_blank" rel="noopener" href="https://github.com/mozilla/geckodriver/">Mozilla</a></td>
-<td align="left">54及以上版本</td>
+<td style="text-align:left">Firefox</td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://github.com/mozilla/geckodriver/">Mozilla</a></td>
+<td style="text-align:left">54及以上版本</td>
 </tr>
 <tr>
-<td align="left">Edge</td>
-<td align="left"><a target="_blank" rel="noopener" href="https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/">Microsoft</a></td>
-<td align="left">84及以上版本</td>
+<td style="text-align:left">Edge</td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/">Microsoft</a></td>
+<td style="text-align:left">84及以上版本</td>
 </tr>
 <tr>
-<td align="left">Internet Explorer</td>
-<td align="left">Selenium</td>
-<td align="left">6及以上版本</td>
+<td style="text-align:left">Internet Explorer</td>
+<td style="text-align:left">Selenium</td>
+<td style="text-align:left">6及以上版本</td>
 </tr>
 <tr>
-<td align="left">Opera</td>
-<td align="left"><a target="_blank" rel="noopener" href="https://github.com/operasoftware/operachromiumdriver/">Opera Chromium</a> &#x2F; <a target="_blank" rel="noopener" href="https://github.com/operasoftware/operaprestodriver">Presto</a></td>
-<td align="left">10.5及以上版本</td>
+<td style="text-align:left">Opera</td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://github.com/operasoftware/operachromiumdriver/">Opera Chromium</a> / <a target="_blank" rel="noopener" href="https://github.com/operasoftware/operaprestodriver">Presto</a></td>
+<td style="text-align:left">10.5及以上版本</td>
 </tr>
 <tr>
-<td align="left">Safari</td>
-<td align="left"><a target="_blank" rel="noopener" href="https://webkit.org/blog/6900/webdriver-support-in-safari-10/">Apple</a></td>
-<td align="left">10及以上版本</td>
+<td style="text-align:left">Safari</td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://webkit.org/blog/6900/webdriver-support-in-safari-10/">Apple</a></td>
+<td style="text-align:left">10及以上版本</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>在模拟用户在浏览器上的选择、点击等操作方面，<a target="_blank" rel="noopener" href="https://www.selenium.dev/documentation/zh-cn/webdriver/">webdriver</a>包提供了非常多的便利！使用方面，网上有非常多详实的手册，如果你使用python，推荐 <a target="_blank" rel="noopener" href="https://selenium-python-zh.readthedocs.io/en/latest/installation.html">selenium-Python</a> 网站。</p>
-<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>不详细讨论技术细节，总的来说，有五个步骤：</p>
+<h3 id="使用">使用</h3>
+<p>不详细讨论技术细节，总的来说，有五个步骤：</p>
 <ol>
-<li>webdriver 初始化，获取驱动。Chrome 用 <code>webdriver.Chrome()</code> </li>
+<li>webdriver 初始化，获取驱动。Chrome 用 <code>webdriver.Chrome()</code></li>
 <li>打开网页链接。<code>driver.get(&quot;http://www.python.org&quot;)</code></li>
 <li>找到需要的元素。<code>elem = driver.find_element_by_name(&quot;q&quot;)</code></li>
 <li>对该元素进行操作，例如点击、提交信息等。<code>elem.send_keys(&quot;pycon&quot;)</code></li>
 <li>等待网页的响应。<code>driver.implicitly_wait(10)</code> 或者 <code>WebDriverWait(driver, 10).until()</code></li>
 </ol>
 <p>整个过程重点是要确定交互的元素，需要在编程前仔细研究网页的 HTML 源码。</p>
-<h2 id="自动化"><a href="#自动化" class="headerlink" title="自动化"></a>自动化</h2><h3 id="获取作业"><a href="#获取作业" class="headerlink" title="获取作业"></a>获取作业</h3><p>首先，获取驱动，打开网站：</p>
+<h2 id="自动化">自动化</h2>
+<h3 id="获取作业">获取作业</h3>
+<p>首先，获取驱动，打开网站：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># bb 网站 点击 统一身份认证登录</span><br>driver = webdriver.Chrome(<span class="hljs-string">&quot;/Pathto/chromedriver&quot;</span>)<br>driver.get(<span class="hljs-string">&quot;https://www.bb.ustc.edu.cn/&quot;</span>)<br></code></pre></td></tr></table></figure>
-
 <p>因为刚刚打开浏览器会比较慢，因此使用显式等待比较好。下面的代码，对应的操作就是点击“统一身份认证登录”。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">try</span>:<br>    button1 = WebDriverWait(driver, <span class="hljs-number">5</span>).until(<br>        EC.presence_of_element_located((By.LINK_TEXT, <span class="hljs-string">&quot;统一身份认证登录&quot;</span>)))<br>    button1.click()<br><span class="hljs-keyword">except</span>:<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;bb website Error&quot;</span>)<br>    driver.quit()<br></code></pre></td></tr></table></figure>
-
 <center>
  <img src="/img/bb_ustc.png" srcset="/img/loading.gif" lazyload>
 </center>
-
 <hr>
 <p>随后就会进入科大的统一身份认证系统。同样地，先找到账号密码对应的 input 框的id，然后用 <code>find_element_by_id</code> 查找，将你的账号密码填入即可。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 中科大身份认证</span><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>user = driver.find_element_by_id(<span class="hljs-string">&quot;username&quot;</span>)<br>user.clear()<br>user.send_keys(<span class="hljs-string">&quot;xxxxxx&quot;</span>)<br>password = driver.find_element_by_id(<span class="hljs-string">&quot;password&quot;</span>)<br>password.send_keys(<span class="hljs-string">&quot;xxxxxx&quot;</span>)<br>button2 = driver.find_element_by_id(<span class="hljs-string">&quot;login&quot;</span>)<br>button2.click()<br></code></pre></td></tr></table></figure>
-
 <p>登录后，网站就跳入到了bb页面。要下载所有学生的作业，首先需要点击对应课程“操作系统原理与设计”，进入课程页面后，找到“评分中心”，下拉框中有“需要评分”一栏，点击后会出现已经提交作业的学生名单。</p>
 <p>整体步骤依然不变，但为了更快找到对应元素，需要熟练地使用 webdriver 的 API 。不过我觉得，能用 id 或者 text 找，就尽量用 id 或 text 找。没有定义 id 和 text 的，才需要从 class 等入手。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 进入我的blackboard</span><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>osbut = driver.find_element_by_partial_link_text(<span class="hljs-string">&quot;操作系统&quot;</span>)<br>osbut.click()<br><br><span class="hljs-comment"># 进入操作系统课程页面</span><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>butlist = driver.find_elements_by_class_name(<span class="hljs-string">&quot;submenuLink&quot;</span>)<br>butlist[<span class="hljs-number">3</span>].click()<br>eval_score = driver.find_element_by_link_text(<span class="hljs-string">&quot;评分中心&quot;</span>)<br>eval_score.click()<br><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>need_eval = driver.find_element_by_link_text(<span class="hljs-string">&quot;需要评分&quot;</span>)<br>need_eval.click()<br></code></pre></td></tr></table></figure>
-
 <p>程序进行到这里后，我已经可以看到提交同学的名单了。但需要更进一步，让python能帮我自动下载这些作业，才是我的目的。</p>
 <center>
   <img src="/img/pingfen.jpg" srcset="/img/loading.gif" lazyload>
 </center>
-
 <hr>
 <p>先从该页面中，抠出所有提交作业的学生名。注意，<code>find_elements*</code> 的 API ，都是返回一个列表。以下面代码为例，返回了所有 class 为 <code>gradeAttempt</code> 的元素。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 进入到评分界面 获取提交学生名单</span><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>students = driver.find_elements_by_class_name(<span class="hljs-string">&quot;gradeAttempt&quot;</span>)<br>students_list = []<br><span class="hljs-keyword">for</span> button <span class="hljs-keyword">in</span> students:<br>    students_list.append(button.text)<br></code></pre></td></tr></table></figure>
-
 <p>然后，点击链接（表格中同学名字的链接背后就是每个人的作业界面）。需要注意的是，下载完一个同学的作业后，还需要点击返回，即 <code>driver.back()</code>，才能回到上面的页面。循环才能继续，否则会出现程序找不到元素的情况。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> text <span class="hljs-keyword">in</span> students_list:<br>    <span class="hljs-built_in">print</span>(text)<br>    button = driver.find_element_by_partial_link_text(text)<br>    button.click()<br><br>    <span class="hljs-comment"># 页面一直循环，直到 id=&quot;myDynamicElement&quot; 出现</span><br>    <span class="hljs-keyword">try</span>:<br>        download = WebDriverWait(driver, <span class="hljs-number">5</span>).until(<br>            EC.presence_of_element_located((By.CLASS_NAME, <span class="hljs-string">&quot;dwnldBtn&quot;</span>)))<br>        download.click()<br>    <span class="hljs-keyword">except</span>:<br>        <span class="hljs-built_in">print</span>(text, <span class="hljs-string">&quot;Get TimeoutException&quot;</span>)<br>    <span class="hljs-keyword">finally</span>:<br>        driver.back()<br></code></pre></td></tr></table></figure>
-
-<h3 id="解压操作"><a href="#解压操作" class="headerlink" title="解压操作"></a>解压操作</h3><p>如此，我十分顺利地拿到了所有同学的作业，程序自动帮我下载到了 <code>~/下载</code> 目录中。不过，我还想一步到位，除了自动下载，干脆解压的工作也让程序帮我完成了吧 :smile:。下面的代码使用了 python 中最好用也是最常用的包 <a target="_blank" rel="noopener" href="https://www.runoob.com/python/os-file-methods.html">os</a> 和 <a target="_blank" rel="noopener" href="https://www.runoob.com/python/python-reg-expressions.html">re</a>。</p>
+<h3 id="解压操作">解压操作</h3>
+<p>如此，我十分顺利地拿到了所有同学的作业，程序自动帮我下载到了 <code>~/下载</code> 目录中。不过，我还想一步到位，除了自动下载，干脆解压的工作也让程序帮我完成了吧 :smile:。下面的代码使用了 python 中最好用也是最常用的包 <a target="_blank" rel="noopener" href="https://www.runoob.com/python/os-file-methods.html">os</a> 和 <a target="_blank" rel="noopener" href="https://www.runoob.com/python/python-reg-expressions.html">re</a>。</p>
 <p>一般来说，作业的提交格式都是统一的，这里是“学号_姓名.zip or .rar”，那么相关的正则表达式需要如何描述呢？</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python">os.chdir(<span class="hljs-string">&quot;~/下载&quot;</span>)<br><span class="hljs-comment"># 规定了 作业的提交格式 因此可以使用正则化表达</span><br>pattern = re.<span class="hljs-built_in">compile</span>(<span class="hljs-string">&quot;PB[0-9]&#123;8&#125;(.*)\.((zip)|(rar))&quot;</span>)<br>dirs = os.listdir()<br><span class="hljs-keyword">for</span> <span class="hljs-built_in">dir</span> <span class="hljs-keyword">in</span> dirs:<br>    <span class="hljs-keyword">if</span> pattern.<span class="hljs-keyword">match</span>(<span class="hljs-built_in">dir</span>) <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        <span class="hljs-comment"># 给每位同学建立一个目录</span><br>        dst = <span class="hljs-string">&quot;/Path/to/HW/&quot;</span>+<span class="hljs-built_in">dir</span>[:-<span class="hljs-number">4</span>]<br>        os.makedirs(dst)<br>        <span class="hljs-comment"># 根据后缀名使用对应的解压工具</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">dir</span>[-<span class="hljs-number">3</span>:] == <span class="hljs-string">&quot;zip&quot;</span>:<br>            os.system(<span class="hljs-string">&quot;unzip -d &quot;</span>+dst+<span class="hljs-string">&quot; &quot;</span>+<span class="hljs-built_in">dir</span>)<br>        <span class="hljs-keyword">elif</span> <span class="hljs-built_in">dir</span>[-<span class="hljs-number">3</span>:] == <span class="hljs-string">&quot;rar&quot;</span>:<br>            os.system(<span class="hljs-string">&quot;unrar x &quot;</span>+<span class="hljs-built_in">dir</span>+<span class="hljs-string">&quot; &quot;</span>+dst)<br>        <span class="hljs-built_in">print</span>(<span class="hljs-built_in">dir</span>, <span class="hljs-string">&quot;is in HW/&quot;</span>)<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Deleting &quot;</span>, <span class="hljs-built_in">dir</span>)<br>        os.remove(<span class="hljs-built_in">dir</span>)<br></code></pre></td></tr></table></figure>
-
 <p>大功告成！:happy:</p>
 
                 
@@ -551,7 +551,6 @@
 
   
   
-
 
 
 
@@ -773,49 +772,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

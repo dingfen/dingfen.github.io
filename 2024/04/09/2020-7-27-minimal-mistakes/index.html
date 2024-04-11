@@ -16,12 +16,12 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="使用 Minimal Mistakes 配置个人网页——问与答今天发现了一个很好的英文博客，可帮助美化一下自己的个人网站。  Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part I Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part II Pe">
+    <meta name="description" content="使用 Minimal Mistakes 配置个人网页——问与答 今天发现了一个很好的英文博客，可帮助美化一下自己的个人网站。  Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part I Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part II P">
 <meta property="og:type" content="article">
 <meta property="og:title" content="峰子的乐园">
 <meta property="og:url" content="https://dingfen.github.io/2024/04/09/2020-7-27-minimal-mistakes/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="使用 Minimal Mistakes 配置个人网页——问与答今天发现了一个很好的英文博客，可帮助美化一下自己的个人网站。  Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part I Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part II Pe">
+<meta property="og:description" content="使用 Minimal Mistakes 配置个人网页——问与答 今天发现了一个很好的英文博客，可帮助美化一下自己的个人网站。  Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part I Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part II P">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-04-09T14:37:51.156Z">
 <meta property="article:modified_time" content="2024-04-09T15:14:26.275Z">
@@ -41,6 +41,8 @@
   <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
 
 
 
@@ -282,7 +284,8 @@
             
               <div class="markdown-body">
                 
-                <h1 id="使用-Minimal-Mistakes-配置个人网页——问与答"><a href="#使用-Minimal-Mistakes-配置个人网页——问与答" class="headerlink" title="使用 Minimal Mistakes 配置个人网页——问与答"></a>使用 Minimal Mistakes 配置个人网页——问与答</h1><p>今天发现了一个很好的英文博客，可帮助美化一下自己的个人网站。</p>
+                <h1>使用 Minimal Mistakes 配置个人网页——问与答</h1>
+<p>今天发现了一个很好的英文博客，可帮助美化一下自己的个人网站。</p>
 <ul>
 <li><a target="_blank" rel="noopener" href="https://www.cross-validated.com/Personal-website-with-Minimal-Mistakes-Jekyll-Theme-HOWTO-Part-I/">Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part I</a></li>
 <li><a target="_blank" rel="noopener" href="https://www.cross-validated.com/Personal-website-with-Minimal-Mistakes-Jekyll-Theme-HOWTO-Part-II/">Personal Website with Minimal Mistakes Jekyll Theme HOWTO - Part II</a></li>
@@ -406,7 +409,6 @@
 
   
   
-
 
 
 
@@ -628,49 +630,6 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
-
-  
-      <script>
-        if (!window.MathJax) {
-          window.MathJax = {
-            tex    : {
-              inlineMath: { '[+]': [['$', '$']] }
-            },
-            loader : {
-              load: ['ui/lazy']
-            },
-            options: {
-              renderActions: {
-                insertedScript: [200, () => {
-                  document.querySelectorAll('mjx-container').forEach(node => {
-                    let target = node.parentNode;
-                    if (target.nodeName.toLowerCase() === 'li') {
-                      target.parentNode.classList.add('has-jax');
-                    }
-                  });
-                }, '', false]
-              }
-            }
-          };
-        } else {
-          MathJax.startup.document.state(0);
-          MathJax.texReset();
-          MathJax.typeset();
-          MathJax.typesetPromise();
-        }
-
-        Fluid.events.registerRefreshCallback(function() {
-          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
-            MathJax.startup.document.state(0);
-            MathJax.texReset();
-            MathJax.typeset();
-            MathJax.typesetPromise();
-          }
-        });
-      </script>
-    
-
-  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 
