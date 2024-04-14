@@ -27,7 +27,7 @@
 <meta property="og:image" content="https://dingfen.github.io/img/PP/grid-of-thread-blocks.png">
 <meta property="og:image" content="https://dingfen.github.io/img/PP/index.jpg">
 <meta property="article:published_time" content="2021-10-08T04:00:00.000Z">
-<meta property="article:modified_time" content="2024-04-09T15:19:13.375Z">
+<meta property="article:modified_time" content="2024-04-12T12:12:32.698Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="CUDA">
 <meta name="twitter:card" content="summary_large_image">
@@ -226,7 +226,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.5k 字
+          3.6k 字
         
       </span>
     
@@ -279,7 +279,8 @@
               <p id="updated-time" class="note note-info" style="display: none">
                 
                   
-                    本文最后更新于 2024-04-09T23:19:13+08:00
+                    <!-- compatible with older versions-->
+                    更新于：2024-04-12T20:12:32+08:00
                   
                   
 
@@ -415,7 +416,7 @@
 <p>这其中，<code>cudaDeviceSynchronize()</code> 函数会将程序一直阻塞，直到前面所有请求的 GPU 任务全部执行完毕。因为主机在调用了核函数后，往往不会等待设备端任务完成就往下执行了，所以如果不加这一函数，可能会出现结果还未计算完成就被移动到主机的情况。</p>
 <h2 id="实践">实践</h2>
 <p>学完了这些以后，就可以写一些简单的 CUDA 小程序了，动手体验一下 GPU 的计算能力吧！之前我们已经给出了向量加法的部分代码。现在考虑一下数组求和问题。</p>
-<p>随机生成一个数组，需要求出该数组所有元素的和。在<a href="https://dingfen.github.io/mpi&amp;openmp/2020/12/17/PP02.html#%E4%BA%8C%E5%8F%89%E6%A0%91%E6%B1%82%E5%92%8C%E5%AE%9E%E7%8E%B0">之前的文章中</a>，介绍过二叉树求和的基本算法。这里可用 CUDA 再实现一次。</p>
+<p>随机生成一个数组，需要求出该数组所有元素的和。在[之前的文章中](<a href="https://dingfen.github.io/Parallel">https://dingfen.github.io/Parallel</a> Computing/2020/12/17/PP02.html#%E4%BA%8C%E5%8F%89%E6%A0%91%E6%B1%82%E5%92%8C%E5%AE%9E%E7%8E%B0)，介绍过二叉树求和的基本算法。这里可用 CUDA 再实现一次。</p>
 <p>略不同于之前文章的求和步骤，为了方便编程，不要求线程必须将相邻数组的元素相加，而是将步长一致的元素相加。在一开始时，规定步长为线程块大小的一半。<br>
 每次循环线程计算 <code>v[t] += v[t+n]</code> 的值，也就是将步长一致的累加起来。循环一次后，数组元素的部分和就出现在数组的前半部分。然后将步长缩小一半，那么下一次循环会将部分和集中到数组前半部分。如此往复，直到数组的和集中到了第0号元素上。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> N 256</span><br><br><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">psum</span><span class="hljs-params">(<span class="hljs-type">float</span>* v)</span></span><br><span class="hljs-function"></span>&#123; <br>    <span class="hljs-comment">// Thread index.</span><br>    <span class="hljs-type">int</span> t = threadIdx.x; <br>    <span class="hljs-comment">// Should be half the length of v.</span><br>    <span class="hljs-type">int</span> n = blockDim.x / <span class="hljs-number">2</span>; <br><br>    <span class="hljs-keyword">while</span> (n != <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-keyword">if</span>(t &lt; n)<br>            v[t] += v[t + n];  <br>        __syncthreads();    <br>        n /= <span class="hljs-number">2</span>; <br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
@@ -440,7 +441,7 @@
     
       <span class="category-chain">
         
-  <a href="/categories/MPI-OpenMP/" class="category-chain-item">MPI&amp;OpenMP</a>
+  <a href="/categories/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
   
   
 
@@ -484,6 +485,11 @@
         </div>
       
       
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2024年4月12日</div>
+        </div>
+      
       
         <div class="license-meta-item">
           <div>许可协议</div>
@@ -518,9 +524,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2021/10/20/2021-10-20-cuda-with-matmul/" title="CUDA 中的矩阵乘">
+                      <a href="/2021/10/20/2021-10-20-cuda-with-matmul/" title="长文介绍矩阵乘法——从自己手搓到CUTLASS实现">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">CUDA 中的矩阵乘</span>
+                        <span class="hidden-mobile">长文介绍矩阵乘法——从自己手搓到CUTLASS实现</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     

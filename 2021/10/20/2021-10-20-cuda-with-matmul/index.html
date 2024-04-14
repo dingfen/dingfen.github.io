@@ -16,28 +16,24 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="矩阵乘的分块">
+    <meta name="description" content="矩阵乘中很多计算步骤都十分相似且数据依赖不复杂，所以特别适合使用 GPU 来计算, 利用 GPU 内部的高度并行性，可极大地提高计算速度。使用 CUDA 完成矩阵乘法是一件非常有意义也有难度的事情。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="CUDA 中的矩阵乘">
+<meta property="og:title" content="长文介绍矩阵乘法——从自己手搓到CUTLASS实现">
 <meta property="og:url" content="https://dingfen.github.io/2021/10/20/2021-10-20-cuda-with-matmul/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="矩阵乘的分块">
+<meta property="og:description" content="矩阵乘中很多计算步骤都十分相似且数据依赖不复杂，所以特别适合使用 GPU 来计算, 利用 GPU 内部的高度并行性，可极大地提高计算速度。使用 CUDA 完成矩阵乘法是一件非常有意义也有难度的事情。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/matmul_inner_product.gif">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/matmul_tile2d.gif">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/matseg.png">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/matmul_outer_product.gif">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/matmul_tile2d_outer_product.gif">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/cutlass-logo-small.png">
 <meta property="article:published_time" content="2021-10-20T04:00:00.000Z">
-<meta property="article:modified_time" content="2024-04-11T17:14:29.513Z">
+<meta property="article:modified_time" content="2024-04-14T10:35:08.133Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="CUDA">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://dingfen.github.io/img/PP/matmul_inner_product.gif">
+<meta name="twitter:image" content="https://dingfen.github.io/img/PP/cutlass-logo-small.png">
   
   
   
-  <title>CUDA 中的矩阵乘 - 峰子的乐园</title>
+  <title>长文介绍矩阵乘法——从自己手搓到CUTLASS实现 - 峰子的乐园</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -199,13 +195,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+     style="background: url('/img/PP/cutlass-banner.png') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="CUDA 中的矩阵乘"></span>
+            <span id="subtitle" data-typed-text="长文介绍矩阵乘法——从自己手搓到CUTLASS实现"></span>
           
         </div>
 
@@ -228,7 +224,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.3k 字
+          4.9k 字
         
       </span>
     
@@ -239,7 +235,7 @@
         
         
         
-          37 分钟
+          41 分钟
         
       </span>
     
@@ -276,12 +272,13 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">CUDA 中的矩阵乘</h1>
+            <h1 id="seo-header">长文介绍矩阵乘法——从自己手搓到CUTLASS实现</h1>
             
               <p id="updated-time" class="note note-info" style="display: none">
                 
                   
-                    本文最后更新于 2024-04-12T01:14:29+08:00
+                    <!-- compatible with older versions-->
+                    更新于：2024-04-14T18:35:08+08:00
                   
                   
 
@@ -291,9 +288,7 @@
             
               <div class="markdown-body">
                 
-                <h1>CUDA 中的矩阵相乘</h1>
-<p>矩阵乘中很多计算步骤都十分相似且数据依赖不复杂，所以特别适合使用 GPU 来计算, 利用 GPU 内部的高度并行性，可极大地提高计算速度。使用 CUDA 完成矩阵乘法是一件非常有意义也有难度的事情。本篇博客从最简单最原始的实现出发，一步步地针对 CUDA 核函数进行优化，探讨 CUDA 矩阵乘中的优化 trick。</p>
-<p>这篇博客在 2024年2月 被更新了。</p>
+                <p>矩阵乘中很多计算步骤都十分相似且数据依赖不复杂，所以特别适合使用 GPU 来计算, 利用 GPU 内部的高度并行性，可极大地提高计算速度。使用 CUDA 完成矩阵乘法是一件非常有意义也有难度的事情。本篇博客从最简单最原始的实现出发，一步步地针对 CUDA 核函数进行优化，探讨 CUDA 矩阵乘中的优化与实现细节，并尝试总结出一般性原则，最后，我们粗略介绍了 cutlass 的矩阵乘步骤。</p>
 <h2 id="矩阵乘法-CPU-实现">矩阵乘法 CPU 实现</h2>
 <p>先看看在 CPU 下如何实现矩阵乘法，如我们在线性代数课上学的计算方式一样，代码逻辑非常简单，直接给出如下：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">matMulCpu</span><span class="hljs-params">(<span class="hljs-type">float</span>* c, <span class="hljs-type">float</span>* a, <span class="hljs-type">float</span>* b, <span class="hljs-type">int</span> m, <span class="hljs-type">int</span> n, <span class="hljs-type">int</span> k)</span> </span>&#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; m; i++) &#123;<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>; j &lt; n; j++) &#123;<br>            <span class="hljs-type">float</span> sum = <span class="hljs-number">0.0f</span>;<br>            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> l = <span class="hljs-number">0</span>; l &lt; k; l++) &#123;<br>                sum += a[i * k + l] * b[l * n + j];<br>            &#125;<br>            c[i * n + j] = sum;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
@@ -459,7 +454,7 @@ l0,-1344c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
 <p><img src="/img/PP/matseg.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>上文中我们使用的 <code>matmul_tile2d_shared_gpu</code> 核函数是用矩阵乘内积的方式来实现矩阵乘的。</p>
 <p>显然，矩阵乘内积和矩阵乘外积的计算次数是相同的。矩阵乘内积的好处是便于理解，每次得到的结果矩阵不会太大，做最后的结果聚合时通信开销也很低（只要把计算得到的矩阵填到对应位置就行），但坏处就是循环比较复杂（计算时需要双重循环产生最终的结果矩阵，可参考上面的动图），双重循环就意味着 GPU 会重复缓存相同行和列，增加了访存延迟，并可能导致潜在的缓存访问冲突等。</p>
-<p>那么我们花这些篇幅来说明矩阵乘内积和矩阵乘外积，目的为何？其实很简单，在遇到大矩阵相乘时，我们往往会使用矩阵外积完成矩阵乘法，因为矩阵乘外积只需要加载一遍矩阵就行了，减轻了内存带宽的压力。我们指出，当它要处理大矩阵乘（尤其 k 过大时），切分出来的子矩阵无法放入到共享内存中，需要 split k 方向，增加了程序的复杂度，因此这次我们选择用更简单的矩阵乘外积来实现核函数。</p>
+<p>那么我们花这些篇幅来说明矩阵乘内积和矩阵乘外积，目的为何？其实很简单，<u>在遇到大矩阵相乘时，我们往往会使用矩阵外积完成矩阵乘法，因为矩阵乘外积只需要加载一遍矩阵就行了，减轻了内存带宽的压力。</u>我们指出，当它要处理大矩阵乘（尤其 k 过大时），切分出来的子矩阵无法放入到共享内存中，需要 split k 方向，增加了程序的复杂度，因此这次我们选择用更简单的矩阵乘外积来实现核函数。</p>
 <p>也许会有这样的疑问：使用矩阵乘外积也会遇到 m 和 n 过大时，无法放入共享内存的问题，为何说矩阵乘外积实现要简单？<strong>因为矩阵乘内积的 split K 方向是在线程块内做的切分，实现起来比较复杂；而矩阵乘外积对 m 和 n 的切分是在线程块间和网格间做的，实现相对简单。</strong></p>
 <p>为更好地说明切分和计算过程，简化问题，<strong>我们先假定 grid 的大小能覆盖整个矩阵</strong>。将矩阵按照下动图的方式切分，那么每个小块的厚度就是线程块中 x 或 y 方向的线程数量。程序仅有一层循环，循环次数就是 <code>(k + BLOCK_SIZE - 1) / BLOCK_SIZE</code>。</p>
 <ol>
@@ -483,23 +478,29 @@ l0,-1344c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
 <p>聪明的读者可能已经想到，切分过大的 m 和 n 已经在 <code>matmul_tile2d_gpu</code> 矩阵乘内积做过了。的确，我们又可以使用矩阵乘内积的方法将矩阵沿两个方向切分，如下图。但这回，每个小条状的矩阵乘其实是由 <code>matmul_outer_product_gpu</code> 矩阵乘外积计算得到的。也就是说，面对这样的大矩阵，我们选择使用矩阵乘内积 + 矩阵乘外积的组合方式完成矩阵乘计算。</p>
 <p><img src="/img/PP/matmul_tile2d_outer_product.gif" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>仿照上面的动图步骤，我们将矩阵乘内积中对矩阵的二维分块代码拿过来，套在矩阵乘外积的外面，即可成功计算出大矩阵的乘法结果。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">int</span> tidy = threadIdx.y;<br><span class="hljs-type">int</span> tidx = threadIdx.x;<br><span class="hljs-type">int</span> thread_num_x = gridDim.x * blockDim.x;<br><span class="hljs-type">int</span> thread_num_y = gridDim.y * blockDim.y;<br><span class="hljs-type">int</span> x_grid_loop = (m + thread_num_x - <span class="hljs-number">1</span>) / thread_num_x;<br><span class="hljs-type">int</span> y_grid_loop = (n + thread_num_y - <span class="hljs-number">1</span>) / thread_num_y;<br><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> mm = <span class="hljs-number">0</span>; mm &lt; x_grid_loop; mm++) &#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> nn = <span class="hljs-number">0</span>; nn &lt; y_grid_loop; nn++) &#123;<br>        <span class="hljs-type">int</span> y = nn * thread_num_y + blockIdx.y * blockDim.y + threadIdx.y;<br>        <span class="hljs-type">int</span> x = mm * thread_num_x + blockIdx.x * blockDim.x + threadIdx.x;<br>        <span class="hljs-type">float</span> v = <span class="hljs-number">0.0f</span>;<br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">         * matrix outer product</span><br><span class="hljs-comment">         * matmul_outer_product_gpu() part</span><br><span class="hljs-comment">         */</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-keyword">template</span>&lt;<span class="hljs-type">int</span> BLOCK_SIZE&gt;</span><br><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">matmul_outer_product_tile2d_gpu</span><span class="hljs-params">(<span class="hljs-type">float</span>* c, <span class="hljs-type">float</span>* a, <span class="hljs-type">float</span>* b, <span class="hljs-type">int</span> m, <span class="hljs-type">int</span> n, <span class="hljs-type">int</span> k)</span> </span>&#123;<br><span class="hljs-type">int</span> tidy = threadIdx.y;<br><span class="hljs-type">int</span> tidx = threadIdx.x;<br><span class="hljs-type">int</span> thread_num_x = gridDim.x * blockDim.x;<br><span class="hljs-type">int</span> thread_num_y = gridDim.y * blockDim.y;<br><span class="hljs-type">int</span> x_grid_loop = (m + thread_num_x - <span class="hljs-number">1</span>) / thread_num_x;<br><span class="hljs-type">int</span> y_grid_loop = (n + thread_num_y - <span class="hljs-number">1</span>) / thread_num_y;<br><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> mm = <span class="hljs-number">0</span>; mm &lt; x_grid_loop; mm++) &#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> nn = <span class="hljs-number">0</span>; nn &lt; y_grid_loop; nn++) &#123;<br>        <span class="hljs-type">int</span> y = nn * thread_num_y + blockIdx.y * blockDim.y + threadIdx.y;<br>        <span class="hljs-type">int</span> x = mm * thread_num_x + blockIdx.x * blockDim.x + threadIdx.x;<br>        <span class="hljs-type">float</span> v = <span class="hljs-number">0.0f</span>;<br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">         * matrix outer product</span><br><span class="hljs-comment">         * matmul_outer_product_gpu() part</span><br><span class="hljs-comment">         */</span><br>    &#125;<br>&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>小结一下，<code>matmul_outer_product_tile2d_gpu</code> 函数的实现思路就是先将矩阵按照矩阵乘内积的思路分割（如下图上半），再对每个小分块，使用矩阵乘外积的思路分割（如下图下半部），即先内积后外积的划分原则。后续我们会发现流行的开源库对矩阵乘的分割方法也遵循着上述原则。</p>
+<p><img src="/img/PP/matsplit.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <h3 id="分析与性能测试">分析与性能测试</h3>
-<h2 id="题外话——cuBLAS-版本的实现">题外话——cuBLAS 版本的实现</h2>
-<p>cuBlAS 是 NVidia 对传统 BLAS（Basic Liner Algebra Subprograms，基本线性代数子程序库）的 GPU 实现，因为 BLAS 最初是由 FORTRAN 语言实现，为了最大程度地遵循传统，NVidia 在实现时，保留了大量 BLAS 和 Fortran 语言的特点，比如以列优先存储数组，索引从 1 开始计数等。但这些“落后于时代”的特征，往往给现代程序员制造了不少麻烦。</p>
-<p>cuBLAS 最早在 CUDA6.0 中出现，现在（v11.5.0）包含3类 API</p>
-<ul>
-<li>cuBLAS API</li>
-<li>cuBLASXt API</li>
-<li>cuBLASLt API</li>
-</ul>
-<p>若用户要使用 cuBLAS API，那么应该：</p>
-<ol>
-<li>分配矩阵或向量所需的 GPU 内存空间，并加载数据到 GPU 上</li>
-<li>调用所需的 cuBLAS 函数</li>
-<li>将计算结果传输至主机，cuBLAS API也提供一些帮助函数来写或者读取数据从 GPU 中</li>
-</ol>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++">a = (<span class="hljs-type">float</span>*) <span class="hljs-built_in">malloc</span>(m_size * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>));<br>b = (<span class="hljs-type">float</span>*) <span class="hljs-built_in">malloc</span>(m_size * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>));<br>c = (<span class="hljs-type">float</span>*) <span class="hljs-built_in">malloc</span>(m_size * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>));<br><br><span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span> **)&amp;dev_a, <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>) * m_size);<br><span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span> **)&amp;dev_b, <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>) * m_size);<br><span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span> **)&amp;dev_c, <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>) * m_size);<br><br><span class="hljs-comment">// initialize CUBLAS context</span><br>stat = <span class="hljs-built_in">cublasCreate</span>(&amp;handle);<br><br>stat = <span class="hljs-built_in">cublasSetMatrix</span>(r_size, r_size, <span class="hljs-built_in">sizeof</span>(*mat1), mat1, r_size, g_mat1, r_size);<br>stat = <span class="hljs-built_in">cublasSetMatrix</span>(r_size, r_size, <span class="hljs-built_in">sizeof</span>(*mat2), mat2, r_size, g_mat2, r_size);<br>stat = <span class="hljs-built_in">cublasSetMatrix</span>(r_size, r_size, <span class="hljs-built_in">sizeof</span>(*result), result, r_size, g_mat_result, r_size);<br><br><span class="hljs-type">float</span> al = <span class="hljs-number">1.0f</span>;<br><span class="hljs-type">float</span> bet = <span class="hljs-number">0.0f</span>;<br>    <br>stat = <span class="hljs-built_in">cublasSgemm</span>(handle, CUBLAS_OP_N, CUBLAS_OP_N, <br>        r_size, r_size, r_size, &amp;al, g_mat1, <br>        r_size, g_mat2, r_size, &amp;bet, g_mat_result, r_size);<br>stat = <span class="hljs-built_in">cublasGetMatrix</span>(r_size, r_size, <span class="hljs-built_in">sizeof</span>(*result), g_mat_result, r_size, result, r_size);<br></code></pre></td></tr></table></figure>
+<h2 id="cutlass-实现">cutlass 实现</h2>
+<p>前面我们花了很大的功夫，从最简单的 GPU 实现出发，通过一步步地引入循环分块、 GPU 共享内存、矩阵乘的内外积等方法，摸索出了一套计算大矩阵乘法的复杂的矩阵乘 GPU 实现，并总结了先内积再外积的分割原则。</p>
+<p>现在我们来看一下 <a target="_blank" rel="noopener" href="https://github.com/NVIDIA/cutlass/tree/main">cutlass</a> (CUDA Templates for Linear Algebra Subroutines)，它是一个基于 CUDA C++ 模板实现的 gemm CUDA kernel 开源库，它分别实现了各个层级和尺度的高性能 GEMM kernel，现被广泛用于各个大模型的底层计算中。我们来看看它是如何将矩阵一步步分割计算的：</p>
+<p><img src="/img/PP/cutlass_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<hr>
+<p>为了能充分压榨 GPU 的计算资源，cutlass 引入了一个设计精巧的 gemm 复杂层次结构，这个层次结构精确地与 <a target="_blank" rel="noopener" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#programming-model">CUDA 编程模型</a> 相配，如图上图所示。</p>
+<p>CUTLASS 将矩阵的计算过程自上到下分解成 Blocked GEMM, Thread Block Tile, Warp Tile, Thread Tile 四个层次，它们分别与 CUDA 编程模型中 Global grid, blocks, warps, threads 相对应。让我们一个一个来看：</p>
+<p>首先是 Blocked GEMM，cutlass 首先使用矩阵乘内积划分方式，将矩阵 A 的 m 方向和矩阵 B 的 n 方向切分，切分后的每块由每个 grid 完成计算。然后，每个 grid 中，计算时会使用矩阵乘外积的划分方式，grid 内的每个 block 负责完成其中高亮部分的计算，然后累加得到矩阵 C 的结果。可见，仍然遵循着先内积再外积的分割原则。</p>
+<p><img src="/img/PP/cutlass-blocks-gemm.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>然后是 Thread Block Tile。对于每个线程块，其线程数量一般是 128 的倍数，可参考<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/442304996">如何设置CUDA Kernel中的grid_size和block_size？</a>。以下图为例，线程块数量为 256 为例，已知 CUDA 中一个 warp 有 32 个线程，于是一个线程块可分出 8 个 warp。仍遵循先内积后外积的分割原则，A tile 被<br>
+一分为二，B tile 被一分为四，每个 warp 负责其中的一份计算。</p>
+<p><img src="/img/PP/cutlass-warp-gemm.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>而在 warp 计算内部，见下图。矩阵会被沿着 k 方向继续切割，执行矩阵乘外积的计算方式：</p>
+<p><img src="/img/PP/cutlass-warp-level-gemm-operation.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>Thread Tile 的有些复杂，因为一个 warp 只有 32 个线程，而要计算的元素有 128 组，所以每个线程需要执行 4 组元素的计算。对于 A fragment 和 B fragment 的分割仍遵循先内积的方法，而当一个线程将它负责的 4 组元素准备就绪后，会采用外积的方式执行计算。</p>
+<p><img src="/img/PP/cutlass-thread-gemm.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>从上面的分析和图片中可以明显看出，为了高效地完成大矩阵运算，cutlass 的工程师们不断地利用“先内积后外积”的原则，对矩阵进行分割，使之适配每一层的 CUDA 编程模型。</p>
+<p>cutlass 的性能虽然逊于 cublas（2.8版本的数据），但由于其开源、灵活可适配的优点，仍为业界广泛使用。</p>
+<p><img src="/img/PP/cutlass-2.8-cublas.png" srcset="/img/loading.gif" lazyload alt=""></p>
 
                 
               </div>
@@ -518,7 +519,7 @@ l0,-1344c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
     
       <span class="category-chain">
         
-  <a href="/categories/MPI-OpenMP/" class="category-chain-item">MPI&amp;OpenMP</a>
+  <a href="/categories/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
   
   
 
@@ -545,7 +546,7 @@ l0,-1344c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>CUDA 中的矩阵乘</div>
+      <div>长文介绍矩阵乘法——从自己手搓到CUTLASS实现</div>
       <div>https://dingfen.github.io/2021/10/20/2021-10-20-cuda-with-matmul/</div>
     </div>
     <div class="license-meta">
@@ -561,6 +562,11 @@ l0,-1344c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
           <div>2021年10月20日</div>
         </div>
       
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2024年4月14日</div>
+        </div>
       
       
         <div class="license-meta-item">
