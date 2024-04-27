@@ -16,21 +16,21 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="加速深度学习推理和训练的新引擎">
+    <meta name="description" content="加速深度学习推理和训练的新引擎（持续更新中）">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深入探索 deepspeed">
-<meta property="og:url" content="https://dingfen.github.io/2021/10/20/2024-4-24-LLM-from-pretrained/index.html">
+<meta property="og:url" content="https://dingfen.github.io/2024/04/20/2024-4-20-deepspeed/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="加速深度学习推理和训练的新引擎">
+<meta property="og:description" content="加速深度学习推理和训练的新引擎（持续更新中）">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/cutlass-logo-small.png">
-<meta property="article:published_time" content="2021-10-20T04:00:00.000Z">
-<meta property="article:modified_time" content="2024-04-24T14:40:53.848Z">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed-logo.svg">
+<meta property="article:published_time" content="2024-04-20T02:00:00.000Z">
+<meta property="article:modified_time" content="2024-04-27T08:00:17.614Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="deepspeed">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://dingfen.github.io/img/PP/cutlass-logo-small.png">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/deepspeed-logo.svg">
   
   
   
@@ -196,7 +196,7 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('/img/PP/cutlass-banner.png') no-repeat center center; background-size: cover;">
+     style="background: url('/img/LLM/deepspeed-four.png') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
@@ -213,8 +213,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2021-10-20 12:00" pubdate>
-          2021年10月20日 中午
+        <time datetime="2024-04-20 10:00" pubdate>
+          2024年4月20日 上午
         </time>
       </span>
     
@@ -225,7 +225,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          153 字
+          1.6k 字
         
       </span>
     
@@ -236,7 +236,7 @@
         
         
         
-          2 分钟
+          14 分钟
         
       </span>
     
@@ -279,7 +279,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-04-24T22:40:53+08:00
+                    更新于：2024-04-27T16:00:17+08:00
                   
                   
 
@@ -289,42 +289,73 @@
             
               <div class="markdown-body">
                 
-                <p>如何在没有权重数据的情况下运行大模型？</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@classmethod</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">from_pretrained</span>(<span class="hljs-params"></span><br><span class="hljs-params">    cls,</span><br><span class="hljs-params">    pretrained_model_name_or_path: <span class="hljs-type">Optional</span>[<span class="hljs-type">Union</span>[<span class="hljs-built_in">str</span>, os.PathLike]],</span><br><span class="hljs-params">    *model_args,</span><br><span class="hljs-params">    config: <span class="hljs-type">Optional</span>[<span class="hljs-type">Union</span>[PretrainedConfig, <span class="hljs-built_in">str</span>, os.PathLike]] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    cache_dir: <span class="hljs-type">Optional</span>[<span class="hljs-type">Union</span>[<span class="hljs-built_in">str</span>, os.PathLike]] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    ignore_mismatched_sizes: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">False</span>,</span><br><span class="hljs-params">    force_download: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">False</span>,</span><br><span class="hljs-params">    local_files_only: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">False</span>,</span><br><span class="hljs-params">    token: <span class="hljs-type">Optional</span>[<span class="hljs-type">Union</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">bool</span>]] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    revision: <span class="hljs-built_in">str</span> = <span class="hljs-string">&quot;main&quot;</span>,</span><br><span class="hljs-params">    use_safetensors: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    **kwargs,</span><br><span class="hljs-params"></span>):<br></code></pre></td></tr></table></figure>
-<p><code>pretrained_model_name_or_path (</code>str<code>or</code>os.PathLike<code>, *optional*):</code> Can be either:</p>
+                <p>推理和训练大模型通常需要巨大的计算资源和时间。微软推出 <a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed">DeepSpeed</a> 深度学习优化库，旨在解决这一问题。从本篇博客中，我们将深入了解 deepspeed，并理解微软的工程师们是如何通过对内存、并行度、通信的优化，从而极大地加速了大模型的推理和训练过程。</p>
+<h2 id="DeepSpeed-简介">DeepSpeed 简介</h2>
+<p>DeepSpeed 是一个专门为深度学习模型训练设计的优化库。它实现了 <a target="_blank" rel="noopener" href="https://arxiv.org/abs/1910.02054">ZeRO 论文</a>中描述的所有内容。它是目前开源社区中广泛使用的训练大模型的框架。一般地，它支持以下三个阶段（stage）：</p>
 <ul>
-<li>A string, the <em>model id</em> of a pretrained model hosted inside a model repo on <a target="_blank" rel="noopener" href="http://huggingface.co">huggingface.co</a>.<br>
-Valid model ids can be located at the root-level, like <code>bert-base-uncased</code>, or namespaced under a<br>
-user or organization name, like <code>dbmdz/bert-base-german-cased</code>.</li>
-<li>A path to a <em>directory</em> containing model weights saved using<br>
-[<code>~PreTrainedModel.save_pretrained</code>], e.g., <code>./my_model_directory/</code>.</li>
-<li>A path or url to a <em>tensorflow index checkpoint file</em> (e.g, <code>./tf_model/model.ckpt.index</code>). In<br>
-this case, <code>from_tf</code> should be set to <code>True</code> and a configuration object should be provided as<br>
-<code>config</code> argument. This loading path is slower than converting the TensorFlow checkpoint in a<br>
-PyTorch model using the provided conversion scripts and loading the PyTorch model afterwards.</li>
-<li>A path or url to a model folder containing a <em>flax checkpoint file</em> in <em>.msgpack</em> format (e.g,<br>
-<code>./flax_model/</code> containing <code>flax_model.msgpack</code>). In this case, <code>from_flax</code> should be set to<br>
-<code>True</code>.</li>
-<li><strong><code>None</code> if you are both providing the configuration and state dictionary (resp. with keyword<br>
-arguments <code>config</code> and <code>state_dict</code>).</strong></li>
+<li>ZeRO stage 1：优化器状态分区</li>
+<li>ZeRO stage 2：梯度分区</li>
+<li>ZeRO stage 3：参数分区</li>
 </ul>
-<p><code>config (</code>Union[PretrainedConfig, str, os.PathLike]<code>, *optional*):</code> Can be either:</p>
+<p>上述三个阶段给了用户更多更灵活的训练选择。用户可参考<a target="_blank" rel="noopener" href="https://huggingface.co/docs/transformers/main/deepspeed#select-a-zero-stage">官方文档</a>，选择适配自己硬件条件的训练方式。一般而言，花费的内存越少，训练时间越长；花费的内存越多，训练时间越短。</p>
+<p>| Fastest	| Memory efficient |<br>
+| ZeRO-1	| ZeRO-3 + offload |<br>
+| ZeRO-2	| ZeRO-3 |<br>
+| ZeRO-2 + offload	| ZeRO-2 + offload |<br>
+| ZeRO-3	| ZeRO-2 |<br>
+| ZeRO-3 + offload	| ZeRO-1 |</p>
+<p>此外，它还支持了以下功能：</p>
 <ul>
-<li>an instance of a class derived from [<code>PretrainedConfig</code>],</li>
-<li>a string or path valid as input to [<code>~PretrainedConfig.from_pretrained</code>].</li>
+<li>自定义混合精度训练处理。使用类似 PyTorch AMP 的方式，也可以选择使用类似 Apex 的方式</li>
+<li>基于 CUDA 扩展的快速优化器。主要优化器包括 Adam、AdamW、OneBitAdam 和 Lamb</li>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2101.06840">ZeRO-Offload</a> 到 CPU 和 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2104.07857.pdf">NVMe</a>。对于显存空间不足的用户，可以先将一部分数据卸载到主存或者 NVMe 上。</li>
 </ul>
-<p>Configuration for the model to use instead of an automatically loaded configuration. Configuration can<br>
-be automatically loaded when:</p>
-<ul>
-<li>The model is a model provided by the library (loaded with the <em>model id</em> string of a pretrained<br>
-model).</li>
-<li>The model was saved using [<code>~PreTrainedModel.save_pretrained</code>] and is reloaded by supplying the<br>
-save directory.</li>
-<li>The model is loaded by supplying a local directory as <code>pretrained_model_name_or_path</code> and a<br>
-configuration JSON file named <em>config.json</em> is found in the directory.</li>
-</ul>
-<p><code>state_dict (</code>Dict[str, torch.Tensor]<code>, *optional*):</code> A state dictionary to use instead of a state dictionary loaded from saved weights file.</p>
-<p>This option can be used if you want to create a model from a pretrained configuration but load your own weights. In this case though, you should check if using [<code>~PreTrainedModel.save_pretrained</code>] and [<code>~PreTrainedModel.from_pretrained</code>] is not a simpler option.</p>
+<h2 id="deepspeed-之大模型推理">deepspeed 之大模型推理</h2>
+<p>网络上使用 deepspeed 做训练的博客汗牛充栋，但使用它做推理的博客就比较少，因此我先从推理开始探索 deepspeed 的内部机制。但在这之前，我们需要先用 deepspeed 跑一个模型：</p>
+<h3 id="使用-deepspeed-完成模型推理">使用 deepspeed 完成模型推理</h3>
+<p>首先，需要安装 deepspeed transformers库：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install deepspeed transformers<br></code></pre></td></tr></table></figure>
+<p>然后，准备好模型和权重数据。完成推理代码，以模型 t5-v1_1-small 为例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># create the model</span><br><span class="hljs-keyword">import</span> transformers<br><span class="hljs-keyword">from</span> transformers.models.t5.modeling_t5 <span class="hljs-keyword">import</span> T5Block<br><br><span class="hljs-keyword">import</span> deepspeed<br><br>pipe = pipeline(<span class="hljs-string">&quot;text2text-generation&quot;</span>, model=<span class="hljs-string">&quot;google/t5-v1_1-small&quot;</span>, device=local_rank)<br><span class="hljs-comment"># Initialize the DeepSpeed-Inference engine</span><br>pipe.model = deepspeed.init_inference(<br>    pipe.model,<br>    tensor_parallel=&#123;<span class="hljs-string">&quot;tp_size&quot;</span>: world_size&#125;,<br>    dtype=torch.<span class="hljs-built_in">float</span>,<br>    injection_policy=&#123;T5Block: (<span class="hljs-string">&#x27;SelfAttention.o&#x27;</span>, <span class="hljs-string">&#x27;EncDecAttention.o&#x27;</span>, <span class="hljs-string">&#x27;DenseReluDense.wo&#x27;</span>)&#125;<br>)<br>output = pipe(<span class="hljs-string">&#x27;Input String&#x27;</span>)<br></code></pre></td></tr></table></figure>
+<p>然后就是启动 deepspeed 完成推理：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">deepspeed --num_gpus 2 inference.py<br></code></pre></td></tr></table></figure>
+<p>有时还需要完成 DeepSpeed 配置文件（通常为<code>ds_config.json</code>），指定使用的推理优化策略、参数等资源等，详细的配置说明可参考<a target="_blank" rel="noopener" href="https://www.deepspeed.ai/docs/config-json/">官方文档</a>。</p>
+<h3 id="deepspeed-加速推理的原理">deepspeed 加速推理的原理</h3>
+<p>DeepSpeed ZeRO-3 也可以用于推理，因为它允许将单个GPU无法加载的大模型加载到多个GPU上。</p>
+<p>DeepSpeed的核心就在于，GPU显存不够，CPU内存来凑。</p>
+<p>比方说，我们只有一张 10GB 的 GPU，那么我们很可能需要借助 80GB 的 CPU，才能够训练一个大模型。</p>
+<p>看一下官网对于这个理念的描述：</p>
+<blockquote>
+<p>Why would you want to use DeepSpeed with just one GPU?<br>
+It has a ZeRO-offload feature which can delegate some computations and memory to the host’s CPU and RAM, and thus leave more GPU resources for model’s needs - e.g. larger batch size, or enabling a fitting of a very big model which normally won’t fit.<br>
+It provides a smart GPU memory management system, that minimizes memory fragmentation, which again allows you to fit bigger models and data batches.</p>
+</blockquote>
+<p>具体点说，DeepSpeed将当前时刻，训练模型用不到的参数，缓存到CPU中，等到要用到了，再从CPU挪到GPU。这里的“参数”，不仅指的是模型参数，还指optimizer、梯度等。</p>
+<p>越多的参数挪到CPU上，GPU的负担就越小；但随之的代价就是，更为频繁的CPU，GPU交互，极大增加了训练推理的时间开销。因此，DeepSpeed使用的一个核心要义是，时间开销和显存占用的权衡。</p>
+<p>有关于offload<br>
+上述参数中，最重要的一个就是&quot;offload_optimizer&quot;。如上述所示，我们将其”device“设置成了cpu，DeepSpeed就会按照之前提到过的ZeRO操作，在训练过程中，将优化器状态分配到cpu上。从而降低单张GPU的memory占用。</p>
+<p>有关于overlap_comm<br>
+另外一个需要提到的参数是overlap_comm。简单地理解，它控制着多个memory上进程之间通信的buffer的大小。这个值越大，进程之间通信越快，模型训练速度也会提升，但相应的显存占用也会变大；反之亦然。</p>
+<p>因此，overlap_comm也是一个需要进行一定权衡的参数。</p>
+<p>有关于auto<br>
+我们可以发现，上述大量参数被设置为auto。由于DeepSpeed目前已经被集成到了HuggingFace Transformer框架。而DeepSpeed的很多参数，和Transformer的Trainer参数设置是一模一样的，例如，“optimizer”，“scheduler”。因此，官方推荐将很多常用的模型训练参数，设置为auto，在使用Trainer进行训练的时候，这些值都会自动更新为Trainer中的设置，或者帮你自动计算。</p>
+<p>DeepSpeed的加速原理主要基于以下几个方面的优化：</p>
+<ol>
+<li>
+<p><strong>内存优化</strong>：DeepSpeed通过自动混合精度训练、梯度累积和内存卸载等技术，有效减少了训练过程中的内存占用。这使得大型模型能够在有限的硬件资源上进行训练，同时提高了训练速度和稳定性。</p>
+</li>
+<li>
+<p><strong>模型并行化</strong>：DeepSpeed支持多种模型并行化策略，如张量切片和管道并行。通过将模型拆分成多个部分并在多个GPU或节点上进行并行计算，DeepSpeed能够充分利用硬件资源，加速训练过程。</p>
+</li>
+<li>
+<p><strong>通信优化</strong>：针对分布式训练中的通信瓶颈问题，DeepSpeed采用了梯度压缩、稀疏通信等技术，减少了通信开销，提高了训练效率。</p>
+</li>
+<li>
+<p><strong>硬件感知优化</strong>：DeepSpeed能够根据硬件的特性进行相应的优化。例如，它可以利用NVIDIA的Ampere架构中的Tensor Cores进行高效的矩阵乘法运算，或者利用多核CPU进行并行数据处理。</p>
+</li>
+</ol>
+<h2 id="四、总结">四、总结</h2>
+<p>DeepSpeed作为一款强大的深度学习优化库，为研究人员和开发者提供了高效的训练解决方案。它通过内存优化、模型并行化、通信优化以及硬件感知优化等技术，显著提升了深度学习模型的训练速度和效率。使用DeepSpeed，您可以更快速地探索新的模型架构和算法，加速科研和工程实践中的深度学习应用。无论是单个GPU的训练任务还是多节点集群的大规模训练任务，DeepSpeed都能为您带来卓越的性能提升和便捷的使用体验。</p>
 
                 
               </div>
@@ -373,7 +404,7 @@ configuration JSON file named <em>config.json</em> is found in the directory.</l
   <div class="license-box my-3">
     <div class="license-title">
       <div>深入探索 deepspeed</div>
-      <div>https://dingfen.github.io/2021/10/20/2024-4-24-LLM-from-pretrained/</div>
+      <div>https://dingfen.github.io/2024/04/20/2024-4-20-deepspeed/</div>
     </div>
     <div class="license-meta">
       
@@ -385,13 +416,13 @@ configuration JSON file named <em>config.json</em> is found in the directory.</l
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2021年10月20日</div>
+          <div>2024年4月20日</div>
         </div>
       
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年4月24日</div>
+          <div>2024年4月27日</div>
         </div>
       
       
@@ -428,18 +459,12 @@ configuration JSON file named <em>config.json</em> is found in the directory.</l
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2021/10/20/2024-4-20-deepspeed/" title="深入探索 deepspeed">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">深入探索 deepspeed</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2021/10/08/2021-10-8-cuda-beginer/" title="CUDA 快速入门">
-                        <span class="hidden-mobile">CUDA 快速入门</span>
+                      <a href="/2024/04/09/2024-4-10-hello-world/" title="将博客切换到 hexo Fluid 主题">
+                        <span class="hidden-mobile">将博客切换到 hexo Fluid 主题</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
