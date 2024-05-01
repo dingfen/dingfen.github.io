@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
 <meta property="article:published_time" content="2024-04-20T02:00:00.000Z">
-<meta property="article:modified_time" content="2024-04-27T08:13:37.059Z">
+<meta property="article:modified_time" content="2024-05-01T15:51:04.619Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="deepspeed">
@@ -225,7 +225,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.6k 字
+          1.9k 字
         
       </span>
     
@@ -236,7 +236,7 @@
         
         
         
-          14 分钟
+          17 分钟
         
       </span>
     
@@ -279,7 +279,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-04-27T16:13:37+08:00
+                    更新于：2024-05-01T23:51:04+08:00
                   
                   
 
@@ -298,27 +298,54 @@
 <li>ZeRO stage 3：参数分区</li>
 </ul>
 <p>上述三个阶段给了用户更多更灵活的训练选择。用户可参考<a target="_blank" rel="noopener" href="https://huggingface.co/docs/transformers/main/deepspeed#select-a-zero-stage">官方文档</a>，选择适配自己硬件条件的训练方式。一般而言，花费的内存越少，训练时间越长；花费的内存越多，训练时间越短。</p>
-<p>| Fastest	| Memory efficient |<br>
-| ZeRO-1	| ZeRO-3 + offload |<br>
-| ZeRO-2	| ZeRO-3 |<br>
-| ZeRO-2 + offload	| ZeRO-2 + offload |<br>
-| ZeRO-3	| ZeRO-2 |<br>
-| ZeRO-3 + offload	| ZeRO-1 |</p>
+<table>
+<thead>
+<tr>
+<th>Fastest</th>
+<th>Memory efficient</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZeRO-1</td>
+<td>ZeRO-3 + offload</td>
+</tr>
+<tr>
+<td>ZeRO-2</td>
+<td>ZeRO-3</td>
+</tr>
+<tr>
+<td>ZeRO-2 + offload</td>
+<td>ZeRO-2 + offload</td>
+</tr>
+<tr>
+<td>ZeRO-3</td>
+<td>ZeRO-2</td>
+</tr>
+<tr>
+<td>ZeRO-3 + offload</td>
+<td>ZeRO-1</td>
+</tr>
+</tbody>
+</table>
 <p>此外，它还支持了以下功能：</p>
 <ul>
 <li>自定义混合精度训练处理。使用类似 PyTorch AMP 的方式，也可以选择使用类似 Apex 的方式</li>
 <li>基于 CUDA 扩展的快速优化器。主要优化器包括 Adam、AdamW、OneBitAdam 和 Lamb</li>
-<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2101.06840">ZeRO-Offload</a> 到 CPU 和 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2104.07857.pdf">NVMe</a>。对于显存空间不足的用户，可以先将一部分数据卸载到主存或者 NVMe 上。</li>
+<li>将部分训练参数卸载到 CPU 主存或者 SSD 上，适合于显存空间不足的用户。详细可参考<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2101.06840">ZeRO-Offload</a> 到 CPU 和 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2104.07857.pdf">NVMe</a>这两篇论文。</li>
 </ul>
 <h2 id="deepspeed-之大模型推理">deepspeed 之大模型推理</h2>
 <p>网络上使用 deepspeed 做训练的博客汗牛充栋，但使用它做推理的博客就比较少，因此我先从推理开始探索 deepspeed 的内部机制。但在这之前，我们需要先用 deepspeed 跑一个模型：</p>
 <h3 id="使用-deepspeed-完成模型推理">使用 deepspeed 完成模型推理</h3>
-<p>首先，需要安装 deepspeed transformers库：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install deepspeed transformers<br></code></pre></td></tr></table></figure>
-<p>然后，准备好模型和权重数据。完成推理代码，以模型 t5-v1_1-small 为例：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># create the model</span><br><span class="hljs-keyword">import</span> transformers<br><span class="hljs-keyword">from</span> transformers.models.t5.modeling_t5 <span class="hljs-keyword">import</span> T5Block<br><br><span class="hljs-keyword">import</span> deepspeed<br><br>pipe = pipeline(<span class="hljs-string">&quot;text2text-generation&quot;</span>, model=<span class="hljs-string">&quot;google/t5-v1_1-small&quot;</span>, device=local_rank)<br><span class="hljs-comment"># Initialize the DeepSpeed-Inference engine</span><br>pipe.model = deepspeed.init_inference(<br>    pipe.model,<br>    tensor_parallel=&#123;<span class="hljs-string">&quot;tp_size&quot;</span>: world_size&#125;,<br>    dtype=torch.<span class="hljs-built_in">float</span>,<br>    injection_policy=&#123;T5Block: (<span class="hljs-string">&#x27;SelfAttention.o&#x27;</span>, <span class="hljs-string">&#x27;EncDecAttention.o&#x27;</span>, <span class="hljs-string">&#x27;DenseReluDense.wo&#x27;</span>)&#125;<br>)<br>output = pipe(<span class="hljs-string">&#x27;Input String&#x27;</span>)<br></code></pre></td></tr></table></figure>
+<p>首先，需要进入 NGC docker，再安装 deepspeed transformers 等库：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker run --init -it --name <span class="hljs-variable">$&#123;NAME&#125;</span> nvcr.io/nvidia/pytorch:23.03-py3 /bin/bash<br>pip install deepspeed transformers sentencepiece mpi4py<br></code></pre></td></tr></table></figure>
+<p>然后，准备好模型和权重数据。敲入以下推理代码，以模型 <code>t5-v1_1-small</code> 为例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># create the model</span><br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> pipeline<br><span class="hljs-keyword">from</span> transformers.models.t5.modeling_t5 <span class="hljs-keyword">import</span> T5Block<br><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> deepspeed<br><br>local_rank = <span class="hljs-built_in">int</span>(os.environ[<span class="hljs-string">&quot;LOCAL_RANK&quot;</span>])<br>world_size = <span class="hljs-built_in">int</span>(os.environ[<span class="hljs-string">&quot;WORLD_SIZE&quot;</span>])<br>deepspeed.init_distributed()<br>pipe = pipeline(<span class="hljs-string">&quot;text2text-generation&quot;</span>, model=<span class="hljs-string">&quot;google/t5-v1_1-small&quot;</span>, device=local_rank)<br><span class="hljs-comment"># Initialize the DeepSpeed-Inference engine</span><br>pipe.model = deepspeed.init_inference(<br>    pipe.model,<br>    tensor_parallel=&#123;<span class="hljs-string">&quot;tp_size&quot;</span>: world_size&#125;,<br>    dtype=torch.<span class="hljs-built_in">float</span>,<br>    injection_policy=&#123;T5Block: (<span class="hljs-string">&#x27;SelfAttention.o&#x27;</span>, <span class="hljs-string">&#x27;EncDecAttention.o&#x27;</span>, <span class="hljs-string">&#x27;DenseReluDense.wo&#x27;</span>)&#125;<br>)<br>output = pipe(<span class="hljs-string">&#x27;Input String&#x27;</span>)<br></code></pre></td></tr></table></figure>
 <p>然后就是启动 deepspeed 完成推理：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">deepspeed --num_gpus 2 inference.py<br></code></pre></td></tr></table></figure>
+<p>简单地解释一下 <code>deepspeed.init_inference</code> 这个重要的 API。该 API 装入并初始化推理模型。第一个参数是传入的推理模型；<code>tensor_parallel</code> 传入推理时用的张量并行度参数，一般就是显卡的数量；第三个参数是运算类型；第四个 <code>injection_policy</code> 参数给那些不支持 deepspeed 内核的模型准备的，用户需要手动指定模型的“注入策略”，即 Transformer 层的两个特定线性层：1）attention output GeMM 和 2）layer output GeMM。deepspeed 内部会根据用户提供的层，增加必要的 all-reduce 通信以便将各个 GPU 上的计算结果合并起来。上面的 <code>t5-v1_1-small</code> 就是例子。当然不是所有的 transformers 库内的模型都可以这样做，<a target="_blank" rel="noopener" href="https://www.deepspeed.ai/tutorials/automatic-tensor-parallelism/#supported-models">官方文档中列出了目前支持的模型</a></p>
+<p>但具体到 <code>injection_policy</code> 是如何确定的，暂没有确切的定论，我猜测是根据 <a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/t5/modeling_t5.py#L646">t5 模型源码里的 <code>T5Block</code> 类</a>确定，最终实现类内的 <code>SelfAttention.o</code>, <code>EncDecAttention.o</code>, <code>DenseReluDense.wo</code> 计算并行。</p>
+<p>此外，还有一些比较重要的参数，但在这个例子中没有体现，比如 <code>replace_with_kernel_inject=True</code> 可以将模型内的部分 kernel 替换成 deepspeed 内开发的高性能 kernel。</p>
 <p>有时还需要完成 DeepSpeed 配置文件（通常为<code>ds_config.json</code>），指定使用的推理优化策略、参数等资源等，详细的配置说明可参考<a target="_blank" rel="noopener" href="https://www.deepspeed.ai/docs/config-json/">官方文档</a>。</p>
 <h3 id="deepspeed-加速推理的原理">deepspeed 加速推理的原理</h3>
 <p>DeepSpeed ZeRO-3 也可以用于推理，因为它允许将单个GPU无法加载的大模型加载到多个GPU上。</p>
@@ -422,7 +449,7 @@ It provides a smart GPU memory management system, that minimizes memory fragment
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年4月27日</div>
+          <div>2024年5月1日</div>
         </div>
       
       
