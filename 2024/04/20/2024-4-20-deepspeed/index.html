@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
 <meta property="article:published_time" content="2024-04-20T02:00:00.000Z">
-<meta property="article:modified_time" content="2024-05-03T09:39:21.170Z">
+<meta property="article:modified_time" content="2024-05-14T14:03:28.087Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="deepspeed">
@@ -225,7 +225,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.2k 字
+          3.7k 字
         
       </span>
     
@@ -236,7 +236,7 @@
         
         
         
-          27 分钟
+          31 分钟
         
       </span>
     
@@ -279,7 +279,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-05-03T17:39:21+08:00
+                    更新于：2024-05-14T22:03:28+08:00
                   
                   
 
@@ -336,7 +336,22 @@
 <li>将部分训练参数卸载到 CPU 主存或者 SSD 上，适合于显存空间不足的用户。详细可参考<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2101.06840">ZeRO-Offload</a> 到 CPU 和 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2104.07857.pdf">NVMe</a>这两篇论文。</li>
 </ul>
 <h1>deepspeed 之大模型推理</h1>
-<p>网络上使用 deepspeed 做训练的博客汗牛充栋，但使用它做推理的博客就比较少，因此我先从推理开始探索 deepspeed 的内部机制。但在这之前，我们需要先用 deepspeed 跑一个模型：</p>
+<p>网络上使用 deepspeed 做训练的博客汗牛充栋，但使用它做推理的博客就比较少，因此我先从推理开始探索 deepspeed 的内部机制。从<a target="_blank" rel="noopener" href="https://www.microsoft.com/en-us/research/blog/deepspeed-accelerating-large-scale-model-inference-and-training-via-system-optimizations-and-compression/">官网博客上</a>可以了解到，deepspeed 推理有如下几个特点：</p>
+<ol>
+<li>deepspeed 将推理的多个算子融合为单一的算子 kernel，从而减少 kernel 间的启动开销和访问内存的延迟。与 JIT、XLA 或其他项目的算子融合相比，deepspeed 的算子融合力度更猛，它融合了element-wise、矩阵乘、转置、归约到一个 kernel。与未融合相比，以上几个部分的加速比可分别达到 1.5x, 2.9x, 3x, 1.2x</li>
+</ol>
+<p><img src="https://www.microsoft.com/en-us/research/uploads/prod/2021/05/Fig1_DeepSpeed5_Blog.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<ol start="2">
+<li>
+<p>为推理定制化的 GeMM 。小 batch size 会导致维度更瘦小 GeMM 运算操作：即参与 Gemm 运算的矩阵都是权重参数比激活大得多的矩阵，并且每个参数的总计算量受批量大小的限制。此时，GeMM 的性能主要取决于从主内存读取参数所花费的时间，即内存瓶颈，而不是 GPU 的计算瓶颈。因此，为了达到最佳性能，deepspeed 对推理内核进行了微调，以最大限度地利用内存带宽来加载参数。这项优化使得 DeepSpeed 推理内核在批量大小为 1-10 的推理工作负载上，实现比 NVIDIA cuBLAS 库高出 20% 的性能。</p>
+</li>
+<li>
+<p>使用通用和专用的 Transformer 内核。deepspeed 推理部分使用了两种 transformers 内核来实现前文提到的两个优化方案：</p>
+</li>
+</ol>
+<p>Generic Transformer：使用深度融合技术，将 Transformer 中的各个 PyTorch 操作（如 LayerNorm、Softmax 和 bias-add）替换为高度优化的 DeepSpeed 版本。<br>
+Specialized Transformer：进一步利用深度融合技术，创建了融合调度，不仅在PyTorch的宏操作符（如Softmax）内部融合微操作符，还在多个宏操作符（如 Softmax 和 LayerNorm，以及转置操作和甚至 GeMM）之间进行融合。Specialized Transformer 内核的融合结构上图所示。</p>
+<p>但在深究这些高大上的优化原理和实现之前，我们需要先用 deepspeed 跑一个模型，以此作为一个驱动例子，带领我们一步步深入下去：</p>
 <h2 id="使用-deepspeed-完成模型推理">使用 deepspeed 完成模型推理</h2>
 <h3 id="具体步骤">具体步骤</h3>
 <p>首先，需要进入 NGC docker，再安装 deepspeed transformers 等库：</p>
@@ -417,6 +432,7 @@
 <p>目前 deepspeed 支持的 <code>replace_policy</code> 有很多，具体见其内部实现的 <a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed/blob/v0.14.2/deepspeed/module_inject/replace_policy.py">replace_policy.py 文件</a>，而 <code>generic_policies</code> 适用的有 <code>UNetPolicy</code>, <code>VAEPolicy</code>。它们具体实现有兴趣的读者可自己查阅代码。</p>
 <h1>总结</h1>
 <p>DeepSpeed 作为一款强大的深度学习优化库，为研究人员和开发者提供了高效的训练解决方案。网上许多极客对该框架进行了研究，但并不是很深入，多是翻译搬运，少了自己的理解和对源码的深入挖掘。接下来我还会对 deepspeed 展开详细的研究。</p>
+<p>下一步，我会继续沿着 DeepSpeed 推理的路径出发，研究其推理的高性能</p>
 
                 
               </div>
@@ -483,7 +499,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年5月3日</div>
+          <div>2024年5月14日</div>
         </div>
       
       
