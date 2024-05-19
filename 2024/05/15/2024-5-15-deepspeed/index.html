@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
 <meta property="article:published_time" content="2024-05-15T15:26:00.000Z">
-<meta property="article:modified_time" content="2024-05-15T17:12:34.271Z">
+<meta property="article:modified_time" content="2024-05-18T03:10:41.835Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="deepspeed">
@@ -225,7 +225,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          193 字
+          215 字
         
       </span>
     
@@ -279,7 +279,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-05-16T01:12:34+08:00
+                    更新于：2024-05-18T11:10:41+08:00
                   
                   
 
@@ -292,7 +292,7 @@
                 <p><a href="https://dingfen.github.io/2024/04/20/2024-4-20-deepspeed/">上篇博客</a>我罗列了 deepspeed 针对推理的优化方法，并详细分析了 deepspeed 推理引擎中对网络层的替换，张量并行等实现。那么 deepspeed 自己内部实现的高性能网络层究竟有何蹊跷，能比一般的网络层更快？让我们从源码开始看起。</p>
 <p>注：本篇博文的源码分析基于 deepspeed-0.14.2。</p>
 <h1>接上篇博客</h1>
-<p>上篇博客我们提到对于一些常见的主流大模型，deepspeed 其内部自己实现了一套高性能的代码。只要 deepspeed 检测到用户使用了这些模型，那么就会启动模型网络结构的替换功能，用高效的实现替代部分或全部网络结构。</p>
+<p>上篇博客我们提到对于一些常见的主流大模型，deepspeed 其内部自己实现了一套高性能的代码。只要 deepspeed 检测到用户使用了这些模型，那么就会启动模型网络结构的替换功能，用高效的实现替代部分或全部网络结构。以 llama2 模型为例，<code>DeepSpeedLlama2Inference</code> 就是 deepspeed 内针对 llama2 开发的高性能推理模型。</p>
 
                 
               </div>
@@ -359,7 +359,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年5月16日</div>
+          <div>2024年5月18日</div>
         </div>
       
       
