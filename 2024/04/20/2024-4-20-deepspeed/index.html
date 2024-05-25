@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
 <meta property="article:published_time" content="2024-04-20T02:00:00.000Z">
-<meta property="article:modified_time" content="2024-05-18T03:08:43.305Z">
+<meta property="article:modified_time" content="2024-05-25T11:58:09.232Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="deepspeed">
@@ -225,7 +225,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.1k 字
+          4.2k 字
         
       </span>
     
@@ -236,7 +236,7 @@
         
         
         
-          35 分钟
+          36 分钟
         
       </span>
     
@@ -279,7 +279,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-05-18T11:08:43+08:00
+                    更新于：2024-05-25T19:58:09+08:00
                   
                   
 
@@ -405,13 +405,14 @@ Specialized Transformer：进一步利用深度融合技术，创建了融合调
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">replace_transformer_layer</span>(<span class="hljs-params">orig_layer_impl, model, checkpoint_dict, config, model_config</span>):<br>  <span class="hljs-comment"># ...</span><br>  mp_replace = ReplaceWithTensorSlicing(mp_group=config.tensor_parallel.tp_group,<br>                                        mp_size=config.tensor_parallel.tp_size)<br>  <span class="hljs-keyword">if</span> checkpoint_dict <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> config.replace_with_kernel_inject:<br>    <span class="hljs-comment"># AutoTP shard loading</span><br>    checkpoint = checkpoint_dict[<span class="hljs-string">&quot;checkpoints&quot;</span>]<br>    pbar = tqdm.tqdm(total=<span class="hljs-built_in">len</span>(checkpoint), desc=<span class="hljs-string">f&quot;Loading <span class="hljs-subst">&#123;<span class="hljs-built_in">len</span>(checkpoint)&#125;</span> checkpoint shards&quot;</span>)<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-built_in">len</span>(checkpoint)):<br>      checkpoint_file = os.path.join(config.base_dir, checkpoint[i])<br>      replaced_module = replace_module(model=model,<br>                                        orig_class=orig_layer_impl,<br>                                        replace_fn=replace_fn,<br>                                        _replace_policy=config.injection_policy_tuple,<br>                                        checkpoint=checkpoint_file)<br>    replaced_module = set_lm_head(replaced_module)<br>  <span class="hljs-keyword">else</span>:<br>    replaced_module = replace_module(model=model,<br>                                    orig_class=orig_layer_impl,<br>                                    replace_fn=replace_fn,<br>                                    _replace_policy=config.injection_policy_tuple)<br>  <span class="hljs-comment"># ...</span><br></code></pre></td></tr></table></figure>
 <p>上面的源码中，最重要的就是这个函数：<code>replace_module</code>。它负责扫描整个模型，找到所有是 <code>orig_layer_impl</code> 类的实例，然后调用 <code>replace_fn</code> 函数将它们替换掉，<code>_replace_policy</code> 则是针对该 layer 层的优化策略。</p>
 <p>这些源码篇幅较长，不适合全部粘贴放在此处，建议读者将本博客与 <a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed/blob/master/deepspeed/module_inject/replace_module.py#L573-L608">deepspeed replace_module的源码</a>一起服用，效果更佳。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">replace_module</span>(<span class="hljs-params">model, orig_class, replace_fn, _replace_policy, checkpoint=<span class="hljs-literal">None</span></span>):<br>  <span class="hljs-string">&quot;&quot;&quot; Scan the model for instances of ``orig_clas:`` to replace using ``replace_fn``.</span><br><span class="hljs-string">  Arguments:</span><br><span class="hljs-string">      model (torch.nn.Module): the model to augment</span><br><span class="hljs-string">      orig_class (torch.nn.Module): the module to search for</span><br><span class="hljs-string">      replace_fn (method): a method to convert instances of ``orig_class`` to the</span><br><span class="hljs-string">                            desired type and return a new instance.</span><br><span class="hljs-string">  Returns:</span><br><span class="hljs-string">      A modified ``model``.</span><br><span class="hljs-string">  &quot;&quot;&quot;</span><br></code></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">replace_module</span>(<span class="hljs-params">model, orig_class, replace_fn, _replace_policy, checkpoint=<span class="hljs-literal">None</span></span>):<br>  <span class="hljs-string">&quot;&quot;&quot; Scan the model for instances of ``orig_clas:`` to replace using ``replace_fn``.</span><br><span class="hljs-string">  Arguments:</span><br><span class="hljs-string">      model (torch.nn.Module): the model to augment</span><br><span class="hljs-string">      orig_class (torch.nn.Module): the module to search for</span><br><span class="hljs-string">      replace_fn (method): a method to convert instances of ``orig_class`` to the</span><br><span class="hljs-string">                            desired type and return a new instance.</span><br><span class="hljs-string">  Returns:</span><br><span class="hljs-string">      A modified ``model``.</span><br><span class="hljs-string">  &quot;&quot;&quot;</span><br>    <span class="hljs-comment"># ... #</span><br>    policy = &#123;&#125;<br>    <span class="hljs-keyword">if</span> orig_class <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        policy.update(&#123;orig_class: (replace_fn, _replace_policy)&#125;)<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-keyword">for</span> plcy <span class="hljs-keyword">in</span> replace_policies:<br>            <span class="hljs-comment"># instantiate a throw-away policy in order to populate the _orig_layer_class</span><br>            _ = plcy(<span class="hljs-literal">None</span>)<br>            <span class="hljs-keyword">if</span> <span class="hljs-built_in">isinstance</span>(plcy._orig_layer_class, <span class="hljs-built_in">list</span>):<br>                <span class="hljs-keyword">for</span> orig_layer_class <span class="hljs-keyword">in</span> plcy._orig_layer_class:<br>                    policy.update(&#123;orig_layer_class: (replace_fn, plcy)&#125;)<br>            <span class="hljs-keyword">elif</span> plcy._orig_layer_class <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>                policy.update(&#123;plcy._orig_layer_class: (replace_fn, plcy)&#125;)<br>    replaced_module, _ = _replace_module(model, policy, state_dict=sd)<br>    <span class="hljs-keyword">return</span> replaced_module<br></code></pre></td></tr></table></figure>
 <p>总的来说，<code>replace_module</code> 函数的流程是这样的：</p>
 <ol>
-<li>根据输入的 <code>orig_class</code> 类名，寻找 deepspeed 中支持的 policy，如果有 deepspeed 能支持的 policy 分割法，那么直接就使用，否则保留。</li>
+<li>根据输入的 <code>orig_class</code> 类名（本例中的 <code>T5Block</code>），寻找 deepspeed 中支持的 policy，如果有 deepspeed 能支持的 policy 分割法，那么直接就使用，否则保留。</li>
 <li>进入 <code>_replace_module</code> 函数，开始递归处理模型。它会遍历 <code>model</code> 中所有的 layer，并找到 policy 中 layer 层</li>
 <li>对于每个找到的 layer，调用 <code>replace_fn</code> 函数做替换</li>
 <li>对于不在 policy 中的 layer 层，使用自动化张量并行(AutoTP)的方式处理，并递归调用 <code>_replace_module</code>，处理其子层。</li>
+<li>若没有输入 <code>orig_class</code> 类名，那么 <code>replace_module</code> 函数会将所有 deepspeed 内支持的 policy 都存放到字典中，并在递归函数中逐个去比对，比对成功后替换。</li>
 </ol>
 <p>那么 <code>replace_fn</code> 函数如何将原来的 layer 层做替换的呢？对于“高性能 kernel 注入”的模式，使用 <code>replace_with_policy</code>；对于“用户指定的张量并行策略”模式，使用 <code>replace_wo_policy</code> 处理：</p>
 <h4 id="replace-wo-policy">replace_wo_policy</h4>
@@ -505,7 +506,7 @@ Specialized Transformer：进一步利用深度融合技术，创建了融合调
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年5月18日</div>
+          <div>2024年5月25日</div>
         </div>
       
       
@@ -541,6 +542,12 @@ Specialized Transformer：进一步利用深度融合技术，创建了融合调
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2024/05/15/2024-5-15-deepspeed/" title="深入探索 deepspeed（二）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入探索 deepspeed（二）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
