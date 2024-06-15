@@ -1,0 +1,755 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="加速深度学习推理的高性能kernel">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入探索 deepspeed（三）">
+<meta property="og:url" content="https://dingfen.github.io/2024/06/12/2024-6-12-deepspeed/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="加速深度学习推理的高性能kernel">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
+<meta property="article:published_time" content="2024-06-12T14:03:00.000Z">
+<meta property="article:modified_time" content="2024-06-13T15:59:47.945Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="deepspeed">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
+  
+  
+  
+  <title>深入探索 deepspeed（三） - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/LLM/deepspeed-four.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入探索 deepspeed（三）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-06-12 22:03" pubdate>
+          2024年6月12日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入探索 deepspeed（三）</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2024-06-13T23:59:47+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>DeepSpeed 高性能算子实现</h1>
+<p><a href="https://dingfen.github.io/2024/05/15/2024-5-15-deepspeed/">上篇博客</a>的最后，我发现 deepspeed inference v1 版本的算子代码似乎有精度问题。笔者在 A100 上用 deepspeed 推理模型，当打开 <code>replace_with_kernel_inject</code> 后，模型使用上面介绍的算子做推理后，其回答会变成一些乱码，或者是胡言乱语。本人怀疑是 v1 高性能算子代码实现有精度问题，进而导致模型回答混乱。</p>
+<p>因此，这里不再介绍 deepspeed inference v1 版本的算子代码，连带着上篇博客前面部分的所有内容都有可能过时甚至是错误的😢。</p>
+<p>注：本篇博文的源码分析基于 deepspeed-0.14.2。</p>
+<p>这次，我们来看看 deepspeed 推理 v2 版本有哪些新花样。还是从 llama2 模型出发，先看看整个模型架构中，高性能 kernel 的使用情况：</p>
+<p><img src="/img/LLM/llama2inferencemodel.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="参差不齐的嵌入操作">参差不齐的嵌入操作</h2>
+<p>为了充分释放 GPU 的性能，模型会将若干个用户输入的请求做批处理。然而，用户输入到大模型内的请求语句必然是长短不一的，此时常规做法是，模型通过填充（padding）的手段将请求中的输入张量填充为相同的形状，再做进一步处理。但这样做还是浪费了不少 GPU 的性能，为此，deepspeed 提供了类似 vllm 中的动态批处理功能（dynamic batching）。它将同一模型执行的多个请求组合在一起，并且不需要填充短请求，就可直接进行批处理，从而获得更大的吞吐量。</p>
+<p><img src="/img/LLM/vllm_dynamic_batch_1.png" srcset="/img/loading.gif" lazyload alt=""><br>
+<img src="/img/LLM/vllm_dynamic_batch_2.png" srcset="/img/loading.gif" lazyload alt="vllm 的动态批处理"></p>
+<p>因为缺少了填充对齐，因此取名“参差不齐的嵌入操作”，英文名 RaggedEmbedding，这恰好对应了类名 <code>DSRaggedEmbedding</code>。而要想充分理解 <code>DSRaggedEmbedding</code> 的实现，我们必须从与它密切相关的类 <code>RaggedBatchWrapper</code> 和 <code>RaggedEmbeddingKernel</code> 开始聊起。</p>
+<h3 id="RaggedBatchWrapper">RaggedBatchWrapper</h3>
+<p>虽然这类只是一个 wrapper，仅封装了相关的值而已。但我觉得这内部的值可以很好地帮助我们理解动态批处理的实现细节。因此在这里展开讲讲。</p>
+<p>为了让更清楚明白，举一个简单的例子：假设现在模型正在处理 8 个 token，这 8 个 token 分别位于 3 个 sequence 中：</p>
+<p><img src="/img/LLM/raggedEmbedding.png" srcset="/img/loading.gif" lazyload alt="RaggedBatch Embedding所需要的数据结构"></p>
+<p>其中，sequence 指的是每个请求读入的句子，<code>_token_to_seq_storage</code> 存放了 token_id 映射到 seq_id 的表，通过它每个 token 可以找到自己的 seq。<code>_inflight_seq_descriptor</code> 存放了每个正在处理的句子的详细信息，包括开始 token 位置，总token 数，目前看见的 token 等。</p>
+<h3 id="RaggedEmbeddingKernel">RaggedEmbeddingKernel</h3>
+<p><code>RaggedEmbeddingKernel</code> 是对 CUDA 实现的算子的一个 python 包装，封装了 <code>ragged_embed</code> C++ 函数的实现：</p>
+<p>下面就是 <code>DSRaggedEmbedding</code> 的前推函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python">self._ragged_embed = RaggedEmbeddingKernel(self._config.residual_dtype, torch.int32,<br>                                           self._config.embedding_dim)<br><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, ragged_batch: RaggedBatchWrapper, word_embeddings: torch.Tensor,</span><br><span class="hljs-params">            position_embeddings: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span></span>) -&gt; torch.Tensor:<br>    output = empty_from(self._output, (ragged_batch.tensor_toks, self._config.embedding_dim))<br>    self._ragged_embed(output, ragged_batch, word_embeddings,<br>                       position_embed_weight=position_embeddings,<br>                       position_embed_offset=self.embed_offset)<br>    <span class="hljs-keyword">return</span> output<br></code></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">__call__</span>(<span class="hljs-params">self, embedded_tokens: torch.Tensor, ragged_wrapper: RaggedBatchWrapper,</span><br><span class="hljs-params">             embedding_weight: torch.Tensor, position_embed_weight: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">             position_embed_offset: <span class="hljs-built_in">int</span> = <span class="hljs-number">0</span></span>) -&gt; torch.Tensor:<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        embedded_tokens (torch.Tensor): Output tensor of shape [num_tokens, embed_dim]</span><br><span class="hljs-string">        ragged_wrapper (RaggedBatchWrapper): Wrapper for the ragged batch.</span><br><span class="hljs-string">        embedding_weight (torch.Tensor): Embedding table of shape [vocab_size, embed_dim]</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    self.kernel(embedded_tokens, ragged_wrapper.input_ids(),<br>                embedding_weight, position_embed_weight, position_embed_offset,<br>                ragged_wrapper.batch_metadata_buffer(), ragged_wrapper.inflight_seq_descriptors(),<br>                ragged_wrapper.tokens_to_seq(), ragged_wrapper.kv_ptrs())<br>    <span class="hljs-keyword">return</span> embedded_tokens<br></code></pre></td></tr></table></figure>
+<hr>
+<p>在开始看 C++ 实现之前，我想带大家先回顾一下 embedding 的计算方式，避免被代码绕晕。</p>
+<p>NLP 中的 Embedding 原理就是将文本编码为紧凑的高维向量。而为了将原先文本中 token 的 one-hot 编码转换成更紧凑稠密的高维向量，往往需要做一次矩阵乘法：如下图所示例子，利用稠密的浮点向量来表示每个 token，再利用向量间的余弦值来表示词义关系。</p>
+<p><img src="/img/LLM/tokenEmbeddingExample.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>因为注意力机制无法发现词序关系，LLM 中还更多地加入了位置编码，比如 transformer 论文中经典的 sin-cos 位置函数表示词序位置，他们计算后会直接加到 embedding 向量中。</p>
+<h3 id="C-实现">C++ 实现</h3>
+<p>对于 <code>DSRaggedEmbedding</code> 中维护的 embedding 相关的张量，他们在主机上也相应地维护了一个 shadow 张量。这些 shadow 张量是在构造 ragged embedding 时直接填充的。在条件允许的前提下，应分配 shadow 张量，以方便张量快速复制到 GPU 上。因此，我们需要尽可能地降低主机到 GPU 的数据传输延迟，来看看 deepspeed 是如何实现的：</p>
+<h4 id="快速分配主机内存">快速分配主机内存</h4>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span>* <span class="hljs-title">get_cuda_fast_buffer</span><span class="hljs-params">(<span class="hljs-type">int64_t</span> size)</span> </span>&#123;<br>    <span class="hljs-type">void</span>* buffer_ptr;<br>    <span class="hljs-comment">// Host allocation flags that should minimize the host -&gt; accelerator copy latency</span><br>    <span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> alloc_flags =<br>        cudaHostAllocPortable | cudaHostAllocMapped | cudaHostAllocWriteCombined;<br>    <span class="hljs-built_in">cudaHostAlloc</span>(&amp;buffer_ptr, size, alloc_flags);<br>    <span class="hljs-keyword">return</span> buffer_ptr;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>其中：</p>
+<ul>
+<li><code>cudaHostAllocPortable</code> 该 flag 要求返回的主机内存将被<strong>所有CUDA context</strong>视为 pinned memory，而不仅仅执行了分配内存的那个 context。这里与 <code>cudaMallocHost()</code> 有点区别，<a target="_blank" rel="noopener" href="https://forums.developer.nvidia.com/t/cudamallochost-vs-cudahostalloc-cudahostallocportable/30274">参看 NVIDIA 社区解答</a></li>
+<li><code>cudaHostAllocMapped</code> 该 flag 要求分配的空间必须映射到 CUDA 地址空间中，并且设备内存指针可以被 <code>cudaHostGetDevicePointer()</code> 来调用得到。</li>
+<li><code>cudaHostAllocWriteCombined</code> 该 flag 要求分配的内存必须执行组合写(Write-Combined)策略。在某些系统配置上，WC 内存可以通过 PCI Express 总线更快地传输，但大多数 CPU 无法有效地读取。对于那些 CPU 写入，设备通过 pinned memory 或主机-&gt;设备传输读出的操作来说，WC 内存是一个很好的选择。</li>
+</ul>
+<h4 id="ragged-embed">ragged_embed</h4>
+<p>接下来我们来看被封装的 <code>ragged_embed</code> C++ 代码。参考上文给出的 Embedding 原理示例，可以很清楚地明白各个变量的含义。在使用了 <code>DISPATCH_FOR_FLOAT</code> 和 <code>DISPATCH_FOR_INT</code> 这两个宏做变量类型的定义后，CUDA 代码被正式启动了。</p>
+<p><img src="/img/LLM/ragged_embed_code.png" srcset="/img/loading.gif" lazyload alt="ragged_embed 代码"></p>
+<h4 id="ragged-embed-CUDA-kernel">ragged embed CUDA kernel</h4>
+<p>使用 CUDA 加速程序计算，首先要明确如何安排我们手中的大量线程。从之前的 Embedding 示例中，敏感的读者已经注意到，只需要按照 <code>input_ids</code> 内值读取 <code>embedding_weight</code> 的那一行就行了，不需要真的去计算矩阵乘。因此事实上 CUDA 程序需要注意的根本不是计算，而是读取和写入。</p>
+<p>deepspeed 是这样安排他们的线程的。首先，让每个线程负责 load <code>embedding_weight</code> 矩阵中一行的一小块颗粒（红圈部分），这一颗粒大小被定义为 <code>embed::granularity = 16</code> 个字节。而一个线程块内有 512 个线程，因此一个线程块可以 load 一共 512 * 16 个字节的数据。对应的，一个 token 的向量维度有 <code>embed_dim</code>，所以需要 <code>parallel_blocks</code> 个线程块 load。这组成了线程块排布的 x 方向，一行 x 方向的线程块完成一个 token 的向量读取，而 y 方向的线程块数量对应着 token 的总数。</p>
+<p><img src="/img/LLM/launch_ragged_embed_kernel.png" srcset="/img/loading.gif" lazyload alt="launch_ragged_embed_kernel"></p>
+<p><img src="/img/LLM/ragged_embed_kernel.png" srcset="/img/loading.gif" lazyload alt="ragged_embed_kernel"></p>
+<p>用之前的 Embedding 举例，要处理 “I have four tokens” 这句话，首先找到了这句话对应 token 的行号，填入 <code>input_ids</code> 为 [3, 1, 4, 2]。CUDA 程序执行时，会产生四行 x 方向的线程块，其中第一行的所有线程块负责从 <code>embedding_weight</code> 中装载第 3 行（对应 <code>token_value</code>）的所有数据，读入到输出的 <code>embedded_tokens</code> 矩阵中的第 1 行（对应 <code>token_idx</code>）。</p>
+<h4 id="数据读取与写入">数据读取与写入</h4>
+<p>现在我们来看一下该 kernel 的性能情况。由于整个 kernel 几乎没有运算，因此主要的瓶颈必然发生在读写数据上，为了尽可能快地将数据读入和写出，deepspeed 安排 warp 内的线程读取了连续的 32 * 16 = 512 个字节的数据。整数倍的内存读取容易实现 cacheline 的对齐。</p>
+<p>而对于下面这个 API 则大有学问。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// usage</span><br>mem_access::<span class="hljs-built_in">load_global</span>&lt;embed::granularity&gt;(reg_buf, embedding_row + channel_offset)<br><br><span class="hljs-comment">// declaration</span><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-type">int</span> AccessSize, LoadPolicy policy = LoadPolicy::CacheAll&gt;<br>__device__ __forceinline__ <span class="hljs-type">void</span> <span class="hljs-built_in">load_global</span>(<span class="hljs-type">void</span>* dst, <span class="hljs-type">const</span> <span class="hljs-type">void</span>* src);<br><br><span class="hljs-comment">// definition</span><br><span class="hljs-keyword">template</span> &lt;&gt;<br>__device__ __forceinline__ <span class="hljs-type">void</span> <span class="hljs-built_in">load_global</span>&lt;<span class="hljs-number">16</span>&gt;(<span class="hljs-type">void</span>* dst, <span class="hljs-type">const</span> <span class="hljs-type">void</span>* src)<br>&#123;<br>    uint4* data = <span class="hljs-built_in">reinterpret_cast</span>&lt;uint4*&gt;(dst);<br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> PTX_AVAILABLE</span><br>    <span class="hljs-function"><span class="hljs-keyword">asm</span> <span class="hljs-title">volatile</span><span class="hljs-params">(<span class="hljs-string">&quot;ld.global.ca.v4.u32 &#123;%0, %1, %2, %3&#125;, [%4];\n&quot;</span></span></span><br><span class="hljs-params"><span class="hljs-function">                 : <span class="hljs-string">&quot;=r&quot;</span>(data[<span class="hljs-number">0</span>].x), <span class="hljs-string">&quot;=r&quot;</span>(data[<span class="hljs-number">0</span>].y), <span class="hljs-string">&quot;=r&quot;</span>(data[<span class="hljs-number">0</span>].z), <span class="hljs-string">&quot;=r&quot;</span>(data[<span class="hljs-number">0</span>].w)</span></span><br><span class="hljs-params"><span class="hljs-function">                 : <span class="hljs-string">&quot;l&quot;</span>(src))</span></span>;<br><span class="hljs-meta">#<span class="hljs-keyword">else</span></span><br>    <span class="hljs-type">const</span> uint4* src_cast = <span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">const</span> uint4*&gt;(src);<br>    data[<span class="hljs-number">0</span>] = src_cast[<span class="hljs-number">0</span>];<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>&#125;<br><br><span class="hljs-comment">// the uint4 definition</span><br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">__device_builtin__</span> __builtin_align__(<span class="hljs-number">16</span>) uint4<br>&#123;<br>    <span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> x, y, z, w;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p><code>uint4</code> 表示 4 个 <code>unsigned int</code> 变量按照 16 个字节对齐的方式排布在内存中，总共有 16 个字节大小，正好对应了之前 embed 移动的颗粒度，因此 <code>load_global</code> 在实现时直接使用了 <code>uint4</code> 进行数据搬运。而对应到 PTX 汇编代码，有若干不同的模板实例化来实现：</p>
+<ul>
+<li>ld.global.ca.v4.u32 Cache at all levels 所有缓存上都过一遍</li>
+<li>ld.global.cg.v4.u32 CacheGlobal  Cache at L2 only 仅在 L2 缓存上存放</li>
+<li>ld.global.cs.v4.u32 CacheStreaming Cache with evict first policy 使用优先驱逐的方式缓存。即先后读入的数据入流水一般从缓存走过，但片叶不沾身，尽量不影响 cache 其他的数据</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/deepspeed/" class="print-no-link">#deepspeed</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入探索 deepspeed（三）</div>
+      <div>https://dingfen.github.io/2024/06/12/2024-6-12-deepspeed/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年6月12日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2024年6月13日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/29/2024-5-29-LLM-perf/" title="大模型性能优化的总结和分享">
+                        <span class="hidden-mobile">大模型性能优化的总结和分享</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
