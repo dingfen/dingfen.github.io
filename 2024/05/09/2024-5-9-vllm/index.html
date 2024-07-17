@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/PP/cutlass-logo-small.png">
 <meta property="article:published_time" content="2024-05-09T13:10:00.000Z">
-<meta property="article:modified_time" content="2024-05-09T13:33:01.512Z">
+<meta property="article:modified_time" content="2024-07-15T16:04:26.429Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta name="twitter:card" content="summary_large_image">
@@ -224,7 +224,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          163 字
+          428 字
         
       </span>
     
@@ -235,7 +235,7 @@
         
         
         
-          2 分钟
+          4 分钟
         
       </span>
     
@@ -278,7 +278,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-05-09T21:33:01+08:00
+                    更新于：2024-07-16T00:04:26+08:00
                   
                   
 
@@ -294,6 +294,75 @@
 <p>相应的，KV cache 的计算公式会被改写。</p>
 <h2 id="VLLM-代码实现">VLLM 代码实现</h2>
 <p>PagedAttention 类实现了之前上文介绍的算法。该层的输入是 query key 和 value 三个向量。我总结了一下该层所完成的工作流程：</p>
+<h2 id="CUDA-代码一览">CUDA 代码一览</h2>
+<p>以 llama3-8b 为例，</p>
+<h3 id="paged-attention-kernel-的声明">paged_attention_kernel 的声明</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span>&lt;<br>  <span class="hljs-keyword">typename</span> <span class="hljs-type">scalar_t</span>,<br>  <span class="hljs-keyword">typename</span> <span class="hljs-type">cache_t</span>,<br>  <span class="hljs-type">int</span> HEAD_SIZE,<br>  <span class="hljs-type">int</span> BLOCK_SIZE,<br>  <span class="hljs-type">int</span> NUM_THREADS,<br>  <span class="hljs-type">bool</span> IS_FP8_E5M2_KV_CACHE,<br>  <span class="hljs-type">int</span> PARTITION_SIZE = <span class="hljs-number">0</span>&gt; <span class="hljs-comment">// Zero means no partitioning.</span><br>__device__ <span class="hljs-type">void</span> <span class="hljs-built_in">paged_attention_kernel</span>(<br>  <span class="hljs-type">float</span>* __restrict__ exp_sums,           <span class="hljs-comment">// [num_seqs, num_heads, max_num_partitions]</span><br>  <span class="hljs-type">float</span>* __restrict__ max_logits,         <span class="hljs-comment">// [num_seqs, num_heads, max_num_partitions]</span><br>  <span class="hljs-type">scalar_t</span>* __restrict__ out,             <span class="hljs-comment">// [num_seqs, num_heads, max_num_partitions, head_size]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">scalar_t</span>* __restrict__ q,         <span class="hljs-comment">// [num_seqs, num_heads, head_size]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">cache_t</span>* __restrict__ k_cache,    <span class="hljs-comment">// [num_blocks, num_kv_heads, head_size/x, block_size, x]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">cache_t</span>* __restrict__ v_cache,    <span class="hljs-comment">// [num_blocks, num_kv_heads, head_size, block_size]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> num_kv_heads,                 <span class="hljs-comment">// [num_heads]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">float</span> scale,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span>* __restrict__ block_tables,   <span class="hljs-comment">// [num_seqs, max_num_blocks_per_seq]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span>* __restrict__ context_lens,   <span class="hljs-comment">// [num_seqs]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> max_num_blocks_per_seq,<br>  <span class="hljs-type">const</span> <span class="hljs-type">float</span>* __restrict__ alibi_slopes, <span class="hljs-comment">// [num_heads]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> q_stride,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> kv_block_stride,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> kv_head_stride)<br></code></pre></td></tr></table></figure>
+<p>从注释中获得的有用信息：</p>
+<ul>
+<li>out [num_seqs, num_heads, head_size]</li>
+<li>Q [num_seqs, num_heads, head_size]</li>
+<li>KCache [num_blocks, num_kv_heads, head_size/x, block_size, x]</li>
+<li>VCache [num_blocks, num_kv_heads, head_size, block_size]</li>
+</ul>
+<h3 id="参数与数据结构">参数与数据结构</h3>
+<p>参数解释与 llama3-8b 的相关数据情况：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>llama3-8b 中的值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>num_seq</td>
+<td>4(batch_size)</td>
+<td>该推理中 sequence 个数</td>
+</tr>
+<tr>
+<td>num_head</td>
+<td>32</td>
+<td>Query 的 head 个数</td>
+</tr>
+<tr>
+<td>num_kv_heads</td>
+<td>8</td>
+<td>Key、Value 的 head 个数</td>
+</tr>
+<tr>
+<td>hidden_size</td>
+<td>4096</td>
+<td>输入的嵌入张量维度</td>
+</tr>
+<tr>
+<td>head_size</td>
+<td>128</td>
+<td>每个注意力头的维度大小</td>
+</tr>
+<tr>
+<td>x</td>
+<td>2(FP16)</td>
+<td>数据类型的字节数</td>
+</tr>
+<tr>
+<td>scaling</td>
+<td>128^-0.5</td>
+<td>注意力公式中的scale值</td>
+</tr>
+</tbody>
+</table>
+<p>Paged Attention 算法相关的辅助数据结构：</p>
+<p>block_size KVCache page 的最高维，KVCache 是若干个 page 的集合，每个 page 存（block_size, num_head，head_size）个 K、V 的元素。<br>
+context_lens [num_seqs] 用于变长<br>
+max_num_blocks_per_seq<br>
+q_stride<br>
+kv_block_stride<br>
+kv_head_stride</p>
+<p>q_vecs</p>
+<p>head_mapping [num_heads] 用于 MQA, GQA，确定用的 KV_head</p>
+<p>block_tables [num_seqs, max_num_blocks_per_seq] block_tables 映射表，表示每个 sequence 映射到哪几个 block 上</p>
 
                 
               </div>
@@ -358,7 +427,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年5月9日</div>
+          <div>2024年7月16日</div>
         </div>
       
       

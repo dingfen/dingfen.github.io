@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
 <meta property="article:published_time" content="2024-05-15T15:26:00.000Z">
-<meta property="article:modified_time" content="2024-06-12T14:02:46.493Z">
+<meta property="article:modified_time" content="2024-07-15T15:36:44.069Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="deepspeed">
@@ -279,7 +279,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-06-12T22:02:46+08:00
+                    更新于：2024-07-15T23:36:44+08:00
                   
                   
 
@@ -367,10 +367,8 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
 <p><img src="/img/LLM/deepspeed_mlp.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p><img src="https://www.microsoft.com/en-us/research/uploads/prod/2021/05/Fig1_DeepSpeed5_Blog.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
 <h2 id="高性能算子的实现">高性能算子的实现</h2>
-<p>deepspeed inference v1 版本的算子代码似乎有精度问题。笔者在 A100 上用 deepspeed 推理模型，打开 <code>replace_with_kernel_inject</code> 后，模型使用上面介绍的算子做推理后，其回答会变成一些乱码，或者是胡言乱语。</p>
-<p>因此，这里不再介绍 deepspeed inference v1 版本的算子代码，连带着本篇博客前面部分的所有内容都有可能过时甚至是错误的😢。</p>
-<p>但没关系，下次可以再看看 v2 版本的实现。</p>
-
+<p>deepspeed inference v1 版本的算子代码很多。我这里只挑重点，一起来看一下 Attention 部分。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs C++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">launch_bias_add_transform_0213</span><span class="hljs-params">(T* output, T* k_cache, T* v_cache,<span class="hljs-type">const</span> T* vals, <span class="hljs-type">const</span> T* bias,</span></span><br><span class="hljs-params"><span class="hljs-function">      <span class="hljs-type">int</span> batch_size, <span class="hljs-type">int</span> seq_length, <span class="hljs-type">unsigned</span> seq_offset, <span class="hljs-type">int</span> all_tokens, <span class="hljs-type">int</span> hidden_dim,</span></span><br><span class="hljs-params"><span class="hljs-function">      <span class="hljs-type">int</span> heads, <span class="hljs-type">int</span> num_kv, <span class="hljs-type">int</span> rotary_dim, <span class="hljs-type">bool</span> rotate_half, <span class="hljs-type">bool</span> rotate_every_two,</span></span><br><span class="hljs-params"><span class="hljs-function">      cudaStream_t stream, <span class="hljs-type">int</span> trans_count, <span class="hljs-type">int</span> max_out_tokens, <span class="hljs-type">float</span> rope_theta)</span> </span>&#123;<br>    hidden_dim &gt;&gt;= <span class="hljs-number">3</span>;<br>    <span class="hljs-type">int</span> head_ext = <span class="hljs-number">1</span>;  <span class="hljs-comment">// (hidden_dim - 1) / MAX_THREADS + 1;</span><br>    <span class="hljs-function">dim3 <span class="hljs-title">block_dim</span><span class="hljs-params">(hidden_dim / heads, (heads / head_ext))</span></span>;<br>    <span class="hljs-function">dim3 <span class="hljs-title">grid_dim</span><span class="hljs-params">(batch_size, seq_length, (trans_count * head_ext))</span></span>;<br>    bias_add_transform_0213&lt;&lt;&lt;grid_dim, block_dim, <span class="hljs-number">0</span>, stream&gt;&gt;&gt;(output,<br>                                                                k_cache,<br>                                                                v_cache,<br>                                                                vals,<br>                                                                bias,<br>                                                                hidden_dim,<br>                                                                seq_length,<br>                                                                seq_offset,<br>                                                                all_tokens,<br>                                                                heads,<br>                                                                num_kv &gt; <span class="hljs-number">0</span> ? (heads / num_kv) : <span class="hljs-number">1</span>,<br>                                                                num_kv &gt; <span class="hljs-number">0</span> ? num_kv : heads,<br>                                                                rotary_dim &gt;&gt; <span class="hljs-number">3</span>,<br>                                                                rotate_half,<br>                                                                rotate_every_two,<br>                                                                head_ext,<br>                                                                max_out_tokens,<br>                                                                rope_theta);<br>&#125;<br></code></pre></td></tr></table></figure>
                 
               </div>
             
@@ -436,7 +434,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年6月12日</div>
+          <div>2024年7月15日</div>
         </div>
       
       
