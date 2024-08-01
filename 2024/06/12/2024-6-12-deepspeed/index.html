@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
 <meta property="article:published_time" content="2024-06-12T14:03:00.000Z">
-<meta property="article:modified_time" content="2024-07-14T02:57:35.320Z">
+<meta property="article:modified_time" content="2024-08-01T16:40:32.834Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="DeepSpeed">
@@ -225,7 +225,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          6k 字
+          6.2k 字
         
       </span>
     
@@ -236,7 +236,7 @@
         
         
         
-          51 分钟
+          52 分钟
         
       </span>
     
@@ -279,7 +279,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-07-14T10:57:35+08:00
+                    更新于：2024-08-02T00:40:32+08:00
                   
                   
 
@@ -290,10 +290,10 @@
               <div class="markdown-body">
                 
                 <h1>DeepSpeed 高性能算子实现</h1>
-<p><a href="https://dingfen.github.io/2024/05/15/2024-5-15-DeepSpeed/">上篇博客</a>的最后，我发现 DeepSpeed inference v1 版本的算子代码似乎有精度问题。笔者在 A100 上用 DeepSpeed 推理模型，当打开 <code>replace_with_kernel_inject</code> 后，模型使用上面介绍的算子做推理后，其回答会变成一些乱码，或者是胡言乱语。本人怀疑是 v1 高性能算子代码实现有精度问题，进而导致模型回答混乱。</p>
-<p>因此，这里不再介绍 DeepSpeed inference v1 版本的算子代码，连带着上篇博客前面部分的所有内容都有可能过时甚至是错误的😢。</p>
+<p><a href="https://dingfen.github.io/2024/05/15/2024-5-15-DeepSpeed/">上篇博客</a>的最后，<s>我发现 DeepSpeed inference v1 版本的算子代码似乎有精度问题。笔者在 A100 上用 DeepSpeed 推理模型，当打开 <code>replace_with_kernel_inject</code> 后，模型使用上面介绍的算子做推理后，其回答会变成一些乱码，或者是胡言乱语。本人怀疑是 v1 高性能算子代码实现有精度问题，进而导致模型回答混乱。</s></p>
+<p>因此，这里不再介绍 DeepSpeed inference v1 版本的算子代码，我们来看看 inference V2 代码。</p>
 <p>注：本篇博文的源码分析基于 DeepSpeed-0.14.2。</p>
-<p>也许是因为 DeepSpeed inference v1 的实现不是很理想（起码从精度层面来说已经失败了），微软很快又把 DeepSpeed inference v2 端了上来，这篇博客我们重点来关注一下 DeepSpeed inference v2 的内部实现，包括它的引擎，以及<a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed/tree/master/blogs/DeepSpeed-fastgen">它博客</a>中介绍的最大特点——动态分割融合（Dynamic SplitFuse）到底是如何实现的。</p>
+<p>也许是因为 DeepSpeed inference v1 的实现不是很理想，微软很快又把 DeepSpeed inference v2 端了上来，这篇博客我们重点来关注一下 DeepSpeed inference v2 的内部实现，包括它的引擎，以及<a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed/tree/master/blogs/DeepSpeed-fastgen">它博客</a>中介绍的最大特点——动态分割融合（Dynamic SplitFuse）到底是如何实现的。</p>
 <h2 id="DeepSpeed-inference-v2-示例">DeepSpeed inference v2 示例</h2>
 <p>老规矩，开始之前，我们总要拿一个例子来跑一跑：</p>
 <p>首先，按照 DeepSpeed 和 DeepSpeed-mii 的要求，需要安装：</p>
@@ -443,7 +443,9 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
 <p>看完 embedding 层的计算后，我们顺着数据流动的方向，来看一下 QKV 需要经过的线性层计算。说到底，线性层计算其实就是简单的矩阵相乘，那么在 CUDA 平台上，调用 cublas 接口完成矩阵乘无疑是最方便也是最高效的选择了 😃。</p>
 <h3 id="BlasFPLinear">BlasFPLinear</h3>
 <p>DeepSpeed 中选择使用 <code>BlasFPLinear</code> 类完成 cublas 接口的调用和封装。该类涉及到其他的三个类：<code>CUDAGatedActivation</code> <code>CUDABiasActivation</code> 和 <code>BlasLibLinear</code>。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python">```<br><br>先从最简单的 `BlasLibLinear` 开始吧，它调用了 C++ 函数 `void blas_linear(at::Tensor&amp; output, at::Tensor&amp; hidden_states, at::Tensor&amp; weights)`<br><br>```python<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">BlasLibLinear</span>(<span class="hljs-title class_ inherited__">DSKernelBase</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, fp_dtype: DtypeEnum</span>):<br>        self.inf_module = InferenceCoreBuilder().load()<br>        self.inf_module.create_handle()<br>        self.kernel = self.inf_module.blas_linear<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__call__</span>(<span class="hljs-params">self, output: torch.Tensor, hidden_states: torch.Tensor, weights: torch.Tensor</span>) -&gt; torch.Tensor:<br>        self.kernel(output, hidden_states, weights)<br>        <span class="hljs-keyword">return</span> output<br></code></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">BlasFPLinear</span>(<span class="hljs-title class_ inherited__">DSLinearBase</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    Linear DSModule based on BLAS library and standalone bias + activation kernel implementation.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config: DSLinearConfig, implementation_config: <span class="hljs-type">Dict</span>[<span class="hljs-built_in">str</span>, <span class="hljs-type">Any</span>]</span>) -&gt; <span class="hljs-literal">None</span>:<br>        <span class="hljs-built_in">super</span>().__init__(config, implementation_config)<br>        self._linear_impl = BlasLibLinear(self._config.input_dtype)<br>        <span class="hljs-keyword">if</span> is_gated(config.activation):<br>            self._is_gated = <span class="hljs-literal">True</span><br>            self._act_fn = CUDAGatedActivation(config.out_channels, config.output_dtype, config.activation)<br>            self._double_buffer = torch.empty((config.max_tokens, config.out_channels * <span class="hljs-number">2</span>),<br>                                              dtype=config.output_dtype,<br>                                              device=get_accelerator().current_device())<br>        <span class="hljs-keyword">else</span>:<br>            self._is_gated = <span class="hljs-literal">False</span><br>            self._act_fn = CUDABiasActivation(config.out_channels, config.output_dtype, config.activation)<br>        self._output = torch.empty((config.max_tokens, config.out_channels),<br>                                   dtype=config.output_dtype,<br>                                   device=get_accelerator().current_device())<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, hidden_states: torch.Tensor, w: torch.Tensor, b: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span></span>) -&gt; torch.Tensor:<br>        output = empty_from(self._output, (hidden_states.shape[<span class="hljs-number">0</span>], self._config.out_channels))<br>        <span class="hljs-keyword">if</span> self._is_gated:<br>            staging_output = empty_from(self._double_buffer, (hidden_states.shape[<span class="hljs-number">0</span>], self._config.out_channels * <span class="hljs-number">2</span>))<br>            self._linear_impl(staging_output, hidden_states, w)<br>            self._act_fn(output, staging_output, b)<br>        <span class="hljs-keyword">else</span>:<br>            self._linear_impl(output, hidden_states, w)<br>            self._act_fn(output, b)<br>        <span class="hljs-keyword">return</span> output<br></code></pre></td></tr></table></figure>
+<p>先从最简单的 <code>BlasLibLinear</code> 开始吧，它调用了 C++ 函数 <code>void blas_linear(at::Tensor&amp; output, at::Tensor&amp; hidden_states, at::Tensor&amp; weights)</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">BlasLibLinear</span>(<span class="hljs-title class_ inherited__">DSKernelBase</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, fp_dtype: DtypeEnum</span>):<br>        self.inf_module = InferenceCoreBuilder().load()<br>        self.inf_module.create_handle()<br>        self.kernel = self.inf_module.blas_linear<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__call__</span>(<span class="hljs-params">self, output: torch.Tensor, hidden_states: torch.Tensor, weights: torch.Tensor</span>) -&gt; torch.Tensor:<br>        self.kernel(output, hidden_states, weights)<br>        <span class="hljs-keyword">return</span> output<br></code></pre></td></tr></table></figure>
 <p>然后是<code>CUDABiasActivation</code>，它调用了 C++ 函数 <code>bias_activation</code>；<code>CUDAGatedActivation</code> 调用了 <code>ds_gated_activation</code>。</p>
 <h4 id="C-实现-2">C++ 实现</h4>
 <p>因为 cublas 中做矩阵运算时，通常会采用列主序（column-major）的方式，而 python C++ 中我们已经习惯使用了行主序的方式排布矩阵，因此在运算前需要对矩阵做一定的转换，因此矩阵的维度在这里会有点混乱，让我们好好捋一捋。</p>
@@ -462,11 +464,14 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
 <p><img src="/img/LLM/blas_linear.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>再来看看激活函数的实现。BlasActivation 支持 GELU、RELU、SILU 和 identity 类型的激活函数。同样地，使用 CUDA 编程首要解决的就是如何安排 CUDA 线程组。这里，DeepSpeed 工程师为了避免一个线程做的活太少，让每个线程 unroll 4 次，一次 load 16 个字节，而一个线程块 512 个线程，因此一共可计算 512 * 4 * 16 / sizeof(T) 个元素。顺带我不得不吐槽一下 DeepSpeed 的代码，这么写应该是怕自己和别人读懂吧。</p>
 <p><img src="/img/LLM/blas_activation.png" srcset="/img/loading.gif" lazyload alt=""></p>
-<p>然后我们来看看 CUDA 核函数本身的实现。代码读到这里，其实已经有一点规律可循了。当核函数内部的计算较少甚至没有计算时，通常瓶颈都会在访存这。此时最好将内部的元素做条纹打包，让每个线程一次循环处理一个条纹的数据，而在循环内，需要将数据缓存在寄存器中，减少访存次数；在对待线程相关的偏移量需要特别小心，多声明几个变量理清思路才是关键，将偏移量的颗粒度从大到小地考量会比较容易。比如需要先考虑到一个线程块会计算多少元素，再考虑一次 unroll 循环有多少元素，再考虑 512 个线程中，每个线程占了多少元素，三者相加就是真正的偏移量。</p>
+<p>然后我们来看看 CUDA 核函数本身的实现。代码读到这里，其实已经有一点规律可循了。</p>
+<p>当核函数内部的计算较少甚至没有计算时，通常瓶颈都会在访存这。此时最好将内部的元素做条纹打包，让每个线程一次循环处理一个条纹的数据，而在循环内，需要将数据缓存在寄存器中，减少访存次数；</p>
+<p>在对待线程相关的偏移量需要特别小心，多声明几个变量理清思路才是关键，将偏移量的颗粒度从大到小地考量会比较容易。</p>
+<p>比如需要先考虑到一个线程块会计算多少元素，再考虑一次 unroll 循环有多少元素，再考虑 512 个线程中，每个线程占了多少元素，三者相加就是真正的偏移量。</p>
 <p><img src="/img/LLM/blas_activation_kernel.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>至于 GatedActivation 的实现，其实与 BlasActivation 差别不大，唯一的区别在于，他会算出一个 2 倍大的 output_feature，以便存放 gate 值和 activation 值，然后在 CUDA 核函数中，再使用 gate 函数计算，并写回最终结果即可。</p>
 <h2 id="注意力计算">注意力计算</h2>
-<h3 id="套用-cutlass">套用 cutlass</h3>
+<p>关于 DeepSpeed Inference V2 注意力计算的部分，微软将其实现另开了一个库：<a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed-Kernels/">https://github.com/microsoft/DeepSpeed-Kernels/</a>，并在我们编译 DeepSpeed-MII 时将 .a 文件静态链接进来，考虑到本篇博客篇幅已经很长，因此我选择下篇再来讲讲 DeepSpeed-MII 的注意力机制实现！</p>
 
                 
               </div>
@@ -533,7 +538,7 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年7月14日</div>
+          <div>2024年8月2日</div>
         </div>
       
       
