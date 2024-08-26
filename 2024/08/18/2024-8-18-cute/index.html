@@ -16,26 +16,25 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="对并行程序设计中的一个小实验的一些细节总结">
+    <meta name="description" content="Tensor 与 layout">
 <meta property="og:type" content="article">
-<meta property="og:title" content="并行程序中的求和">
-<meta property="og:url" content="https://dingfen.github.io/2020/12/17/2020-12-17-PP02/index.html">
+<meta property="og:title" content="深入 CUTLASS 之 CuTe 详解">
+<meta property="og:url" content="https://dingfen.github.io/2024/08/18/2024-8-18-cute/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="对并行程序设计中的一个小实验的一些细节总结">
+<meta property="og:description" content="Tensor 与 layout">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/dieshi.png">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/ercha.png">
-<meta property="og:image" content="https://dingfen.github.io/img/PP/jisuan.png">
-<meta property="article:published_time" content="2020-12-17T04:00:00.000Z">
-<meta property="article:modified_time" content="2024-08-26T05:24:00.595Z">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
+<meta property="article:published_time" content="2024-08-18T11:13:00.000Z">
+<meta property="article:modified_time" content="2024-08-18T11:56:12.330Z">
 <meta property="article:author" content="Bill Ding">
-<meta property="article:tag" content="MPI">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="CUTLASS">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://dingfen.github.io/img/PP/dieshi.png">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
   
   
   
-  <title>并行程序中的求和 - 峰子的乐园</title>
+  <title>深入 CUTLASS 之 CuTe 详解 - 峰子的乐园</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -197,13 +196,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+     style="background: url('/img/LLM/deepspeed-four.png') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="并行程序中的求和"></span>
+            <span id="subtitle" data-typed-text="深入 CUTLASS 之 CuTe 详解"></span>
           
         </div>
 
@@ -214,8 +213,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2020-12-17 12:00" pubdate>
-          2020年12月17日 中午
+        <time datetime="2024-08-18 19:13" pubdate>
+          2024年8月18日 晚上
         </time>
       </span>
     
@@ -226,7 +225,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.2k 字
+          428 字
         
       </span>
     
@@ -237,7 +236,7 @@
         
         
         
-          11 分钟
+          4 分钟
         
       </span>
     
@@ -274,13 +273,13 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">并行程序中的求和</h1>
+            <h1 id="seo-header">深入 CUTLASS 之 CuTe 详解</h1>
             
               <p id="updated-time" class="note note-info" style="display: none">
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-08-26T13:24:00+08:00
+                    更新于：2024-08-18T19:56:12+08:00
                   
                   
 
@@ -290,48 +289,24 @@
             
               <div class="markdown-body">
                 
-                <h1>并行求和算法实现</h1>
-<h2 id="题目描述">题目描述</h2>
-<p>有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 个处理器，现对 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 个数求和，要求每个处理器中都保持全和。有两个算法可以实现：</p>
-<ul>
-<li>蝶式求和算法：重复计算元素的求和，共需要 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi><mi>o</mi><mi>g</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">logN</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 步。在每个阶段，处理器都会将数据发给指定的其他处理器，然后进行求和。</li>
-<li>二叉树求和算法，累计求和，在广播给其他节点，需要 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>l</mi><mi>o</mi><mi>g</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">2logN</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 步</li>
-</ul>
-<h2 id="蝶式算法实现">蝶式算法实现</h2>
-<p>首先需要假定：数据均匀地分布在每一个处理器中，特别地，每个处理器中只有一个数字。但求和必然要求<strong>所有的数据</strong>，蝶式算法就是将数据从少到多，一步一步地累加起来。编程时，可按照蝶式算法一步一步按阶段地实现。接下来，对照下图，仔细地品读一下算法，了解其中的规律，以便代码实现。</p>
-<center>
-    <img src="/img/PP/dieshi.png" srcset="/img/loading.gif" lazyload/>
-</center>
-<p>在第一阶段，每个处理器与其相邻的处理器交换它们的数据。注意一下它们的编号：<code>Proc#0</code> 和 <code>Proc#1</code> ，<code>Proc#2</code> 和 <code>Proc#3</code>，……如果我们把这些编号全部写成二进制，规律就更加明显了😄。这些互相交流的处理器的编号，除了倒数第一位是不一致的，其他都是一致的！</p>
-<p>第二个阶段，处理器0与2号处理器交流，1号与3号交流，4号与6号交流……在二进制表示中，也是只有一个位的差别，这里是倒数第二位。第三阶段，0号处理器与4号交流，是倒数第三位的差别。</p>
-<p>得到规律：在第 <code>i</code> 个阶段，处理器 <code>Proc#n</code> 会与处理器 <code>Proc#(n ^ (1 &lt;&lt; (i-1)))</code> 交换数据（发送和接收都要），然后相加就行了😆 。如此一来，代码就呼之欲出了。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">2</span>; i &lt;= num_procs; i &lt;&lt;= <span class="hljs-number">1</span>) &#123;<br>    <span class="hljs-type">int</span> tag = i &gt;&gt; <span class="hljs-number">1</span>;<br>    <span class="hljs-type">int</span> dest = id_procs ^ tag;<br>    MPI_Send(&amp;data, <span class="hljs-number">1</span>, MPI_INT, dest, tag, MPI_COMM_WORLD);<br>    MPI_Recv(&amp;recvdata, <span class="hljs-number">1</span>, MPI_INT, dest, tag, MPI_COMM_WORLD, &amp;status);<br>    data += recvdata;<br>&#125;<br></code></pre></td></tr></table></figure>
-<h2 id="二叉树求和实现">二叉树求和实现</h2>
-<p>二叉树求和的过程非常好理解：先将相邻的处理器数据收集起来，求和后再次重复，直到求出总和，最后沿着二叉树的路径将求和结果往下传导。</p>
-<center>
-    <img src="/img/PP/ercha.png" srcset="/img/loading.gif" lazyload />
-</center>
-<p>虽然二叉树求和算法的实现相较于蝶式求和更容易理解，但实现起来却相对吃力，并且还会更加耗时。因为它还要求将数据从根部传下来，多了一个要实现的阶段。</p>
-<p>还是找规律，第一个阶段，0号处理器与1号处理器相加，<code>Proc#2</code> 与 <code>Proc#3</code>  相加，我假设求和后的数据都存放在较小编号的处理器中，那么第二阶段，就是 <code>Proc#0</code> 与 <code>Proc#2</code>  相加，第三阶段（如果有的话），就是 <code>Proc#0</code> 与<code>Proc#4</code>  相加。同样从二进制入手，找到如下规律：**在第 <code>i</code> 个阶段，相互之间通信的处理器中仅第 <code>i</code> 位不一致。**还需要注意的是，编号较小的处理器接收数据，较大的发送数据。好，现在理解计算这部分代码就没有难度了 :yum:。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">2</span>; i &lt;= num_procs; i &lt;&lt;= <span class="hljs-number">1</span>) &#123;<br>    <span class="hljs-type">int</span> tag = i &gt;&gt; <span class="hljs-number">1</span>;<br>    <span class="hljs-type">int</span> diff = id_procs &amp; tag;<br>    <span class="hljs-keyword">if</span> (diff) &#123;<br>        MPI_Send(&amp;data, <span class="hljs-number">1</span>, MPI_INT, id_procs-tag, tag, MPI_COMM_WORLD);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        MPI_Recv(&amp;recvdata, <span class="hljs-number">1</span>, MPI_INT, id_procs+tag, tag, MPI_COMM_WORLD, &amp;status);<br>    &#125;<br>    data += recvdata;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>然后就是将 <code>Proc#0</code> 处理器中的计算结果分发给其他处理器。当然，使用 <code>MPI_Bcast()</code> 函数直接将数据广播出去会更加方便，但是这样做不符合算法的要求 :man_shrugging:。我们需要弄清楚两点：哪一个处理器接收？哪一个处理器发送？第一步，当然是 <code>Proc#0</code> 处理器发送，让 <code>Proc#N/2</code> 处理器接收。第二步，<code>Proc#0</code> 与 <code>Proc#N/4</code> 通信，<code>Proc#N/2</code>与 <code>Proc#3N/4</code> 通信……emm，看起来我们需要拿出纸笔，好好算一算。每次发送/接收消息，处理器编号的差都是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">i/2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">i</span><span class="mord">/2</span></span></span></span>，而且只有编号是 i 的倍数的处理器才能发送消息。把循环变量当做处理器总数，并每次除 2，可以方便我们对处理器编号的计算。</p>
-<center>
-    <img src="/img/PP/jisuan.png" srcset="/img/loading.gif" lazyload />
-</center>
-<p>计算完后，在编写代码，就可以一步到位，省去了很多调试的烦恼！如果大家没看懂代码，或许上图可以帮助大家理解。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = num_procs; i &gt;= <span class="hljs-number">2</span>; i &gt;&gt;= <span class="hljs-number">1</span>) &#123;<br>    <span class="hljs-type">int</span> tag = i;<br>    <span class="hljs-keyword">if</span> (id_procs % i == <span class="hljs-number">0</span>) &#123;<br>        MPI_Send(&amp;data, <span class="hljs-number">1</span>, MPI_INT, id_procs+(i&gt;&gt;<span class="hljs-number">1</span>), tag, MPI_COMM_WORLD);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(id_procs % (i &gt;&gt; <span class="hljs-number">1</span>) == <span class="hljs-number">0</span>) &#123;<br>         MPI_Recv(&amp;data, <span class="hljs-number">1</span>, MPI_INT, id_procs-(i&gt;&gt;<span class="hljs-number">1</span>), tag, MPI_COMM_WORLD, &amp;status);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>所有算法的代码实现请见我的 <a target="_blank" rel="noopener" href="https://github.com/dingfen/ParallelComputing/tree/master/PP_02">github仓库</a></p>
-<head>
-    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-            tex2jax: {
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-            inlineMath: [['$','$']]
-            }
-        });
-    </script>
-</head>
+                <h1>什么是 CuTe</h1>
+<p>CuTe 是 nvidia 在 <a target="_blank" rel="noopener" href="https://github.com/NVIDIA/cutlass/tree/main">CUTLASS 项目</a>中开发并提供的一组 C++ CUDA Template 抽象工具，它主要用于定义和操作在 CUDA 中的有多维分层 layout 的线程和数据。具体来说，CuTe 提供了 Layout 和 Tensor 模板类工具，和一系列相关的复杂索引等计算函数，以帮助程序员摆脱 CUDA 编程中繁琐复杂的数据线程排布，让程序员可以专注于算法的逻辑描述。</p>
+<p>举例来说，在 CuTe 之前，我们为了高性能地执行 CUDA 并行，需要花费大量时间在理解每个线程和线程块要处理哪部分数据，最终写出下面的丑陋代码：不仅不易阅读理解，更不容易调试。</p>
+<p><img src="/img/PP/before.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>而在 CuTe 之后，只要正确地理清数据和线程的布局，并准确地使用 layout 等模板类，代码可读性提高了，也容易调试修改。</p>
+<p><img src="/img/PP/after.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>当然，想轻松驾驭 CuTe 也绝非易事。首先，它用大量天书般的 C++ Template 编写，因此需要程序员有扎实的 C++ 功底；其次由于 CuTe 的核心抽象是分层地多维 layout，并且它必须足够强大到表示 CUDA 并行计算时的几乎一切操作，这也意味着它的实现十分复杂。总之，CuTe 的学习曲线非常陡峭，一点都不 cute ！</p>
+<p>在开始前，还是提醒各位读者，若有不明白的地方，可以速览参考<a target="_blank" rel="noopener" href="https://github.com/NVIDIA/cutlass/blob/main/media/docs/cute/00_quickstart.md">官方文档</a>。</p>
+<h1>从 Layout 开始</h1>
+<h2 id="基本类型和概念">基本类型和概念</h2>
+<p><code>Layout</code> 是 CuTe 的核心抽象，弄懂了 <code>Layout</code> 就基本学会了一半 CuTe。</p>
+<p>请大家记住这句话：</p>
+<blockquote>
+<p>Layouts 是整数到整数的函数<br>
+Layouts are functions from integers to integers.</p>
+</blockquote>
+<h1>Layout 代数学</h1>
+
                 
               </div>
             
@@ -349,7 +324,7 @@
     
       <span class="category-chain">
         
-  <a href="/categories/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
   
   
 
@@ -364,7 +339,9 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/MPI/" class="print-no-link">#MPI</a>
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/CUTLASS/" class="print-no-link">#CUTLASS</a>
       
     </div>
   
@@ -376,8 +353,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>并行程序中的求和</div>
-      <div>https://dingfen.github.io/2020/12/17/2020-12-17-PP02/</div>
+      <div>深入 CUTLASS 之 CuTe 详解</div>
+      <div>https://dingfen.github.io/2024/08/18/2024-8-18-cute/</div>
     </div>
     <div class="license-meta">
       
@@ -389,13 +366,13 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2020年12月17日</div>
+          <div>2024年8月18日</div>
         </div>
       
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年8月26日</div>
+          <div>2024年8月18日</div>
         </div>
       
       
@@ -432,18 +409,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2021/01/23/2021-1-23-psrs_sort/" title="并行正则采样排序之 MPI 实现">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">并行正则采样排序之 MPI 实现</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2020/12/14/2020-12-14-PP01/" title="对一并行程序实验的简单理解">
-                        <span class="hidden-mobile">对一并行程序实验的简单理解</span>
+                      <a href="/2024/08/02/2024-5-9-vllm/" title="VLLM Paged Attention 实现">
+                        <span class="hidden-mobile">VLLM Paged Attention 实现</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

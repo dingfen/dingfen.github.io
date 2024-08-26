@@ -221,7 +221,82 @@
   <div class="row mx-auto index-card">
     
     
-    <article class="col-12 col-md-12 mx-auto index-info">
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2024/08/18/2024-8-18-cute/" target="_self">
+          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/loading.gif" lazyload alt="深入 CUTLASS 之 CuTe 详解">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/08/18/2024-8-18-cute/" target="_self">
+          深入 CUTLASS 之 CuTe 详解
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2024/08/18/2024-8-18-cute/" target="_self">
+        <div>
+          Tensor 与 layout
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-08-18 19:13" pubdate>
+              2024-08-18
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/CUTLASS/">#CUTLASS</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2024/08/02/2024-5-9-vllm/" target="_self">
+          <img src="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png" srcset="/img/loading.gif" lazyload alt="VLLM Paged Attention 实现">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
       <h2 class="index-header">
         
         <a href="/2024/08/02/2024-5-9-vllm/" target="_self">
@@ -230,9 +305,9 @@
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/08/02/2024-5-9-vllm/" target="_self">
+      <a class="index-excerpt " href="/2024/08/02/2024-5-9-vllm/" target="_self">
         <div>
-          Paged Attention 简介 Paged Attention 是 vllm 用来解决 KV cache 利用率不高的问题的优化技术。它仿照了操作系统中经典的分页技术（paging）。Paged Attention 通过切分一个 sequence 序列中的 KV cache 为多个 KV blocks 的方法，允许在非连续的内存空间存储连续的 key 和 value。每一个 KV block
+          Paged Attention 简介 Paged Attention 是 vllm 在 decode 阶段用来解决 KV cache 利用率不高的加速技术。它仿照了操作系统中经典的分页技术（paging）。Paged Attention 通过切分一个 sequence 序列中的 KV cache 为多个 KV blocks 的方法，允许在非连续的内存空间存储连续的 key 和 value。每一个
         </div>
       </a>
 
@@ -746,69 +821,6 @@
       <a class="index-excerpt index-excerpt__noimg" href="/2023/11/30/2023-11-30-LLM-KVCache/" target="_self">
         <div>
           在消费级显卡上运行大模型
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-11-30 12:00" pubdate>
-              2023-11-30
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Transformer/">#Transformer</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/11/30/2023-11-30-huggingface2/" target="_self">
-          huggingface下llama代码细读（下）
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/11/30/2023-11-30-huggingface2/" target="_self">
-        <div>
-          揭开它神秘的面纱
         </div>
       </a>
 
