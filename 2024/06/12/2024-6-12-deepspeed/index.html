@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -32,6 +32,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>深入探索 DeepSpeed（三） - 峰子的乐园</title>
@@ -74,7 +76,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -308,13 +310,13 @@
 <h2 id="DeepSpeed-mii">DeepSpeed-mii</h2>
 <h3 id="动态分割融合">动态分割融合</h3>
 <p>为了充分释放 GPU 的性能，大模型会将若干个用户输入语句（prompt）合并，一起做批处理。然而，用户输入的 prompt 到大模型内的请求语句必然是长短不一的，此时常规做法是，模型通过填充（padding）的手段将请求中的输入 token 张量填充为相同的形状，再做进一步处理。但这样做还是浪费了不少 GPU 的性能，于是就有了连续批处理技术（Continuous batching）——将每个用户输入语句尽可能地“拼接”起来，补齐空白。</p>
-<p><img src="/img/LLM/vllm_dynamic_batch_1.png" srcset="/img/loading.gif" lazyload alt=""><br>
-<img src="/img/LLM/vllm_dynamic_batch_2.png" srcset="/img/loading.gif" lazyload alt="vllm 的动态批处理"></p>
+<p><img src="/img/LLM/vllm_dynamic_batch_1.png" srcset="/img/background.bmp" lazyload alt=""><br>
+<img src="/img/LLM/vllm_dynamic_batch_2.png" srcset="/img/background.bmp" lazyload alt="vllm 的动态批处理"></p>
 <p>另一个大模型推理的性能瓶颈是，KV cache 占用空间过大。为此，vllm 提出了 KV cache 分块技术，借鉴操作系统中分页（paging）的概念，将本应该连续存放的 KV cache 做分块处理。具体操作是，vllm 将 KV cache 分成若干分固定长度的块，并通过映射表建立了逻辑 KV 块和物理 KV 块间的关联。处理时，逻辑块连续，但其映射到物理内存上的物理 KV 块可以分开存放，这样既可以减少内存碎片，也可以增加 KV block 共享的可能。</p>
-<p><img src="/img/LLM/vllm_page_attn.webp" srcset="/img/loading.gif" lazyload alt=""><br>
-<img src="/img/LLM/vllm_page_attn_2.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/vllm_page_attn.webp" srcset="/img/background.bmp" lazyload alt=""><br>
+<img src="/img/LLM/vllm_page_attn_2.webp" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>而 DeepSpeed 工程师进一步发现，prompt 阶段往往因处理的 token 过多而出现计算瓶颈，generation 阶段往往因处理的 token 过少（仅有 1）而陷入内存瓶颈。因此，它将上述两者技术结合，提出了动态分割融合（dynamic splitfuse）的优化技术。这是一种用于 prompt 阶段和 generation 阶段的 token 组合策略。<strong>具体操作是，通过从 prompt 阶段中取出部分 token 与 generation 阶段的 token 计算结合，使得模型可以保持一致的前向推理大小（forward size）</strong>。如此保持一定量的前推大小，可以使得 GPU 的计算性能和访存带宽都得到较好的发挥👇。</p>
-<p><img src="/img/LLM/observation-prompt-v-flops.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/observation-prompt-v-flops.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>为此，动态分割融合需要：</p>
 <ul>
 <li>将长 prompt 分解成一些小 token 块，并在多个 forward（迭代）中进行调度，只有在最后一次 forward 完成后才能执行生成。</li>
@@ -327,25 +329,25 @@
 <li><strong>更低的波动和更好的一致性</strong>： 由于前向传递的大小一致，且前向传递大小是性能的主要决定因素，每个前向传递的延迟比其他系统更加一致。生成频率也是如此，因为DeepSpeed-FastGen不需要像其他先前的系统那样抢占或长时间处理 prompt ，因此延迟会更低。</li>
 </ul>
 <p>因此，与现有最先进的大模型推理系统相比，DeepSpeed-FastGen 既可以迅速、持续地处理 prompt 的 token，还能同时完成 token 的 generation。该技术不仅提高了系统利用率，也获得了更低的延迟和更高的吞吐量。</p>
-<p><img src="/img/LLM/fastgen-overview-light.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/fastgen-overview-light.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>图: 连续批处理策略的示意图。每个块显示一个前向推理的执行。箭头表示前向推理有一个或多个生成的 token 序列。vLLM 在一个前向推理中要么是 token generation 阶段，只产生一个 token，要么处理 prompt 阶段，处理一堆 token；这里 token 的生成抢占了 prompt 的处理。Orca 则以完整长度处理 prompt。DeepSpeed-FastGen 的动态分割融合则执行固定大小 token 块，对它们做前向推理。</p>
 <h3 id="代码实现">代码实现</h3>
 <p>我们从上面例子中的 <code>mii.pipeline</code> 出发：下面的介绍包括了 <code>mii.pipeline</code> 和基类 <code>RaggedBatchBase</code>  在拿到 batch 个 request 后的工作流程。</p>
-<p><img src="/img/LLM/miipipeline.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/miipipeline.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>我们将 pipeline 的调用代码分成三部分（红框标明），接下来分成三部分对代码做说明。</p>
 <h4 id="第一部分">第一部分</h4>
 <p>首先看第一个红框，这部分主要完成对用户输入 prompt 的切分、调度。它将输入的 prompts 全都导入到分词器 tokenizer 中，经过 <code>_put_request</code> 的编码后，包装产生 request。这个 request 包含了一切大模型推理需要的用户输入 tokens 和生成参数(generation config)，然后这些 requet 就会被放入队列中等待调度。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_put_request</span>(<span class="hljs-params">self, uid: <span class="hljs-built_in">int</span>, <span class="hljs-built_in">input</span>: <span class="hljs-built_in">str</span>, kwargs: <span class="hljs-type">Dict</span>[<span class="hljs-built_in">str</span>, <span class="hljs-type">Any</span>]</span>) -&gt; <span class="hljs-literal">None</span>:<br>    self.result_queues[self.tid] = queue.Queue()<br>    input_tokens = self.tokenizer.encode(<span class="hljs-built_in">input</span>)<br>    request = self.make_request(self.tid, uid, input_tokens, kwargs)<br>    self.request_queue.put(request)<br></code></pre></td></tr></table></figure>
 <p>那么这些 request 是如何被调度的？</p>
 <p>很简单，对于那些已经将输入 token 解析完成的，处于生成阶段（generation 阶段）的 request，放入 <code>_schedule_token_gen</code> 中处理，对于还在解析输入（prompt阶段），放到 <code>_schedule_prompts</code> 中处理。prompt 的模型总入口是 <code>self.scheduled_requests</code>，要暂未被调度到的 request 会被放到 <code>self.buffer</code> 中缓存。</p>
-<p><img src="/img/LLM/miischedulereq.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/miischedulereq.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>系统会优先处理生成阶段的 request，当出现 kv block 空缺位后，就会加入新的 request。而若 GPU 还有闲余空间（语句（sequence）空间）处理 prompt，那么会继续处理 prompt 阶段的 request。它会依照下面的函数严格限制每个 request 的长度：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_kv_requirements</span>(<span class="hljs-params">self, sequence: DSSequenceDescriptor, max_new_tokens: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params">        max_new_blocks: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>]:<br>    total_tokens = sequence.seen_tokens + max_new_tokens<br>    req_blocks = ceil_div(total_tokens, self.attn.kv_block_size)<br>    block_lim = req_blocks - sequence.cur_allocated_blocks<br>    <span class="hljs-keyword">if</span> block_lim &lt;= max_new_blocks:<br>        <span class="hljs-keyword">return</span> max_new_tokens, block_lim<br>    token_capacity = (max_new_blocks +<br>        sequence.cur_allocated_blocks) * self.attn.kv_block_size - sequence.seen_tokens<br></code></pre></td></tr></table></figure>
-<p><img src="/img/LLM/miischedulepro.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/miischedulepro.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <h4 id="第二部分">第二部分</h4>
 <p>第二个红框是模型的执行部分，Rank 1-n 的节点仅负责 generate，而 Rank 0 要考虑的就多了：他不仅需要运行 generate，还需要在最后管理释放 requset，输出 response，在最后让 Rank 1-n 节点退出释放。</p>
 <p>先来看一下 <code>generate()</code> 函数，它负责 token 的生成，因此其中的实现对于我们了解 deepspeed inference 如何运作相当重要。</p>
-<p><img src="/img/LLM/miigenerate.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/miigenerate.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <ol>
 <li><code>_bcast_requests</code> 将 req 广播。<br>
 a. <code>RaggedBatchBase</code> 内部将多个 GPU 节点用 <a target="_blank" rel="noopener" href="https://zeromq.org/languages/python/">ZeroMQ</a> 的高性能异步消息库连接起来。<br>
@@ -382,16 +384,16 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
 <p>在设计使用 <code>insert_sequence</code> 函数时，DeepSpeed 的工程师发现，将句子逐个插入到列表中会导致内存访问因碎片过多而过慢，因此他们的做法是先插入所有的句子到一个临时列表中，然后再使用 <code>finalize()</code> 函数将全体数据更新到 <code>RaggedBatchWrapper</code> 内的最终目前数据结构中。然后，<code>prepare_batch</code> 准备所有的用于前推数据结构，并做摊还分析。</p>
 <hr>
 <p>现在，我们来看看 DeepSpeed 推理 v2 版本有哪些新花样。还是从 llama2 模型出发，先看看整个模型架构中，高性能 kernel 的使用情况：</p>
-<p><img src="/img/LLM/llama2inferencemodel.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/llama2inferencemodel.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h2 id="参差不齐的嵌入操作">参差不齐的嵌入操作</h2>
 <p>为了充分释放 GPU 的性能，模型会将若干个用户输入的请求做批处理。然而，用户输入到大模型内的请求语句必然是长短不一的，此时常规做法是，模型通过填充（padding）的手段将请求中的输入张量填充为相同的形状，再做进一步处理。但这样做还是浪费了不少 GPU 的性能，为此，DeepSpeed 提供了类似 vllm 中的动态批处理功能（dynamic batching）。它将同一模型执行的多个请求组合在一起，并且不需要填充短请求，就可直接进行批处理，从而获得更大的吞吐量。</p>
-<p><img src="/img/LLM/vllm_dynamic_batch_1.png" srcset="/img/loading.gif" lazyload alt=""><br>
-<img src="/img/LLM/vllm_dynamic_batch_2.png" srcset="/img/loading.gif" lazyload alt="vllm 的动态批处理"></p>
+<p><img src="/img/LLM/vllm_dynamic_batch_1.png" srcset="/img/background.bmp" lazyload alt=""><br>
+<img src="/img/LLM/vllm_dynamic_batch_2.png" srcset="/img/background.bmp" lazyload alt="vllm 的动态批处理"></p>
 <p>因为缺少了填充对齐，因此取名“参差不齐的嵌入操作”，英文名 RaggedEmbedding，这恰好对应了类名 <code>DSRaggedEmbedding</code>。而要想充分理解 <code>DSRaggedEmbedding</code> 的实现，我们必须从与它密切相关的类 <code>RaggedBatchWrapper</code> 和 <code>RaggedEmbeddingKernel</code> 开始聊起。</p>
 <h3 id="RaggedBatchWrapper">RaggedBatchWrapper</h3>
 <p>虽然这类只是一个 wrapper，仅封装了相关的值而已。但我觉得这内部的值可以很好地帮助我们理解动态批处理的实现细节。因此在这里展开讲讲。</p>
 <p>为了让更清楚明白，举一个简单的例子：假设现在模型正在处理 8 个 token，这 8 个 token 分别位于 3 个 sequence 中：</p>
-<p><img src="/img/LLM/raggedEmbedding.png" srcset="/img/loading.gif" lazyload alt="RaggedBatch Embedding所需要的数据结构"></p>
+<p><img src="/img/LLM/raggedEmbedding.png" srcset="/img/background.bmp" lazyload alt="RaggedBatch Embedding所需要的数据结构"></p>
 <p>其中，sequence 指的是每个请求读入的句子，seq_lens 表示一个 batch 中所有的句子。<code>RaggedBatchWrapper</code> 的成员还有：</p>
 <ul>
 <li><code>input_ids</code> 用户输入的句子，被切分、数字化后，成为一列整数列</li>
@@ -408,7 +410,7 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
 <hr>
 <p>在开始看 C++ 实现之前，我想带大家先回顾一下 embedding 的计算方式，避免被代码绕晕。</p>
 <p>NLP 中的 Embedding 原理就是将文本编码为紧凑的高维向量。而为了将原先文本中 token 的 one-hot 编码转换成更紧凑稠密的高维向量，往往需要做一次矩阵乘法：如下图所示例子，利用稠密的浮点向量来表示每个 token，再利用向量间的余弦值来表示词义关系。</p>
-<p><img src="/img/LLM/tokenEmbeddingExample.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/tokenEmbeddingExample.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>因为注意力机制无法发现词序关系，LLM 中还更多地加入了位置编码，比如 transformer 论文中经典的 sin-cos 位置函数表示词序位置，他们计算后会直接加到 embedding 向量中。</p>
 <h3 id="C-实现">C++ 实现</h3>
 <p>前面提到，对于 <code>DSRaggedEmbedding</code> 中维护的 embedding 相关的张量，他们在主机上也相应地维护了一个 shadow 张量。这些 shadow 张量是在构造 ragged embedding 时直接填充的。在条件允许的前提下，应分配 shadow 张量，以方便张量快速复制到 GPU 上。因此，我们需要尽可能地降低主机到 GPU 的数据传输延迟，来看看 DeepSpeed 是如何实现的：</p>
@@ -422,12 +424,12 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
 </ul>
 <h4 id="ragged-embed">ragged_embed</h4>
 <p>接下来我们来看被封装的 <code>ragged_embed</code> C++ 代码。参考上文给出的 Embedding 原理示例，可以很清楚地明白各个变量的含义。在使用了 <code>DISPATCH_FOR_FLOAT</code> 和 <code>DISPATCH_FOR_INT</code> 这两个宏做变量类型的定义后，CUDA 代码被正式启动了。</p>
-<p><img src="/img/LLM/ragged_embed_code.png" srcset="/img/loading.gif" lazyload alt="ragged_embed 代码"></p>
+<p><img src="/img/LLM/ragged_embed_code.png" srcset="/img/background.bmp" lazyload alt="ragged_embed 代码"></p>
 <h4 id="ragged-embed-CUDA-kernel">ragged embed CUDA kernel</h4>
 <p>使用 CUDA 加速程序计算，首先要明确如何安排我们手中的大量线程。从之前的 Embedding 示例中，敏感的读者已经注意到，只需要按照 <code>input_ids</code> 内值读取 <code>embedding_weight</code> 的那一行就行了，不需要真的去计算矩阵乘。因此事实上 CUDA 程序需要注意的根本不是计算，而是读取和写入。</p>
 <p>DeepSpeed 是这样安排他们的线程的。首先，让每个线程负责 load <code>embedding_weight</code> 矩阵中一行的一小块颗粒（红圈部分），这一颗粒大小被定义为 <code>embed::granularity = 16</code> 个字节。而一个线程块内有 512 个线程，因此一个线程块可以 load 一共 512 * 16 个字节的数据。对应的，一个 token 的向量维度有 <code>embed_dim</code>，所以需要 <code>parallel_blocks</code> 个线程块 load。这组成了线程块排布的 x 方向，一行 x 方向的线程块完成一个 token 的向量读取，而 y 方向的线程块数量对应着 token 的总数。</p>
-<p><img src="/img/LLM/launch_ragged_embed_kernel.png" srcset="/img/loading.gif" lazyload alt="launch_ragged_embed_kernel"></p>
-<p><img src="/img/LLM/ragged_embed_kernel.png" srcset="/img/loading.gif" lazyload alt="ragged_embed_kernel"></p>
+<p><img src="/img/LLM/launch_ragged_embed_kernel.png" srcset="/img/background.bmp" lazyload alt="launch_ragged_embed_kernel"></p>
+<p><img src="/img/LLM/ragged_embed_kernel.png" srcset="/img/background.bmp" lazyload alt="ragged_embed_kernel"></p>
 <p>用之前的 Embedding 举例，要处理 “I have four tokens” 这句话，首先找到了这句话对应 token 的行号，填入 <code>input_ids</code> 为 [3, 1, 4, 2]。CUDA 程序执行时，会产生四行 x 方向的线程块，其中第一行的所有线程块负责从 <code>embedding_weight</code> 中装载第 3 行（对应 <code>token_value</code>）的所有数据，读入到输出的 <code>embedded_tokens</code> 矩阵中的第 1 行（对应 <code>token_idx</code>）。</p>
 <h4 id="数据读取与写入">数据读取与写入</h4>
 <p>现在我们来看一下该 kernel 的性能情况。由于整个 kernel 几乎没有运算，因此主要的瓶颈必然发生在读写数据上，为了尽可能快地将数据读入和写出，DeepSpeed 安排 warp 内的线程读取了连续的 32 * 16 = 512 个字节的数据。整数倍的内存读取容易实现 cacheline 的对齐。</p>
@@ -461,14 +463,14 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
 </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8913em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1413em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-2.453em;margin-left:-0.0813em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.1413em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1383em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-2.453em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0813em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8913em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span></span></p>
 </blockquote>
 <p>于是，输入到 cublas 计算 gemm 的公式应当变成 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mo>×</mo><msup><mi>H</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">W\times H^T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span>。这就解释了下图中的红框部分计算 m n 和 k 的代码。又因为实际 cublas 是要计算 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>W</mi><mi>c</mi><mi>T</mi></msubsup><mo>×</mo><msub><mi>H</mi><mi>c</mi></msub></mrow><annotation encoding="application/x-tex">W_c^T\times H_c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0883em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-2.453em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0813em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，因此 <code>trans_a</code> 为 TRUE，而 <code>trans_b</code> 为 FALSE。随后针对 cublas API 调用就比较平凡了，不说了。</p>
-<p><img src="/img/LLM/blas_linear.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/blas_linear.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>再来看看激活函数的实现。BlasActivation 支持 GELU、RELU、SILU 和 identity 类型的激活函数。同样地，使用 CUDA 编程首要解决的就是如何安排 CUDA 线程组。这里，DeepSpeed 工程师为了避免一个线程做的活太少，让每个线程 unroll 4 次，一次 load 16 个字节，而一个线程块 512 个线程，因此一共可计算 512 * 4 * 16 / sizeof(T) 个元素。顺带我不得不吐槽一下 DeepSpeed 的代码，这么写应该是怕自己和别人读懂吧。</p>
-<p><img src="/img/LLM/blas_activation.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/blas_activation.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>然后我们来看看 CUDA 核函数本身的实现。代码读到这里，其实已经有一点规律可循了。</p>
 <p>当核函数内部的计算较少甚至没有计算时，通常瓶颈都会在访存这。此时最好将内部的元素做条纹打包，让每个线程一次循环处理一个条纹的数据，而在循环内，需要将数据缓存在寄存器中，减少访存次数；</p>
 <p>在对待线程相关的偏移量需要特别小心，多声明几个变量理清思路才是关键，将偏移量的颗粒度从大到小地考量会比较容易。</p>
 <p>比如需要先考虑到一个线程块会计算多少元素，再考虑一次 unroll 循环有多少元素，再考虑 512 个线程中，每个线程占了多少元素，三者相加就是真正的偏移量。</p>
-<p><img src="/img/LLM/blas_activation_kernel.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/blas_activation_kernel.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>至于 GatedActivation 的实现，其实与 BlasActivation 差别不大，唯一的区别在于，他会算出一个 2 倍大的 output_feature，以便存放 gate 值和 activation 值，然后在 CUDA 核函数中，再使用 gate 函数计算，并写回最终结果即可。</p>
 <h2 id="注意力计算">注意力计算</h2>
 <p>关于 DeepSpeed Inference V2 注意力计算的部分，微软将其实现另开了一个库：<a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed-Kernels/">https://github.com/microsoft/DeepSpeed-Kernels/</a>，并在我们编译 DeepSpeed-MII 时将 .a 文件静态链接进来，考虑到本篇博客篇幅已经很长，因此我选择下篇再来讲讲 DeepSpeed-MII 的注意力机制实现！</p>
@@ -698,6 +700,30 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -870,6 +896,8 @@ b. Rank 0 在这里会调用 logit_processor 和 sampler 来选择具体的 toke
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

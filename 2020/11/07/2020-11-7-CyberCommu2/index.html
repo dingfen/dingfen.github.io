@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -34,6 +34,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/CyberLayer.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>Apollo Cyber RT 通信（下） - 峰子的乐园</title>
@@ -76,7 +78,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -296,7 +298,7 @@
 <p>欢迎回来！今天我继续和大家聊 Cyber RT 的通信，<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">上文</a>我探讨了 Cyber RT 的两种通信方式和三种通信模型，并从通信架构的角度，一层层地给大家详细介绍了通信时代码的具体工作情况。由于通信内容过多，全放在一篇博客理论太长，于是我将这些内容简单地一分为二，事实上它们应当是有机的整体。</p>
 <p>上文末尾，我介绍了 <code>Blocker</code> 类的功能，今天这篇博客，我们继续向深处进军↖(^ω^)↗。</p>
 <center>
-<img src="/img/CyberLayer.png" srcset="/img/loading.gif" lazyload />
+<img src="/img/CyberLayer.png" srcset="/img/background.bmp" lazyload />
 </center>
 ## Receiver & Transmitter
 <p>我们在上文已经认识了 <code>Reader</code> 和 <code>Writer</code> ，现在继续往下走。如果你仔细看代码的话，在 <code>Reader</code> 和 <code>Writer</code> 初始化时，都会分别构建好底层的 <code>Receiver</code> 和 <code>Transmitter</code> 对象。为了描述简便，我之前有意地忽略了，现在把它拿出来。<code>Reader</code> 部分的比较复杂，还使用了 <code>ReceiverManager</code> 进行管理；<code>Writer</code> 就比较直接了，在 <code>Init()</code> 函数中可以直接看到。</p>
@@ -416,7 +418,7 @@
 <h2 id="总结">总结</h2>
 <p>(⊙o⊙)哦终于，我把 Cyber RT 所有的通信机制都看完了，哦，BTW，上篇通信链接在<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">这里</a>。现在，在把所有的内容都搞明白后，让我们理一理自己昏沉的头脑，跳脱出代码的边边框框，从上帝视角审视一下数据是如何流通的。</p>
 <p>这里有两张非常好的图，感谢 [2]，我可以不用自己动手，花费数小时画图了😀</p>
-<p><img src="/img/msg.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/msg.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>在上面这张图中，仍然以两个信道的 <code>Component</code> 为例，从左上角出发：</p>
 <ul>
 <li><code>Component</code> 初始化建成了两个 <code>Reader</code> 对象，然后创建了一个 <code>DataVisitor&lt;M0, M1&gt;</code> 对象</li>
@@ -426,7 +428,7 @@
 <li>之后，<code>DataVisitor</code> 会使用 <code>DataNotifier</code> 对象，唤醒相应的协程，处理收到的数据</li>
 </ul>
 <p>现在，我们再来看看底层的通信架构，虽然有些部分我略去未讲，但这张图我们还是可以看明白的🐶。这次，我们从最右边开始看起。</p>
-<p><img src="/img/msg2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/msg2.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <ul>
 <li>可以看出两个 <code>Reader</code> 对象共用了一个 <code>Receiver</code> 。这是因为在同一个进程内，不同的 <code>Reader</code> 对象订阅同一个信道，就会使用同一个 <code>Receiver</code></li>
 <li>默认选择的 <code>Receiver</code> 是 hybrid 的，因此需要三个底层接收类 <code>IntraReceiver</code> 、<code>ShmReceiver</code> 和 <code>RtpsReceiver</code> 配合</li>
@@ -669,6 +671,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -841,6 +867,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

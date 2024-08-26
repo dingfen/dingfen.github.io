@@ -4,33 +4,6 @@
   
   
   <entry>
-    <title>深入 CUTLASS 之 CuTe 详解</title>
-    <link href="/2024/08/18/2024-8-18-cute/"/>
-    <url>/2024/08/18/2024-8-18-cute/</url>
-    
-    <content type="html"><![CDATA[<h1>什么是 CuTe</h1><p>CuTe 是 nvidia 在 <a href="https://github.com/NVIDIA/cutlass/tree/main">CUTLASS 项目</a>中开发并提供的一组 C++ CUDA Template 抽象工具，它主要用于定义和操作在 CUDA 中的有多维分层 layout 的线程和数据。具体来说，CuTe 提供了 Layout 和 Tensor 模板类工具，和一系列相关的复杂索引等计算函数，以帮助程序员摆脱 CUDA 编程中繁琐复杂的数据线程排布，让程序员可以专注于算法的逻辑描述。</p><p>举例来说，在 CuTe 之前，我们为了高性能地执行 CUDA 并行，需要花费大量时间在理解每个线程和线程块要处理哪部分数据，最终写出下面的丑陋代码：不仅不易阅读理解，更不容易调试。</p><p><img src="/img/PP/before.PNG" alt=""></p><p>而在 CuTe 之后，只要正确地理清数据和线程的布局，并准确地使用 layout 等模板类，代码可读性提高了，也容易调试修改。</p><p><img src="/img/PP/after.PNG" alt=""></p><p>当然，想轻松驾驭 CuTe 也绝非易事。首先，它用大量天书般的 C++ Template 编写，因此需要程序员有扎实的 C++ 功底；其次由于 CuTe 的核心抽象是分层地多维 layout，并且它必须足够强大到表示 CUDA 并行计算时的几乎一切操作，这也意味着它的实现十分复杂。总之，CuTe 的学习曲线非常陡峭，一点都不 cute ！</p><p>在开始前，还是提醒各位读者，若有不明白的地方，可以速览参考<a href="https://github.com/NVIDIA/cutlass/blob/main/media/docs/cute/00_quickstart.md">官方文档</a>。</p><h1>从 Layout 开始</h1><h2 id="基本类型和概念">基本类型和概念</h2><p><code>Layout</code> 是 CuTe 的核心抽象，弄懂了 <code>Layout</code> 就基本学会了一半 CuTe。</p><p>请大家记住这句话：</p><blockquote><p>Layouts 是整数到整数的函数<br>Layouts are functions from integers to integers.</p></blockquote><h1>Layout 代数学</h1>]]></content>
-    
-    
-    <categories>
-      
-      <category>AI</category>
-      
-    </categories>
-    
-    
-    <tags>
-      
-      <tag>AI</tag>
-      
-      <tag>CUTLASS</tag>
-      
-    </tags>
-    
-  </entry>
-  
-  
-  
-  <entry>
     <title>VLLM Paged Attention 实现</title>
     <link href="/2024/08/02/2024-5-9-vllm/"/>
     <url>/2024/08/02/2024-5-9-vllm/</url>

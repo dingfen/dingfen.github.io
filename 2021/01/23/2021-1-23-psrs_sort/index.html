@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -33,6 +33,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/PP/psrs.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>并行正则采样排序之 MPI 实现 - 峰子的乐园</title>
@@ -75,7 +77,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -302,7 +304,7 @@
 </ol>
 <p>不得不说，整个算法步骤较多，过程复杂，令人一时难以理解，博主通过图片的形式再描述一遍算法，希望能帮助各位。</p>
 <center>
-   <img src="/img/PP/psrs.png" srcset="/img/loading.gif" lazyload/>
+   <img src="/img/PP/psrs.png" srcset="/img/background.bmp" lazyload/>
 </center>
 <h2 id="具体实现">具体实现</h2>
 <p>首先，还是老规矩，先生成随机数组，然后使用单个处理器（这里使用 <code>Proc#0</code>）排序，得到最终答案，用于检验并行程序的正确性。在做好这些初始化工作后，并行正则采样排序的实现正式开始！:muscle:</p>
@@ -316,7 +318,7 @@
 <p>让每个处理器从已经排好序的数据中，抽取出第$ w, 2w, 3w, … (p-1)w <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>个代表元素，其中</mtext></mrow><annotation encoding="application/x-tex">个代表元素，其中</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord cjk_fallback">个代表元素，其中</span></span></span></span> w = n/p^2 $。每个处理器抽取好 p-1 个数据后，全部送到 <code>Proc#0</code> 处理器中，由它来完成对代表元素的排序。</p>
 <p>很有意思哈，第一步要求 <code>Proc#0</code> 把数据发送给各个处理器，而第二步是要求 <code>Proc#0</code> 接收来自各处理器的数据。</p>
 <center>
-    <img src="/img/PP/Scatter&Gather.png" srcset="/img/loading.gif" lazyload/>
+    <img src="/img/PP/Scatter&Gather.png" srcset="/img/background.bmp" lazyload/>
 </center>
 <p>简单介绍一下，<code>MPI_Scatterv</code>  的反操作 <a target="_blank" rel="noopener" href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Gatherv.html">MPI_Gatherv</a>：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">MPI_Gatherv</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">void</span> *sendbuf, <span class="hljs-type">int</span> sendcount, MPI_Datatype sendtype,</span><br><span class="hljs-params">                <span class="hljs-type">void</span> *recvbuf, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *recvcounts, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *displs,</span><br><span class="hljs-params">                MPI_Datatype recvtype, <span class="hljs-type">int</span> root, MPI_Comm comm)</span><br></code></pre></td></tr></table></figure>
@@ -333,7 +335,7 @@
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">MPI_Alltoallv</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">void</span> *sendbuf, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *sendcounts,</span><br><span class="hljs-params">                  <span class="hljs-type">const</span> <span class="hljs-type">int</span> *sdispls, MPI_Datatype sendtype, <span class="hljs-type">void</span> *recvbuf,</span><br><span class="hljs-params">                  <span class="hljs-type">const</span> <span class="hljs-type">int</span> *recvcounts, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *rdispls, MPI_Datatype recvtype,</span><br><span class="hljs-params">                  MPI_Comm comm)</span><br></code></pre></td></tr></table></figure>
 <p>该函数的功能是，让每个处理器发送一个消息给所有处理器（包括自己），这些消息都在它的发送缓冲中以处理器标识符号的顺序有序地存放。如下图所示，每个处理器都从所有处理器接收到一个消息，并以标号的顺序存放在缓冲区中。</p>
 <center>
-   <img src="/img/PP/Alltoall.png" srcset="/img/loading.gif" lazyload />
+   <img src="/img/PP/Alltoall.png" srcset="/img/background.bmp" lazyload />
 </center>
 <p>回到本次实现，不难发现，对$ W^j_i $ 的操作，就是全局交换，与 <code>MPI_Alltoall</code> 函数所描述的功能完全一致。那么紧接着的一个问题是，如何编码呢？</p>
 <p>首先，明确一个坏消息：$ W^j_i $ 的长度都是不定的，且只有本地的处理器知道它的长度。这意味着，在直接使用 <code>MPI_Alltoallv</code> 函数来完成全局交换之前，所有处理器还需要<strong>全局交换每个数据段的长度</strong>:scream: 。否则，我无法赋值 <code>MPI_Alltoallv</code> 函数中的各个数组值。好在，这部分代码很简单，就当做正式作战之前的一次热身吧。</p>
@@ -589,6 +591,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -761,6 +787,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

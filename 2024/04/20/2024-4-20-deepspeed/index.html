@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -32,6 +32,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>深入探索 deepspeed（一） - 峰子的乐园</title>
@@ -74,7 +76,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -340,7 +342,7 @@
 <ol>
 <li>deepspeed 将推理的多个算子融合为单一的算子 kernel，从而减少 kernel 间的启动开销和访问内存的延迟。与 JIT、XLA 或其他项目的算子融合相比，deepspeed 的算子融合力度更猛，它融合了element-wise、矩阵乘、转置、归约到一个 kernel。与未融合相比，以上几个部分的加速比可分别达到 1.5x, 2.9x, 3x, 1.2x</li>
 </ol>
-<p><img src="https://www.microsoft.com/en-us/research/uploads/prod/2021/05/Fig1_DeepSpeed5_Blog.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://www.microsoft.com/en-us/research/uploads/prod/2021/05/Fig1_DeepSpeed5_Blog.jpg" srcset="/img/background.bmp" lazyload alt=""></p>
 <ol start="2">
 <li>
 <p>为推理定制化的 GeMM 。小 batch size 会导致维度更瘦小 GeMM 运算操作：即参与 Gemm 运算的矩阵都是权重参数比激活大得多的矩阵，并且每个参数的总计算量受批量大小的限制。此时，GeMM 的性能主要取决于从主内存读取参数所花费的时间，即内存瓶颈，而不是 GPU 的计算瓶颈。因此，为了达到最佳性能，deepspeed 对推理内核进行了微调，以最大限度地利用内存带宽来加载参数。这项优化使得 DeepSpeed 推理内核在批量大小为 1-10 的推理工作负载上，实现比 NVIDIA cuBLAS 库高出 20% 的性能。</p>
@@ -387,7 +389,7 @@ Specialized Transformer：进一步利用深度融合技术，创建了融合调
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 1. User specified Tensor Parallelism</span><br><span class="hljs-keyword">for</span> client_module, injection_policy <span class="hljs-keyword">in</span> self.injection_dict.items():<br>  <span class="hljs-comment"># 1.1 construct the tuple and pass that instead of a string or dict.</span><br>  config.injection_policy_tuple = injection_policy<br>  self._apply_injection_policy(config, client_module)<br><span class="hljs-comment"># 2. DeepSpeed Kernel Injection</span><br><span class="hljs-keyword">if</span> config.replace_with_kernel_inject:<br>  self._apply_injection_policy(config)<br><span class="hljs-comment"># 3. Automatic Tensor Parallelism</span><br><span class="hljs-keyword">elif</span> config.tensor_parallel.tp_size &gt; <span class="hljs-number">1</span>:<br>  <span class="hljs-comment"># tp_parser model</span><br>  parser_dict = AutoTP.tp_parser(model)<br>  <span class="hljs-keyword">for</span> client_module, injection_policy <span class="hljs-keyword">in</span> parser_dict:<br>      config.injection_policy_tuple = injection_policy<br>    self._apply_injection_policy(config, client_module)<br></code></pre></td></tr></table></figure>
 <p>明显看得出来，<code>_apply_injection_policy</code> 函数在支持张量并行时起到了关键作用。<strong>三种模式都离不开该函数的支持</strong>。它获取了 <code>injection_dict</code> 中的数据，以前文 <code>t5-v1_1-small</code> 模型为例，<code>injection_dict</code> 就是 <code>T5Block: ('SelfAttention.o', 'EncDecAttention.o', 'DenseReluDense.wo')</code>。再次回顾一下，<code>injection_dict</code> 中输入的线性层要求是两个特定线性层中的一种：1）attention output GeMM 和 2）layer output GeMM。</p>
 <p>我在运行 <code>t5-v1_1-small</code> 模型时将它的 layer 信息打印了出来，我们可以看看到底是哪些 kernel 会被 inject：</p>
-<p><img src="/img/LLM/T5_inject_policy.png" srcset="/img/loading.gif" lazyload alt="T5 网络架构的部分截图"></p>
+<p><img src="/img/LLM/T5_inject_policy.png" srcset="/img/background.bmp" lazyload alt="T5 网络架构的部分截图"></p>
 <p>从打印信息看到，encoder/decoder 的 attention 层计算，以及 DenseFFN 网络会被完成注入替换。</p>
 <p>接下来的重头戏就是，我们要搞清楚它是如何完成注入替换的：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_apply_injection_policy</span>(<span class="hljs-params">self, config, client_module=<span class="hljs-literal">None</span></span>):<br>  <span class="hljs-comment"># client_module is only passed when using the injection_dict method.</span><br>  checkpoint_dir = config.checkpoint<br>  checkpoint = SDLoaderFactory.get_sd_loader_json(checkpoint_dir,<br>                                                  self.checkpoint_engine) <span class="hljs-keyword">if</span> checkpoint_dir <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br>  generic_injection(self.module, dtype=config.dtype, enable_cuda_graph=config.enable_cuda_graph)<br><br>  <span class="hljs-keyword">if</span> <span class="hljs-built_in">isinstance</span>(self.module, torch.nn.Module):<br>    <span class="hljs-comment"># config is our DeepSpeedInferenceConfig and self.config is the HF model config</span><br>    replace_transformer_layer(client_module, self.module, checkpoint, config, self.config)<br></code></pre></td></tr></table></figure>
@@ -399,7 +401,7 @@ Specialized Transformer：进一步利用深度融合技术，创建了融合调
 <h4 id="replace-transformer-layer">replace_transformer_layer</h4>
 <p>多数情况下大家的模型代码继承自 <code>nn.Module</code>，因此我们先来看看 <a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed/blob/v0.14.2/deepspeed/module_inject/replace_module.py#L182-L497"><code>replace_transformer_layer</code> 的源码</a>，看它是怎么处理 <code>nn.Module</code> 类的替换。</p>
 <p>先回顾一下前文，避免被弄晕。在运行模型推理时，我们需要通过 <code>init_inference</code> API 中的 <code>injection_policy</code> 参数将模型内的某些 layer 层替换为 deepspeed 提供的高性能层。而用户传入的类名就是 <code>_apply_injection_policy(config, client_module)</code> 中的 <code>client_module</code>，也即是 <code>replace_transformer_layer</code> 的 <code>orig_layer_impl</code>。用 <code>t5-v1_1-small</code> 为例，<code>orig_layer_impl</code> 就是 <code>T5Block</code>，其中的 <code>injection_policy</code> 则是 ‘SelfAttention.o’, ‘EncDecAttention.o’, ‘DenseReluDense.wo’ 。而 <code>model</code> 是用户传入的整个模型。</p>
-<p><img src="/img/LLM/replace_transformer_layer.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/replace_transformer_layer.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>上面列出的函数调用栈（从上往下）可以看到，用户传入的 <code>injection_policy</code> 字典中，其键表示要执行 inject 的类，而其值对应了如何对该类进行优化的策略 <code>policy</code>：它在用户提供的 layer 层和 deepspeed 内有的高度优化的推理 transformer 层之间搭建起了一个映射。deepspeed 官方提供了不少基于 transformer 的高度优化过的推理层，如果用户提供的 layer 层恰好与这些相匹配，那么可以直接借鉴官方内部的优化策略。</p>
 <p>下面来看一下这部分的源码（有删减）：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">replace_transformer_layer</span>(<span class="hljs-params">orig_layer_impl, model, checkpoint_dict, config, model_config</span>):<br>  <span class="hljs-comment"># ...</span><br>  mp_replace = ReplaceWithTensorSlicing(mp_group=config.tensor_parallel.tp_group,<br>                                        mp_size=config.tensor_parallel.tp_size)<br>  <span class="hljs-keyword">if</span> checkpoint_dict <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> config.replace_with_kernel_inject:<br>    <span class="hljs-comment"># AutoTP shard loading</span><br>    checkpoint = checkpoint_dict[<span class="hljs-string">&quot;checkpoints&quot;</span>]<br>    pbar = tqdm.tqdm(total=<span class="hljs-built_in">len</span>(checkpoint), desc=<span class="hljs-string">f&quot;Loading <span class="hljs-subst">&#123;<span class="hljs-built_in">len</span>(checkpoint)&#125;</span> checkpoint shards&quot;</span>)<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-built_in">len</span>(checkpoint)):<br>      checkpoint_file = os.path.join(config.base_dir, checkpoint[i])<br>      replaced_module = replace_module(model=model,<br>                                        orig_class=orig_layer_impl,<br>                                        replace_fn=replace_fn,<br>                                        _replace_policy=config.injection_policy_tuple,<br>                                        checkpoint=checkpoint_file)<br>    replaced_module = set_lm_head(replaced_module)<br>  <span class="hljs-keyword">else</span>:<br>    replaced_module = replace_module(model=model,<br>                                    orig_class=orig_layer_impl,<br>                                    replace_fn=replace_fn,<br>                                    _replace_policy=config.injection_policy_tuple)<br>  <span class="hljs-comment"># ...</span><br></code></pre></td></tr></table></figure>
@@ -666,6 +668,30 @@ Specialized Transformer：进一步利用深度融合技术，创建了融合调
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -838,6 +864,8 @@ Specialized Transformer：进一步利用深度融合技术，创建了融合调
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -33,6 +33,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/uarthi.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>RISC-V from Scratch 5 - 峰子的乐园</title>
@@ -75,7 +77,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -304,7 +306,7 @@
 <p>如果你还未看本系列博客的第一部分，没有安装 <code>riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
 <h2 id="往期回顾">往期回顾</h2>
 <p>在 <em>RISC-V from scratch 4</em> 中，我们实现了一个简单的 UART 驱动程序和一个简单的 C 运行时 <code>crt0.s</code>，并达到了预期效果，见下图：</p>
-<p><img src="/img/uarthi.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/uarthi.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>考虑到 <code>crt0.s</code> 的实现已经是第二章的事情了，比较久远，因此在这里贴出代码，也是为了方便下一步的讨论。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.section .init, &quot;ax&quot;<br>.global _start<br>_start:<br>    .cfi_startproc<br>    .cfi_undefined ra<br>    .option push<br>    .option norelax<br>    la gp, __global_pointer$<br>    .option pop<br>    la sp, __stack_top<br>    add s0, sp, zero<br>    jal zero, main<br>    .cfi_endproc<br>    .end<br></code></pre></td></tr></table></figure>
 <p>然而，我们为了打出字符串 “hi” ，将主程序写成了这样：</p>
@@ -367,7 +369,7 @@
 <h3 id="mie-寄存器">mie 寄存器</h3>
 <p><code>mie</code> 寄存器包含了中断使能位，用于控制中断是否有效。其位域如下图：</p>
 <span id="mie">
-<p><img src="/img/mie.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/mie.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>我们除了要打开机器模式下的全局中断使能，还需要打开软件、时钟、外部这三部分子中断使能，参照 <a href="#mie"><code>mie</code> 寄存器的位域图</a>，我们可以写出下面的代码，打开所有机器模式下的中断使能。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">li   t3, (1 &lt;&lt; 3) | (1 &lt;&lt; 7) | (1 &lt;&lt; 11)<br>csrw mie, t3<br></code></pre></td></tr></table></figure>
 <h3 id="mtvec-寄存器">mtvec 寄存器</h3>
@@ -407,7 +409,7 @@
 </li>
 </ul>
 <p>然后，我们可以按照之前给过的 <code>Makefile</code> 文件编译生成 <code>a.out</code>，我们首先看看运行结果：</p>
-<p><img src="/img/run_5.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/run_5.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>令人欣慰的是，我们的程序没啥错误（至少到目前为止是这样），为了更好地明确各个数据的位置，我们需要用到 <code>objdump</code> 工具，反编译生成的文件 <code>a.out</code>。在 shell 中输入：<code>riscv64-unknown-elf-objdump -d a.out</code>，就可以得到反编译生成的 RISC-V 汇编语言。为了方便大家看得更加清楚，我单独将 <code>main</code> 的部分取出，并省略了一些对我们不重要的代码：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs nasm">0000000080000018 &lt;main&gt;:<br>     # allocate stack space<br>     # ...<br>    80000020:	06600793          	li	a5,102							# 局部变量 102 直接当作立即数<br>    80000024:	fef42223          	sw	a5,-28(s0)						# 存入到 -28(s0)<br>    80000028:	180000ef          	jal	ra,800001a8 &lt;uartinit&gt;<br>    8000002c:	fe042623          	sw	zero,-20(s0)<br>    80000030:	a00d                	j	80000052 &lt;main+0x3a&gt;<br>    80000032:	00018713          	mv	a4,gp							# 会发现 a4 就在 gp 上<br>    80000036:	fec42783          	lw	a5,-20(s0)						# 即 gp 就是数据段的开头<br>    8000003a:	97ba                	add	a5,a5,a4					# 从 gp 中取出数据 sg<br>    8000003c:	0007c783          	lbu	a5,0(a5)<br>    80000040:	2781                	sext.w	a5,a5<br>    80000042:	853e                	mv	a0,a5						# 全局静态变量 sg<br>    80000044:	1b8000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    # loop var increasement<br>    # ...<br>    80000060:	fe442783          	lw	a5,-28(s0)<br>    80000064:	853e                	mv	a0,a5					# 从 -28(s0) 中取出 是局部变量 102<br>    80000066:	196000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    8000006a:	01c1a783          	lw	a5,28(gp) # 8000101c &lt;sl.1504&gt;  # 静态变量 sl  从 gp 中取出<br>    8000006e:	853e                	mv	a0,a5<br>    80000070:	18c000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    80000074:	fe042423          	sw	zero,-24(s0)<br>    80000078:	a00d                	j	8000009a &lt;main+0x82&gt;<br>    8000007a:	01018713          	addi	a4,gp,16 # 80001010 &lt;g&gt;<br>    8000007e:	fe842783          	lw	a5,-24(s0)<br>    80000082:	97ba                	add	a5,a5,a4					# 从 gp 中取出 全局变量 g<br>    80000084:	0007c783          	lbu	a5,0(a5)<br>    80000088:	2781                	sext.w	a5,a5<br>    8000008a:	853e                	mv	a0,a5<br>    8000008c:	170000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    #  loop var increasement<br>    #  ...<br>    800000a8:	05c1a783          	lw	a5,92(gp) # 8000105c &lt;ga&gt;     # 从 gp 中取出 未初始化的全局变量 ga <br>    800000ac:	e789                	bnez	a5,800000b6 &lt;main+0x9e&gt;<br>    800000ae:	06700513          	li	a0,103<br>    800000b2:	14a000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>	# deallocate stack space and return <br>	# ...<br>    800000c0:	8082                	ret<br><br></code></pre></td></tr></table></figure>
 
@@ -634,6 +636,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -806,6 +832,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -31,6 +31,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://twilco.github.io/img/riscv-from-scratch/pt-3/Parallel_and_Serial_Transmission.gif">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>RISC-V from Scratch 3 - 峰子的乐园</title>
@@ -73,7 +75,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -302,7 +304,7 @@
 <p>译注：亲测无需下载 github 库也可实现下面的实验。</p>
 <h2 id="什么是-UART">什么是 UART</h2>
 <p>UART 是 “<strong>U</strong>niversal <strong>A</strong>synchronous <strong>R</strong>eceiver-<strong>T</strong>ransmitter” 的缩写，它是用于传输、接收系列数据的硬件设备。串行数据传输是逐位顺序发送数据的过程。 相反，并行数据传输是一次发送多个位的过程。 关于串行并行通信，此图很好地说明了差异：</p>
-<p><img src="https://twilco.github.io/img/riscv-from-scratch/pt-3/Parallel_and_Serial_Transmission.gif" srcset="/img/loading.gif" lazyload alt="">{:.align-center}</p>
+<p><img src="https://twilco.github.io/img/riscv-from-scratch/pt-3/Parallel_and_Serial_Transmission.gif" srcset="/img/background.bmp" lazyload alt="">{:.align-center}</p>
 <p>UART 从不指定数据接收或发送的速率（也称为时钟速率或时钟信号），这是它们异步而不是同步的原因。正因为异步的要求，UART 使用开始和停止位来将数据截断为帧，开始位和停止位会告诉 UART 何时开始和停止读取数据。</p>
 <p>你可能听说过 USARTs (<strong>U</strong>niversal <strong>S</strong>ynchronous/<strong>A</strong>synchronous <strong>R</strong>eceiver-<strong>T</strong>ransmitter) ，该设备既可以同步也可以异步工作，当同步工作时，USART 会放弃使用开始位和停止位，而是在单独的线路上发送时钟信号，实现发送与接受的同步。</p>
 <p>事实上，UART和USART随处可见。 它们内置于几乎所有现代微控制器（包括我们的虚拟机）中。 这些设备工作在交通信号灯、冰箱以及绕地球轨道运行了多年的卫星上。</p>
@@ -578,6 +580,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -750,6 +776,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

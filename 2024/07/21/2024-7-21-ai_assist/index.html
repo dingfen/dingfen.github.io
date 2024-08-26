@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -31,6 +31,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://coruzant.com/wp-content/uploads/2022/10/chatbot-robot-696x464.jpg">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>在基于 hexo 框架的博客上部署定制化 AI 聊天应用 - 峰子的乐园</title>
@@ -73,7 +75,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -295,7 +297,7 @@
 <p>友情链接：通义系列模型收费<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/model-studio/product-overview/tongyi-qianwen-series-models-price-adjustment">价格一览</a></p>
 <h1>部署方法</h1>
 <p>如何给自己的博客加入 AI 助手，方便全天候（7x24）地回答读者疑问，总结文章内容？本篇博客教你用 10 分钟为您的网站添加一个 AI 助手。以下内容基本参考了<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/model-studio/use-cases/add-an-ai-assistant-to-your-website-in-10-minutes?spm=a2c4g.11186623.0.0.5b796373rqgtsU">10分钟在网站上增加一个 AI 助手</a>。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816074.gif" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816074.gif" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>在网站中引入一个 AI 助手，只需 4 步：</p>
 <ol>
 <li><strong>创建大模型问答应用</strong>：我们将先通过百炼创建一个大模型应用，并获取调用大模型应用 API 的相关凭证。</li>
@@ -303,7 +305,7 @@
 <li><strong>引入 AI 助手</strong>：接着我们将通过修改几行代码，实现在网站中引入一个 AI 助手。</li>
 <li><strong>增加私有知识</strong>：最后可以通过准备一些私有知识，让 AI 助理能回答原本无法准确回答的问题，帮助您更好的应对客户咨询。</li>
 </ol>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816044.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816044.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h2 id="1-创建大模型问答应用">1. 创建大模型问答应用</h2>
 <p>首先我们可以通过创建一个百炼应用，来获取大模型的推理 API 服务，用于实现 AI 助手。</p>
 <blockquote>
@@ -311,7 +313,7 @@
 </blockquote>
 <h3 id="1-1-创建应用">1.1 创建应用</h3>
 <p>进入百炼控制台，在我的应用中点击创建应用。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816048.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816048.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>在应用设置页面，模型选择通义千问-Plus，其他参数保持默认。</p>
 <blockquote>
 <p>您也可以选择输入一些 Prompt，比如设置一些人设以引导大模型更好的应对客户咨询。</p>
@@ -319,18 +321,18 @@
 <p>“你是峰子乐园的管家，名字叫小峰。你是我（主人峰子）的个人博客助手。你负责对博客的文章内容做出总结概括，解答读者们提出的问题。”</p>
 </blockquote>
 <p>点击右上角发布，在页面右侧可以提问验证模型效果。不过您会发现，目前它还无法准确回答你的私有数据信息，毕竟模型还未获得咱们博客内的文章数据，我们将在后面的步骤中去解决这一问题。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816047.png" srcset="/img/loading.gif" lazyload alt=""><br>
-<img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816045.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816047.png" srcset="/img/background.bmp" lazyload alt=""><br>
+<img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816045.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h3 id="1-2-获取调用-API-所需的凭证">1.2 获取调用 API 所需的凭证</h3>
 <p>为了在后续通过 API 调用大模型应用的能力，我们需要获取一个百炼应用的 API-KEY 和应用 ID：</p>
 <ol>
 <li>在我的应用页面，点击查看我的API-KEY，在弹出窗口中创建一个新 API-KEY。</li>
 </ol>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816049.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816049.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <ol start="2">
 <li>在应用列表中可以查看所有百炼应用 ID</li>
 </ol>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816050.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816050.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h2 id="2-搭建示例网站">2. 搭建示例网站</h2>
 <p>在让 AI 助手能准确回答问题之前，我们可以先尝试快速将 AI 助手集成到网站中。</p>
 <p>您可以通过我们提前准备好的应用模板，快速搭建一个空白的示例网站，用于模拟您的企业官网或者其他站点。详细步骤如下：</p>
@@ -340,12 +342,12 @@
 <h3 id="2-1-创建应用">2.1 创建应用</h3>
 <p>通过我们准备好的<a target="_blank" rel="noopener" href="https://fcnext.console.aliyun.com/applications/create?template=web-chatbot">应用模板</a>，参考下图选择<strong>直接部署</strong>、并填写前面获取到的百炼应用 ID 以及 API-KEY。</p>
 <p>然后其他表单项保持默认，点击页面左下角的<strong>创建并部署默认环境</strong>，等待项目部署完成即可（预计耗时 1 分钟）。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816052.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816052.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>红框部分需要分别填写之前我们申请的百炼应用 ID 和 API-KEY，是因为我们预置的应用模板中包含了通过百炼应用调用大模型的代码，以便您在后续快速完成体验。</p>
 <h3 id="2-2-访问网站">2.2 访问网站</h3>
 <p>应用部署完成后，您可以在应用详情的<strong>环境信息</strong>中找到示例网站的访问域名，点击即可查看，确认示例网站已经部署成功。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816053.png" srcset="/img/loading.gif" lazyload alt=""></p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816051.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816053.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816051.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h2 id="3-为网站增加-AI-助手">3. 为网站增加 AI 助手</h2>
 <p>在网站中增加 AI 助手非常简单，您只需要在网站的 html 文件中插入几行代码。</p>
 <h3 id="3-1-增加-AI-助手相关代码">3.1 增加 AI 助手相关代码</h3>
@@ -353,36 +355,36 @@
 <ol>
 <li>回到应用详情页，在环境详情的最底部找到函数资源，点击函数名称，进入函数详情页。</li>
 </ol>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816055.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816055.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <ol start="2">
 <li>在函数详情页，参考下图打开代码视图，并找到public/index.html文件，然后取消③所在位置的代码注释即可。</li>
 </ol>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816054.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816054.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <ol start="3">
 <li>最后点击<strong>部署代码</strong>，等待部署完成即可。</li>
 </ol>
 <h3 id="3-2-验证网站上的-AI-助手">3.2 验证网站上的 AI 助手</h3>
 <p>现在，您可以刷新示例网站页面以查看最新效果。此时您会发现网站的右下角出现了 AI 助手图标image.png，点击即可唤起 AI 助手。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816057.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816057.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h2 id="4-为-AI-助手增加私有知识">4. 为 AI 助手增加私有知识</h2>
 <p>通过前面的步骤，您已经拥有了一个可以和客户对话的 AI 助手。但是，如果想让 AI 助手像你的博客助手一样，更加精准且专业地回答与博客文章相关的问题，我们还需要为大模型应用配置知识库。</p>
 <p>假设您的博客文章包括了许多智能手机相关的知识。您的博客网站上会有很多与智能手机相关的信息，如支持双卡双待、屏幕、电池容量、内存等信息。不同机型的详细配置清单参考：<a target="_blank" rel="noopener" href="https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20240701/geijms/%E7%99%BE%E7%82%BC%E7%B3%BB%E5%88%97%E6%89%8B%E6%9C%BA%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D.docx">百炼系列手机产品介绍.docx</a>。</p>
 <h3 id="4-1-配置知识库">4.1 配置知识库</h3>
 <p>接下来，我们可以尝试让大模型在面对客户问题时参考这份文档，以产出一个更准确的回答和建议。</p>
 <p><strong>上传文件</strong>：在百炼控制台的<a target="_blank" rel="noopener" href="https://bailian.console.aliyun.com/data-center#/data-center">数据管理</a>中点击<strong>导入数据</strong>，根据引导上传我们虚构的百炼系列手机产品介绍：</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816058.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816058.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p><strong>建立索引</strong>：在左侧菜单中找到<a target="_blank" rel="noopener" href="https://bailian.console.aliyun.com//knowledge-base#/knowledge-base">知识索引</a>，根据引导创建一个新的知识库，选择向量存储类型，并选择刚才上传的文件，其他参数保持默认即可。知识库将为上一步骤中准备的文档建立索引，以便后续大模型回答时检索参考。</p>
 <blockquote>
 <p>选择向量存储类型时，如果您希望集中存储、灵活管理多个应用的向量数据，可选择ADB-PG。</p>
 </blockquote>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816059.png" srcset="/img/loading.gif" lazyload alt=""></p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8243531271/p822476.png" srcset="/img/loading.gif" lazyload alt=""></p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816061.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816059.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8243531271/p822476.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816061.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p><strong>引用知识</strong>：完成知识库的创建后，返回应用设置，打开知识检索增强开关、选择知识库，最后点击发布。Prompt 中会被自动添加一段信息，以便大模型在后续回答时参考检索出来的信息。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816060.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816060.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h3 id="4-2-检验效果">4.2 检验效果</h3>
 <p>有了参考知识，AI 助手就能准确回答关于您公司的商品的问题了。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816109.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816109.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h2 id="总结">总结</h2>
 <p>通过前面的学习，您已经能搭建一个大模型 RAG 应用，并且将其以 AI 助手的形式添加到网站中来应对客户咨询，过程仅需 0 元（免费试用额度内） 10 分钟。</p>
 <h3 id="应用于生产环境">应用于生产环境</h3>
@@ -398,14 +400,14 @@
 <p>函数计算应用在没有访问时不产生任何费用，您完全可以保留此函数应用，在后续用作调用大模型的转发服务。</p>
 </blockquote>
 <p>函数计算应用部署时附带的 **.devsapp.net 域名会在下发后 30 天内回收，且不支持 https 访问，只适合于测试验证。如果您希望在您的网站上直接调用函数计算中部署的 <code>POST /chat</code> 接口，建议使用函数计算 http 触发器中提供的域名，如：<code>https://web-chat****.fcapp.run/chat</code>。与此同时，建议您修改index.js中的 cors 配置，禁止其他站点对此接口的访问。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/2542880271/p820673.png" srcset="/img/loading.gif" lazyload alt=""></p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/2542880271/p820675.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/2542880271/p820673.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/2542880271/p820675.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <h4 id="应用评测">应用评测</h4>
 <p>建议在正式上线 AI 助手前，组织业务人员一起参与<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/model-studio/user-guide/evaluate-application/">应用评测</a>，确保大模型应用的回答效果符合预期。如果不符合预期，可以通过<a target="_blank" rel="noopener" href="https://edu.aliyun.com/course/3126500/lesson/342551535">优化提示词</a>、完善补充私有知识、调整文档切分策略等方法来改进回答效果。</p>
 <h1>如何部署到基于 hexo 框架的博客上</h1>
 <h2 id="hexo-注入器">hexo 注入器</h2>
 <p>沿着上面的部署方法，如果顺利的话，可以将 AI 助手部署在示例的网站上。</p>
-<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816057.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816057.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>但这不是我们需要的，我们最终是要把它放在我们的博客上供读者使用的！</p>
 <p>因此，我们需要用到 hexo 框架内的<a target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/advance/#hexo-%E6%B3%A8%E5%85%A5%E4%BB%A3%E7%A0%81">注入器</a>来帮助我们将阿里云提供的前端代码注入到我们的博客网页上。</p>
 <p>Hexo 注入器是 Hexo 5 版本自身加入的一项新功能，所以在所有 Hexo 主题都是支持这个功能的。</p>
@@ -643,6 +645,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -815,6 +841,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

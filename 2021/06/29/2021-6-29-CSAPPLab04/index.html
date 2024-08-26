@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -34,6 +34,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/CSAPP/lab4/rotate.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>深入理解计算机系统之代码优化实验 - 峰子的乐园</title>
@@ -76,7 +78,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -304,7 +306,7 @@
 <li>交换行：第i行与第N-1 − i行交换。</li>
 </ul>
 <p><strong>旋转操作</strong>的具体步骤如下图所示：</p>
-<p><img src="/img/CSAPP/lab4/rotate.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab4/rotate.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p><strong>平滑操作</strong>的目标是将每个像素值改为其周围像素值的平均值。参考以下公式：</p>
 <p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>M</mi><mn>2</mn><mo stretchy="false">[</mo><mn>1</mn><mo stretchy="false">]</mo><mo stretchy="false">[</mo><mn>1</mn><mo stretchy="false">]</mo><mo>=</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mn>2</mn></munderover><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>0</mn></mrow><mn>2</mn></munderover><mi>M</mi><mn>1</mn><mo stretchy="false">[</mo><mi>i</mi><mo stretchy="false">]</mo><mo stretchy="false">[</mo><mi>j</mi><mo stretchy="false">]</mo></mrow><mn>9</mn></mfrac></mrow><annotation encoding="application/x-tex">M2[1][1]=\frac{\sum^2_{i=0}\sum^2_{j=0}M1[i][j]}{9}  
 </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mord">2</span><span class="mopen">[</span><span class="mord">1</span><span class="mclose">]</span><span class="mopen">[</span><span class="mord">1</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4658em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7798em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">9</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.8258em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.954em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">0</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.954em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span><span class="mrel mtight">=</span><span class="mord mtight">0</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4358em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mord">1</span><span class="mopen">[</span><span class="mord mathnormal">i</span><span class="mclose">]</span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mclose">]</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
@@ -321,11 +323,11 @@
 <p>以下 C 函数计算将源图像旋转90°，并将结果存储在目标图像中。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">naive_rotate</span><span class="hljs-params">(<span class="hljs-type">int</span> dim, pixel *src, pixel *dst)</span> &#123;<br>    <span class="hljs-type">int</span> i, j;<br>    <span class="hljs-keyword">for</span>(i=<span class="hljs-number">0</span>; i &lt; dim; i++)<br>    	<span class="hljs-keyword">for</span>(j=<span class="hljs-number">0</span>; j &lt; dim; j++)<br>    		dst[RIDX(dim<span class="hljs-number">-1</span>-j,i,dim)] = src[RIDX(i,j,dim)];<br>    <span class="hljs-keyword">return</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>从下图可以看出，旋转操作必然会在一定程度上违反局部性原理。因此我首先想到的是，把循环分块，好让高速缓存能完全容纳一个小循环内所需要访问的数据，增强程序的局部性。</p>
-<p><img src="/img/CSAPP/lab4/rotate1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab4/rotate1.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>分别以8*8分块、16*16分块和32*32分块做测试，代码都很类似，仅将8*8代码放置下方。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">rotate_8x8</span><span class="hljs-params">(<span class="hljs-type">int</span> dim, pixel *src, pixel *dst)</span> &#123;<br>    <span class="hljs-type">int</span> i, j;<br><br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i1 = <span class="hljs-number">0</span>; i1 &lt; dim; i1+=<span class="hljs-number">8</span>)<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> j1 = <span class="hljs-number">0</span>; j1 &lt; dim; j1+=<span class="hljs-number">8</span>)<br>    <span class="hljs-keyword">for</span> (i = i1; i &lt; i1+<span class="hljs-number">8</span>; i++)<br>	    <span class="hljs-keyword">for</span> (j = j1; j &lt; j1+<span class="hljs-number">8</span>; j++)<br>	        dst[RIDX(dim<span class="hljs-number">-1</span>-j, i, dim)] = src[RIDX(i, j, dim)];<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>经过测试，得出的结果如下：</p>
-<p><img src="/img/CSAPP/lab4/optrotate.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab4/optrotate.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>从结果看，8*8的分块获得的优化性能最好，而随着分块越大，性能就会变得越差。</p>
 <h3 id="平滑操作">平滑操作</h3>
 <p>简而言之，就是要对如下代码进行优化：</p>
@@ -340,7 +342,7 @@
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// dst中间主体部分处理</span><br><span class="hljs-keyword">for</span>(j=<span class="hljs-number">1</span>;j&lt;dim2;j+=<span class="hljs-number">2</span>)<br>&#123;        <br>    <span class="hljs-comment">// 同时处理两个像素</span><br>    dst-&gt;red=(P1-&gt;red+(P1+<span class="hljs-number">1</span>)-&gt;red+(P1+<span class="hljs-number">2</span>)-&gt;red+P2-&gt;red+(P2+<span class="hljs-number">1</span>)-&gt;red+(P2+<span class="hljs-number">2</span>)-&gt;red+P3-&gt;red+(P3+<span class="hljs-number">1</span>)-&gt;red+(P3+<span class="hljs-number">2</span>)-&gt;red)/<span class="hljs-number">9</span>;<br>    dst-&gt;green=(P1-&gt;green+(P1+<span class="hljs-number">1</span>)-&gt;green+(P1+<span class="hljs-number">2</span>)-&gt;green+P2-&gt;green+(P2+<span class="hljs-number">1</span>)-&gt;green+(P2+<span class="hljs-number">2</span>)-&gt;green+P3-&gt;green+(P3+<span class="hljs-number">1</span>)-&gt;green+(P3+<span class="hljs-number">2</span>)-&gt;green)/<span class="hljs-number">9</span>;<br>    dst-&gt;blue=(P1-&gt;blue+(P1+<span class="hljs-number">1</span>)-&gt;blue+(P1+<span class="hljs-number">2</span>)-&gt;blue+P2-&gt;blue+(P2+<span class="hljs-number">1</span>)-&gt;blue+(P2+<span class="hljs-number">2</span>)-&gt;blue+P3-&gt;blue+(P3+<span class="hljs-number">1</span>)-&gt;blue+(P3+<span class="hljs-number">2</span>)-&gt;blue)/<span class="hljs-number">9</span>;<br>    dst1-&gt;red=((P1+<span class="hljs-number">3</span>)-&gt;red+(P1+<span class="hljs-number">1</span>)-&gt;red+(P1+<span class="hljs-number">2</span>)-&gt;red+(P2+<span class="hljs-number">3</span>)-&gt;red+(P2+<span class="hljs-number">1</span>)-&gt;red+(P2+<span class="hljs-number">2</span>)-&gt;red+(P3+<span class="hljs-number">3</span>)-&gt;red+(P3+<span class="hljs-number">1</span>)-&gt;red+(P3+<span class="hljs-number">2</span>)-&gt;red)/<span class="hljs-number">9</span>;<br>    dst1-&gt;green=((P1+<span class="hljs-number">3</span>)-&gt;green+(P1+<span class="hljs-number">1</span>)-&gt;green+(P1+<span class="hljs-number">2</span>)-&gt;green+(P2+<span class="hljs-number">3</span>)-&gt;green+(P2+<span class="hljs-number">1</span>)-&gt;green+(P2+<span class="hljs-number">2</span>)-&gt;green+(P3+<span class="hljs-number">3</span>)-&gt;green+(P3+<span class="hljs-number">1</span>)-&gt;green+(P3+<span class="hljs-number">2</span>)-&gt;green)/<span class="hljs-number">9</span>;<br>    dst1-&gt;blue=((P1+<span class="hljs-number">3</span>)-&gt;blue+(P1+<span class="hljs-number">1</span>)-&gt;blue+(P1+<span class="hljs-number">2</span>)-&gt;blue+(P2+<span class="hljs-number">3</span>)-&gt;blue+(P2+<span class="hljs-number">1</span>)-&gt;blue+(P2+<span class="hljs-number">2</span>)-&gt;blue+(P3+<span class="hljs-number">3</span>)-&gt;blue+(P3+<span class="hljs-number">1</span>)-&gt;blue+(P3+<span class="hljs-number">2</span>)-&gt;blue)/<span class="hljs-number">9</span>;<br>    dst+=<span class="hljs-number">2</span>;<br>    dst1+=<span class="hljs-number">2</span>;<br>    P1+=<span class="hljs-number">2</span>;<br>    P2+=<span class="hljs-number">2</span>;<br>    P3+=<span class="hljs-number">2</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>总而言之，将代码充分展开，并优先考虑编写对缓存友好的代码，可以获得更好的效果。</p>
 <p>经过测试，得出的结构如下：</p>
-<p><img src="/img/CSAPP/lab4/optsmooth.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab4/optsmooth.png" srcset="/img/background.bmp" lazyload alt=""></p>
 
                 
               </div>
@@ -565,6 +567,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -737,6 +763,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

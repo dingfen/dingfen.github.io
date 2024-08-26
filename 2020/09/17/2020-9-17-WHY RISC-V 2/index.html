@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -38,6 +38,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/RV32I_reg.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>Why RISC-V ? - 峰子的乐园</title>
@@ -80,7 +82,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -321,11 +323,11 @@
 <p>和许多 RISC 指令集一样，其余的指令分为三类：运算，控制，内存访问。RISC-V 是一种 load-store 架构，算术指令只在寄存器上操作，只能使用 load 和 store 向存储器或从存储器传输数据。</p>
 <p>如下图，在 RV32I 中有 31 个通用整数寄存器，命名为 <code>x1</code> - <code>x31</code>，每个寄存器的宽度为 32 位。寄存器 <code>x0</code>  恒为 0；<code>x0</code> 可以被用作废弃指令结果的目标寄存器。唯一的附加寄存器是程序计数器，<code>PC</code>，它保存当前指令的地址。</p>
 <center>
-    <img src="/img/RV32I_reg.png" srcset="/img/loading.gif" lazyload />
+    <img src="/img/RV32I_reg.png" srcset="/img/background.bmp" lazyload />
 </center>
 <p>RV32I 中的指令有 32 位长，且以<strong>小端字节</strong>的顺序在内存中对齐存储。我们之所以这么做，是因为当前在通用计算中占主导地位的 x86 是小端法，且小端法软件更常见，虽然大多数软件都是兼容的😓。ISA 有六种指令格式组成：四种主要格式，<strong>R</strong>, <strong>I</strong>, <strong>S</strong>, <strong>U</strong>；还有两个变体 <strong>SB</strong> 和 <strong>UJ</strong>，除了直接操作数编码外，它们与 S 和 U 完全相同。指令中的两个源操作数寄存器分别被标识为 <code>rs1</code> 和 <code>rs2</code> ，输出结果的目的寄存器被标识为 <code>rd</code> 。<u>这样编码的一个重要特性是，当这些寄存器被用到时，它们在指令中的位置始终相同，这就允许寄存器获取与指令解码并行执行，改善了许多实现中的关键路径</u>。</p>
 <center>
-    <img src="/img/RV32I_formats.png" srcset="/img/loading.gif" lazyload />
+    <img src="/img/RV32I_formats.png" srcset="/img/background.bmp" lazyload />
 </center>
 <p><u>该编码方案的另一个特性是，从指令中生成立即操作数的成本很低</u>。在一个 32 位的立即数中，有 7 位总是来自指令中的相同位置（imm[10:5]），包括符号位，由于它们是最经常用到的，因而是最关键的。另外 24 位来自于两个地方，因此最终的立即数有三处来源。对于 SB 和 UJ 格式，它们的立即数一定会被 2 整除，立即数是通过旋转拼接而成的，而不是像 MIPS、SPARC 和 Alpha 一样使用多路选择器。这种设计降低了重用 ALU 数据路径来计算分支目标的硬件成本。</p>
 <p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/mikewolf2002/p/11196680.html">这篇博客</a>描述了 RV32I 的主操作码的分配情况。主操作码 7 位宽，但在 base ISAs 中，末两位都是 11 ，也就是说一共可编码 32 条指令。这意味着我们留出了 3/4 的编码空间给扩展 ISA ，这可以显著提升代码密度。 在这可编码的 32 条指令中，RV32I 花了 11 个，其他 base ISAs 花了 4 个，标准扩展花了 8 个，另外剩下 9 个仍用于 ISA 扩展。</p>
@@ -359,7 +361,7 @@
 <p>EBREAK 指令用于调用调试器。与许多 ISAs 不同，<u>RISC-V 不允许在 EBREAK 指令字中编码元数据</u>。这个特性会消耗额外的编码空间，但是并不是特别有用，因为字段的宽度不足以容纳一个完整的内存地址。相反，这些数据最好存储在一个辅助的数据结构中，由 EBREAK 指令的程序计数器索引。</p>
 <p>还有六条指令都是用于读写控制与状态寄存器 (control and status registers) 的值，这些寄存器用于提供系统控制和 I/O 。CSR 地址空间支持最多 $ 2^{12}$ 个控制寄存器；现在，这些空间大部分都空着。CSRRW 指令将CSR 中的值复制到整数寄存器 <code>rd</code> 中，并将 <code>rs1</code> 的值自动覆盖到 CSR 寄存器中。CSRRC 指令原子地清除CSR 中的位。它复制 CSR 的旧值给 <code>rd</code>，然后对于寄存器 <code>rs1</code> 中设置的任何位，它会自动清除 CSR 中的相应位。CSRRS 指令与此类似，但它在 CSR 中设置位，而不是清除位。其余三个指令，CSRRWI 、CSRRCI 和 CSRRSI，它们的行为与没有 I 的对应指令类似，但是它们不是从寄存器 <code>rs1</code> 中获取源操作数，而是直接对一个 5 位立即数进行零扩展。</p>
 <center>
-<img src="/img/RV32I_CSR.png" srcset="/img/loading.gif" lazyload />
+<img src="/img/RV32I_CSR.png" srcset="/img/background.bmp" lazyload />
 </center>
 <p>由于读取或写入 CSR 都有副作用，因此我们定义了这些指令的两种特殊情况，每一种都显式地缺少其中一种副作用。用 CSRRS + <code>rs1</code> = <code>x0</code> 来读取 CSR 寄存器，但不设置任何位，失去了写副作用，这便是 CSRR 伪指令。用 CSRRW + <code>rd</code> = <code>x0</code> 来写入 CSR 寄存器，但旧值被丢弃，失去了读副作用，这就是 CSRW 伪指令。</p>
 <table>
@@ -409,11 +411,11 @@
 <p>对于很多应用程序来说，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>32</mn></msup></mrow><annotation encoding="application/x-tex">2^{32}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span></span></span></span></span></span></span></span> 个字节的可寻址内存是不够的。2015 年，大型服务器拥有多达 64 TiB 的DRAM，需要 46 位才能完全寻址。甚至一些手机的内存也超过了 4 GiB。因此，尽管 RV32I 适用于大多数的小型系统，但其有限的地址空间已无法满足许多系统。RV64I 在其基础上解决了地址空间不足的问题。</p>
 <p>如下图所示，RV64I 的用户可见状态与 RV32I 非常相似：它只在整数寄存器和 <code>PC</code> 的位宽上都增加了一倍，达到 64 位。同样，RV32I 指令与 RV64I 对应的指令有相同的功能，当然 RV64I 能在 64 位寄存器上操作。除此之外，RV64I 提供了 12 条新的指令。</p>
 <center>
-    <img src="/img/RV64I_reg.png" srcset="/img/loading.gif" lazyload />
+    <img src="/img/RV64I_reg.png" srcset="/img/background.bmp" lazyload />
 </center>
 <p>虽然整数算术通常操作寄存器的所有位，特别是在处理地址时，但对 sub-word 的计算也很常见。这种效果在 64 位中得到了放大，因为 Java 和 C 中 <code>int</code> 等数据类型仍然保持 32 位的宽度。为了在 32 位的代码上保持合理的性能，RV64I 添加了几条运算指令（图中前 9 条指令），它们对整数的低 32 位进行运算，并得到 32 位的结果，最后符号扩展到 64 位。</p>
 <center>
-   <img src="/img/RV64I.png" srcset="/img/loading.gif" lazyload />
+   <img src="/img/RV64I.png" srcset="/img/background.bmp" lazyload />
 </center>
 <p>在寄存器中保持 32 位数据符号扩展，可以在 C 类型 <code>int</code> 和 <code>unsigned int</code> 之间，以及 <code>int</code> 和 <code>long</code> 之间进行几乎无代价的强制类型转换。现有的分支指令在有符号/无符号的情况下都可以自动进行正常操作。</p>
 <p>还有三条新的内存访问指令：LWU load 32 位的字，并将结果零扩展到 64 位。LD 和 SD load/store 64 位的双字。</p>
@@ -422,7 +424,7 @@
 <p>为了避开这一设计错误，我们有意识地为 128 位地址空间 RV128I 保留了很多 RISC-V 的编码空间。虽然我们预计 64 位的地址空间在未来几十年对几乎所有的计算设备来说都是足够的，但 128 位的地址空间已经有了合理的应用，包括单地址空间操作系统。截至撰写本文时（2016），速度最快的超级计算机“天河 2 号”拥有 1.3 PiB 的内存，寻址需要 51 位。按照 TOP500 冠军的内存容量的历史增长率（每年约 70%），64 位地址空间将会在大约 20 年内耗尽。就从其全局可寻址的方面来看，我们认为扁平可寻址性是最好的方法； RV128I 提供了一个很有前途的解决方案。</p>
 <p>RV128I 对 RV64I 的扩展类似于 RV64I 对 RV32I 的扩展：整数寄存器的位宽加倍；增加新的 load store 指令；基本的算术运算的操作对象变为 128 位。为了在 64 位数据上保持合理的性能，添加了只处理低 64 位的新的算术操作。下图总结了 RV128I 中的新指令。</p>
 <center>
-    <img src="/img/RV128I.png" srcset="/img/loading.gif" lazyload />
+    <img src="/img/RV128I.png" srcset="/img/background.bmp" lazyload />
 </center>
 <h2 id="总结">总结</h2>
 <p>RISC-V 的基础 ISAs 实现起来很简单，也很直接，但足够完整，能支持现代软件堆栈。基础 ISA 设计避免了为简单或复杂的微体系结构增加不合理的复杂的设计负担；基础 ISA 在设计时考虑到了译码、立即数扩展、关键路径等一系列电路实现中的效率，使得实现更有能效；RISC-V 充分考虑到了 PIC 的重要性，并丢弃了提升很小但完全不合算的设计方案（比如，有条件移动、预测、延迟槽等）；同时，RISC-V 为了更好地提高嵌入式领域/高性能领域的性能或者能效，设计了 RV32E 和 RV64I 甚至 RV128I ，并提供了各种标准扩展；RISC-V 留给了未来非常充裕的编码空间，给自定义的扩展指令集非常充分的选择；</p>
@@ -654,6 +656,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -826,6 +852,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -31,6 +31,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/PP/dotproduct.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>CUDA 中的向量内积 - 峰子的乐园</title>
@@ -73,7 +75,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -292,7 +294,7 @@
 <p>博主本科时略学过 CUDA 编程的相关知识，但远算不上熟练，更谈不上精通。恰好本人对并行计算很感兴趣，这几天实现了一下最基础的向量内积，对以前的知识做了一点总结，算是温故而知新，可以为师矣。</p>
 <h2 id="向量内积">向量内积</h2>
 <p>两个长为 N 的向量做内积。从并行计算的角度看，可并行部分就是 <code>a[i] * b[i]</code> 部分，然后再对得到的乘积做累加求和。可以让 GPU 中的每个线程执行一个 <code>a[i] * b[i]</code>，然后再进行累加。如下图，考虑到 N 可能非常大，GPU 网格中的线程数量不足以覆盖整个向量，因此需要使用 <code>while</code> 循环，让线程运算多个乘法。</p>
-<p><img src="/img/PP/dotproduct.png" srcset="/img/loading.gif" lazyload alt="cuda 向量内积示意图"></p>
+<p><img src="/img/PP/dotproduct.png" srcset="/img/background.bmp" lazyload alt="cuda 向量内积示意图"></p>
 <p>具体而言，在下面的这个循环中，每个线程都会运行一个 grid 中的一次乘法，然后跳转到下一个 grid 继续完成乘法。因此，程序的 <code>while</code> 循环，让每个线程计算相应的乘法后，跨越一个 grid 的长度再完成乘法，最后累加到 <code>cache</code> 数组中（橙色箭头），为了不让自增的 <code>tid</code> 变量超过数组边界，每次累加后还需要在 <code>while</code> 语句中判断一下。相应的代码如下，配合上图相应能更好地理解计算过程。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">dot</span><span class="hljs-params">(<span class="hljs-type">float</span> *c, <span class="hljs-type">float</span> *a, <span class="hljs-type">float</span> *b)</span> </span>&#123;<br>  <span class="hljs-type">int</span> tid = threadIdx.x + blockIdx.x * blockDim.x;<br>  <span class="hljs-type">float</span> cache[blockDim.x * gridDim.x];<br>  <span class="hljs-type">float</span> ans = <span class="hljs-number">0.0f</span>;<br>  <span class="hljs-comment">// 线程并行地执行内积 乘法</span><br>  <span class="hljs-keyword">while</span>(tid &lt; N) &#123;<br>    ans += a[tid] * b[tid];<br>    tid += blockDim.x * gridDim.x;<br>  &#125;<br>  cache[threadIdx.x + blockIdx.x * blockDim.x] = ans;<br></code></pre></td></tr></table></figure>
 <p>上述计算完成后，还需要将 <code>cache</code> 中的数组进一步累加。但这里必须注意，进一步累加前，必须确保所有线程已经完成了上面的循环。因此，这里需添加一个 barrier：</p>
@@ -549,6 +551,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -721,6 +747,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

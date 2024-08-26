@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -25,13 +25,15 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
 <meta property="article:published_time" content="2024-08-18T11:13:00.000Z">
-<meta property="article:modified_time" content="2024-08-18T11:56:12.330Z">
+<meta property="article:modified_time" content="2024-08-26T08:42:13.917Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="CUTLASS">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>深入 CUTLASS 之 CuTe 详解 - 峰子的乐园</title>
@@ -74,7 +76,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -279,7 +281,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-08-18T19:56:12+08:00
+                    更新于：2024-08-26T16:42:13+08:00
                   
                   
 
@@ -292,9 +294,9 @@
                 <h1>什么是 CuTe</h1>
 <p>CuTe 是 nvidia 在 <a target="_blank" rel="noopener" href="https://github.com/NVIDIA/cutlass/tree/main">CUTLASS 项目</a>中开发并提供的一组 C++ CUDA Template 抽象工具，它主要用于定义和操作在 CUDA 中的有多维分层 layout 的线程和数据。具体来说，CuTe 提供了 Layout 和 Tensor 模板类工具，和一系列相关的复杂索引等计算函数，以帮助程序员摆脱 CUDA 编程中繁琐复杂的数据线程排布，让程序员可以专注于算法的逻辑描述。</p>
 <p>举例来说，在 CuTe 之前，我们为了高性能地执行 CUDA 并行，需要花费大量时间在理解每个线程和线程块要处理哪部分数据，最终写出下面的丑陋代码：不仅不易阅读理解，更不容易调试。</p>
-<p><img src="/img/PP/before.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/PP/before.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>而在 CuTe 之后，只要正确地理清数据和线程的布局，并准确地使用 layout 等模板类，代码可读性提高了，也容易调试修改。</p>
-<p><img src="/img/PP/after.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/PP/after.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>当然，想轻松驾驭 CuTe 也绝非易事。首先，它用大量天书般的 C++ Template 编写，因此需要程序员有扎实的 C++ 功底；其次由于 CuTe 的核心抽象是分层地多维 layout，并且它必须足够强大到表示 CUDA 并行计算时的几乎一切操作，这也意味着它的实现十分复杂。总之，CuTe 的学习曲线非常陡峭，一点都不 cute ！</p>
 <p>在开始前，还是提醒各位读者，若有不明白的地方，可以速览参考<a target="_blank" rel="noopener" href="https://github.com/NVIDIA/cutlass/blob/main/media/docs/cute/00_quickstart.md">官方文档</a>。</p>
 <h1>从 Layout 开始</h1>
@@ -372,7 +374,7 @@ Layouts are functions from integers to integers.</p>
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年8月18日</div>
+          <div>2024年8月26日</div>
         </div>
       
       
@@ -404,23 +406,6 @@ Layouts are functions from integers to integers.</p>
 
 
 
-              
-                <div class="post-prevnext my-3">
-                  <article class="post-prev col-6">
-                    
-                    
-                  </article>
-                  <article class="post-next col-6">
-                    
-                    
-                      <a href="/2024/08/02/2024-5-9-vllm/" title="VLLM Paged Attention 实现">
-                        <span class="hidden-mobile">VLLM Paged Attention 实现</span>
-                        <span class="visible-mobile">下一篇</span>
-                        <i class="iconfont icon-arrowright"></i>
-                      </a>
-                    
-                  </article>
-                </div>
               
             </div>
 
@@ -525,6 +510,30 @@ Layouts are functions from integers to integers.</p>
        <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
     </div>
   
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
   
   
   
@@ -698,6 +707,8 @@ Layouts are functions from integers to integers.</p>
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -34,6 +34,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/CSAPP/lab1/1.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>深入理解计算机系统之位操作实验 - 峰子的乐园</title>
@@ -76,7 +78,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -327,7 +329,7 @@
 <p>题目要求：判断 <code>x</code> 中的奇数位置是否全为 1，若是返回 1。比如 <code>0xAAAA AAAA</code> 就满足要求。</p>
 <p>与上题同样的思路：<strong>找出某运算过程，使得符号要求的数字经计算后得到 0，从而判断命题真伪，我取名为得 0 思想</strong> 。判断 <code>x</code> 的某位是否为 1 ，有两种做法：一是 <code>x</code> 与 1 取 <code>&amp;</code> ，即 <code>&amp;</code> 的保持性，二是 <code>x</code> 与 0 取 <code>|</code> ，即 <code>|</code> 的保持性。该使用哪一种？第二种。因为第一种要求立即数奇数位为 1 才能有区分性，但偶数位得出的结果是不定的，因此使用第一种后，计算得出的结果会难以判断问题的真伪。</p>
 <p>而第二种中，要求立即数奇数位为 0 才能有区分性，若立即数偶数位全为 1 ，那么 <code>|</code> 运算后，偶数位一定都是 1 ，这是确定的。</p>
-<p><img src="/img/CSAPP/lab1/1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab1/1.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">allOddBits</span><span class="hljs-params">(<span class="hljs-type">int</span> x)</span> &#123;<br>  <span class="hljs-type">int</span> a = <span class="hljs-number">0x55</span>;<br>  <span class="hljs-type">int</span> b = a + (a&lt;&lt;<span class="hljs-number">8</span>) + (a&lt;&lt;<span class="hljs-number">16</span>) + (a&lt;&lt;<span class="hljs-number">24</span>);<br>  <span class="hljs-keyword">return</span> !~(b|x);<br>&#125;<br></code></pre></td></tr></table></figure>
 <h3 id="negate">negate</h3>
 <p>题目要求：返回 -<code>x</code> 的值。</p>
@@ -365,7 +367,7 @@
 <p>题目要求：返回与 <code>f*2</code> 等价的二进制补码下的整数。</p>
 <p>只要熟悉了浮点数的 IEEE 表示方法，这题便不难解决。</p>
 <p>浮点数的表示方法简介如下：</p>
-<p><img src="/img/CSAPP/lab1/2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab1/2.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <ul>
 <li>
 <p>denormalized</p>
@@ -410,7 +412,7 @@
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">unsigned</span> <span class="hljs-title function_">floatPower2</span><span class="hljs-params">(<span class="hljs-type">int</span> x)</span> &#123;<br>    <span class="hljs-keyword">if</span>(x&gt;<span class="hljs-number">127</span>)&#123;<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">0xFF</span>&lt;&lt;<span class="hljs-number">23</span>; <span class="hljs-comment">// NaN</span><br>    &#125;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(x&lt;<span class="hljs-number">-148</span>)<br>      <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(x&gt;=<span class="hljs-number">-126</span>)&#123;<br>      <span class="hljs-type">int</span> <span class="hljs-built_in">exp</span> = x + <span class="hljs-number">127</span>;<br>      <span class="hljs-keyword">return</span> (<span class="hljs-built_in">exp</span> &lt;&lt; <span class="hljs-number">23</span>);<br>    &#125; <br>    <span class="hljs-keyword">else</span> &#123;<br>      <span class="hljs-type">int</span> t = <span class="hljs-number">148</span> + x;<br>      <span class="hljs-keyword">return</span> (<span class="hljs-number">1</span> &lt;&lt; t);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 <h2 id="实验结果">实验结果</h2>
 <p>如果所有函数都编写完成，编译运行后，出现如下结果，那么本实验就圆满完成了 :smile:。</p>
-<p><img src="/img/CSAPP/lab1/3.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab1/3.png" srcset="/img/background.bmp" lazyload alt=""></p>
 
                 
               </div>
@@ -637,6 +639,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -809,6 +835,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -34,6 +34,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/gem5/gem5-4-M2S.PNG">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>深入理解 Gem5 之四 - 峰子的乐园</title>
@@ -76,7 +78,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -323,11 +325,11 @@
 <p>于是，PacketPtr 通过函数参数的方式传给了 RespondPort，而 RespondPort 事实上是处于从模块中，所以现在数据就移动到了下游从模块。注意，<code>recvTimingReq()</code> 的返回值给最终会 return 到 <code>sendTimingReq</code> 函数中。因此主模块可以知晓请求是否被从模块接收，true 表示该数据包已被收到。false 意味着从模块目前无法接收请求，必须在未来的某个时刻重试。</p>
 <p>若 RespondPort 成功接收了 PacketPtr，此时主模块会继续自己的运行，从模块则会处理 Packet，双方都不会被阻塞。当从模块完成处理后，需向主模块发送响应：调用 <code>sendTimingResp(pkt)</code>（此时 pkt 是与请求相同的指针，但它现在指向一个响应包）。类似的是，<code>sendTimingResp(pkt)</code> 内部实现还是直接调用 <code>peer-&gt;recvTimingResp(pkt)</code> 并返回该函数的返回值。若 master 的 <code>recvTimingResp()</code> 函数返回 true，表明 master 已经收到应答，如此一来，该请求的交互就完成了（见下图）。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">sendTimingResp</span><span class="hljs-params">(PacketPtr pkt)</span> </span>&#123;<br>  <span class="hljs-keyword">try</span> &#123;<br>    <span class="hljs-keyword">return</span> TimingResponseProtocol::<span class="hljs-built_in">sendResp</span>(_requestPort, pkt);<br>  &#125; <span class="hljs-built_in">catch</span> (UnboundPortException) &#123;<br>    <span class="hljs-built_in">reportUnbound</span>();<br>  &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">TimingResponseProtocol::sendResp</span><span class="hljs-params">(TimingRequestProtocol *peer, PacketPtr pkt)</span> </span>&#123;<br>  <span class="hljs-built_in">assert</span>(pkt-&gt;<span class="hljs-built_in">isResponse</span>());<br>  <span class="hljs-keyword">return</span> peer-&gt;<span class="hljs-built_in">recvTimingResp</span>(pkt);<br>&#125;<br></code></pre></td></tr></table></figure>
-<p><img src="/img/gem5/gem5-4-M2S.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/gem5/gem5-4-M2S.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>之前说的都是非常顺利的情况，若出现从模块因某些原因暂无法接收。那么 <code>recvTimingReq()</code> 的返回值为 false，于是主模块会得知从模块正在忙碌，当从模块可以接受数据后，会调用 <code>sendReqRetry()</code> 函数来通知主模块再次发送请求。而主模块也只有在等到 <code>recvReqRetry()</code> 执行后，才能再次调用 <code>sendTimingReq()</code> 函数来发送请求。当然，第二次发送请求失败也是有可能的，因此上述过程可能会发生很多次。注意：主模块负责保存失败的 PacketPtr，而不是从模块，从模块不保留失败的 PacketPtr。</p>
-<p><img src="/img/gem5/gem5-4-M2SR.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/gem5/gem5-4-M2SR.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>当然，也可能出现主模块因忙碌而无法接收应答的情况，从模块通过 <code>sendTimingResp</code> 的返回值可知应答未被主模块接收，那么从模块需要等待主模块调用 <code>sendRespRetry()</code> 函数，然后才能再次发送应答。</p>
-<p><img src="/img/gem5/gem5-4-M2SRR.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/gem5/gem5-4-M2SRR.PNG" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>最后，补上官方文档中关于时序数据流控制的说明：</p>
 <blockquote>
 <p>当 <code>sendTiming()</code> 函数返回 false 时，相同的 Packet 就不应当再次发送，直到 <code>recvRetry()</code> 函数被调用时，才可以再次调用 <code>sendTiming()</code> 函数，然而此时也不必一定要重发之前的 Packet，可以发送一个优先级更高的 Packet。Once sendTiming() returns true, the packet may still not be able to make it to its destination. For packets that require a response (i.e. pkt-&gt;needsResponse() is true), any memory object can refuse to acknowledge the packet by changing its result to Nacked and sending it back to its source. However, if it is a response packet, this can not be done. The true/false return is intended to be used for local flow control, while nacking is for global flow control. In both cases a response can not be nacked.</p>
@@ -943,6 +945,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -1115,6 +1141,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

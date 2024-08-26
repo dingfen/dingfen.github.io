@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -31,6 +31,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>VLLM Paged Attention 实现 - 峰子的乐园</title>
@@ -73,7 +75,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -290,7 +292,7 @@
                 
                 <h1>Paged Attention 简介</h1>
 <p>Paged Attention 是 vllm <strong>在 decode 阶段</strong>用来解决 KV cache 利用率不高的加速技术。它仿照了操作系统中经典的分页技术（paging）。Paged Attention 通过切分一个 sequence 序列中的 KV cache 为多个 KV blocks 的方法，允许在非连续的内存空间存储连续的 key 和 value。每一个 KV block 会存储一定数量 tokens 的 K，V 向量，这样就将原本 KV cache 切分成一块块 KV blocks，如下图所示：</p>
-<p><img src="/img/LLM/vllm_page_attn.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/vllm_page_attn.webp" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>为了获得更快的性能，VLLM 针对 attention kernel 有专门的内存布局和访问设计，尤其是线程从全局内存中读取数据到共享内存的环节。</p>
 <p>今天，我们来一起看一下 VLLM 对于 Paged Attention 的具体实现细节，本文参考 <a target="_blank" rel="noopener" href="https://docs.vllm.ai/en/stable/dev/kernel/paged_attention.html">vLLM Paged Attention</a>。本文涉及到的 VLLM 代码版本为 0.5.3。</p>
 <h1>输入</h1>
@@ -403,9 +405,9 @@
 <h1>Query</h1>
 <p>这一节来介绍一下 query 张量的内存布局以及如何被线程 load 并计算的过程。上文提到过，每个 thread group 会 load 一个完整的 query token 张量，因此分摊到每个线程只会 load 部分 token 张量。而在一个 warp 中，所有的 thread group 都会 load 相同的 query token 张量，同时也会 load 多个同一 KV block 内的不同的 key token 张量。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">const</span> <span class="hljs-type">scalar_t</span>* q_ptr = q + seq_idx * q_stride + head_idx * HEAD_SIZE;<br></code></pre></td></tr></table></figure>
-<p><img src="https://docs.vllm.ai/en/stable/_images/query.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/query.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>上图所示的是一个注意力头中，一个 query token 的数据，当 <code>VEC_SIZE</code> 是 4，<code>HEAD_SIZE</code> 是 128, 那么就包含了一共 128 / 4 = 32 vecs。在每个线程内，定义了一个线程私有的 <code>q_ptr</code>，指向它需要 load 的 query token 数据，见下图，每一行都是一个线程 load 的 token 数据。</p>
-<p><img src="https://docs.vllm.ai/en/stable/_images/q_vecs.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/q_vecs.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++">__shared__ Q_vec q_vecs[THREAD_GROUP_SIZE][NUM_VECS_PER_THREAD];<br><span class="hljs-comment">// 从 global mem load 到 shared mem，一个线程管一行 循环一次 load 一个 vec</span><br><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = thread_group_idx; i &lt; NUM_VECS_PER_THREAD; i += NUM_THREAD_GROUPS) &#123;<br>    <span class="hljs-type">const</span> <span class="hljs-type">int</span> vec_idx = thread_group_offset + i * THREAD_GROUP_SIZE;<br>    q_vecs[thread_group_offset][i] = *<span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">const</span> Q_vec*&gt;(q_ptr + vec_idx * VEC_SIZE);<br>  &#125;<br></code></pre></td></tr></table></figure>
 <p>这些线程组织起来，我们就需要一个 <code>q_vecs</code> 来管理它们。注意，<code>q_ptr</code> 指向的是全局内存 query，cuda 程序会将它们 load 到共享内存，组成 <code>q_vecs</code> 数组。每个线程负责处理 <code>q_vecs</code> 中一行的数据。上图中，如果 <code>THREAD_GROUP_SIZE</code> 是 2, thread 0 则会处理第 0 行的 vecs，而 thread 1 处理第 1 行 vecs。这样读取 query 数据的好处是，相邻的线程能读取到相邻的内存数据，利用了内存合并（memory coalescing）获得性能上的提升。</p>
 <p>这部分内容理解起来不算困难，但请大家记住这一个例子：</p>
@@ -419,10 +421,10 @@
 <p>与上节相似，这一节我们介绍一下 key 张量的内存排布以及 load 过程。上文提到，每个 thread group 只会处理一个 query token，但要多个 key tokens 参与计算。而每个 warp 会多次循环，以处理每个 KV block 的 key token，从而确保所有 context tokens 被一个 thread group 计算到（即将 query 与所有相关 key 做点乘）。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">const</span> <span class="hljs-type">scalar_t</span>* k_ptr = k_cache + physical_block_number * kv_block_stride<br>                    + kv_head_idx * kv_head_stride<br>                    + physical_block_offset * x;<br></code></pre></td></tr></table></figure>
 <p>与 <code>q_ptr</code> 不同，在每次循环中，每个线程的 <code>k_ptr</code> 指向的是不同 key token 张量。就如上面的代码所述，<code>physical_block_offset</code> 就是 block 内的偏移量，<code>k_ptr</code> 的值取决于 KV cache 的 block 块，kv head 和现在读到的 kv token 偏移。</p>
-<p><img src="https://docs.vllm.ai/en/stable/_images/key.png" srcset="/img/loading.gif" lazyload alt="Key data of all context tokens at one head"></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/key.png" srcset="/img/background.bmp" lazyload alt="Key data of all context tokens at one head"></p>
 <p>上面这张图解释了 key 张量的内存布局。我们假设 <code>BLOCK_SIZE</code> 为 16，<code>HEAD_SIZE</code> 是 128，<code>x</code>（即一个 thread group 处理的元素个数）是 8，<code>THREAD_GROUP_SIZE</code> 是 2，这里一共有 4 个 warps。可以看出，左半部图中 block0 有 16 个 token 编号 0-15，每个 token 内有 32 个 vec。右半边图展示了 4 个 warps 分别处理不同的 block，四个一循环后 warp0 的下一个外循环会处理 block4。每个大矩形代表一个注意力头计算时需要的 key token 数据，它们由一个 thread group 完成计算。</p>
 <p>还记得之前请大家记住的例子么，这里的数据沿用了之前的例子，所以 thread 0 仍然 load query token 的 vec0 vec2 vec4 等偶数项，相对应地，thread 0 还 load 了 key token 的偶数项。load 完成后，可以直接计算它们的 QK 值了。</p>
-<p><img src="https://docs.vllm.ai/en/stable/_images/k_vecs.png" srcset="/img/loading.gif" lazyload alt=" for one thread"></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/k_vecs.png" srcset="/img/background.bmp" lazyload alt=" for one thread"></p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">K_vec k_vecs[NUM_VECS_PER_THREAD]<br></code></pre></td></tr></table></figure>
 <p>下面，我们来看一下从 <code>k_ptr</code> 全局内存读入 key token，存储到 <code>k_vecs</code> 的寄存器内存。<code>k_vecs</code> 之所以使用寄存器内存是因为它一次只会被一个线程访问，而上文介绍的 <code>q_vecs</code> 会被多个线程多次访问。每个 <code>k_vecs</code> 会包含多个 vec 用于后续计算。每个 vec 在内循环中使用。同一 warp 内的相邻线程可以一起将相邻的 vecs 的读取进来，这里又利用了内存的 CUDA 内存合并以提升性能。举例说明，thread 0 读取 vec0，thread 1 读取 vec1，在下一个内循环中，thread 0 读取 vec2，thread 1 读取 vec3。</p>
 <p>也许你会对上面的过程感到困惑，不必担心，接下去的 QK 节会更详细、清晰地解释 query 和 key 如何完成计算过程。</p>
@@ -465,9 +467,9 @@
 <h1>Value</h1>
 <p>在执行完前文描述的步骤后，现在它们已经获得了 <code>logits</code> 数组了，又因为 QK 的计算会被 reduce 到 warp 上所有的线程，以及 4 个 warp 对所有 context 的 block 的遍历，所以每个线程现在都有 <code>HEAD_SIZE</code> * <code>BLOCK_SIZE</code> 个 <code>logits</code> 值。</p>
 <p>搞明白了这个前提后，再来看看 value 张量的内存布局和 load 情况吧。</p>
-<p><img src="https://docs.vllm.ai/en/stable/_images/value.png" srcset="/img/loading.gif" lazyload alt="Value data of all context tokens at one head"></p>
-<p><img src="https://docs.vllm.ai/en/stable/_images/logits_vec.png" srcset="/img/loading.gif" lazyload alt=" for one thread"></p>
-<p><img src="https://docs.vllm.ai/en/stable/_images/v_vec.png" srcset="/img/loading.gif" lazyload alt="List of  for one thread"></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/value.png" srcset="/img/background.bmp" lazyload alt="Value data of all context tokens at one head"></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/logits_vec.png" srcset="/img/background.bmp" lazyload alt=" for one thread"></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/v_vec.png" srcset="/img/background.bmp" lazyload alt="List of  for one thread"></p>
 <p>先来看第一张图，虽然 value 部分不涉及到 thread group 的东西，但为了理解方便图中仍然画出了两个 thread，这是之前计算 QK 时留下的一组 thread group。</p>
 <p>我们需要检索 value 张量，然后计算与 <code>logits</code> 的点乘了。不像 query 和 key，value 处理数据是跨 token 的，它会同时计算不同 token 的数据，且没有涉及到 thread group。第一张图中展示了 value 的内存排布，同一列的元素对应着同一个 value token，不同列就是不同的 token 了。</p>
 <p>对于一个 block 的 value 数据，它有 <code>HEAD_SIZE</code> 行和 <code>BLOCK_SIZE</code> 列，每个部分都被分成 <code>v_vecs</code>。其中 thread 0 则 load 了 32 的倍数的 v_vec，thread 1 则 load 了 32 的倍数余 1 的 v_vec。在之前举出的例子中，v_vec 的大小为 8，因此图二画了 8 个 vec，每个 vec 分别对应了不同的 token。</p>
@@ -647,12 +649,6 @@ kv_head_stride</p>
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/08/18/2024-8-18-cute/" title="深入 CUTLASS 之 CuTe 详解">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">深入 CUTLASS 之 CuTe 详解</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
@@ -769,6 +765,30 @@ kv_head_stride</p>
        <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
     </div>
   
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
   
   
   
@@ -942,6 +962,8 @@ kv_head_stride</p>
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

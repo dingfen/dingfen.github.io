@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -33,6 +33,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/bb_ustc.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>python 自动化——获取学生提交的作业 - 峰子的乐园</title>
@@ -75,7 +77,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -360,7 +362,7 @@
 <p>因为刚刚打开浏览器会比较慢，因此使用显式等待比较好。下面的代码，对应的操作就是点击“统一身份认证登录”。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">try</span>:<br>    button1 = WebDriverWait(driver, <span class="hljs-number">5</span>).until(<br>        EC.presence_of_element_located((By.LINK_TEXT, <span class="hljs-string">&quot;统一身份认证登录&quot;</span>)))<br>    button1.click()<br><span class="hljs-keyword">except</span>:<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;bb website Error&quot;</span>)<br>    driver.quit()<br></code></pre></td></tr></table></figure>
 <center>
- <img src="/img/bb_ustc.png" srcset="/img/loading.gif" lazyload>
+ <img src="/img/bb_ustc.png" srcset="/img/background.bmp" lazyload>
 </center>
 <hr>
 <p>随后就会进入科大的统一身份认证系统。同样地，先找到账号密码对应的 input 框的id，然后用 <code>find_element_by_id</code> 查找，将你的账号密码填入即可。</p>
@@ -370,7 +372,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 进入我的blackboard</span><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>osbut = driver.find_element_by_partial_link_text(<span class="hljs-string">&quot;操作系统&quot;</span>)<br>osbut.click()<br><br><span class="hljs-comment"># 进入操作系统课程页面</span><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>butlist = driver.find_elements_by_class_name(<span class="hljs-string">&quot;submenuLink&quot;</span>)<br>butlist[<span class="hljs-number">3</span>].click()<br>eval_score = driver.find_element_by_link_text(<span class="hljs-string">&quot;评分中心&quot;</span>)<br>eval_score.click()<br><br>driver.implicitly_wait(<span class="hljs-number">10</span>)<br>need_eval = driver.find_element_by_link_text(<span class="hljs-string">&quot;需要评分&quot;</span>)<br>need_eval.click()<br></code></pre></td></tr></table></figure>
 <p>程序进行到这里后，我已经可以看到提交同学的名单了。但需要更进一步，让python能帮我自动下载这些作业，才是我的目的。</p>
 <center>
-  <img src="/img/pingfen.jpg" srcset="/img/loading.gif" lazyload>
+  <img src="/img/pingfen.jpg" srcset="/img/background.bmp" lazyload>
 </center>
 <hr>
 <p>先从该页面中，抠出所有提交作业的学生名。注意，<code>find_elements*</code> 的 API ，都是返回一个列表。以下面代码为例，返回了所有 class 为 <code>gradeAttempt</code> 的元素。</p>
@@ -608,6 +610,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -780,6 +806,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

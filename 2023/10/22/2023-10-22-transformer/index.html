@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -36,6 +36,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/LLM/transformer.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>大话 transformer 架构 - 峰子的乐园</title>
@@ -78,7 +80,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -299,7 +301,7 @@
 <h2 id="故事的开始">故事的开始</h2>
 <p>与大多数博客一样，我们需要请出论文中最有名的架构图来解释 transformer：</p>
 <center>
-<img src="/img/LLM/transformer.png" srcset="/img/loading.gif" lazyload>
+<img src="/img/LLM/transformer.png" srcset="/img/background.bmp" lazyload>
 </center>
 <p>上面的架构图可以简单地分成两个部分，encoder（左边）和 decoder（右边）。而组成他们的组件又有一些共通之处，因此 transformer 架构其实没有大家想的那样复杂。</p>
 <p>虽然现在 transformer 被应用于非常多的 AI 领域，但起初它是在自然语言处理 (NLP) 中针对序列到序列 (seq2seq) 的任务被提出的。所谓的 seq2seq ，可以简单地理解为自然语言翻译：将一串中文翻译成一串英文，对于计算机而言就是程序将一串字符串转换到了另一串字符串。我们将以此为背景讨论 transformer，希望能对刚入门的新人有所帮助。</p>
@@ -312,7 +314,7 @@
 <h3 id="基本数据流">基本数据流</h3>
 <p>将目标聚焦到架构图的左边，注意到，encoder 由 N 个相同的模块组成，而最下面是模型的入口。输入 inputs 可以简单地理解为读入的文字序列，它需要经过 Input Embedding 和 Positional Encoding 地处理（这些我们稍后会讨论），再进入到编码器中。数据流进入编码器后，一方面会兵分三路进入到多头注意力块 (multi-head Attention)，另一方面会使用<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/42833949">残差连接</a>将原始输入添加到输出中，最后执行归一化操作。随后，数据会进入第二个子层 Feed Forward，也就是全连接层，然后再执行残差连接和归一化操作。得到的输出作为下一编码层的输入，再重复上述运算，如此操作 N 次，即完成了对文本的编码。</p>
 <center>
-<img src="/img/LLM/transformer_encoder.png" srcset="/img/loading.gif" lazyload>
+<img src="/img/LLM/transformer_encoder.png" srcset="/img/background.bmp" lazyload>
 </center>
 <h3 id="注意力机制">注意力机制</h3>
 <h3 id="多头注意力">多头注意力</h3>
@@ -324,15 +326,15 @@
 <p>2、如果没有残余连接，原始序列的信息就会丢失。多头注意力层忽略序列中元素的位置，并且只能根据输入特征来学习它。删除残余连接意味着该信息在第一个注意层之后（初始化之后）丢失，并且使用随机初始化的查询和键向量，位置 i 的输出向量与其原始输入无关。注意力的所有输出都可能表示相似/相同的信息，并且模型没有机会区分哪些信息来自哪个输入元素。</p>
 <p>归一化层在 Transformer 架构中也发挥着重要作用，它可以实现更快的训练速度。</p>
 <p>除了多头注意力之外，模型中还包括一个小型全连接前馈网络，应用于每一个 block。它增加了模型的复杂度，并允许单独对每个序列元素进行转换。</p>
-<p><img src="/img/LLM/encoder_decoder.png" srcset="/img/loading.gif" lazyload alt=""></p>
-<p><img src="https://pic3.zhimg.com/80/v2-89c3f1cbaf99ea0bf397d450908f5f0a_720w.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/encoder_decoder.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="https://pic3.zhimg.com/80/v2-89c3f1cbaf99ea0bf397d450908f5f0a_720w.webp" srcset="/img/background.bmp" lazyload alt=""></p>
 <h3 id="残差连接">残差连接</h3>
 <h3 id="归一化">归一化</h3>
 <h3 id="MLP">MLP</h3>
 <h2 id="深入解码器">深入解码器</h2>
 <h3 id="基本数据流-2">基本数据流</h3>
 <center>
-<img src="/img/LLM/transformer_decoder.png" srcset="/img/loading.gif" lazyload>
+<img src="/img/LLM/transformer_decoder.png" srcset="/img/background.bmp" lazyload>
 </center>
 <h3 id="Masked-注意力机制">Masked 注意力机制</h3>
 <h2 id="位置编码与嵌入技术">位置编码与嵌入技术</h2>
@@ -562,6 +564,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -734,6 +760,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

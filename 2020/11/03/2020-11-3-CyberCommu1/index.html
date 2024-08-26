@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -34,6 +34,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dingfen.github.io/img/Apollo_3.0_diagram.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>Apollo Cyber RT 通信（上） - 峰子的乐园</title>
@@ -76,7 +78,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -296,9 +298,9 @@
 <p>在<a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html">之前的博客</a>中，我和大家讨论了 Apollo Cyber RT 组件的相关内容，在介绍组件的内容时，我们谈到每个组件都有自己的读者信道 <code>Reader&lt;M&gt;</code> 和 <code>Node</code> 节点类对象， <code>DataVisitor</code> 数据访问类在创建协程工厂时也起到了关键作用。由此可见，通信问题已经成为了在学习 Cyber RT 过程中绕不过去的槛儿，那么，Cyber RT 怎么保证这么多的组件能够齐心协力，高效地完成一件件任务呢？今天我就来带领大家探讨一下这类问题。由于通信部分的内容过多，写在一篇博客里太长，所以我把它分成了两部分。</p>
 <h3 id="ROS-的历史遗留">ROS 的历史遗留</h3>
 <p>之前在研究 Apollo 时，我了解到 Apollo 3.5 版本前，各个模块直接通过一个简单的运行时框架，构建在 ROS 之上。</p>
-<p><img src="/img/Apollo_3.0_diagram.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/Apollo_3.0_diagram.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>而之后的版本，都加上了 Cyber RT，它不仅仅是一个运行时框架，还承担了数据通信和任务调度，以及记录日志等任务。但是从软件工程的角度出发，对底层的大改必然会牵动上层，为了尽可能地不影响上层代码，Cyber RT 不得不依照 ROS 的“规矩”，提供有相同名称的功能近似的接口，这之后我们可以将 ROS 与 Cyber RT 进行比较。</p>
-<p><img src="/img/Apollo_5_5_Architecture.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/Apollo_5_5_Architecture.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>于是我就发现，与 ROS &amp; ROS2 中类似的是，Cyber RT 也支持两种通信方式，详情见<a href="https://dingfen.github.io/apollo/2020/10/14/apollo-intro.html#%E7%9B%B8%E5%85%B3%E6%9C%AF%E8%AF%AD%E4%BB%8B%E7%BB%8D">术语介绍</a>：</p>
 <ul>
 <li><strong>发布—订阅通信方式</strong>（Publish-Subscribe），也叫基于信道的通信方式，常用于数据流处理中节点间通信。即<strong>发布者</strong>（Publisher）在信道（channel，ROS 中对应地称为 topic）上发布消息，相应的<strong>订阅者</strong>（Subscriber）便会收到消息数据</li>
@@ -314,7 +316,7 @@
 <h2 id="通信架构">通信架构</h2>
 <span id="l" />
 <center>
-<img src="/img/CyberLayer.png" srcset="/img/loading.gif" lazyload />
+<img src="/img/CyberLayer.png" srcset="/img/background.bmp" lazyload />
 </center>
 <p>首先来看一下通信的层级划分（上图）<sup>2</sup>，再重复一遍，自动驾驶系统中的各个模块基本都由 <code>Component</code> 类实现，而一个 <code>Component</code> 对象包含一个 <code>Node</code> 对象。<code>Node</code> 对象会根据需要创建和管理 <code>Writer</code>，<code>Reader</code>，<code>Service</code> 和 <code>Client</code> 对象。而在通信类下面， <code>Trasmitter</code> 和 <code>Receiver</code> 类。前者用于数据发送，后者用于数据接收。它们是数据传输层的抽象，而底下还有多个用于<strong>不同场景下的传输实现类</strong>，比如对于 <code>Trasmitter</code> 类，就有 <code>IntraTransmitter</code> 类，<code>ShmTransmitter</code> 类，<code>RtpsTransmitter</code> 类和 <code>HybridTransmitter</code> 类。同样地， <code>Receiver</code> 类也有类似的情况 。在这里我就简单地说明一下这些底层类的作用，因为这些东西过于细节，我往后也不会重点研究，但是还是有必要稍微了解一下的😀：</p>
 <ul>
@@ -629,6 +631,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -801,6 +827,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 

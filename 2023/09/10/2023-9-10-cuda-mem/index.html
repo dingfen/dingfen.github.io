@@ -7,8 +7,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
@@ -32,6 +32,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>CUDA 进阶之内存优化 - 峰子的乐园</title>
@@ -74,7 +76,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -300,7 +302,7 @@
 <p>pinned 内存有时也会被称作为页锁定内存，或者固定内存。本文中皆以 pinned 内存指代。</p>
 <p>pinned 内存是相对于一般的页可分配内存而言的。一般地，主机上的内存都会被操作系统采用分页机制管理，我们平时编程中遇到的“地址”事实上都是虚拟地址，需要通过地址转换才能获得物理地址（有时甚至不在物理内存中，会发生缺页），进而获得数据。</p>
 <p>因此对于页可分配内存，由于 GPU 获得的地址是虚拟内存的地址，不可直接获得对应物理内存页上的数据，因此要想实现主机与设备间的数据传输，必须先将页可分配内存上的数据转移到一个临时的 pinned 内存页上，再实现内存传输，如下图。</p>
-<p><img src="https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>而对于 pinned 内存，操作系统不会对其进行分页和交换操作，其内存页会被“固定存储”在物理内存中，GPU 获得的地址就是物理地址，因此可直接通过 DMA 机制在主机和 GPU 之间快速传输数据。</p>
 <p>正因如此，pinned 内存传输速率接近理论峰值。例如，在使用 PCIe3x16 的机器上，pinned 内存可以达到大约 12 GB/s 的传输速率。</p>
 <h3 id="使用">使用</h3>
@@ -334,7 +336,7 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">cudaStreamCreate</span>(&amp;stream1);<br><span class="hljs-built_in">cudaStreamCreate</span>(&amp;stream2);<br><span class="hljs-built_in">cudaMemcpyAsync</span>(a_d, a_h, size, cudaMemcpyHostToDevice, stream1);<br>kernel&lt;&lt;&lt;grid, block, <span class="hljs-number">0</span>, stream2&gt;&gt;&gt;(otherData_d);<br></code></pre></td></tr></table></figure>
 <p>在上面的示例中，创建了两个流，分别在数据传输和内核执行中使用，<code>cudaMemcpyAsync</code> 调用的最后一个参数指明使用了流1，而内核执行配置指明使用流2。此时这两个流可以并发执行，一个拷贝数据一个计算（当然前提是他们不能相互依赖）。</p>
 <p>并发传输和执行演示了如何使内核执行与异步数据传输重叠。当数据依赖关系可以将数据分解成块并分多个阶段传输时，可以使用此技术，并在数据到达时启动多个内核对每个块进行操作。下图不严谨地展示了这一技巧的优点。其中第一个柱状图表示将数据先全体搬运到设备内存，再执行运算所需要的时间（浅绿色表示数据传输时间，红色表示数据计算时间），第二个柱状图表示使用并发异步传输任务的完成情况，可以很明显地看到使用异步传输的总时间要短不少：</p>
-<p><img src="https://docs.nvidia.com/cuda/archive/11.7.0/cuda-c-best-practices-guide/graphics/timeline-comparison-for-copy-and-kernel-execution.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://docs.nvidia.com/cuda/archive/11.7.0/cuda-c-best-practices-guide/graphics/timeline-comparison-for-copy-and-kernel-execution.png" srcset="/img/background.bmp" lazyload alt=""></p>
 <p>但这里出现了个问题，前言中本文说到：</p>
 <blockquote>
 <p>由于每次传输都有相关的固定开销，因此将许多小数据包装成一个较大的数据包进行传输，会比多次传输小数据包要好得多</p>
@@ -597,6 +599,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -769,6 +795,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 
