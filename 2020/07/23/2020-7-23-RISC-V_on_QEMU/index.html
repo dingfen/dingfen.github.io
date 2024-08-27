@@ -807,18 +807,19 @@
           conversationStarters: [
             {prompt: '请问你是谁，能为我做什么？'},
             {prompt: '请介绍一下博客的主人'}
-          ]
+          ],
+          layout: 'bubbles'
         },
         displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
-          height: 600,
+          height: 550,
           // width: 400,
         },
         personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
           assistant: {
-            name: '你好，我是你的 AI 助手',
+            name: '你好，我是本网站的 AI 助手',
             // AI 助手的图标
             avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
-            tagline: '您可以尝试点击下方的快捷入口开启体验！',
+            tagline: '输入您的问题，我会尽力帮你解答！',
           }
         }
       }
