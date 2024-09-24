@@ -1,0 +1,942 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="对 Cyber RT 的通信架构的深入研究">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apollo Cyber RT 通信（下）">
+<meta property="og:url" content="https://dingfen.github.io/2020/11/07/2020-11-7-CyberCommu2/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="对 Cyber RT 的通信架构的深入研究">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/CyberLayer.png">
+<meta property="og:image" content="https://dingfen.github.io/img/msg.png">
+<meta property="og:image" content="https://dingfen.github.io/img/msg2.png">
+<meta property="article:published_time" content="2020-11-07T04:00:00.000Z">
+<meta property="article:modified_time" content="2024-09-24T03:28:38.168Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Apollo">
+<meta property="article:tag" content="Cyber RT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/CyberLayer.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Apollo Cyber RT 通信（下） - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Apollo Cyber RT 通信（下）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-11-07 12:00" pubdate>
+          2020年11月7日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          48 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Apollo Cyber RT 通信（下）</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2024-09-24T11:28:38+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Apollo Cyber RT 通信（下）</h1>
+<h2 id="前言">前言</h2>
+<p>欢迎回来！今天我继续和大家聊 Cyber RT 的通信，<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">上文</a>我探讨了 Cyber RT 的两种通信方式和三种通信模型，并从通信架构的角度，一层层地给大家详细介绍了通信时代码的具体工作情况。由于通信内容过多，全放在一篇博客理论太长，于是我将这些内容简单地一分为二，事实上它们应当是有机的整体。</p>
+<p>上文末尾，我介绍了 <code>Blocker</code> 类的功能，今天这篇博客，我们继续向深处进军↖(^ω^)↗。</p>
+<center>
+<img src="/img/CyberLayer.png" srcset="/img/loading.gif" lazyload />
+</center>
+## Receiver & Transmitter
+<p>我们在上文已经认识了 <code>Reader</code> 和 <code>Writer</code> ，现在继续往下走。如果你仔细看代码的话，在 <code>Reader</code> 和 <code>Writer</code> 初始化时，都会分别构建好底层的 <code>Receiver</code> 和 <code>Transmitter</code> 对象。为了描述简便，我之前有意地忽略了，现在把它拿出来。<code>Reader</code> 部分的比较复杂，还使用了 <code>ReceiverManager</code> 进行管理；<code>Writer</code> 就比较直接了，在 <code>Init()</code> 函数中可以直接看到。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">bool</span> Reader&lt;MessageT&gt;::<span class="hljs-built_in">Init</span>() &#123;<br>	receiver_ = ReceiverManager&lt;MessageT&gt;::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">GetReceiver</span>(role_attr_);<br>&#125;<br><br><span class="hljs-type">bool</span> Writer&lt;MessageT&gt;::<span class="hljs-built_in">Init</span>() &#123;<br>   <span class="hljs-comment">/*  ....   */</span><br>    transmitter_ =<br>        transport::Transport::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">CreateTransmitter</span>&lt;MessageT&gt;(role_attr_);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>我们不妨把这里作为突破口，打开新世界的大门。</p>
+<span id="1">
+<h3 id="ReceiverManager">ReceiverManager</h3>
+<p>之前提到过，<code>Reader</code> 在初始化时，需要用 <code>ReceiverManager::GetReceiver()</code> 获得 <code>Receiver</code> 对象。它的内部分封装了一个 <code>unordered_map</code> 表，将信道名字和与之对应的 <code>Receiver</code> 对象保存在表中。再看看下面的代码，可得出一个结论，<em>如果同一个进程内，不同的 <code>Reader</code> 对象订阅同一个信道，事实上使用的是同一个 <code>Receiver</code></em> <sup>2</sup>。再看看那个很长的 <code>CreateReceiver()</code> 函数调用，除了传递一个配置信息参数外，还有一个很长的回调函数。回调函数会做：</p>
+<ul>
+<li>加入一个 Transport 事件，类型为 Dispatch</li>
+<li>调用数据分发器 <code>DataDispatcher::Dispatch()</code>  函数</li>
+<li>加入一个 Transport 事件，类型为 Notify</li>
+</ul>
+<p>这些步骤具体做了什么？我们目前还不知道，求知的欲望驱使着我们继续往下探索。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> MessageT&gt;<br><span class="hljs-keyword">auto</span> ReceiverManager&lt;MessageT&gt;::<span class="hljs-built_in">GetReceiver</span>(<span class="hljs-type">const</span> proto::RoleAttributes&amp; role_attr) <br>    -&gt; <span class="hljs-keyword">typename</span> std::shared_ptr&lt;transport::Receiver&lt;MessageT&gt;&gt; &#123;<br>  <span class="hljs-comment">// because multi reader for one channel will write datacache multi times,</span><br>  <span class="hljs-comment">// so reader for datacache we use map to keep one instance for per channel</span><br>  <span class="hljs-type">const</span> std::string&amp; channel_name = role_attr.<span class="hljs-built_in">channel_name</span>();<br>    <span class="hljs-comment">// 如果信道名字对应的 Receiver 还没有创建 那就创建</span><br>  <span class="hljs-keyword">if</span> (receiver_map_.<span class="hljs-built_in">count</span>(channel_name) == <span class="hljs-number">0</span>) &#123;<br>      <span class="hljs-comment">// 一个巨长的 CreateReceiver() 函数调用</span><br>    receiver_map_[channel_name] = transport::Transport::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">CreateReceiver</span>&lt;MessageT&gt;(<br>            		role_attr, [](<span class="hljs-type">const</span> std::shared_ptr&lt;MessageT&gt;&amp; msg,<br>                          <span class="hljs-type">const</span> transport::MessageInfo&amp; msg_info,<br>                          <span class="hljs-type">const</span> proto::RoleAttributes&amp; reader_attr) &#123;<br>              (<span class="hljs-type">void</span>)msg_info;<br>              (<span class="hljs-type">void</span>)reader_attr;<br>              PerfEventCache::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">AddTransportEvent</span>(<br>                  TransPerf::DISPATCH, reader_attr.<span class="hljs-built_in">channel_id</span>(),<br>                  msg_info.<span class="hljs-built_in">seq_num</span>());<br>              data::DataDispatcher&lt;MessageT&gt;::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">Dispatch</span>(<br>                  reader_attr.<span class="hljs-built_in">channel_id</span>(), msg);<br>              PerfEventCache::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">AddTransportEvent</span>(<br>                  TransPerf::NOTIFY, reader_attr.<span class="hljs-built_in">channel_id</span>(),<br>                  msg_info.<span class="hljs-built_in">seq_num</span>());<br>            &#125;);<br>  &#125;<br>    <span class="hljs-comment">// 如果已经有了 直接返回</span><br>  <span class="hljs-keyword">return</span> receiver_map_[channel_name];<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="Transport">Transport</h3>
+<p><code>Transport</code> 类，单例模式，有如下指针成员，emm……在还没完全弄懂底层代码的情况下，也很难告诉你们这些类的具体作用：</p>
+<ul>
+<li><code>Participant</code> 类  FastRtps 相关</li>
+<li><code>Notifier</code> 类 与 Shm 相关</li>
+<li><code>IntraDispatcher</code> 类 Intra 的分发器</li>
+<li><code>ShmDispatcher</code> 类 Shm 的分发器</li>
+<li><code>RtpsDispatcher</code> 类 Rtps 的分发器</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Transport</span> &#123;<br> <span class="hljs-keyword">private</span>:<br>  ParticipantPtr participant_ = <span class="hljs-literal">nullptr</span>;<br>  NotifierPtr notifier_ = <span class="hljs-literal">nullptr</span>;<br>  IntraDispatcherPtr intra_dispatcher_ = <span class="hljs-literal">nullptr</span>;<br>  ShmDispatcherPtr shm_dispatcher_ = <span class="hljs-literal">nullptr</span>;<br>  RtpsDispatcherPtr rtps_dispatcher_ = <span class="hljs-literal">nullptr</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>和之前 Cyber RT 给人的感觉一样，一旦它要创建什么重要的东西，不调用个几层是根本不可能完成的。在这里，<code>Transport</code> 类的两个函数 <code>CreateTransmitter</code> 和 <code>CreateReceiver</code> 都会根据传入的 mode ，去构造出对应的子类对象，分别对应我在这篇博客开头提到的四种不同场景下的传输实现类。哦，提醒一下，默认的 mode 是 Hybrid ，也就是三种模式混用。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M&gt;<br><span class="hljs-function"><span class="hljs-keyword">auto</span> <span class="hljs-title">Transport::CreateTransmitter</span><span class="hljs-params">(<span class="hljs-type">const</span> RoleAttributes&amp; attr,</span></span><br><span class="hljs-params"><span class="hljs-function">  <span class="hljs-type">const</span> OptionalMode&amp; mode)</span> -&gt; <span class="hljs-keyword">typename</span> std::shared_ptr&lt;Transmitter&lt;M&gt;&gt; </span>&#123;<br>  <span class="hljs-comment">/*  ....  */</span><br> <span class="hljs-comment">// 往 modified_attr 中加入 qos profile</span><br> <span class="hljs-comment">// 根据各种模式 创建相应的 Transmitter 子类</span><br>  <span class="hljs-keyword">switch</span> (mode) &#123;<br>    <span class="hljs-keyword">case</span> OptionalMode::INTRA:<br>      transmitter = std::make_shared&lt;IntraTransmitter&lt;M&gt;&gt;(modified_attr);<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> OptionalMode::SHM:<br>      transmitter = std::make_shared&lt;ShmTransmitter&lt;M&gt;&gt;(modified_attr);<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> OptionalMode::RTPS:<br>      transmitter =<br>          std::make_shared&lt;RtpsTransmitter&lt;M&gt;&gt;(modified_attr, <span class="hljs-built_in">participant</span>());<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">default</span>:<br>      transmitter =<br>          std::make_shared&lt;HybridTransmitter&lt;M&gt;&gt;(modified_attr, <span class="hljs-built_in">participant</span>());<br>      <span class="hljs-keyword">break</span>;<br>  &#125;<br>  <span class="hljs-keyword">if</span> (mode != OptionalMode::HYBRID)<br>    transmitter-&gt;<span class="hljs-built_in">Enable</span>();<br>  <span class="hljs-keyword">return</span> transmitter;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>Transmitter</code> 类是写消息，而 <code>Receiver</code> 类是读消息，因此 <code>Receiver</code> 类比 <code>Transmitter</code> 类多了一个参数 <code>MessageListener</code> ，其本质就是个回调函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">using</span> MessageListener = std::function&lt;<span class="hljs-built_in">void</span>(<span class="hljs-type">const</span> MessagePtr&amp;, <span class="hljs-type">const</span> MessageInfo&amp;, <span class="hljs-type">const</span> RoleAttributes&amp;)&gt;;<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M&gt;<br><span class="hljs-function"><span class="hljs-keyword">auto</span> <span class="hljs-title">Transport::CreateReceiver</span><span class="hljs-params">(<span class="hljs-type">const</span> RoleAttributes&amp; attr,</span></span><br><span class="hljs-params"><span class="hljs-function">    <span class="hljs-type">const</span> <span class="hljs-keyword">typename</span> Receiver&lt;M&gt;::MessageListener&amp; msg_listener,</span></span><br><span class="hljs-params"><span class="hljs-function">    <span class="hljs-type">const</span> OptionalMode&amp; mode)</span> -&gt; <span class="hljs-keyword">typename</span> std::shared_ptr&lt;Receiver&lt;M&gt;&gt; </span>&#123;<br> <span class="hljs-comment">/*  ....   */</span><br> <span class="hljs-comment">// 往 modified_attr 中加入 qos profile</span><br> <span class="hljs-comment">// 根据各种模式 创建相应的 Receiver 子类</span><br>  <span class="hljs-keyword">switch</span> (mode) &#123;<br>    <span class="hljs-keyword">case</span> OptionalMode::INTRA:<br>      receiver =<br>          std::make_shared&lt;IntraReceiver&lt;M&gt;&gt;(modified_attr, msg_listener);<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> OptionalMode::SHM:<br>      receiver = std::make_shared&lt;ShmReceiver&lt;M&gt;&gt;(modified_attr, msg_listener);<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> OptionalMode::RTPS:<br>      receiver = std::make_shared&lt;RtpsReceiver&lt;M&gt;&gt;(modified_attr, msg_listener);<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">default</span>:<br>      receiver = std::make_shared&lt;HybridReceiver&lt;M&gt;&gt;(<br>          modified_attr, msg_listener, <span class="hljs-built_in">participant</span>());<br>      <span class="hljs-keyword">break</span>;<br>  &#125;<br>  <span class="hljs-keyword">if</span> (mode != OptionalMode::HYBRID)<br>    receiver-&gt;<span class="hljs-built_in">Enable</span>();<br>  <span class="hljs-keyword">return</span> receiver;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后一部分代码：在 <code>Receiver</code> 对象被创建时，只要模式不是 Hybrid，都会立刻调用 <code>Receiver::Enable()</code> 函数开启接收。</p>
+<span id="2">
+<h3 id="Receiver-Transmitter">Receiver &amp; Transmitter</h3>
+<p>这两个类是 <code>EndPoint</code> 的子类。关于 <code>Endpoint</code> 类<sup>5</sup>，那可就是整个架构的类继承的终点了，其内部有三个成员</p>
+<ul>
+<li><code>bool enabled_</code> 用来标记是否被启用</li>
+<li><code>Identity id_</code> 用于标识，对于每个 <code>Endpoint</code> 对象拥有唯一的 id 号，其子类也是用这个来进行标识</li>
+<li><code>RoleAttributes attr_</code> 用来记录配置文件中的数据。</li>
+</ul>
+<p>其中 <code>Receiver</code> 类只有一个回调函数 <code>msg_listener_</code>，该回调函数就是 <code>Receiver</code> 构造时传入的函数。在新消息到来时，会被调用👇：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M&gt;<br><span class="hljs-type">void</span> Receiver&lt;M&gt;::<span class="hljs-built_in">OnNewMessage</span>(<span class="hljs-type">const</span> MessagePtr&amp; msg,<br>                               <span class="hljs-type">const</span> MessageInfo&amp; msg_info) &#123;<br>  <span class="hljs-keyword">if</span> (msg_listener_ != <span class="hljs-literal">nullptr</span>)<br>    <span class="hljs-built_in">msg_listener_</span>(msg, msg_info, attr_);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在 <a href="#1">ReceiverManager</a> 那一小节中，已经说到该函数有三个步骤，其中<sup>5</sup>，调用 <code>DataDispatcher::Dispatch</code> 非常关键。因为从这步可以看出上层和底层最终完成了闭环。当底层 <code>Receiver</code> 的回调函数 <code>msg_listener</code> 收到消息被调用时，上层的分发器 <code>DataDispatcher</code> 会把来自底层的消息发到等待的消息缓存里，然后调用上层的通知器 <code>DataNotifier::Notify()</code> ，唤醒对应的 <code>Component</code> 的封装了 <code>Process()</code> 的协程，让协程处理这些消息。</p>
+<p>再看看 <code>Receiver</code> 的四个子类，每个子类都包含了相应的 Dispatcher 的指针，例如，<code>RtpsReceiver</code> 类含有 <code>RtpsDispatcherPtr</code> 成员。这些 Dispatcher 的功能就是增删监听者，从而让 <code>Receiver</code> 关闭或开启，比如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M&gt;<br><span class="hljs-type">void</span> RtpsReceiver&lt;M&gt;::<span class="hljs-built_in">Enable</span>() &#123;<br> <span class="hljs-comment">/*  ....  */</span><br>  dispatcher_-&gt;<span class="hljs-built_in">AddListener</span>&lt;M&gt;(<br>      <span class="hljs-keyword">this</span>-&gt;attr_, std::<span class="hljs-built_in">bind</span>(&amp;RtpsReceiver&lt;M&gt;::OnNewMessage, <span class="hljs-keyword">this</span>,<br>                             std::placeholders::_1, std::placeholders::_2));<br>  <span class="hljs-keyword">this</span>-&gt;enabled_ = <span class="hljs-literal">true</span>;<br>&#125;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M&gt;<br><span class="hljs-type">void</span> RtpsReceiver&lt;M&gt;::<span class="hljs-built_in">Disable</span>() &#123;<br>  dispatcher_-&gt;<span class="hljs-built_in">RemoveListener</span>&lt;M&gt;(<span class="hljs-keyword">this</span>-&gt;attr_);<br>  <span class="hljs-keyword">this</span>-&gt;enabled_ = <span class="hljs-literal">false</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>简单地介绍一下 <code>Dispatcher</code> 类（别和下面的 <code>DataDispatcher</code> 搞混了）。它主要负责记录一个 <code>channel_id</code> 和对应 <code>ListenerHandlerBasePtr</code> 的关系表。而<code>AddListener()</code> 和 <code>RemoveListener()</code> 函数是从关系表中，拿到给定信道的对应 <code>ListenerHandlerBase</code> ，并在这上面连接（Connect）或不连接（Disconnect）相应的回调函数。由于时间精力有限，这边解释得比较混乱，若想具体了解其工作机制，可以参考文章最后的文献。总的来说，这有点像在 <a target="_blank" rel="noopener" href="https://www.qt.io/cn">Qt</a> 中实现的信号槽机制：信号在特定情况下被发射出去，对应的信号响应函数在槽中监听。信号与槽通过 Connect 函数关联，一个信号可以发射到多个槽，多个信号可以被一个槽监听。</p>
+<hr>
+<p>再来看看 <code>Transmitter</code> 类，它是真正的数据写者的基类。它有两个成员，分别为序列号 <code>seq_num_</code> 和消息信息 <code>msg_info_</code> 。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Transmitter</span> : <span class="hljs-keyword">public</span> Endpoint &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Transmitter</span><span class="hljs-params">(<span class="hljs-type">const</span> RoleAttributes&amp; attr)</span></span>;<br>  <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">bool</span> <span class="hljs-title">Transmit</span><span class="hljs-params">(<span class="hljs-type">const</span> MessagePtr&amp; msg)</span></span>;<br>  <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">bool</span> <span class="hljs-title">Transmit</span><span class="hljs-params">(<span class="hljs-type">const</span> MessagePtr&amp; msg, <span class="hljs-type">const</span> MessageInfo&amp; msg_info)</span> </span>= <span class="hljs-number">0</span>;<br><br>  <span class="hljs-function"><span class="hljs-type">uint64_t</span> <span class="hljs-title">NextSeqNum</span><span class="hljs-params">()</span> </span>&#123; <span class="hljs-keyword">return</span> ++seq_num_; &#125;<br>  <span class="hljs-function"><span class="hljs-type">uint64_t</span> <span class="hljs-title">seq_num</span><span class="hljs-params">()</span> <span class="hljs-type">const</span> </span>&#123; <span class="hljs-keyword">return</span> seq_num_; &#125;<br> <span class="hljs-keyword">protected</span>:<br>  <span class="hljs-type">uint64_t</span> seq_num_;<br>  MessageInfo msg_info_;<br>&#125;;<br><br></code></pre></td></tr></table></figure>
+<p>我主要研究其中的 <code>Transmit()</code> 函数，其四个子类都具体实现了 <code>Transmit()</code> 函数，如果你仔细看过前一篇博客，就知道这也是 <code>Writer</code> 类一直在调用的函数。那么这个 <code>Transmit()</code> 函数有什么具体步骤呢？</p>
+<ul>
+<li><code>Writer</code> 调用 <code>Transmitter::Transmit()</code> 函数</li>
+<li>设置 <code>msg_info::seq_num = NextSeqNum</code> 消息的序列号</li>
+<li>加入一个 Transport事件，类型为 Transmit Begin</li>
+<li>调用子类实现的 <code>Transmit()</code> 函数，该函数通过传入一条消息即可以完成数据写入任务。</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M&gt;<br><span class="hljs-type">bool</span> Transmitter&lt;M&gt;::<span class="hljs-built_in">Transmit</span>(<span class="hljs-type">const</span> MessagePtr&amp; msg) &#123;<br>  msg_info_.<span class="hljs-built_in">set_seq_num</span>(<span class="hljs-built_in">NextSeqNum</span>());<br>  PerfEventCache::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">AddTransportEvent</span>(<br>      TransPerf::TRANSMIT_BEGIN, attr_.<span class="hljs-built_in">channel_id</span>(), msg_info_.<span class="hljs-built_in">seq_num</span>());<br>  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Transmit</span>(msg, msg_info_);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>好，我对 <code>Receiver</code> 和 <code>Transmitter</code> 类的介绍就到这里了。我不打算再继续介绍它们的子类以及更加底层的设计是如何实现的，因为这边牵扯到非常多的技术细节，弄懂这些会消耗非常多的精力，而且这些东西也远远超出了课题组目前的要求。</p>
+<h2 id="Data-部分">Data 部分</h2>
+<p>通信架构的内容已经全部介绍完了（至少对于发布—订阅通信方式来说），但还是感觉缺了什么东西，把这两者有效地连接起来😅。没错，我至今还没有说清楚，<code>Writer</code> 发布的消息是如何让 <code>Reader</code> 看到的。而这就牵扯到 <code>cyber/data</code> 中实现的类了。</p>
+<h3 id="DataVisitor">DataVisitor</h3>
+<p>先来说说数据访问类 <code>DataVisitor</code> ，它是 <code>DataVisitorBase</code> 的子类。它的主要成员和构造函数如下。先来说几个明显可以得到的结论：</p>
+<ul>
+<li><code>DataVisitor</code> 对象都会有若干个缓存类 <code>ChannelBuffer</code> ，还有一个 <code>DataFusion</code> 对象，融合了所有的消息类型</li>
+<li>在初始化的时候，首先构建这些 <code>ChannelBuffer</code> ，然后它们都会被加入到<strong>相应类型</strong>的 <code>DataDispatcher</code> 的管理中</li>
+<li><code>data_notifier_</code> （存在于 <code>DataVisitorBase</code> 中），会向信道 0 加入一个 <code>notifier_</code> ，类型为 <code>struct Notifier &#123; std::function&lt;void()&gt; callback; &#125;;</code>，这表明信道 0 注定与其他信道不一般 :thinking:</li>
+<li><code>data_fusion_</code> 会构建并指向 <code>AllLatest</code> 对象，从类型来看，它们整合了所有的消息类型，应当用于信息的最后收集发送</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M0, <span class="hljs-keyword">typename</span> M1&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">DataVisitor</span>&lt;M0, M1, NullType, NullType&gt; : <span class="hljs-keyword">public</span> DataVisitorBase &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">DataVisitor</span><span class="hljs-params">(<span class="hljs-type">const</span> std::vector&lt;VisitorConfig&gt;&amp; configs)</span></span><br><span class="hljs-function">      : buffer_m0_(configs[<span class="hljs-number">0</span>].channel_id, new BufferType&lt;M0&gt;(configs[<span class="hljs-number">0</span>].queue_size)),</span><br><span class="hljs-function">     buffer_m1_(configs[<span class="hljs-number">1</span>].channel_id, new BufferType&lt;M1&gt;(configs[<span class="hljs-number">1</span>].queue_size)) &#123;</span><br>    DataDispatcher&lt;M0&gt;::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">AddBuffer</span>(buffer_m0_);<br>    DataDispatcher&lt;M1&gt;::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">AddBuffer</span>(buffer_m1_);<br>    data_notifier_-&gt;<span class="hljs-built_in">AddNotifier</span>(buffer_m0_.<span class="hljs-built_in">channel_id</span>(), notifier_);<br>    data_fusion_ = <span class="hljs-keyword">new</span> fusion::<span class="hljs-built_in">AllLatest</span>&lt;M0, M1&gt;(buffer_m0_, buffer_m1_);<br>  &#125;<br> <span class="hljs-keyword">private</span>:<br>  fusion::DataFusion&lt;M0, M1&gt;* data_fusion_ = <span class="hljs-literal">nullptr</span>;<br>  ChannelBuffer&lt;M0&gt; buffer_m0_;<br>  ChannelBuffer&lt;M1&gt; buffer_m1_;<br>&#125;;<br><br><span class="hljs-comment">/** DataVisitorBase 内有</span><br><span class="hljs-comment"> * 指向 DataNotifier 的指针</span><br><span class="hljs-comment"> * 封装为 Notifier 的回调函数  */</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">DataVisitorBase</span> &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">RegisterNotifyCallback</span><span class="hljs-params">(std::function&lt;<span class="hljs-type">void</span>()&gt;&amp;&amp; callback)</span> </span>&#123;<br>    notifier_-&gt;callback = callback;<br>  &#125;<br> <span class="hljs-keyword">protected</span>:<br>  <span class="hljs-type">uint64_t</span> next_msg_index_ = <span class="hljs-number">0</span>;<br>  DataNotifier* data_notifier_ = DataNotifier::<span class="hljs-built_in">Instance</span>();<br>  std::shared_ptr&lt;Notifier&gt; notifier_;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p><em>该类主要用于消息数据的访问，存放到来的消息数据，并提供接口供消息读取</em>。事实上，我们之前在讨论<a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html#%E7%9C%9F%E5%AE%9E%E6%A8%A1%E5%BC%8F%E4%B8%8E%E6%A8%A1%E6%8B%9F%E6%A8%A1%E5%BC%8F">组件的初始化的最后部分时</a>见过它，也在<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html#reader-%E7%B1%BB">订阅者初始化时遇见过它</a>，但当时我都有意地略过了。现在我们重拾这部分内容（为了简单且不失一般性，我以两个信道的情况为例），把这部分彻底搞明白：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span>&lt;<span class="hljs-keyword">typename</span> M0, <span class="hljs-keyword">typename</span> M1&gt;<br><span class="hljs-type">bool</span> Component&lt;M0, M1, NullType, NullType&gt;::<span class="hljs-built_in">Initialize</span>() &#123;<br>   <span class="hljs-comment">/*   ....   */</span><br>  <span class="hljs-comment">// 创建 DataVisitor 和 RoutineFactory   最后创建任务</span><br>  std::vector&lt;data::VisitorConfig&gt; config_list;<br>  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; reader : readers_)<br>    config_list.<span class="hljs-built_in">emplace_back</span>(reader-&gt;<span class="hljs-built_in">ChannelId</span>(), reader-&gt;<span class="hljs-built_in">PendingQueueSize</span>());<br>   <span class="hljs-comment">// 创建了两个信道的 DataVisitor 并用在了协程工厂类</span><br>  <span class="hljs-keyword">auto</span> dv = std::make_shared&lt;data::DataVisitor&lt;M0, M1&gt;&gt;(config_list);<br>  croutine::RoutineFactory factory = croutine::<span class="hljs-built_in">CreateRoutineFactory</span>&lt;M0, M1&gt;(func, dv);<br>  <span class="hljs-keyword">return</span> sched-&gt;<span class="hljs-built_in">CreateTask</span>(factory, node_-&gt;<span class="hljs-built_in">Name</span>());<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>上面代码做了：</p>
+<ul>
+<li>
+<p>收集了所有的 <code>Reader</code> 对象的所读信道 id 和消息队列大小，放入到 <code>config_list</code> 后就创建 <code>DataVisitor</code> 对象</p>
+</li>
+<li>
+<p>在上面 <code>DataVisitor</code> 类的构造函数中，根据传入的信道 id 和消息队列尺寸，<code>DataVisitor</code> 内为其创建了两个 <code>ChannelBuffer</code> 作为缓冲区</p>
+<ul>
+<li>调用数据分发器将它们加入到 <code>DataDispatcher</code> 的管理中</li>
+<li>调用 <code>DataNotifier::AddNotifier()</code> 函数，传入第 0 个读者的信道 id ，加入到 <code>DataNotifier</code> 的管理中。<code>DataDispatcher</code> 与 <code>DataNotifier</code> 类均为单例，之后我们会对它们做详细介绍</li>
+<li>创建 <code>DataFusion</code> 对象，这也是之后要了解的╮(╯▽╰)╭</li>
+</ul>
+</li>
+<li>
+<p>创建协程工厂，并构建出要封装为协程的函数：</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++">factory.create_routine = [=]() &#123;<br><span class="hljs-keyword">return</span> [=]() &#123;<br>  std::shared_ptr&lt;M0&gt; msg0;     std::shared_ptr&lt;M1&gt; msg1;<br>  <span class="hljs-keyword">for</span> (;;) &#123;<br>    CRoutine::<span class="hljs-built_in">GetCurrentRoutine</span>()-&gt;<span class="hljs-built_in">set_state</span>(RoutineState::DATA_WAIT);<br>    <span class="hljs-keyword">if</span> (dv-&gt;<span class="hljs-built_in">TryFetch</span>(msg0, msg1)) &#123;  <span class="hljs-comment">// 取数据</span><br>      <span class="hljs-built_in">f</span>(msg0, msg1);	<span class="hljs-comment">// f 函数就是组件初始化时创建的 func 函数</span><br>      CRoutine::<span class="hljs-built_in">Yield</span>(RoutineState::READY);<br>    &#125; <span class="hljs-keyword">else</span><br>      CRoutine::<span class="hljs-built_in">Yield</span>();<br>  &#125;<br>&#125;; &#125;;<br></code></pre></td></tr></table></figure>
+<p>协程做的就是调用 <code>dv-&gt;TryFetch()</code> 取数据（下文会详细说明），如果成功就调用组件的 <code>Process()</code> 函数，且协程的状态从等待数据转变为了就绪，而一旦协程就绪，就可以被 <code>Processor</code> 类运行</p>
+</li>
+<li>
+<p><code>Scheduler</code> 创建任务，在<code>CreateTask()</code> 函数中，调用 <code>visitor-&gt;RegisterNotifyCallback()</code> 函数</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++">visitor-&gt;<span class="hljs-built_in">RegisterNotifyCallback</span>([<span class="hljs-keyword">this</span>, task_id]() &#123;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">cyber_unlikely</span>(stop_.<span class="hljs-built_in">load</span>()))<br>    <span class="hljs-keyword">return</span>;<br>  <span class="hljs-keyword">this</span>-&gt;<span class="hljs-built_in">NotifyProcessor</span>(task_id);<br>&#125;);<br></code></pre></td></tr></table></figure>
+<p>上面的函数被赋值给了 <code>DataVisitorBase::notifier_</code> ，用于唤醒相应的协程来处理该新消息</p>
+</li>
+</ul>
+<p>说完这部分过程后，我发现我们至少还要理解一下 <code>DataDispatcher</code> 、 <code>DataNotifier</code> 、 <code>DataFusion</code> 和 <code>AllLatest</code> 类😂😂😂。</p>
+<h3 id="DataDispatcher">DataDispatcher</h3>
+<p>千里之行，始于足下。先来看看数据分发类 <code>DataDispatcher</code> ，顾名思义，它将底层传来的数据进行分发，具体来说，当新消息到来时，通过 <code>Dispatch()</code> 函数把它们放到该信道下的所有消息缓冲区中。它是个单例模式，但是个模板类，意味着每一个消息类型会有对应的一个唯一的 <code>DataDispatcher</code> 对象。类内记录了一个信道 id 与多个 <code>CacheBuffer</code> 对象对应的表。注意到：一个信道可以有多个订阅者 <code>Reader</code> ，每个订阅者拥有一个 <code>CacheBuffer</code> 缓冲区，而这个缓冲区就是之前 <code>DataVisitor</code> 类在构造时给每个消息类型创建的 <code>ChannelBuffer</code> 。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">DataDispatcher</span> &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">AddBuffer</span><span class="hljs-params">(<span class="hljs-type">const</span> ChannelBuffer&lt;T&gt;&amp; channel_buffer)</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Dispatch</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">uint64_t</span> channel_id, <span class="hljs-type">const</span> std::shared_ptr&lt;T&gt;&amp; msg)</span></span>;<br> <span class="hljs-keyword">private</span>:<br>  DataNotifier* notifier_ = DataNotifier::<span class="hljs-built_in">Instance</span>();<br>  AtomicHashMap&lt;<span class="hljs-type">uint64_t</span>, BufferVector&gt; buffers_map_;<br>&#125;;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-type">bool</span> DataDispatcher&lt;T&gt;::<span class="hljs-built_in">Dispatch</span>(<span class="hljs-type">const</span> <span class="hljs-type">uint64_t</span> channel_id,<br>                                 <span class="hljs-type">const</span> std::shared_ptr&lt;T&gt;&amp; msg) &#123;<br>  BufferVector* buffers = <span class="hljs-literal">nullptr</span>;<br>  <span class="hljs-keyword">if</span> (apollo::cyber::<span class="hljs-built_in">IsShutdown</span>())<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>  <span class="hljs-comment">// 每次收到该信道的消息时，就会给所有缓冲区都放一份消息</span><br>  <span class="hljs-keyword">if</span> (buffers_map_.<span class="hljs-built_in">Get</span>(channel_id, &amp;buffers)) &#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; buffer_wptr : *buffers)<br>      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">auto</span> buffer = buffer_wptr.<span class="hljs-built_in">lock</span>()) &#123;<br>        <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(buffer-&gt;Mutex())</span></span>;<br>       <span class="hljs-comment">// 向 CacheBuffer 填入数据</span><br>        buffer-&gt;<span class="hljs-built_in">Fill</span>(msg);<br>      &#125;<br>  &#125; <span class="hljs-keyword">else</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>  <span class="hljs-keyword">return</span> notifier_-&gt;<span class="hljs-built_in">Notify</span>(channel_id);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>DataDispatcher::Dispatch()</code> 函数非常重要，在 <a href="#1">ReceiverManager</a> 和 <a href="#2">Receiver &amp;&amp; Transmitter</a> 中我们已经提到，他是连接上层和底层的最关键一环。在 <code>Receiver</code> 对象每次收到该信道的消息时，就会调用<code>DataDispatcher::Dispatch()</code> 函数分发刚收到的数据，函数会先从表中取出所有对应信道的缓冲区，然后调用 <code>CacheBuffer::Fill()</code> 函数来给缓冲区填数据（稍后介绍这个函数），最后调用 <code>DataNotifier::Notify()</code> 函数，唤醒它们对应的协程来取数据并运行。现在你应该明白，为何 <code>DataVisitor</code> 在构造时，需要把刚刚建立的缓冲区给 <code>DataDispatcher</code> 管理，不然的话，缓冲区拿不到消息啊。</p>
+<h3 id="DataNotifier">DataNotifier</h3>
+<p>再来看看 <code>DataNotifier</code> 类。它是个单例模式，类内有一个信道 id 与多个 <code>Notifer</code> 对应的表，这是考虑到一个信道可以有多个订阅者。很显然，前文提到的在 <code>DataVisitor</code> 构造时，调用 <code>AddNotifier()</code> 就是要把自己的 <code>Notifier</code> 存到这个表中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">DataNotifier</span> &#123;<br> <span class="hljs-keyword">public</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">AddNotifier</span><span class="hljs-params">(<span class="hljs-type">uint64_t</span> channel_id, <span class="hljs-type">const</span> std::shared_ptr&lt;Notifier&gt;&amp; notifier)</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Notify</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">uint64_t</span> channel_id)</span></span>;<br> <span class="hljs-keyword">private</span>:<br>  AtomicHashMap&lt;<span class="hljs-type">uint64_t</span>, NotifyVector&gt; notifies_map_;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>至于 <code>AddNotifier()</code> 函数的实现，emm……很平凡，无非就是找到对应的信道 id ，然后将参数中的 <code>Notifier</code> 放入到数组里（如果没有数组，新建一个）。重要的是唤醒函数 <code>Notify()</code> ，该函数内部会调用 <code>notifier-&gt;callback()</code> ，回顾一下，这个 <code>notifier</code> 是在 <code>Scheduler</code> 创建任务时被设置的，内含有 <code>NotifyProcessor()</code> 函数，可以唤醒协程。在 <a href="#2">Receiver &amp;&amp; Transmitter</a> 和 <a href="#1">ReceiverManager</a> 也提到，第二步的分发器最终会调用该函数，唤醒所有监听该信道的协程，来处理到来的消息。这样，你也就明白为什么 <code>DataVisitor</code> 类在构造时要把 <code>notifier</code> 加入进去了，不然的话信道来了个消息，就没法唤醒协程，<code>Reader</code> 就不知道了呀。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-keyword">inline</span> <span class="hljs-type">bool</span> <span class="hljs-title">DataNotifier::Notify</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">uint64_t</span> channel_id)</span> </span>&#123;<br>  NotifyVector* notifies = <span class="hljs-literal">nullptr</span>;<br>  <span class="hljs-keyword">if</span> (notifies_map_.<span class="hljs-built_in">Get</span>(channel_id, &amp;notifies)) &#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; notifier : *notifies)<br>      <span class="hljs-keyword">if</span> (notifier &amp;&amp; notifier-&gt;callback)<br>        notifier-&gt;<span class="hljs-built_in">callback</span>();<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="DataFusion-AllLatest">DataFusion &amp; AllLatest</h3>
+<p>再来看看 <code>DataVisitor</code> 构造函数的最后一步，创建 <code>DataFusion</code> 对象，看看名字，就应该明白该对象用于信道数据的融合。<code>DataFusion</code> 是 <code>AllLatest</code> 的基类，<code>DataFusion</code> 类十分简单，仅提供了一个 <code>Fusion()</code> 接口，具体由 <code>AllLatest</code> 实现。所以，我们重点看一下 <code>AllLatest</code> 类，哈，听名字就知道它会取所有信道中的<strong>最新值</strong>，再结合它是 <code>DataFusion</code> 的子类，所以主要功能应该是<strong>融合多个信道的最新数据</strong>。</p>
+<p>我还是以两个信道的情况为例，该类成员有几个 <code>ChannelBuffer</code> 类，其中一个比较特殊，类型是数据融合的 <code>buffer_fusion_</code> 。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> M0, <span class="hljs-keyword">typename</span> M1&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">AllLatest</span>&lt;M0, M1, NullType, NullType&gt; : <span class="hljs-keyword">public</span> DataFusion&lt;M0, M1&gt; &#123;<br>     <span class="hljs-comment">// 所谓融合消息，就是放在 tuple 里</span><br> <span class="hljs-keyword">using</span> FusionDataType = std::tuple&lt;std::shared_ptr&lt;M0&gt;, std::shared_ptr&lt;M1&gt;&gt;;<br> <span class="hljs-keyword">private</span>:<br>  ChannelBuffer&lt;M0&gt; buffer_m0_;<br>  ChannelBuffer&lt;M1&gt; buffer_m1_;<br>  ChannelBuffer&lt;FusionDataType&gt; buffer_fusion_;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>在构造函数中，特殊的信道 0 的消息缓冲区会调用 <code>SetFusionCallback()</code> 来设置<strong>回调函数</strong> :point_down:，<em>为方便表述，我给它起名 <code>FusionFunc</code></em> 。从下面的代码中看出， <code>FusionFunc</code> 先判断是否所有信道都有消息，并获取最新的消息，如果都有消息的话就将这些消息融合，即用 <code>std::tuple</code> 封装，再调用 <code>Fill()</code> 函数填入到 <code>buffer_fusion_</code> 的 <code>CacheBuffer</code> 中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">AllLatest</span>(<span class="hljs-type">const</span> ChannelBuffer&lt;M0&gt;&amp; buffer_0, <span class="hljs-type">const</span> ChannelBuffer&lt;M1&gt;&amp; buffer_1)<br>      : <span class="hljs-built_in">buffer_m0_</span>(buffer_0), <span class="hljs-built_in">buffer_m1_</span>(buffer_1),<br>        <span class="hljs-built_in">buffer_fusion_</span>(buffer_m0_.<span class="hljs-built_in">channel_id</span>(),<br>           <span class="hljs-keyword">new</span> CacheBuffer&lt;std::shared_ptr&lt;FusionDataType&gt;&gt;(<br>              buffer_0.<span class="hljs-built_in">Buffer</span>()-&gt;<span class="hljs-built_in">Capacity</span>() - <span class="hljs-built_in">uint64_t</span>(<span class="hljs-number">1</span>))) &#123;<br>    buffer_m0_.<span class="hljs-built_in">Buffer</span>()-&gt;<span class="hljs-built_in">SetFusionCallback</span>( <span class="hljs-comment">// buffer0 设置融合的回调函数</span><br>        [<span class="hljs-keyword">this</span>](<span class="hljs-type">const</span> std::shared_ptr&lt;M0&gt;&amp; m0) &#123;<br>          std::shared_ptr&lt;M1&gt; m1;<br>          <span class="hljs-keyword">if</span> (!buffer_m1_.<span class="hljs-built_in">Latest</span>(m1)) <span class="hljs-comment">// 信道内是否有消息 有的话取出最后一个</span><br>            <span class="hljs-keyword">return</span>;<br>          <span class="hljs-keyword">auto</span> data = std::<span class="hljs-built_in">make_shared</span>&lt;FusionDataType&gt;(m0, m1);<br>          std::lock_guard&lt;std::mutex&gt; <span class="hljs-built_in">lg</span>(buffer_fusion_.<span class="hljs-built_in">Buffer</span>()-&gt;<span class="hljs-built_in">Mutex</span>());<br>          <span class="hljs-comment">// 填充到消息中</span><br>          buffer_fusion_.<span class="hljs-built_in">Buffer</span>()-&gt;<span class="hljs-built_in">Fill</span>(data);<br>        &#125;);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p><strong>何时调用</strong> <code>FusionFunc</code> 呢？答案在这个 <code>Fill()</code> 函数（见下代码）中，它诡计多端——如果 <code>CacheBuffer</code> 有回调函数 <code>FusionFunc</code>，会调用回调函数；如果没有，会把接收到的数据放入缓冲区中。很显然在上面的构造函数中，只有信道 0 设置了回调函数 <code>FusionFunc</code>。<em>因此当信道 0 有数据到来， <code>DataDispatcher::Dispatch()</code> 被调用时（代码见 DataDispatcher 部分），进而调用 <code>Fill()</code> 函数时， <code>FusionFunc</code> 才会被调用</em>，将最新的消息融合，并将融合的消息填入到 <code>buffer_fusion_</code> 中。而其他信道的数据到来时， <code>Fill()</code> 函数只是单纯往对应的 <code>CacheBuffer</code> 中填数据。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">CacheBuffer::Fill</span><span class="hljs-params">(<span class="hljs-type">const</span> T&amp; value)</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (fusion_callback_)<br>    <span class="hljs-built_in">fusion_callback_</span>(value);  <span class="hljs-comment">// buffer 0 运行这个</span><br>  <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">Full</span>()) &#123;<br>      buffer_[<span class="hljs-built_in">GetIndex</span>(head_)] = value;<br>      ++head_;     ++tail_;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      buffer_[<span class="hljs-built_in">GetIndex</span>(tail_ + <span class="hljs-number">1</span>)] = value;<br>      ++tail_;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在协程的处理函数中（回顾一下， DataVisitor 的创建协程工厂中提到的）会调用 <code>DataVisitor::TryFetch()</code> 函数，再调用 <code>Fusion()</code> 函数（代码如下），它从融合数据的缓冲区 <code>buffer_fusion_</code> 中拿走（Fetch）融合消息，这也就意味着同时拿多个信道上的最新消息，保证了每次给 <code>Component::Process()</code> 函数的参数都必须“全员到齐”，并且所有信息都是最新的。综上所述，只有信道 0 收到消息后，才会融合其他信道的消息，往往主导通信处理的节奏，因此信道 0 的选取就比较关键了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">DataVisitor::TryFetch</span><span class="hljs-params">(std::shared_ptr&lt;M0&gt;&amp; m0, std::shared_ptr&lt;M1&gt;&amp; m1)</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (data_fusion_-&gt;<span class="hljs-built_in">Fusion</span>(&amp;next_msg_index_, m0, m1)) &#123;<br>    next_msg_index_++;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">AllLatest::Fusion</span><span class="hljs-params">(<span class="hljs-type">uint64_t</span>* index, std::shared_ptr&lt;M0&gt;&amp; m0,</span></span><br><span class="hljs-params"><span class="hljs-function">              std::shared_ptr&lt;M1&gt;&amp; m1)</span> <span class="hljs-keyword">override</span> </span>&#123;<br>  std::shared_ptr&lt;FusionDataType&gt; fusion_data;<br>  <span class="hljs-comment">// 从 fusion 缓冲区中取数据</span><br>  <span class="hljs-keyword">if</span> (!buffer_fusion_.<span class="hljs-built_in">Fetch</span>(index, fusion_data))<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>  <span class="hljs-comment">// 得到了数据 分别赋值给 m0 m1</span><br>  m0 = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">0</span>&gt;(*fusion_data);<br>  m1 = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">1</span>&gt;(*fusion_data);<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="ChannelBuffer-CacheBuffer">ChannelBuffer &amp; CacheBuffer</h3>
+<p>前文我一直提到一个词，叫做缓冲区。事实上这个词具体指向了两个类，<code>ChannelBuffer</code> 和 <code>CacheBuffer</code> 类。为了让读者更好地理解“缓冲区”这个词，我简要地介绍一下这两个类。<code>ChannelBuffer</code> 类包含了两个成员：信道 id 和 指向 <code>CacheBuffer</code> 的指针。它的函数 <code>Fetch()</code> 和 <code>Latest()</code> 分别用于取对应索引的消息和取得最新消息。而 <code>CacheBuffer</code> 类，其实质就是一个循环队列，用来放置某个信道产生的数据。需要注意的是，<code>CacheBuffer</code> 占用的内存是恒定的，因为里面的数组长度一开始就被限定了，所以，一旦缓冲区装满了，它会毫不犹豫地丢弃最旧的消息，推入最新的消息。具体的队列实现在 <code>cyber/data/cache_buffer.h</code> 和 <code>cyber/data/channel_buffer.h</code>，很简单，有兴趣可以直接读代码。</p>
+<h2 id="总结">总结</h2>
+<p>(⊙o⊙)哦终于，我把 Cyber RT 所有的通信机制都看完了，哦，BTW，上篇通信链接在<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">这里</a>。现在，在把所有的内容都搞明白后，让我们理一理自己昏沉的头脑，跳脱出代码的边边框框，从上帝视角审视一下数据是如何流通的。</p>
+<p>这里有两张非常好的图，感谢 [2]，我可以不用自己动手，花费数小时画图了😀</p>
+<p><img src="/img/msg.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>在上面这张图中，仍然以两个信道的 <code>Component</code> 为例，从左上角出发：</p>
+<ul>
+<li><code>Component</code> 初始化建成了两个 <code>Reader</code> 对象，然后创建了一个 <code>DataVisitor&lt;M0, M1&gt;</code> 对象</li>
+<li>两个 <code>Reader</code> 对象也分别创建了一个 <code>DataVisitor&lt;&gt;</code> 对象，回顾一下上篇提到的 <code>Reader</code> 的初始化过程</li>
+<li>这些 <code>DataVisitor</code> 对象会分别创建出 <code>ChannelBuffer</code> ，并使用 <code>DataDispatcher</code> 管理这些缓冲区（注意看它内部的表）</li>
+<li>当接收到新消息后，<code>DataDispatcher</code> 会给对应的信道上的所有缓冲区进行分派，特别地，若信道 0 有新消息，还会对其他消息进行融合（注意看 <code>AllLatest</code> 对象）</li>
+<li>之后，<code>DataVisitor</code> 会使用 <code>DataNotifier</code> 对象，唤醒相应的协程，处理收到的数据</li>
+</ul>
+<p>现在，我们再来看看底层的通信架构，虽然有些部分我略去未讲，但这张图我们还是可以看明白的🐶。这次，我们从最右边开始看起。</p>
+<p><img src="/img/msg2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<ul>
+<li>可以看出两个 <code>Reader</code> 对象共用了一个 <code>Receiver</code> 。这是因为在同一个进程内，不同的 <code>Reader</code> 对象订阅同一个信道，就会使用同一个 <code>Receiver</code></li>
+<li>默认选择的 <code>Receiver</code> 是 hybrid 的，因此需要三个底层接收类 <code>IntraReceiver</code> 、<code>ShmReceiver</code> 和 <code>RtpsReceiver</code> 配合</li>
+<li>在创建 <code>Receiver</code> 时，监听者处理函数 <code>msg_listener_</code> 就已经“准备就绪”了。</li>
+<li><code>Dispatcher</code> 的表中记录了监听者和它们负责的信道，并把它们连接 <code>Connect</code> 起来，如同 Qt 中的信号槽机制</li>
+<li>一有新消息到达（最左边的函数是我陌生的），那么就会立刻触发信号槽机制，调用 <code>msg_listener</code> 函数，之后就是上层 <code>DataDispatcher</code> 的工作了</li>
+</ul>
+<p>最后的最后，事实上我还是落了一个东西：服务—客户通信方式😓😓😂😂。的确，这篇博客的内容全是关于发布—订阅通信方式的，对于 <code>Service</code> 和 <code>Client</code> ，几乎没有提及，之后，我就会补上这一部分服务发现的内容。</p>
+<h2 id="参考">参考</h2>
+<p>[1] <a target="_blank" rel="noopener" href="https://github.com/daohu527/Dig-into-Apollo/tree/master/cyber">Dig into Apollo - Cyber</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://blog.csdn.net/jinzhuojun/article/details/108066714">自动驾驶平台Apollo 5.5阅读手记：Cyber RT中的通信传输</a></p>
+<p>[3] <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_25762163/article/details/103803032">百度Apollo系统学习-Cyber RT 通信-上层</a></p>
+<p>[4] <a target="_blank" rel="noopener" href="https://blog.csdn.net/kesalin/article/details/88914029">百度 Apollo Cyber RT简介、基本概念以及与 ROS 对照</a></p>
+<p>[5] <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_25762163/article/details/103895527">百度Apollo系统学习-Cyber RT 通信-底层</a></p>
+<p>[6] <a target="_blank" rel="noopener" href="https://cyber-rt.readthedocs.io/en/latest/api/cppapi.html#cyber-node-reader-h">cyber-rt.readthedocs.io</a></p>
+<p>[7] 自动驾驶汽车平台技术基础/杨世春等编著. —北京：清华大学出版社</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Apollo/" class="category-chain-item">Apollo</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Apollo/" class="print-no-link">#Apollo</a>
+      
+        <a href="/tags/Cyber-RT/" class="print-no-link">#Cyber RT</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Apollo Cyber RT 通信（下）</div>
+      <div>https://dingfen.github.io/2020/11/07/2020-11-7-CyberCommu2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年11月7日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2024年9月24日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/11/11/2020-11-11-ApolloPlanning/" title="Apollo Planning 规划模块">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Apollo Planning 规划模块</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/11/03/2020-11-3-CyberCommu1/" title="Apollo Cyber RT 通信（上）">
+                        <span class="hidden-mobile">Apollo Cyber RT 通信（上）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

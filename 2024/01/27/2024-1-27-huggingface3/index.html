@@ -1,0 +1,916 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="智谱清言の大模型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="THUDM&#x2F;chatglm代码细读">
+<meta property="og:url" content="https://dingfen.github.io/2024/01/27/2024-1-27-huggingface3/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="智谱清言の大模型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/ChatGLM2.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/RoPE3.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/ChatGLM2MLP.png">
+<meta property="article:published_time" content="2024-01-27T04:00:00.000Z">
+<meta property="article:modified_time" content="2024-09-24T03:28:38.182Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/ChatGLM2.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>THUDM/chatglm代码细读 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="THUDM/chatglm代码细读"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-01-27 12:00" pubdate>
+          2024年1月27日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">THUDM/chatglm代码细读</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2024-09-24T11:28:38+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>THUDM/ChatGLM代码细读</h1>
+<h2 id="ChatGLM-是什么">ChatGLM 是什么</h2>
+<p>ChatGLM-6B 是一个基于 General Language Model (GLM) 架构的开源、支持中英双语的对话语言模型。<br>
+由清华大学研发，截至笔者更新时已经发布了第三代 ChatGLM3。ChatGLM 模型使用了和 ChatGPT 相似的技术，使用约 1T 标识符的中英双语训练，再辅以监督微调、反馈自助、人类反馈强化学习等技术炼成。</p>
+<p>清华大学团队和智谱AI可以说浑身是肝，发布了许多大模型：</p>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://github.com/thudm/chatglm2-6b">ChatGLM2-6B</a></p>
+<ul>
+<li>更强大的性能：升级了 ChatGLM2-6B 的基座模型。ChatGLM2-6B 使用了 GLM 的混合目标函数，经过了 1.4T 中英标识符的预训练与人类偏好对齐训练，评测结果显示，相比于初代模型，ChatGLM2-6B 在 MMLU（+23%）、CEval（+33%）、GSM8K（+571%） 、BBH（+60%）等数据集上的性能取得了大幅度的提升，在同尺寸开源模型中具有较强的竞争力。</li>
+<li>更长的上下文：使用 FlashAttention 技术将基座模型的上下文长度（Context Length）由 ChatGLM-6B 的 2K 扩展到了 32K，并在对话阶段使用 8K 的上下文长度训练。对于更长的上下文，我们发布了 ChatGLM2-6B-32K 模型。LongBench 的测评结果表明，在等量级的开源模型中，ChatGLM2-6B-32K 有着较为明显的竞争优势。</li>
+<li>更高效的推理：使用 Multi-Query Attention 技术获得了更快的推理速度和更低的显存占用：在官方的模型实现下，推理速度相比初代提升了 42%，INT4 量化下，6G 显存支持的对话长度由 1K 提升到了 8K。</li>
+</ul>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://github.com/THUDM/ChatGLM3">ChatGLM3</a></p>
+<ul>
+<li>更强大的基础模型： ChatGLM3-6B 的基础模型 ChatGLM3-6B-Base 采用了更多样的训练数据、更充分的训练步数和更合理的训练策略。在语义、数学、推理、代码、知识等不同角度的数据集上测评显示，<em>ChatGLM3-6B-Base 具有在 10B 以下的基础模型中最强的性能</em>。</li>
+<li>更完整的功能支持： ChatGLM3-6B 采用了全新设计的 Prompt 格式 ，除正常的多轮对话外。同时原生支持工具调用（Function Call）、代码执行（Code Interpreter）和 Agent 任务等复杂场景。</li>
+<li>更全面的开源序列： 除了对话模型 ChatGLM3-6B 外，还开源了基础模型 ChatGLM3-6B-Base 、长文本对话模型 ChatGLM3-6B-32K。</li>
+</ul>
+</li>
+</ul>
+<p>此外，还有以下模型，我不再详细介绍：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/THUDM/CodeGeeX2">CodeGeeX2</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/THUDM/WebGLM">WebGLM</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/THUDM/VisualGLM-6B">VisualGLM-6B</a></li>
+</ul>
+<h2 id="ChatGLM-架构">ChatGLM 架构</h2>
+<p>ChatGLM2 的架构如下图所示。可以看出来，与 llama 等其他基于 transformer 的模型没什么不同：</p>
+<p><img src="/img/LLM/ChatGLM2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="ChatGLM2-代码详解">ChatGLM2 代码详解</h2>
+<p>因工作原因，先做 ChatGLM2 代码的分析，其模型的 config 数据如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;_name_or_path&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;THUDM/chatglm2-6b&quot;</span><span class="hljs-punctuation">,</span><br>  # ....<br>  <span class="hljs-attr">&quot;add_bias_linear&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>                             # 是否在线性层添加偏移项，否<br>  <span class="hljs-attr">&quot;add_qkv_bias&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                                 # 是否添加 qkv 层的偏移项，是<br>  <span class="hljs-attr">&quot;apply_query_key_layer_scaling&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                # 是否对 qkv 层进行缩放，是<br>  <span class="hljs-attr">&quot;apply_residual_connection_post_layernorm&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>    # 是否在残差连接后进行层归一化，否<br>  <span class="hljs-attr">&quot;attention_dropout&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.0</span><span class="hljs-punctuation">,</span>                             # attention dropout 值，<span class="hljs-number">0</span><br>  <span class="hljs-attr">&quot;attention_softmax_in_fp32&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                    # 是否在 fp32 下计算 softmax，是<br>  <span class="hljs-attr">&quot;bias_dropout_fusion&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                          # 是否融合 bias dropout，是<br>  <span class="hljs-attr">&quot;ffn_hidden_size&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">13696</span><span class="hljs-punctuation">,</span>                             # ffn 层的隐藏层大小，<span class="hljs-number">13696</span><br>  <span class="hljs-attr">&quot;fp32_residual_connection&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>                    # 是否在 fp32 下进行残差连接，否<br>  <span class="hljs-attr">&quot;hidden_dropout&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.0</span><span class="hljs-punctuation">,</span>                                # hidden dropout 值，<span class="hljs-number">0</span><br>  <span class="hljs-attr">&quot;hidden_size&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">4096</span><span class="hljs-punctuation">,</span>                                  # 隐藏层大小，<span class="hljs-number">4096</span><br>  <span class="hljs-attr">&quot;kv_channels&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">128</span><span class="hljs-punctuation">,</span>                                   # kv 张量的通道数，<span class="hljs-number">128</span><br>  <span class="hljs-attr">&quot;layernorm_epsilon&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1e-05</span><span class="hljs-punctuation">,</span>                           # layernorm 层的最小值，<span class="hljs-number">1e-05</span><br>  <span class="hljs-attr">&quot;multi_query_attention&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                        # 是否使用多查询注意力，是<br>  <span class="hljs-attr">&quot;multi_query_group_num&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span><span class="hljs-punctuation">,</span>                           # 多查询注意力的组数，<span class="hljs-number">2</span><br>  <span class="hljs-attr">&quot;num_attention_heads&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32</span><span class="hljs-punctuation">,</span>                            # 注意力头数，<span class="hljs-number">32</span><br>  <span class="hljs-attr">&quot;num_layers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">28</span><span class="hljs-punctuation">,</span>                                     # transformer层数，<span class="hljs-number">28</span><br>  <span class="hljs-attr">&quot;original_rope&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                                # 是否使用原生 RoPE，是<br>  <span class="hljs-attr">&quot;padded_vocab_size&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">65024</span><span class="hljs-punctuation">,</span>                           # 填充后的词表大小，<span class="hljs-number">65024</span><br>  <span class="hljs-attr">&quot;post_layer_norm&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                              # 是否在 transformer 层后进行层归一化，是<br>  <span class="hljs-attr">&quot;rmsnorm&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                                      # 是否使用 RMSNorm，是<br>  <span class="hljs-attr">&quot;seq_length&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32768</span><span class="hljs-punctuation">,</span>                                  # 支持的最长序列长度，<span class="hljs-number">32768</span><br>  <span class="hljs-attr">&quot;use_cache&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span>                                    # 是否使用 KV cache，是<br>  <span class="hljs-attr">&quot;torch_dtype&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;float16&quot;</span><span class="hljs-punctuation">,</span>                             # 模型的精度，float16<br>  <span class="hljs-attr">&quot;transformers_version&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;4.27.1&quot;</span><span class="hljs-punctuation">,</span>                     # transformers 版本，<span class="hljs-number">4.27</span><span class="hljs-number">.1</span><br>  <span class="hljs-attr">&quot;tie_word_embeddings&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>                         # 是否对词嵌入进行绑定，否<br>  <span class="hljs-attr">&quot;eos_token_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span><span class="hljs-punctuation">,</span>                                    # 句子结束符 id，<span class="hljs-number">2</span><br>  <span class="hljs-attr">&quot;pad_token_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span>                                     # 填充符 id，<span class="hljs-number">0</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<h3 id="ChatGLM-基件">ChatGLM 基件</h3>
+<p>与<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">先前的llama博客</a>套路一样，我们从底到顶，先从最基础的基件部分代码开始，一步步往上走，从而逐步理解整个模型的架构。</p>
+<h4 id="PrefixEncoder">PrefixEncoder</h4>
+<p>PrefixEncoder 是一个前缀编码器，ChatGLM 模型使用它对历史输入的文本序列进行嵌入编码。从源码中可知，该类结构随用户配置的 <code>config.prefix_projection</code> 而变化，如果为 True，则使用一个两层的 MLP 进行编码，否则直接使用 Embedding 层进行编码。Embedding 层的规模是 <code>config.pre_seq_len</code>，之前的文本长度，每个词的嵌入向量维度是 <code>config.num_layers * config.kv_channels * config.multi_query_group_num * 2 = 28 * 128 * 2 * 2 = 14336</code>。而加的两层 MLP 则是将其降维到 <code>config.hidden_size</code>，其 MLP 内部的参数可以存储更多的权重信息。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">PrefixEncoder</span>(torch.nn.Module):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    The torch.nn model to encode the prefix</span><br><span class="hljs-string">    Input shape: (batch-size, prefix-length)</span><br><span class="hljs-string">    Output shape: (batch-size, prefix-length, 2*layers*hidden)</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config: ChatGLMConfig</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        self.prefix_projection = config.prefix_projection<br>        <span class="hljs-keyword">if</span> self.prefix_projection:<br>            <span class="hljs-comment"># Use a two-layer MLP to encode the prefix</span><br>            kv_size = config.num_layers * config.kv_channels * config.multi_query_group_num * <span class="hljs-number">2</span><br>            self.embedding = torch.nn.Embedding(config.pre_seq_len, kv_size)<br>            self.trans = torch.nn.Sequential(<br>                torch.nn.Linear(kv_size, config.hidden_size),<br>                torch.nn.Tanh(),<br>                torch.nn.Linear(config.hidden_size, kv_size)<br>            )<br>        <span class="hljs-keyword">else</span>:<br>            self.embedding = torch.nn.Embedding(config.pre_seq_len,<br>                                                config.num_layers * config.kv_channels * config.multi_query_group_num * <span class="hljs-number">2</span>)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, prefix: torch.Tensor</span>):<br>        <span class="hljs-keyword">if</span> self.prefix_projection:<br>            prefix_tokens = self.embedding(prefix)<br>            past_key_values = self.trans(prefix_tokens)<br>        <span class="hljs-keyword">else</span>:<br>            past_key_values = self.embedding(prefix)<br>        <span class="hljs-keyword">return</span> past_key_values<br></code></pre></td></tr></table></figure>
+<h4 id="RotaryEmbedding">RotaryEmbedding</h4>
+<p>旋转位置编码的原理在<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">先前的llama博客</a>中已经介绍过。但 <code>apply_rotary_pos_emb</code> 实现有所不同。先放几行公式供读者参考回忆：</p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>θ</mi><mi>i</mi></msub><mo>=</mo><mn>1000</mn><msup><mn>0</mn><mrow><mo>−</mo><mn>2</mn><mo stretchy="false">(</mo><mi>i</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>d</mi></mrow></msup><mo separator="true">,</mo><mi>i</mi><mo>∈</mo><mo stretchy="false">[</mo><mn>1</mn><mo separator="true">,</mo><mn>2</mn><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo separator="true">,</mo><mi>d</mi><mi mathvariant="normal">/</mi><mn>2</mn><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">\theta_i = 10000^{-2(i-1)/d}, i \in [1,2,...,d/2] 
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1324em;vertical-align:-0.1944em;"></span><span class="mord">1000</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">2</span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">i</span><span class="mbin mtight">−</span><span class="mord mtight">1</span><span class="mclose mtight">)</span><span class="mord mtight">/</span><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">2</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">...</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">d</span><span class="mord">/2</span><span class="mclose">]</span></span></span></span></span></p>
+<center>
+  <img src="/img/LLM/RoPE3.png" srcset="/img/loading.gif" lazyload >
+</center>
+<p>结合前后代码，<code>rope_cache</code> 是 ChatGLM 模型的 <code>RotaryEmbedding</code> 存储的 cos sin cache。其最低维中，0 存储了 cos 值，1 存储了 sin 值，所以 <code>apply_rotary_pos_emb</code> 的 9-15 行出现了一个令人费解的复杂公式。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># ... code in __init__</span><br>rotary_dim = <span class="hljs-number">128</span><br>RotaryEmbedding(rotary_dim // <span class="hljs-number">2</span>, original_impl=config.original_rope, device=device,<br>                dtype=config.torch_dtype)<br>    theta = <span class="hljs-number">1.0</span> / (base ** (torch.arange(<span class="hljs-number">0</span>, n_elem, <span class="hljs-number">2</span>, dtype=dtype, device=device) / n_elem))<br>    seq_idx = torch.arange(seq_len, dtype=dtype, device=device)<br>    idx_theta = torch.outer(seq_idx, theta).<span class="hljs-built_in">float</span>()<br>    <span class="hljs-comment"># compute cos &amp; sin  shape[seq_len, dim//4, 2]</span><br>    cache = torch.stack([torch.cos(idx_theta), torch.sin(idx_theta)], dim=-<span class="hljs-number">1</span>)<br></code></pre></td></tr></table></figure>
+<p><code>apply_rotary_pos_emb</code> 将 query tensor 最低维拆成两半，前半部分参与运算，张量是 <code>x: Shape[seq_len, bsz, num_heads, dim//2, 2]</code> 和 <code>rope cache: Shape[seq_len, bsz, 1, dim//2, 2]</code>，可见 cache 的第二维会进行 broadcast，随后将结果的三四维 flatten，变为 <code>Shape[seq_len, bsz, num_heads, dim//2]</code>，并连接上 query tensor 的后半部。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">apply_rotary_pos_emb</span>(<span class="hljs-params">x: torch.Tensor, rope_cache: torch.Tensor</span>) -&gt; torch.Tensor:<br>    <span class="hljs-comment"># x: [sq, b, np, hn]</span><br>    sq, b, np, hn = x.size(<span class="hljs-number">0</span>), x.size(<span class="hljs-number">1</span>), x.size(<span class="hljs-number">2</span>), x.size(<span class="hljs-number">3</span>)<br>    rot_dim = rope_cache.shape[-<span class="hljs-number">2</span>] * <span class="hljs-number">2</span><br>    x, x_pass = x[..., :rot_dim], x[..., rot_dim:]<br>    <span class="hljs-comment"># truncate to support variable sizes</span><br>    rope_cache = rope_cache[:sq]<br>    xshaped = x.reshape(sq, -<span class="hljs-number">1</span>, np, rot_dim // <span class="hljs-number">2</span>, <span class="hljs-number">2</span>)<br>    rope_cache = rope_cache.view(sq, -<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, xshaped.size(<span class="hljs-number">3</span>), <span class="hljs-number">2</span>)<br>    x_out2 = torch.stack(<br>        [<br>            xshaped[..., <span class="hljs-number">0</span>] * rope_cache[..., <span class="hljs-number">0</span>] - xshaped[..., <span class="hljs-number">1</span>] * rope_cache[..., <span class="hljs-number">1</span>],<br>            xshaped[..., <span class="hljs-number">1</span>] * rope_cache[..., <span class="hljs-number">0</span>] + xshaped[..., <span class="hljs-number">0</span>] * rope_cache[..., <span class="hljs-number">1</span>],<br>        ],<br>        -<span class="hljs-number">1</span>,<br>    )<br>    x_out2 = x_out2.flatten(<span class="hljs-number">3</span>)<br>    <span class="hljs-keyword">return</span> torch.cat((x_out2, x_pass), dim=-<span class="hljs-number">1</span>)<br></code></pre></td></tr></table></figure>
+<p>读者可能觉得奇怪，为何前半部分的 query 参与了运算，后半部分的 query 直接就连接到后面了？事实上我一开始在读这一代码时认为这是个bug，<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/647085112">知乎上也有人发现了这一点</a>，但经他人提醒，认为这是一个 trick 🤯。但其底层原理是啥我不太清楚了。</p>
+<h4 id="RMSNorm">RMSNorm</h4>
+<p>RMSNorm 归一层的作用和原理也在<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">先前的llama博客</a>中已经介绍过，仅列出相应的公式：$ RMS(a) = \sqrt{\frac{1}{n}\sum_i^n{a_i^2}} <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>，</mtext></mrow><annotation encoding="application/x-tex">，</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord cjk_fallback">，</span></span></span></span> \bar{a}_i = \frac{a_i}{RMS(a)}g_i$。其源代码与 llama 的也高度相似，不再赘述。</p>
+<h4 id="Attention">Attention</h4>
+<p>ChatGLM 模型的核心是 Attention 机制，其实现与 llama-2 相比有很大不同，但其架构是相似的。仍然是在实现如下公式计算：</p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>s</mi><mi>o</mi><mi>f</mi><mi>t</mi><mi>m</mi><mi>a</mi><mi>x</mi><mo stretchy="false">(</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><msqrt><msub><mi>d</mi><mi>k</mi></msub></msqrt></mfrac><mo stretchy="false">)</mo><mi>V</mi></mrow><annotation encoding="application/x-tex"> softmax(\frac{QK^T}{\sqrt{d_k}})V 
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.4483em;vertical-align:-0.93em;"></span><span class="mord mathnormal">so</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">t</span><span class="mord mathnormal">ma</span><span class="mord mathnormal">x</span><span class="mopen">(</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5183em;"><span style="top:-2.2528em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8572em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.8172em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1828em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></span></p>
+<p>但从实现上看，我总结了以下几点不同：</p>
+<ol>
+<li>有两个类实现 attention 机制，SelfAttention 和 CoreAttention 类。</li>
+<li>参与运算的张量维度不同。ChatGLM2 实现与主流的张量维度不同，其 query 张量的维度是 <code>(seq_len, batch_size, num_heads, head_dim)</code>，而一般而言张量的维度是 <code>(batch_size, num_heads, seq_len, head_dim)</code>。这导致代码比较繁琐难懂，我也不理解为何实现要与主流相悖。</li>
+</ol>
+<p>现在，我们来看类 <code>CoreAttention</code> 的具体实现：ChatGLM2 模型的 transform 层中，Multi-Head Attention 有 32 个头，每个头的维度为 128，并且使用了 Grouped-Query Attention 优化技术，将 KV 张量分成了两组，减少权重的内存开销。特别注意到，与 llama 不同的是，ChatGLM2 模型打开了 <code>query_key_layer_scaling</code>，从代码实现上看，层号 <code>layer_number</code> 越大，<code>coeff</code> 越大，因此，<code>norm_factor</code> 也会随之增大。此外，还启用了注意力的 dropout 层。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">CoreAttention</span>(torch.nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config: ChatGLMConfig, layer_number</span>):<br>        <span class="hljs-built_in">super</span>(CoreAttention, self).__init__()<br><br>        self.apply_query_key_layer_scaling = config.apply_query_key_layer_scaling<br>        self.attention_softmax_in_fp32 = config.attention_softmax_in_fp32<br>        <span class="hljs-keyword">if</span> self.apply_query_key_layer_scaling:<br>            self.attention_softmax_in_fp32 = <span class="hljs-literal">True</span><br>        self.layer_number = <span class="hljs-built_in">max</span>(<span class="hljs-number">1</span>, layer_number)<br><br>        projection_size = config.kv_channels * config.num_attention_heads<br><br>        <span class="hljs-comment"># Per attention head and per partition values.</span><br>        self.hidden_size_per_partition = projection_size<br>        self.hidden_size_per_attention_head = projection_size // config.num_attention_heads<br>        self.num_attention_heads_per_partition = config.num_attention_heads<br><br>        coeff = <span class="hljs-literal">None</span><br>        self.norm_factor = math.sqrt(self.hidden_size_per_attention_head)<br>        <span class="hljs-keyword">if</span> self.apply_query_key_layer_scaling:<br>            coeff = self.layer_number<br>            self.norm_factor *= coeff<br>        self.coeff = coeff<br><br>        self.attention_dropout = torch.nn.Dropout(config.attention_dropout)<br></code></pre></td></tr></table></figure>
+<p>torch&gt;=2.0 有针对 Attention 机制的优化接口 <code>nn.functional.scaled_dot_product_attention</code>，因此，ChatGLM2 模型直接使用了该接口。由于上文所说的第一个不同点，在使用接口前，第四行 会对 QKV 张量进行重排。调用完接口后，还要将结果重排回去，得到最终的输出。但令人费解的是，之前说的 <code>query_key_layer_scaling</code> 以及 dropout 层的特性好像对 torch&gt;=2.0 不起作用 🤔（因为代码里压根没用上它们）。</p>
+<p>至于 torch-1 的对注意力机制的裸实现，emmm，代码太过复杂，就算花时间去理解也是白费功夫。总而言之，<code>CoreAttention</code> 类围绕着 torch-2 的 SDPA 接口包装了一下，就完事了。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, query_layer, key_layer, value_layer, attention_mask</span>):<br>    pytorch_major_version = <span class="hljs-built_in">int</span>(torch.__version__.split(<span class="hljs-string">&#x27;.&#x27;</span>)[<span class="hljs-number">0</span>])<br>    <span class="hljs-keyword">if</span> pytorch_major_version &gt;= <span class="hljs-number">2</span>:<br>        query_layer, key_layer, value_layer = [k.permute(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>) <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [query_layer, key_layer, value_layer]]<br>        <span class="hljs-keyword">if</span> attention_mask <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> query_layer.shape[<span class="hljs-number">2</span>] == key_layer.shape[<span class="hljs-number">2</span>]:<br>            context_layer = torch.nn.functional.scaled_dot_product_attention(query_layer, key_layer, value_layer,<br>                                                                                is_causal=<span class="hljs-literal">True</span>)<br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-keyword">if</span> attention_mask <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>                attention_mask = ~attention_mask<br>            context_layer = torch.nn.functional.scaled_dot_product_attention(query_layer, key_layer, value_layer,<br>                                                                                attention_mask)<br>        context_layer = context_layer.permute(<span class="hljs-number">2</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>)<br>        new_context_layer_shape = context_layer.size()[:-<span class="hljs-number">2</span>] + (self.hidden_size_per_partition,)<br>        context_layer = context_layer.reshape(*new_context_layer_shape)<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-keyword">pass</span><br></code></pre></td></tr></table></figure>
+<p>再来看 <code>SelfAttention</code> 的实现，SelfAttention 类包含了三个组成成分：一）将输入张量转换成 QKV 张量的线性层，二）CoreAttention 类，实现注意力计算。三）将 CoreAttention 的 SDPA 结果转换成输出张量的线性层。其中，线性层的输入维度是 <code>config.hidden_size</code>，输出维度是 <code>config.projection_size</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SelfAttention</span>(torch.nn.Module):<br>    <span class="hljs-string">&quot;&quot;&quot;Parallel self-attention layer abstract class.</span><br><span class="hljs-string">    Self-attention layer takes input with size [s, b, h]</span><br><span class="hljs-string">    and returns output of the same size.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config: ChatGLMConfig, layer_number, device=<span class="hljs-literal">None</span></span>):<br>        <span class="hljs-built_in">super</span>(SelfAttention, self).__init__()<br>        self.layer_number = <span class="hljs-built_in">max</span>(<span class="hljs-number">1</span>, layer_number)<br>        <span class="hljs-comment"># ......</span><br>        self.multi_query_attention = config.multi_query_attention<br>        self.qkv_hidden_size = <span class="hljs-number">3</span> * self.projection_size<br>        <span class="hljs-keyword">if</span> self.multi_query_attention:<br>            self.num_multi_query_groups_per_partition = config.multi_query_group_num<br>            self.qkv_hidden_size = (<br>                    self.projection_size + <span class="hljs-number">2</span> * self.hidden_size_per_attention_head * config.multi_query_group_num<br>            )<br>        self.query_key_value = nn.Linear(config.hidden_size, self.qkv_hidden_size,<br>                                         bias=config.add_bias_linear <span class="hljs-keyword">or</span> config.add_qkv_bias,<br>                                         device=device, **_config_to_kwargs(config)<br>                                         )<br><br>        self.core_attention = CoreAttention(config, self.layer_number)<br><br>        <span class="hljs-comment"># Output.</span><br>        self.dense = nn.Linear(self.projection_size, config.hidden_size, bias=config.add_bias_linear,<br>                               device=device, **_config_to_kwargs(config)<br>                               )<br></code></pre></td></tr></table></figure>
+<p>其 forward 函数的运算过程也可以分成三部分：</p>
+<ul>
+<li>准备 QKV 张量。输入张量 <code>hidden_states</code> 经过线性层后，得到 QKV 混合张量，随后拆分：<code>mixed_x_layer</code> 的最后一维度是 <code>hidden_size + 2 * KV_dim</code>，因为使用了 Grouped-Query Attention 优化技术后，Key Value 张量的头数变少了。对应地，7-9 行也是按照 <code>hidden_size + 2 * KV_dim</code> 拆分出 QKV 张量。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params"></span><br><span class="hljs-params">    self, hidden_states, attention_mask, rotary_pos_emb, kv_cache=<span class="hljs-literal">None</span>, use_cache=<span class="hljs-literal">True</span></span><br><span class="hljs-params"></span>):<br>    <span class="hljs-comment"># hidden_states: [sq, b, h]</span><br><br>    <span class="hljs-comment"># =================================================</span><br>    <span class="hljs-comment"># Pre-allocate memory for key-values for inference.</span><br>    <span class="hljs-comment"># =================================================</span><br>    <span class="hljs-comment"># =====================</span><br>    <span class="hljs-comment"># Query, Key, and Value</span><br>    <span class="hljs-comment"># =====================</span><br><br>    <span class="hljs-comment"># Attention heads [sq, b, h] --&gt; [sq, b, (np * 3 * hn)]</span><br>    mixed_x_layer = self.query_key_value(hidden_states)<br><br>    <span class="hljs-keyword">if</span> self.multi_query_attention:<br>        (query_layer, key_layer, value_layer) = mixed_x_layer.split(<br>            [<br>                self.num_attention_heads_per_partition * self.hidden_size_per_attention_head,<br>                self.num_multi_query_groups_per_partition * self.hidden_size_per_attention_head,<br>                self.num_multi_query_groups_per_partition * self.hidden_size_per_attention_head,<br>            ],<br>            dim=-<span class="hljs-number">1</span>,<br>        )<br></code></pre></td></tr></table></figure>
+<ul>
+<li>将 QKV 张量转变为 <code>Shape[sq, b, np, hn]</code></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python">    query_layer = query_layer.view(<br>        query_layer.size()[:-<span class="hljs-number">1</span>] + (self.num_attention_heads_per_partition, self.hidden_size_per_attention_head)<br>    )<br>    key_layer = key_layer.view(<br>        key_layer.size()[:-<span class="hljs-number">1</span>] + (self.num_multi_query_groups_per_partition, self.hidden_size_per_attention_head)<br>    )<br>    value_layer = value_layer.view(<br>        value_layer.size()[:-<span class="hljs-number">1</span>]<br>        + (self.num_multi_query_groups_per_partition, self.hidden_size_per_attention_head)<br>    )<br><span class="hljs-keyword">else</span>:<br>    <span class="hljs-comment"># ... no MQA part</span><br></code></pre></td></tr></table></figure>
+<ul>
+<li>准备 RoPE，和 KV cache。QKV 先加入旋转位置编码，再连接上之前的 KV cache 张量。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># apply relative positional encoding (rotary embedding)</span><br><span class="hljs-keyword">if</span> rotary_pos_emb <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>    query_layer = apply_rotary_pos_emb(query_layer, rotary_pos_emb)<br>    key_layer = apply_rotary_pos_emb(key_layer, rotary_pos_emb)<br><br><span class="hljs-comment"># adjust key and value for inference</span><br><span class="hljs-keyword">if</span> kv_cache <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>    cache_k, cache_v = kv_cache<br>    key_layer = torch.cat((cache_k, key_layer), dim=<span class="hljs-number">0</span>)<br>    value_layer = torch.cat((cache_v, value_layer), dim=<span class="hljs-number">0</span>)<br><span class="hljs-keyword">if</span> use_cache:<br>    kv_cache = (key_layer, value_layer)<br><span class="hljs-keyword">else</span>:<br>    kv_cache = <span class="hljs-literal">None</span><br></code></pre></td></tr></table></figure>
+<ul>
+<li>Grouped-Query Attention 使得 KV 张量的数量只有 <code>num_multi_query_groups_per_partition</code>（两个），但却要对应 <code>num_attention_heads_per_partition</code> 个 Query，因此代码最后要将 KV 张量使用 <a target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/generated/torch.Tensor.expand.html">torch.expand</a> 将第三维扩展。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> self.multi_query_attention:<br>    key_layer = key_layer.unsqueeze(-<span class="hljs-number">2</span>)<br>    key_layer = key_layer.expand(<br>        -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, self.num_attention_heads_per_partition // self.num_multi_query_groups_per_partition, -<span class="hljs-number">1</span><br>    )<br>    key_layer = key_layer.contiguous().view(<br>        key_layer.size()[:<span class="hljs-number">2</span>] + (self.num_attention_heads_per_partition, self.hidden_size_per_attention_head)<br>    )<br>    value_layer = value_layer.unsqueeze(-<span class="hljs-number">2</span>)<br>    value_layer = value_layer.expand(<br>        -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, self.num_attention_heads_per_partition // self.num_multi_query_groups_per_partition, -<span class="hljs-number">1</span><br>    )<br>    value_layer = value_layer.contiguous().view(<br>        value_layer.size()[:<span class="hljs-number">2</span>] + (self.num_attention_heads_per_partition, self.hidden_size_per_attention_head)<br>    )<br></code></pre></td></tr></table></figure>
+<ul>
+<li>执行注意力计算和最后的输出线性层计算，这里的代码就很简单了。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># ==================================</span><br><span class="hljs-comment"># core attention computation</span><br><span class="hljs-comment"># ==================================</span><br><br>context_layer = self.core_attention(query_layer, key_layer, value_layer, attention_mask)<br><br><span class="hljs-comment"># =================</span><br><span class="hljs-comment"># Output. [sq, b, h]</span><br><span class="hljs-comment"># =================</span><br><br>output = self.dense(context_layer)<br><br><span class="hljs-keyword">return</span> output, kv_cache<br></code></pre></td></tr></table></figure>
+<h4 id="MLP">MLP</h4>
+<p>ChatGLM2 的 MLP 层与 llama 的略有不同。但都有两层全连接层，以及中间的激活层 swiglu。代码比较平凡，就不细说了。</p>
+<p><img src="/img/LLM/ChatGLM2MLP.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="ChatGLM2-中间件">ChatGLM2 中间件</h3>
+<p>ChatGLM2 中间件的核心是 <code>GLMBlock</code>，<code>GLMBlock</code> 包含了三个组成成分：一）在注意力前后的 LayerNorm 层，二）注意力层，三）在最后的 MLP 层：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">GLMBlock</span>(torch.nn.Module):<br>    <span class="hljs-string">&quot;&quot;&quot;A single transformer layer.</span><br><span class="hljs-string">    Transformer layer takes input with size [s, b, h] and returns an</span><br><span class="hljs-string">    output of the same size.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config: ChatGLMConfig, layer_number, device=<span class="hljs-literal">None</span></span>):<br>        <span class="hljs-comment"># ...</span><br>        LayerNormFunc = RMSNorm <span class="hljs-keyword">if</span> config.rmsnorm <span class="hljs-keyword">else</span> LayerNorm<br>        <span class="hljs-comment"># Layernorm on the input data.</span><br>        self.input_layernorm = LayerNormFunc(config.hidden_size, eps=config.layernorm_epsilon, device=device,<br>                                             dtype=config.torch_dtype)<br><br>        <span class="hljs-comment"># Self attention.</span><br>        self.self_attention = SelfAttention(config, layer_number, device=device)<br>        self.hidden_dropout = config.hidden_dropout<br><br>        <span class="hljs-comment"># Layernorm on the attention output</span><br>        self.post_attention_layernorm = LayerNormFunc(config.hidden_size, eps=config.layernorm_epsilon, device=device,<br>                                                      dtype=config.torch_dtype)<br><br>        <span class="hljs-comment"># MLP</span><br>        self.mlp = MLP(config, device=device)<br></code></pre></td></tr></table></figure>
+<p>多个 <code>GLMBlock</code> 堆叠起来，组成一个 <code>GLMTransformer</code> 层。<code>GLMTransformer</code> 层的最后还会额外附上一层 LayerNorm，这部分代码平凡。</p>
+<p><code>GLMBlock</code> 的 forward 函数很好地描述了 <code>GLMBlock</code> 架构以及数据流向：先是 layernorm 层，再是注意力层，旁路使用残差结构，随后跟上 dropout 层和 Layernorm 层，最后是 MLP 层和 dropout 层，这些数据通路在之前的 ChatGLM2 架构图上描绘得很清楚，读者可参见<a target="_blank" rel="noopener" href="https://huggingface.co/THUDM/chatglm2-6b/blob/main/modeling_chatglm.py#L536">代码</a>。</p>
+<p><code>GLMTransformer</code> 类则是将若干个 <code>GLMBlock</code> 做堆叠封装，并在网络的最后加入一层 layernorm 层。其 forward 函数中包含了 checkpoint 相关的代码👇，之前在 <a href="https://dingfen.github.io/ai/2023/11/30/huggingface2.html">llama 详解的博客</a>中我们提到过，使用 gradient_checkpointing 可以有效节约显存，因为前推时程序不保存中间计算值。而 use_cache 是通过消耗空间换时间。因此若 gradient_checkpointing 和 use_cache 都打开，那么两者可能会互相抵消优化影响，故模型不支持两者同时为 True。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params"></span><br><span class="hljs-params">        self, hidden_states, attention_mask, rotary_pos_emb, kv_caches=<span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        use_cache: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">bool</span>] = <span class="hljs-literal">True</span>,</span><br><span class="hljs-params">        output_hidden_states: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">bool</span>] = <span class="hljs-literal">False</span>,</span><br><span class="hljs-params"></span>):<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> kv_caches:<br>        kv_caches = [<span class="hljs-literal">None</span> <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(self.num_layers)]<br>    presents = () <span class="hljs-keyword">if</span> use_cache <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br>    <span class="hljs-keyword">if</span> self.gradient_checkpointing <span class="hljs-keyword">and</span> self.training:<br>        <span class="hljs-keyword">if</span> use_cache:<br>            logger.warning_once(<br>                <span class="hljs-string">&quot;`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`...&quot;</span><br>            )<br>            use_cache = <span class="hljs-literal">False</span><br>    <span class="hljs-comment"># ...</span><br></code></pre></td></tr></table></figure>
+<h3 id="ChatGLM2-Model">ChatGLM2 Model</h3>
+<p><code>ChatGLMPreTrainedModel</code> 类是一个基抽象类，负责处理 mask 和 position_id 等。<code>ChatGLMModel</code> 继承了它，<code>ChatGLMModel</code> 能囊括了 <code>GLMTransformer</code> 类，以及输出层 output layer；增加了对输入 <code>input_ids</code> 使用 torch.nn.Embedding 嵌入编码，以及对历史对话使用 <code>PrefixEncoder</code> 编码的环节等。</p>
+<h4 id="ChatGLMPreTrainedModel">ChatGLMPreTrainedModel</h4>
+<p>处理 position_id：根据输入的 input_ids 的形状：(batch_size, seq_len)，每个batch都从零开始递增标号：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_position_ids</span>(<span class="hljs-params">self, input_ids, device</span>):<br>    batch_size, seq_length = input_ids.shape<br>    position_ids = torch.arange(seq_length, dtype=torch.long, device=device).<br>    unsqueeze(<span class="hljs-number">0</span>).repeat(batch_size, <span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">return</span> position_ids<br></code></pre></td></tr></table></figure>
+<p>处理 mask：attention mask 应当是一个下三角矩阵，</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_masks</span>(<span class="hljs-params">self, input_ids, past_key_values, padding_mask=<span class="hljs-literal">None</span></span>):<br>    <span class="hljs-comment"># 首先初始化单位阵 维度 (bsz, seq_len, seq_len)，并取 tril_</span><br>    batch_size, seq_length = input_ids.shape<br>    full_attention_mask = torch.ones(batch_size, seq_length, seq_length, device=input_ids.device)<br>    full_attention_mask.tril_()<br><br>    <span class="hljs-comment"># 接上 KV cache 的 attention mask</span><br>    <span class="hljs-keyword">if</span> past_key_values:<br>        past_length = past_key_values[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>].shape[<span class="hljs-number">0</span>]<br>    <span class="hljs-keyword">if</span> past_length:<br>        full_attention_mask = torch.cat((torch.ones(batch_size, seq_length, past_length,<br>                                    device=input_ids.device), full_attention_mask), dim=-<span class="hljs-number">1</span>)<br>    <span class="hljs-comment"># padding_mask 是 bool tensor，两者相乘后，小于0.5的为 false</span><br>    <span class="hljs-keyword">if</span> padding_mask <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        full_attention_mask = full_attention_mask * padding_mask.unsqueeze(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> past_length <span class="hljs-keyword">and</span> padding_mask <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        full_attention_mask -= padding_mask.unsqueeze(-<span class="hljs-number">1</span>) - <span class="hljs-number">1</span><br>    full_attention_mask = (full_attention_mask &lt; <span class="hljs-number">0.5</span>).<span class="hljs-built_in">bool</span>()<br>    full_attention_mask.unsqueeze_(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">return</span> full_attention_mask<br></code></pre></td></tr></table></figure>
+<hr>
+<p><code>ChatGLMForConditionalGeneration</code> 类和 <code>ChatGLMForSequenceClassification</code> 类是用户（指 transformer框架）真正调用到的模型，他们俩内部都包含了 <code>ChatGLMModel</code> 类。</p>
+<p>从架构层面看，<code>ChatGLMForConditionalGeneration</code> 在 ChatGLM 模型的最后上增加了损失函数 <code>CrossEntropyLoss</code>，以便训练；而 <code>ChatGLMForSequenceClassification</code> 类则在最后增加了一个线性层和 dropout 层用于 sequence classification，当然该类最后也会调用损失函数 <code>CrossEntropyLoss</code> 和 <code>BCEWithLogitsLoss</code>。</p>
+<p>在用户与大模型发生交谈时，ChatGLM 模型会使用 transformer 架构下控制 token 生成的工具：logits processor。它可以通过控制 logits 概率，改变大模型吐出的 token。一个很常用的场景是控制大模型不吐出“敏感词”，可以加一个敏感词列表，让大模型在吐出该词前换一个词或者干脆不产生敏感词。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yjh_SE007/article/details/132259230">这篇博客</a>里介绍了自定义 LogitsProcessor 的方法。</p>
+<h3 id="总结">总结</h3>
+<p>至此，我有详有略地给大家展示了 chatglm2 模型的架构和代码实现。总的来说，该模型架构基本相似于其他主流的大模型。在看过 llama 模型的具体实现后，chatglm2 给我一种很熟悉又陌生的感觉。熟悉在于其架构和数据通路层面的相似感，而陌生在于 chatglm2 模型在具体计算注意力时采用了不同寻常的张量形状，不仅与其他大模型相异，也与 torch 的注意力函数接口不同。</p>
+<p>从使用体验上说，ChatGLM2 是一款非常不错的中英文对话大模型，几轮对话下来基本符合预期。其6B的大小对新手和个人玩家友好，值得有条件的各位试试😄。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Transformer/" class="print-no-link">#Transformer</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>THUDM/chatglm代码细读</div>
+      <div>https://dingfen.github.io/2024/01/27/2024-1-27-huggingface3/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年1月27日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2024年9月24日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/04/10/2024-4-10-hello-world/" title="将博客切换到 hexo Fluid 主题">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">将博客切换到 hexo Fluid 主题</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/11/30/2023-11-30-LLM-KVCache/" title="大模型推理优化技术之显存优化">
+                        <span class="hidden-mobile">大模型推理优化技术之显存优化</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>
