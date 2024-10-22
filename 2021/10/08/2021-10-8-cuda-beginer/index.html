@@ -77,7 +77,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -298,7 +298,7 @@
 <p>近年来，AI、比特币的发展对计算能力提出了无尽的需求。而在这之前，人们就已经发现，用于渲染、加载图形的 GPU 有着不俗的计算能力，为了能更好地利用 GPU 的计算能力，使得 GPU 不仅仅局限于做图形渲染，NVIDIA 率先推出了可编程的 GPU 芯片以及相应的软件框架：CUDA。让显卡可以用于图像计算以外的目的。</p>
 <p>在使用 CUDA 进行编程时，往往需要区分哪些数据在 GPU 上计算，哪些数据在 CPU 上计算，还需要考虑数据之间的迁移、传输和存储等。一般地，用<strong>主机</strong>一词指代 CPU 及其系统内存，而用<strong>设备</strong>一词指代 GPU 及其片上、板上内存。很多情况下，CUDA 程序里既包含运行在主机上的程序，又包含运行在设备上的程序，且主机与设备之间存在数据传输，在编程时要格外注意这点。</p>
 <center>
-<img src="/img/PP/gpudevotes.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/PP/gpudevotes.png" srcset="/img/loading.gif" lazyload />
 <br>
 <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
@@ -312,7 +312,7 @@
 </ol>
 <p>CUDA 中，执行核函数的一个基本单位被称为线程（thread）。若干个 thread 组合成线程块（block），而一次调用中所有的线程块组成了一个网格（grid）。</p>
 <center>
-<img src="/img/PP/grid-of-thread-blocks.png" srcset="/img/background.bmp" lazyload/>
+<img src="/img/PP/grid-of-thread-blocks.png" srcset="/img/loading.gif" lazyload/>
 <br>
 <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
@@ -410,7 +410,7 @@
 <p>来看一个简单向量加法的例子：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">add</span><span class="hljs-params">(<span class="hljs-type">int</span> *c, <span class="hljs-type">int</span> *a, <span class="hljs-type">int</span> *b)</span></span>; &#123;<br>  <span class="hljs-comment">// use built-in variable</span><br>  <span class="hljs-type">int</span> x = threadIdx.x + blockIdx.x * blockDim.x;<br>  <span class="hljs-type">int</span> y = threadIdx.y + blockIdx.y * blockDim.y;<br>  <span class="hljs-type">int</span> index = x + y * blockDim.x * gridDim.x;<br><br>  <span class="hljs-keyword">while</span> (index &lt; N) &#123;<br>    c[index] = a[index] + b[index];<br>    index += blockDim.x * gridDim.x;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>如果线程块大小为 256，每个线程块有 256 个线程，GPU 中的线程层级结构如下图：</p>
-<p><img src="/img/PP/index.jpg" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/PP/index.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>可见，计算一个线程的唯一全局编号，还是比较复杂的，但也很常用。在这几行代码中，每个线程都得到了它在线程块中的索引以及这个线程块在网格中的索引，并且这两个索引是二维的，要转为一维的，还需要将 y 方向乘以 x 方向的总数。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">int</span> x = threadIdx.x + blockIdx.x * blockDim.x;<br><span class="hljs-type">int</span> y = threadIdx.y + blockIdx.y * blockDim.y;<br><span class="hljs-type">int</span> index = x + y * blockDim.x * gridDim.x;<br></code></pre></td></tr></table></figure>
 <p>作为对前面知识的巩固，再来看一下部分 <code>main()</code> 函数的书写。主机程序先分配三块用于存贮向量的设备内存，在完成初始化后，将数据移动到设备端。主机调用核函数，并等待 GPU 执行完成，再将数据从设备移动到主机上，最后从中读取计算结果，并回收设备内存。</p>

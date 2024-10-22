@@ -80,7 +80,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -313,7 +313,7 @@
 <li>
 <p><em>指令中的寄存器有巨大的空间局部性</em>。RISC-V 提供了充足的寄存器数量，减少寄存器数量不足导致的溢出、内存交换等。但即使如此，多数访问仍集中在对少数寄存器。下图展示了在 SPEC CPU2006 benchmark 中寄存器的使用频率。</p>
 <center>
-  <img src="/img/reg_freq.png" srcset="/img/background.bmp" lazyload />
+  <img src="/img/reg_freq.png" srcset="/img/loading.gif" lazyload />
 </center>
 </li>
 <li>
@@ -325,7 +325,7 @@
 <li>
 <p><em>一小部分独特的操作码占主导地位</em>。在 SPEC CPU2006（74%）中，绝大多数静态指令是整数装载、加法、存储或分支。如下表所示，20 种最常见的 RISC-V 操作码占静态结构的 91%，占动态指令的 76% 。最常见的指令 ADDI，静态地占指令的四分之一，动态地占七分之一。</p>
 <center>
-  <img src="/img/instr_freq.png" srcset="/img/background.bmp" lazyload />
+  <img src="/img/instr_freq.png" srcset="/img/loading.gif" lazyload />
 </center>
 </li>
 </ul>
@@ -333,7 +333,7 @@
 <h2 id="RVC">RVC</h2>
 <p><u>在 RISC-V Compressed ISA 的扩展中，指令使用了 5 位进行编码，目前我们使用了 24 个操作码，占用了编码空间的 3/4 ，留下 11 位给操作数编码</u>。下表列出了主要 RVC 指令的编码格式；几种次要格式在立即数的编码上有所不同。CR、CI 和 CSS 格式可以访问所有的 32 个寄存器，通常为最常见的操作保留，比如复制寄存器或访问堆栈。</p>
 <center>
-  <img src="/img/major_RVC_formats.png" srcset="/img/background.bmp" lazyload />
+  <img src="/img/major_RVC_formats.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>考虑到一些寄存器的访问频率远远高于其他寄存器，<u>为了节省编码位数，多数指令被限制为仅可以访问少数最常用的寄存器</u>。例如，CIW 和 CL 指令只能访问 8 个被称为 RVC 寄存器 <code>x8</code> - <code>x15</code>。在标准调用规范中，这些寄存器对应了两个被调用者保存（callee-saved）的寄存器 <code>s0</code> 和 <code>s1</code> ，和 6 个调用者保存（caller-saved）的寄存器 <code>a0</code> - <code>a5</code>。</p>
 <p><u>另外，还有些指令隐式地访问了 ABI 中具有特殊意义的寄存器</u>：零寄存器 <code>x0</code>、链接寄存器 <code>ra</code> 和堆栈指针 <code>sp</code> 。虽然此决策增加了译码的复杂性，但对于在有限的编码空间中捕获一些常见现象（如寄存器溢出）是必要的。事实上，译码电路增加的复杂性是有限的，因为上述几个寄存器的前 3 个 MSB 位都是一样的。</p>
@@ -342,14 +342,14 @@
 <h3 id="RVC-指令编码">RVC 指令编码</h3>
 <p>下图表示了 RV32C 和 RV64C 指令的编码情况，以及对应的基础 ISA。ISAs 总共有 44 条指令，其中 RV64C 39 条，RV32C 32 条。</p>
 <center>
-  <img src="/img/RV32C_RV64C.png" srcset="/img/background.bmp" lazyload />
+  <img src="/img/RV32C_RV64C.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>整数算术运算是最常见的一类指令，占用了 19 个操作码。5 个 RVC 指令扩展到 ADDI ，这反映出其使用非常频繁：加法（C.ADDI）、累加堆栈指针（C.ADDI16SP）、生成堆栈相对地址 （C.ADDI4SPN）、立即数加载（<a target="_blank" rel="noopener" href="http://C.LI">C.LI</a>）和 C.NOP。许多算术运算是破坏性的，只针对 RVC 寄存器；最常用的指令可以操作任何寄存器。</p>
 <p>loads 和 stores 是下一个最具代表性的指令类，占 16 个操作码。RV32C 可以移动 32 位整数和浮点数，以及 64 位浮点数；RV64C 支持 32 位和 64 位整数，但只支持 64 位浮点数（RV32C 32 位浮点加载和存储与 RV64C 64 位整数加载和存储占用相同的操作码空间）。对于每个数据类型，有两种寻址方式：基址加偏移量，基址从 RVC 寄存器中取得，以及相对于栈指针的寻址方式，该方式有一个更远的偏移量。在所有情况下，偏移量都是无符号的，并以数据类型的大小为基本单位。</p>
 <p>RVC 提供了条件分支，用于检测是否等于零（C.BEQZ 和 C.BNEZ）、无条件直接跳转（C.J）和寄存器—间接跳转（C.JR）。另外，后两者会链接到 <code>x1</code>，C.JAL 和 C.JALR 指令在标准调用规范下适合函数调用（由于操作码空间有限，RV64C 除去了 C.JAL）。C.EBREAK 是一个断点指令，简化了 RVC 程序的调试。</p>
 <p>下图详细地展示了 RV64C 的编码情况。其中 loads 和 stores 就占了 50% 的编码空间，在其余的空间中，算术指令占了 3/4 ，剩下的就是控制流指令。</p>
 <center>
-  <img src="/img/RV64C.png" srcset="/img/background.bmp" lazyload />
+  <img src="/img/RV64C.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>这一编码方案的明显特征是有大量的立即数编码格式，这是压缩编码空间的结果。然而，就像在 base ISA 一样，立即数编码被打乱了，为的是能最小化产生的立即数的成本。在 12 个立即数选择中，18 个立即数位中的 8 个总是来自指令中相同的位；其中 5 位来自两个地方；4 个来自三个位置；一个来自四个位置。</p>
 <p>还有其他一些微妙之处值得注意。对于带有符号扩展的立即数的指令，符号位总是在相同的位置，第 12 位。此外，这些指令都位于不同的操作码空间中，与那些具有零扩展立即数的指令不同；因此，MSB 立即数位（即第 18 位及以上）可以由三个指令的位生成。</p>

@@ -81,7 +81,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -310,7 +310,7 @@
 <p>那么上面的 <code>conf</code> 文档描述了怎么样的调度策略呢？</p>
 <p>还是参考<a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber/CyberRT_Scheduler_cn.md">官方文档</a>，对于配置文件中已经编排好的任务，其拓扑结构就依据优先级确定了。我们根据上面的 <code>conf</code> 文档，可以简单画出任务的<strong>优先级拓扑</strong>情况，如下图，A、B、C、D 任务在第一个 group 中执行，E在第二个 group 中执行，对于没有出现在配置中的任务，比如F默认会放到第一个 group 中执行（下文会提到哦）。 而且配置中我们对于任务进行了优先级设置，A、B、C、D 的任务优先级依次增大，正好对应下图的拓扑依赖关系，在链路中越靠后的任务优先级越高。其实，数据也是这样在任务拓扑图中传递，数据走到最后，执行的任务优先级越高，这是为保证整个流程可以快速走完，不被其他流程的任务打断。</p>
 <center>
-<img src="/img/topo_sched.png" srcset="/img/background.bmp" lazyload style="zoom:50%;" />
+<img src="/img/topo_sched.png" srcset="/img/loading.gif" lazyload style="zoom:50%;" />
 </center>
 <span id="1" >
 <h3 id="调度策略">调度策略</h3>
@@ -345,7 +345,7 @@
 <h3 id="Scheduler、Processor-Context">Scheduler、Processor &amp; Context</h3>
 <p>我从参考文献<sup>1</sup>中找到一张不错的类关系图，可以很好地帮我说明一下这些类的关系：</p>
 <center>
-<img src="/img/class.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/class.png" srcset="/img/loading.gif" lazyload />
 </center>
 <h4 id="Scheduler">Scheduler</h4>
 <p><code>Scheduler</code> 类使用<a target="_blank" rel="noopener" href="https://www.runoob.com/design-pattern/singleton-pattern.html">单例模式</a>，<code>Instance()</code> 方法被第一次调用时会加载 <code>conf</code> 文件，此时会根据配置文件中指定的类型创建 <code>SchedulerClassic</code> 或者 <code>SchedulerChoreography</code> 对象。</p>
@@ -366,7 +366,7 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Scheduler::CreateTask</span><span class="hljs-params">(std::function&lt;<span class="hljs-type">void</span>()&gt;&amp;&amp; func,</span></span><br><span class="hljs-params"><span class="hljs-function">                           <span class="hljs-type">const</span> std::string&amp; name,</span></span><br><span class="hljs-params"><span class="hljs-function">                           std::shared_ptr&lt;DataVisitorBase&gt; visitor)</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">cyber_unlikely</span>(stop_.<span class="hljs-built_in">load</span>())) &#123;<br>		<span class="hljs-comment">/*  错误处理  */</span><br>  &#125;<br>  <span class="hljs-comment">// 登记任务名字，获得id  </span><br>  <span class="hljs-comment">// GlobalData 中有一个 id 与 name 一一对应的表格</span><br>  <span class="hljs-comment">// 比起直译map这个单词 我更喜欢用表 因为这更容易让人理解</span><br>  <span class="hljs-keyword">auto</span> task_id = GlobalData::<span class="hljs-built_in">RegisterTaskName</span>(name);<br>  <span class="hljs-comment">// 创建协程</span><br>  <span class="hljs-keyword">auto</span> cr = std::<span class="hljs-built_in">make_shared</span>&lt;CRoutine&gt;(func);<br>  cr-&gt;<span class="hljs-built_in">set_id</span>(task_id);<br>  cr-&gt;<span class="hljs-built_in">set_name</span>(name);<br>  <span class="hljs-comment">// 分配任务</span><br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">DispatchTask</span>(cr))<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br><span class="hljs-comment">// 数据访问者 登记回调函数</span><br>  <span class="hljs-keyword">if</span> (visitor != <span class="hljs-literal">nullptr</span>) &#123;<br>    visitor-&gt;<span class="hljs-built_in">RegisterNotifyCallback</span>([<span class="hljs-keyword">this</span>, task_id]() &#123;<br>      <span class="hljs-keyword">if</span> (<span class="hljs-built_in">cyber_unlikely</span>(stop_.<span class="hljs-built_in">load</span>()))<br>        <span class="hljs-keyword">return</span>;<br>      <span class="hljs-comment">// 唤醒 Processor  让它开始处理任务</span><br>      <span class="hljs-keyword">this</span>-&gt;<span class="hljs-built_in">NotifyProcessor</span>(task_id);<br>    &#125;);<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>在上面的代码中，可以看到协程创建完毕后，还会被分配任务，那么分配任务具体做什么呢？在 <code>SchedulerClassic</code> 类中，<code>DispatchTask()</code> 首先把协程 id 和其指针一一对应起来，放入到 <code>id_cr_</code> 表中（下图），然后根据配置文件设置这个协程的优先级和协程组，<strong>如果配置文件中没有提到该协程，默认放入组 0 中</strong>，最后将该协程根据其优先级，放入到<strong>队列</strong>（下图就有）中，最后唤醒所在组的上下文；对于 <code>SchedulerChoreography</code> 类，还需要多一步来判断协程对应的 <code>Processor</code> 类。那么相似的道理，移除任务就是先将协程停止，从表中、队列中移除。</p>
 <center>
-<img src="/img/classic.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/classic.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>最后 <code>Scheduler::NotifyProcessor()</code> 会唤醒 <code>Processor</code> ，它首先检查传入 id 对应的协程的状态，然后就调用了上下文的 <code>Notify()</code> 函数，让控制线程的<a target="_blank" rel="noopener" href="http://www.cplusplus.com/reference/condition_variable/condition_variable/">条件变量</a>唤醒一个线程（<code>Processor</code> 类）。那么等待一个线程呢？也是控制这个条件变量就行了😂，使用 <code>Wait_for</code> 函数就可以满足要求。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">ClassicContext::Notify</span><span class="hljs-params">(<span class="hljs-type">const</span> std::string&amp; group_name)</span> </span>&#123;<br>  (&amp;mtx_wq_[group_name])-&gt;<span class="hljs-built_in">Mutex</span>().<span class="hljs-built_in">lock</span>();<br>  notify_grp_[group_name]++;<br>  (&amp;mtx_wq_[group_name])-&gt;<span class="hljs-built_in">Mutex</span>().<span class="hljs-built_in">unlock</span>();<br>  cv_wq_[group_name].<span class="hljs-built_in">Cv</span>().<span class="hljs-built_in">notify_one</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">ClassicContext::Wait</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lk</span><span class="hljs-params">(mtx_wrapper_-&gt;Mutex())</span></span>;<br>  cw_-&gt;<span class="hljs-built_in">Cv</span>().<span class="hljs-built_in">wait_for</span>(lk, std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">1000</span>),<br>                     [&amp;]() &#123; <span class="hljs-keyword">return</span> notify_grp_[current_grp] &gt; <span class="hljs-number">0</span>; &#125;);<br>  <span class="hljs-keyword">if</span> (notify_grp_[current_grp] &gt; <span class="hljs-number">0</span>) <br>    notify_grp_[current_grp]--;<br>&#125;<br></code></pre></td></tr></table></figure>
@@ -391,7 +391,7 @@
 <li>每一个协程组与一个 <code>ClassicContext</code> 对象对应，一个 <code>ClassicContext</code> 也与一个 <code>Processor</code> 绑定，即与一个线程绑定。这就是我前文所说的“相关协程以组为单位与线程做绑定”的直接证据。</li>
 </ul>
 <center>
-<img src="/img/scheduler_data.png" srcset="/img/background.bmp" lazyload style="zoom:50%;" />
+<img src="/img/scheduler_data.png" srcset="/img/loading.gif" lazyload style="zoom:50%;" />
 </center>
 而反观 Choreography 策略，`ChoreographyContext` 只管理那些**主链路**上的协程（任务），不会对协程进行分组。而对于非主链路上的任务，Choreography 策略会把它们扔给 `ClassicContext` 上下文处理。
 <p>说完这个，我们再看看 <code>Processor</code> 的线程阻塞和唤醒是怎么操作的：没错，通过上下文的 <code>Wait()</code> 和 <code>Notify()</code> 函数 :man_shrugging:。</p>
@@ -408,10 +408,10 @@
 <li><code>Choreography</code> 调度策略，主要是针对主链路上的任务进行编排，这些任务会被分配到程序员指定的 <code>Processor</code> 上，且执行先后关系明确，需要对系统有足够深入的了解。</li>
 </ul>
 <center>
-<img src="/img/classic.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/classic.png" srcset="/img/loading.gif" lazyload />
 </center>
 <center>
-<img src="/img/choreograph.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/choreograph.png" srcset="/img/loading.gif" lazyload />
 </center>
 <h2 id="参考文献">参考文献</h2>
 <p>[1] <a target="_blank" rel="noopener" href="https://blog.csdn.net/jinzhuojun/article/details/104087518">自动驾驶平台Apollo 5.5阅读手记：Cyber RT中的任务调度</a></p>

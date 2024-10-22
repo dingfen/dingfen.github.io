@@ -78,7 +78,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -347,9 +347,9 @@
 <p><a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/master/docs/quickstart/apollo_software_installation_guide.md">Apollo 的 构建与运行文档</a>也非常详细。值得注意的是，考虑到github下载速度过慢，国内用户推荐使用<a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/master/docs/howto/how_to_clone_apollo_repo_from_cn.md">gitee</a>。</p>
 <h2 id="软件架构概览">软件架构概览</h2>
 <p>下图是 Apollo 5.5 的软件架构图，软件平台包括各个模块以及 Cyber RT 框架和 ROS 系统。<strong>在本篇博文中，这次我重点关注的是建立在 Cyber RT 上的软件模块部分</strong>。为了充分了解工作原理，可能还会涉及到一些自动驾驶的硬件方面的知识。</p>
-<p><img src="/img/Apollo_5_5_Architecture.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/Apollo_5_5_Architecture.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>博主从 <a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/r5.5.0/docs/specs/Apollo_3.5_Software_Architecture.md">Apollo 官方文档</a>中找到了软件系统模块之间的关系图。每个模块都作为独立的 CarOS-based 的 ROS 节点运行。 每个模块节点都发送和接受某些消息。 接下来，我会对各个模块作专门的介绍，并了解他们之间的交互作用。不同于官方文档，我尽量避开技术细节，用更加通俗的语言去阐述各个模块的功能。</p>
-<p><img src="/img/Apollo_3_5_software_architecture.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/Apollo_3_5_software_architecture.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <h3 id="Perception">Perception</h3>
 <p>感知模块。相当于自动驾驶车辆的眼睛和耳朵，这是自动驾驶系统获取外界信息的主要模块，是不可或缺的部分。该模块主要感知（或者说把注意力集中在）行车时遇到的<strong>障碍物、交通信号灯、车道线、交通标志</strong>等。这很容易理解，因为人在驾驶时也需要注意这些事物，机器也一样。</p>
 <p>感知模块需要调用的硬件设备主要是<strong>摄像机、激光雷达和雷达</strong>。这其中就涉及到深度学习识别图像技术，以及激光雷达测距技术和雷达点云阵列建模技术等。在一开始，我认为不需要深入理解这些技术在干嘛，需要了解的是，感知模块在得到硬件设备的输入后，会输出交通信号灯的指示和感知范围内障碍物的距离、速度、位置等信息。</p>

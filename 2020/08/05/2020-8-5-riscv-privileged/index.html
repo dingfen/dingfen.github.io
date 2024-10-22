@@ -91,7 +91,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -470,7 +470,7 @@
 <h4 id="mstatus-寄存器"><code>mstatus</code> 寄存器</h4>
 <p>该寄存器在处理中断时会经常用到，且较为复杂，位域包含的信息较多，特在此专门介绍：</p>
 <center>
-<img src="/img/mstatus.png" srcset="/img/background.bmp" lazyload/>
+<img src="/img/mstatus.png" srcset="/img/loading.gif" lazyload/>
 <div style="font-weight:bold">注:  WPRI: Write Preserve values, Reads Ignore values. 保留值<br>xIE: Interrupt Enable in  x mode 中断使能<br>xPIE: Previous Interrupt Enable in x mode 之前的中断使能<br>xPP: Previous Privilege mode up to x mode 之前的特权级别</div>
 </center>
 <p>在中断使能方面，<code>MIE</code> 、<code>SIE</code> 、<code>UIE</code> 分别提供了 machine mode 、supervisor mode 、user mode 的全局中断使能位，若一个 hart 运行在特权级别 <code>x</code> 下，当 <code>xIE = 1</code> 时中断全局打开，反之则关闭。在 hart 于 <code>x</code> 运行时，无论 <code>wIE</code> 为何值，低权限中断 <code>w &lt; x</code> 总是无效的，而无论 <code>yIE</code> 为何值，高权限中断 <code>y &gt; x</code> 总是有效。</p>
@@ -481,7 +481,7 @@
 <p>在该寄存器中，只有低特权级别的软件中断位 (USIP, SSIP)、时钟中断 (UTIP, STIP) 、外部中断 (UEIP, SEIP) 是可以通过 CSR 指令写入的，其他都是只读的。若有中断委托给了权限级别 <code>x</code> ，被委托的中断所对应的位（在 <code>xie</code> 和 <code>xip</code> 寄存器中）就可以使用了，否则，相应的位接地变 0 。</p>
 <span id="mip">
 <center>
-<img src="/img/mip.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/mip.png" srcset="/img/loading.gif" lazyload />
 <div>xTIP: timer interrupt-pending bit in x mode 时钟中断<br>xSIP: software interrupts in x mode 软件中断<br>xEIP: external interrupt 外部中断</div>
 </center>
 因为今后工作的需要，请注意，`MTIP` 、`STIP` 、`UTIP` 位分别对应机器模式、监管者模式、用户模式的时钟中断信号。`MTIP` 位是只读的，而 `UTIP` 和 `STIP` 位在机器模式下可以写入，这就是将时钟中断处理下放给低级权限的方式。
@@ -489,30 +489,30 @@
 <p><code>mie</code> 寄存器包含了相应的中断使能位，<code>sie</code> 和 <code>uie</code> 功能相似。注意观察 <a href="#mcause_code"><code>mcause</code> 寄存器编码</a>，可以发现，**若 bit <code>i</code> 在 <code>mie</code> 和 <code>mip</code> 寄存器都置位，且全局中断位打开，那么中断 <code>i</code> 就会视作发生，并被处理。**一般情况下，在低权限运行时，机器模式的中断一直有效。</p>
 <span id="mie">
 <center>
-<img src="/img/mie.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/mie.png" srcset="/img/loading.gif" lazyload />
 <div>xTIE: timer interrupt-enable bit in x mode 时钟中断使能位<br>xSIE: software interrupt-enable in x mode 软件中断使能位<br>xEIE: external interrupt-enable in x mode 外部中断使能位</div>
 </center>
 <h4 id="mcause-寄存器"><code>mcause</code> 寄存器</h4>
 <p><code>mcause</code> 寄存器的作用是记录中断/异常事件的类型/起因。在当 trap 进入机器模式后，将异常/中断事件产生的起因（或者称之为谁导致了异常/中断事件）写入到该寄存器中。</p>
 <span id="mcause_code">
 <center>
-<img src="/img/mcause.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/mcause.png" srcset="/img/loading.gif" lazyload />
 <div>mcause 寄存器编码形式，首位为 1 时是中断，0 时为异常</div>
 </center>
 <span id="mcause">
 <center>
-<img src="/img/mcause_table.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/mcause_table.png" srcset="/img/loading.gif" lazyload />
 <div>mcause 寄存器对应事件表</div>
 </center>
 <p>上表详细记录了各个中断/异常事件的代码编号，我们以后会经常用到。大家仔细观察 <a href="#mcause">mcause 寄存器对应事件表</a>和<a href="#mie"> mie 寄存器位编码图</a> 、<a href="#mip">mip 寄存器位编码图</a>，会发现 <code>mcause</code> 中编码的事件号的数字，正巧就等于 <code>mie</code> 、<code>mip</code>中对应事件的位偏移量。这一巧妙的设计在今后可能会带来意想不到的方便！</p>
 <p>还有一点就是，当一个指令遇到了多个异常时（这条指令是多么的不幸啊），那么处理异常的优先级也是不一样的，下表很详细的列出了它们的优先级关系：</p>
 <center>
-<img src="/img/sync_exception_priority.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/sync_exception_priority.png" srcset="/img/loading.gif" lazyload />
 </center>
 #### `mtvec` 寄存器
 <p>该寄存器全名 Machine Trap-Vector Base-Address Register，它存放了 trap vector 的信息，包括了基地址和模式 Mode 。基地址要求必须 4 字节对齐，即确保末两位为 0 。当中断/异常发生时，PC 值肯定需要跳转到中断/异常处理程序，该寄存器就保存了这些处理程序的地址。该寄存器有两种使用方法，直接寻址和间接寻址。</p>
 <center>
-<img src="/img/mtvec.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/mtvec.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>直接寻址时，Mode = 0 ，所有转到机器模式下的 traps 都会将基地址值赋给 PC ；间接寻址时，Mode = 1 ，所有转到机器模式的<strong>同步异常</strong>会把基地址传给 PC，而遇到中断时，会根据中断的编号形成特定的偏移量，加上基地址后再赋给 PC ，事实上，中断程序的处理程序地址就是以数组的形式存放在 <code>mtvec</code> 部分了。例如，如果一个机器模式的时钟中断产生了，那么 PC 会被设置为 BASE + 7 * 4 = BASE + 0x1c 。</p>
 <hr>
@@ -538,14 +538,14 @@
 <p>在硬件设计里，PMP (Phsical Memory Protection) 是可选项，但在大部分地方我们都可以见到它的身影。PMP 检查一般用于 hart 在监管者模式或用户模式下的所有访问；或者在 <code>mstatus.MPRV = 1</code> 时的 load 和 store 等情况。一旦触发 PMP 保护，RISC-V 要求产生精确中断并处理。</p>
 <p>PMP 允许机器模式指定用户模式下可以访问的内存地址。PMP entry 由一个 8-bit 的 PMP 配置寄存器和一个 32/64 位长的 PMP 地址寄存器组成。整个 PMP 包括若干个（通常为 8 到 16 组）PMP entry 。配置寄存器可以配置读、写和执行权限，地址寄存器用来划定界限。</p>
 <p>下两图显示了 PMP 地址寄存器和配置寄存器的布局。pmpxxcfg 表示了 PMP 配置寄存器，pmpxxaddr 表示了 PMP 地址寄存器。</p>
-<p><img src="/img/pmpcfg.png" srcset="/img/background.bmp" lazyload alt=""></p>
-<p><img src="/img/pmpaddr.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/pmpcfg.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/pmpaddr.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>当处于用户模式的处理器尝试 load 或 store 操作时，将地址和所有的 PMP 地址寄存器比较。如果地<br>
 址大于等于 PMP 地址 i，但小于 PMP 地址 i+1，则 PMP i+1 的配置寄存器决定该访问是否可以继续，如果不能将会引发访问异常。</p>
 <p>R，W，X 位分别指示了 PMP 入口允许读、写、执行权限。A 域解释了 PMP 寄存器的编码情况。</p>
-<p><img src="/img/pmpcfg_mode.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/pmpcfg_mode.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <center>
-<img src="/img/pmpcfg_A.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/pmpcfg_A.png" srcset="/img/loading.gif" lazyload />
 </center>
 <h2 id="监管者模式">监管者模式</h2>
 <p>前文所述，<code>mstatus</code> 、<code>mie</code> 、<code>mip</code> 、<code>mtvec</code> 等寄存器在监管者模式 (Supervisor mode) 下都有与之名字几乎一样的、功能也相似的寄存器，方便了我们举一反三，这就体现出 RISC-V 体系结构的优越性了。在这里先挖个坑，有时间我会专门介绍一下 RISC-V 体系结构的优越性。</p>
@@ -553,14 +553,14 @@
 <h3 id="SATP-寄存器">SATP 寄存器</h3>
 <p>顾名思义，satp (Supervisor Address Translation and Protection Register) 寄存器的作用是在监管者模式下，控制地址转换与保护的。寄存器内位分布如下图：</p>
 <center>
-<img src="/img/satp.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/satp.png" srcset="/img/loading.gif" lazyload />
 <div>注：PPN: Physical Page Number of the root page table.<br>ASID: Address Space Identifier<br></div>
 </center>
 <p>ASID (地址空间标识符) 域是可选的，它用于帮助地址空间的转换，降低上下文切换的开销。PPN 存储了根页表的物理页号，以 4 KiB 页面大小为单位，它在内存分页中起了十分重要的作用。MODE 位用于选择地址转换的方式，详见 <code>SFENCE.VMA</code> 指令。</p>
 <p>MODE 位的功能见下表：</p>
 <span id="mode" />
 <center>
-<img src="/img/satp_mode.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/satp_mode.png" srcset="/img/loading.gif" lazyload />
 </center>
 ### 内存分页
 <p>在稍微复杂的 RISC-V 处理器中，仅仅依靠 PMP 模块来提供内存保护是不够的。因为 PMP 不够灵活：仅支持固定数量的内存区域；很多复杂的应用程序要求在物理存储中连续，会产生存储碎片；PMP 又无法有效支持分页。</p>
@@ -569,17 +569,17 @@
 <p>当 satp 启动分页时，在监管者模式或用户模式下，虚拟地址 (VA) 会将 satp 寄存器中根页表地址作为基址 (base)，以及自身的页号作偏移 (VPN[1])，在页表中通过计算偏移位置 (base + VPN[1] * 4) 找到<strong>页表项 (Page Table Entry PTE)</strong>。如果该 PTE 不是叶 PTE（什么是页 PTE 下面会解释），那么再将刚刚找到的 PTE 作为基址，用虚拟地址携带的第二个页号作偏移，继续算出第二个页表项，直到获得物理地址 (PA)，更加详细的虚拟地址转换过程见<a href="#VA">附录</a>。</p>
 <span id="VA2PA" />
 <center>
-<img src="/img/VA2PA.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/VA2PA.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>再来看看虚拟地址和物理地址的二进制格式。我们以 Sv32 分页模式为例，虚拟地址、物理地址的编码都是将页号放在 MSB 处，而将偏移量放在 LSB 处。Sv32 分页支持两级分页。从偏移量位长可以看出，Sv32 页表含有 1024 个 PTEs，每个页表项占 4 字节，总共 4 KiB 。</p>
 <center>
-<img src="/img/VA_PA.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/VA_PA.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>最后看一下页表项。<strong>V</strong>alid 位指示该 PTE 是否有效；<strong>R</strong>eadable，<strong>W</strong>riteable，e<strong>X</strong>ecutable 指示了该页是否可读、可写、可运行，当这三位都是 0 时，表明该 PTE 指向了下一层页表，其为<strong>非叶 PTE</strong> ，否则就是<strong>叶 PTE</strong>；<strong>U</strong>ser 位指示了该页是否可以被用户模式访问；<strong>G</strong>lobal 指示了全局映射，存在于所有的地址空间中；<strong>A</strong>ccess 位指示了该页最近是否被读、写、取；<strong>D</strong>irty 位指示了虚拟页最近是否被写过。对于非叶 PTE，<strong>D</strong>，<strong>A</strong>，<strong>U</strong> 位被保留，并被清零。RSW 是保留的，用于操作系统软件。</p>
 <span id="RWX" />
 <center>
-    <img src="/img/pte.png" srcset="/img/background.bmp" lazyload />
-    <img src="/img/pte_field.png" srcset="/img/background.bmp" lazyload />
+    <img src="/img/pte.png" srcset="/img/loading.gif" lazyload />
+    <img src="/img/pte_field.png" srcset="/img/loading.gif" lazyload />
 </center>
 ---
 <p><strong>分页</strong>指的就是用<u>地址管理器或者地址翻译器</u>（下统称 MMU）将系统中的物理地址转换/翻译为虚拟地址。我们已经详细地介绍了<a href="#VA2PA">翻译过程</a>，该过程使用 <code>satp</code> 寄存器对虚拟地址进行一系列的访问计算，得到物理地址。接下来，我们讨论一下页表与<strong>页错误 (page fault)</strong>。</p>

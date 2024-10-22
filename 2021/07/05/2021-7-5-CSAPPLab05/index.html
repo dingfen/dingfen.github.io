@@ -79,7 +79,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -305,7 +305,7 @@
 </ul>
 <h3 id="动态内存申请">动态内存申请</h3>
 <p>使用<strong>动态内存分配器</strong>，可为在程序运行时确定并申请虚拟内存空间。动态内存分配器管理的区域被称作<strong>堆</strong>。每个进程的内存分布如下：</p>
-<p><img src="/img/CSAPP/lab5/heap.jpg" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab5/heap.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>动态内存申请器将堆这块区域当作一系列大小不同的块来管理，块或者已分配的，或者是空闲的。</p>
 <h3 id="malloc-free">malloc &amp; free</h3>
 <p>通常，有关内存管理， Linux 提供的系统调用主要有两种：<br>
@@ -318,9 +318,9 @@
 <p>简单来说，<code>malloc</code> 函数主要是通过维护一个空闲列表来实现内存的管理的，具体涉及到的数据结构就是链表。对每一个内存块，我们使用链表将它们串在一起，当需要使用的时候，我们从链表中寻找大小适合的内存块，并且从空闲链表中删除，拿给用户。当用户用完某个内存块的时候，我们就将其重新插入回空闲链表，这样就实现了简单的内存分配和释放。</p>
 <h2 id="数据结构">数据结构</h2>
 <p>首先介绍实验中的内存分配块的数据结构，我使用边界标记的堆块的格式区分块的边界。其中，头部 (header) 和脚部 (footer) 分别占 4 字节大小，块地址双字对齐，大小为8的整数倍。这样做的好处是，如果用 32 位来存储块大小，低 3 位肯定都为0，相当于低 3 位可以预留出来，用作指示该块是否是一个空闲块。</p>
-<p><img src="/img/CSAPP/lab5/block.jpg" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab5/block.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>块的数据结构确定后，需要一个空闲链表来管理空闲块，参考书本上关于空闲链表的表述，也采用下图方式管理。</p>
-<p><img src="/img/CSAPP/lab5/freeblocks.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab5/freeblocks.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <h2 id="具体实现">具体实现</h2>
 <h3 id="宏定义">宏定义</h3>
 <p>对于这个实验来说，良好的宏定义可提高编程效率，方便阅读书写代码。下面列出部分关键宏，并加以解释。</p>
@@ -352,8 +352,8 @@
 <p>事实上，<code>realloc</code> 函数有很多可以优化的点。首先，如果 <code>realloc</code> 传入的 <code>size</code> 比之前还小，显然我们不需要进行拷贝，直接可以考虑对当前块进行分割。其次，如果下一块是一个空闲块的话，我们可以直接将其占用。这样的话可以很大程度上减少外部碎片，充分地利用了空闲的块。接着，如果下一个块恰好是堆顶，我们也可以考虑直接拓展堆，这样的话就可以避免再去搜索空闲链表，提高效率。</p>
 <h2 id="实验结果">实验结果</h2>
 <p>由于时间关系，本次实验仅仅实现了一个非常简陋的 <code>malloc</code> 版本，因此得分较低。</p>
-<p><img src="/img/CSAPP/lab5/result1.png" srcset="/img/background.bmp" lazyload alt=""></p>
-<p><img src="/img/CSAPP/lab5/result2.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab5/result1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab5/result2.png" srcset="/img/loading.gif" lazyload alt=""></p>
 
                 
               </div>

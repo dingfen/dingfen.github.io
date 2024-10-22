@@ -60,7 +60,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -224,8 +224,142 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2024/10/13/2024-10-13-graphrag/" target="_self">
+          <img src="/img/LLM/GraphRag.png" srcset="/img/loading.gif" lazyload alt="GraphRAG 框架">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/10/13/2024-10-13-graphrag/" target="_self">
+          GraphRAG 框架
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2024/10/13/2024-10-13-graphrag/" target="_self">
+        <div>
+          引言 对于大模型的应用而言，也许最大的挑战就是让它回答一些在预训练和后训练时从未知晓的领域的问题（比如你昨天的日记、商业公司内部的机密文档等私有数据）。目前，业界解决该问题的方案之一就是使用检索增强生成（RAG），RAG 是一种利用大模型（LLMs）对私有数据文献的检索、理解和生成的 AI 回答技术。虽然传统的 RAG 技术可以很好地帮助大模型回答基于私人数据的问题，但它无法进一步地理解私有数据中
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-10-13 16:13" pubdate>
+              2024-10-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2024/10/13/2024-10-20-graphrag/" target="_self">
+          <img src="/img/LLM/GraphRag.png" srcset="/img/loading.gif" lazyload alt="GraphRAG 个人部署">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/10/13/2024-10-20-graphrag/" target="_self">
+          GraphRAG 个人部署
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2024/10/13/2024-10-20-graphrag/" target="_self">
+        <div>
+          如何本地运行 graphrag 有条件的朋友们可以在本地部署 graphrag 哦，然后可以将你的私人文档喂进去，成为你自己的私有得力助手！ 需要的工具 本篇指导内容将基于你的个人电脑来构建 graphrag，在开始之前，需要你的电脑有：  Nvidia GPU 一张，显存最好大于 8 GB 内存空间不少于 16 GB 硬盘空间不少于 50 GB  检查好设备后，还需要你有如下的软件环境：  Li
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-10-13 16:13" pubdate>
+              2024-10-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2024/08/18/2024-8-18-cute/" target="_self">
-          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/background.bmp" lazyload alt="深入 CUTLASS 之 CuTe 详解">
+          <img src="/img/LLM/cutlass_index.jpg" srcset="/img/loading.gif" lazyload alt="深入 CUTLASS 之 CuTe 详解">
         </a>
       </div>
     
@@ -294,7 +428,7 @@
     
       <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2024/08/02/2024-5-9-vllm/" target="_self">
-          <img src="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png" srcset="/img/background.bmp" lazyload alt="VLLM Paged Attention 实现">
+          <img src="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png" srcset="/img/loading.gif" lazyload alt="VLLM Paged Attention 实现">
         </a>
       </div>
     
@@ -361,7 +495,7 @@
     
       <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2024/07/21/2024-7-21-ai_assist/" target="_self">
-          <img src="https://coruzant.com/wp-content/uploads/2022/10/chatbot-robot-696x464.jpg" srcset="/img/background.bmp" lazyload alt="在基于 hexo 框架的博客上部署定制化 AI 聊天应用">
+          <img src="https://coruzant.com/wp-content/uploads/2022/10/chatbot-robot-696x464.jpg" srcset="/img/loading.gif" lazyload alt="在基于 hexo 框架的博客上部署定制化 AI 聊天应用">
         </a>
       </div>
     
@@ -428,7 +562,7 @@
     
       <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2024/06/12/2024-6-12-deepspeed/" target="_self">
-          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/background.bmp" lazyload alt="深入探索 DeepSpeed（三）">
+          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/loading.gif" lazyload alt="深入探索 DeepSpeed（三）">
         </a>
       </div>
     
@@ -497,7 +631,7 @@
     
       <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2024/05/29/2024-5-29-LLM-perf/" target="_self">
-          <img src="https://tse2-mm.cn.bing.net/th/id/OIP-C.wNyK0tqwt9TBBaZmHaptywHaD4?rs=1&amp;pid=ImgDetMain" srcset="/img/background.bmp" lazyload alt="大模型性能优化的总结和分享">
+          <img src="https://tse2-mm.cn.bing.net/th/id/OIP-C.wNyK0tqwt9TBBaZmHaptywHaD4?rs=1&amp;pid=ImgDetMain" srcset="/img/loading.gif" lazyload alt="大模型性能优化的总结和分享">
         </a>
       </div>
     
@@ -566,7 +700,7 @@
     
       <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2024/05/15/2024-5-15-deepspeed/" target="_self">
-          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/background.bmp" lazyload alt="深入探索 deepspeed（二）">
+          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/loading.gif" lazyload alt="深入探索 deepspeed（二）">
         </a>
       </div>
     
@@ -635,7 +769,7 @@
     
       <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2024/04/20/2024-4-20-deepspeed/" target="_self">
-          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/background.bmp" lazyload alt="深入探索 deepspeed（一）">
+          <img src="/img/LLM/deepspeed_logo.png" srcset="/img/loading.gif" lazyload alt="深入探索 deepspeed（一）">
         </a>
       </div>
     
@@ -703,21 +837,21 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2024/04/09/2024-4-10-hello-world/" target="_self">
-          <img src="https://fluid-dev.github.io/hexo-fluid-docs/fluid_hexo.png" srcset="/img/background.bmp" lazyload alt="将博客切换到 hexo Fluid 主题">
+        <a href="/2024/04/10/2024-4-10-hello-world/" target="_self">
+          <img src="https://fluid-dev.github.io/hexo-fluid-docs/fluid_hexo.png" srcset="/img/loading.gif" lazyload alt="将博客切换到 hexo Fluid 主题">
         </a>
       </div>
     
     <article class="col-12 col-md-8 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/04/09/2024-4-10-hello-world/" target="_self">
+        <a href="/2024/04/10/2024-4-10-hello-world/" target="_self">
           将博客切换到 hexo Fluid 主题
         </a>
       </h2>
 
       
-      <a class="index-excerpt " href="/2024/04/09/2024-4-10-hello-world/" target="_self">
+      <a class="index-excerpt " href="/2024/04/10/2024-4-10-hello-world/" target="_self">
         <div>
           Hexo 是个非常好用且好看的个人博客搭建工具!
         </div>
@@ -727,8 +861,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-09 21:34" pubdate>
-              2024-04-09
+            <time datetime="2024-04-10 10:00" pubdate>
+              2024-04-10
             </time>
           </div>
         
@@ -738,132 +872,6 @@
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/Miscellaneous/">#Miscellaneous</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/01/27/2024-1-27-huggingface3/" target="_self">
-          THUDM/chatglm代码细读
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/01/27/2024-1-27-huggingface3/" target="_self">
-        <div>
-          智谱清言の大模型
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-01-27 12:00" pubdate>
-              2024-01-27
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Transformer/">#Transformer</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/11/30/2023-11-30-LLM-KVCache/" target="_self">
-          大模型推理优化技术之显存优化
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/11/30/2023-11-30-LLM-KVCache/" target="_self">
-        <div>
-          在消费级显卡上运行大模型
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-11-30 12:00" pubdate>
-              2023-11-30
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Transformer/">#Transformer</a>
             
           </div>
         

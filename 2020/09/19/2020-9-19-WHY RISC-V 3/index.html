@@ -84,7 +84,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -305,7 +305,7 @@
 <h2 id="整数乘除">整数乘除</h2>
 <p>在许多应用中，特别是那些有很多的定点计算的软件中，整数乘除法是常见的运算。虽然它们在计算操作中不占主导，但当软件运行时，就会发现它们仍可以占据很大一部分运行时间。因此，对于大多数应用程序来说，硬件加速这些操作是必须的。图中显示了 <strong>RISC-V M</strong> 的若干指令。</p>
 <center>
-    <img src="/img/RV32M.png" srcset="/img/background.bmp" lazyload />
+    <img src="/img/RV32M.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>我们考虑将 <strong>M</strong> 扩展进一步分解为单独的乘法和除法扩展，但要明白一点，得出这两种扩展的需求的过程是紧密相关的。此外，若迭代乘法器在低端的 ASIC 上已实现，那么其实可以用较小的代价设计出迭代除法器。另一方面，对于许多 FPGA 来说，除法要比乘法困难得多，但由于乘法块的存在，处理器可以选择 trap 除法指令并在软件中模拟它们。</p>
 <p>与其他 RISC ISAs 为乘法和除法指令添加了特殊的结构寄存器不同，<strong>RISC-V  M</strong> 扩展中的指令直接在整数寄存器上操作。<u>这一设计消除了与特殊的结构寄存器来往发数据的步骤，减少了指令条数以及延迟；减少了线程转换时的上下文大小；让编译器更好地进行代码优化</u>。对于某些实现来说，写回部分的控制逻辑略有增加，但我们觉得这一微小的成本很容易被带来的好处抵消。对于使用寄存器重命名的实现，这一策略降低了复杂性，因为它消除一类为了提供性能而需要重命名的寄存器。</p>
@@ -322,7 +322,7 @@
 <p>互斥是一种完全通用的同步机制，且 <em>test-and-set</em> 很容易实现。然而，这种策略不能很好地用于高度并行的系统，因为它不足以构造无等待的同步原语，比如非阻塞的生产者——消费者队列。几个可选原语就足够了；其中，原子的 <em><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000015239603">compare-and-swap</a></em> (CAS) 是最主流的。CAS 比较寄存器和与另一个寄存器中内存地址指向的值，若比较数相等，就将第三个寄存器的值写入到该内存地址中，这是一条通用的同步原语，其他同步操作可以以它为基础来完成。</p>
 <p>考虑到并行计算的应用，我们设计的 RISC-V ，应当可被用于带有极多线程级并行度的系统。我们本打算让 <strong>RISC-V A</strong> 以只包含 CAS 的方式提供内存原子操作；的确，我们曾对这一选择深思熟虑。<u>但是 CAS 需要三个源操作数（内存地址、比较和交换值），这意味着需要一个新的整数指令类型，必然使得处理器微体系结构设计复杂化</u>，还需要增加附有额外数据字的内存系统命令形式。因此，我们参考了几个早期 RISC ISAs（包括 MIPS 和 Alpha ）的做法，提供了 <em>load-reserved</em>（LR）和 <em>store-conditional</em>（SC）指令。这些低级的原语将原子操作拆分为 load、compute 和 store 三个阶段。LR 执行正常的 load，但注册了一个在内存上的保留。如果时间过长，或者另一个处理器请求相同的地址，该保留会被取消。SC 尝试执行 store ，但只有在拿到保留时才会成功；此外，它将成功或失败的标志写入一个目的寄存器 <code>rd</code> ，以便程序可以根据结果进行分支。通常，LR/SC 序列形成循环体，循环直到 SC 成功为止。</p>
 <center>
-    <img src="/img/RVA.png" srcset="/img/background.bmp" lazyload />
+    <img src="/img/RVA.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>具体来说，LR 和 SC 保证了它们两条指令之间的操作的原子性。LR 读取一个内存字，存入到 <code>rd</code> 寄存器中，并留下这个字的保留记录。而如果 SC 的目标地址上存在保留记录，它就把字存入这个地址。如果存入成功，它向目标寄存器 <code>rd</code> 中写入 0；否则写入一个非 0 的错误代码。</p>
 <p>在成功执行的 SC 之后的 LR 是对修改后的内存字的原子操作。换句话说，没有线程可以观察到在这两者之间发生的另一个内存操作。类似地，在配对 LR 操作之前，不能认为 SC 已经发生。</p>
@@ -339,19 +339,19 @@
 <p><a target="_blank" rel="noopener" href="https://www.cs.utexas.edu/~bornholt/post/memory-models.html">内存模型</a>是一个非常难懂的课题，在之前的博文中，我们说过 RISC-V 采用了 relaxed memory model ，因此一个线程看到的另一个线程的内存访问可以是乱序的，除非执行一个 FENCE 指令以保证一个特定的顺序。这与 <a target="_blank" rel="noopener" href="https://preshing.com/20120930/weak-vs-strong-memory-models/">顺序一致性（sequential consistency）有很大的区别</a>。 <strong>A</strong> 扩展中的指令可以有效地实现 release consistency (RC) 内存模型。RC 是一种宽松的一致性模型，它通过区分不同风格的同步操作，为每一种操作分配不同的、较弱的排序属性，从而允许很大程度的一致性。RC 已经成为 2011 年版本的 C 和 C++ 语言的标准内存模型，并且它一直兼容 Java 内存模型。</p>
 <p>在 RC 中，共享内存访问被分为了普通访问——乱序也不会导致竞争的 loads 和 stores，和特殊访问。RC 引入了两种重要的特殊访问：获取（acquire）和释放（release）。acquire 用于获得对共享变量的访问，而 release 操作释放了该变量的控制权。它们通常与获取互斥锁和释放互斥锁相关联。acquire 和 release 原语的语义是由 RC 模型中的内存顺序约束给出的，如图所示。在允许执行普通的加载和存储之前，必须执行所有的 acquires。同样地，在允许执行 release 之前，所有之前的普通加载和存储必须已经执行。最后，特殊访问必须是完全有序的。</p>
 <center>
-    <img src="/img/releaseconsistency.png" srcset="/img/background.bmp" lazyload />
+    <img src="/img/releaseconsistency.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>这一限制导致了更严格的 RC ，称之为 RCsc ，其特殊访问必须顺序一致性（sequential consistency）。这个关键的特性支持无数据竞争的编程模型，它是硬件和软件之间的一种契约，保证了它看上去像顺序一致的内存系统，前提是对所有特殊访问都进行了适当的注释。其结果是，对于一类重要的程序，RCsc 既提供了 relaxed model 的更大并发性，又提供了顺序一致性的更简单的编程模型。</p>
 <center>
-	<img src="/img/LRSC.png" srcset="/img/background.bmp" lazyload />
-	<img src="/img/AMO.png" srcset="/img/background.bmp" lazyload />
+	<img src="/img/LRSC.png" srcset="/img/loading.gif" lazyload />
+	<img src="/img/AMO.png" srcset="/img/loading.gif" lazyload />
 </center>
 <u>**A** 扩展中的指令通过加上内存顺序注释来实现 RCsc 内存模型，在静态指令上的两位：aq 和 rl</u>[^foot3] 。当 aq 位被设置在 LR 、SC 或 AMO 上时，该指令被当作 acquire 访问，在同一个线程中不会看到在该指令之前的任何内存访问。当 rl 位被设置时，指令被当作 release 访问，这样它就不会被认为是在任何内存访问之前执行的。当 aq 和 rl 都没有设定时，就没有特定的顺序保证，适于组合简化。当两者都被设置时，该访问就是相对于其他访问顺序一致。
 <hr>
 <h2 id="单精度浮点运算">单精度浮点运算</h2>
 <p>浮点计算在一些应用领域是普遍存在的，甚至许多面向整数的程序使用足够的浮点来证明硬件支持。然而，基本 ISA 中排除了浮点指令，以支持不会使用它们的嵌入式实现，而且浮点运算最好是由附加的协处理器处理的处理。<strong>RISC-V F</strong> 扩展增加了对单精度浮点的支持，符合 IEEE 754 浮点运算标准。</p>
 <center>
-<img src="/img/RVF.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/RVF.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>在定义 F 扩展时，最有争议的决定就是：是否要将整数寄存器用于浮点计算？还是添加专用的浮点寄存器？前一种策略将简化 ISA，降低的实现成本，并减少上下文切换时间。尽管如此，我们最终还是选择添加了一组新的浮点寄存器，如上图所示，因为我们觉得优点大于缺点：</p>
 <ul>
@@ -482,7 +482,7 @@
 <p><u>相对于的，当一条计算指令发出 NaN 时，我们要求它是 canonical NaN 即可</u>。当然，实现可以自由地将 NaN 有效负载传播方案作为非标准的扩展提供，由非标准处理器模式位启用，不过我们的默认方案仍然是强制性的。</p>
 <h3 id="浮点指令">浮点指令</h3>
 <center>
-    <img src="/img/RV32F.png" srcset="/img/background.bmp" lazyload />
+    <img src="/img/RV32F.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p>上图列出了 30 条 <strong>RISC-V F</strong> 扩展的新指令。它们分为四类：数据移动指令，转换指令，比较指令和算术指令。数据移动指令中，有新的 loads 和 stores 指令，FLW 和 FSW ，它们负责数据在内存和浮点寄存器之间移动，还包括了数据在浮点寄存器和整数寄存器之间移动的指令，FMV.X.S 和 FMV.S.X 。有些 ISAs 比如 SPARC 和 最初的 Alpha ，省去了这些指令，用一个临时内存来代替实现这一功能。这种设计消除了流水线冒险，但却大大增加混合格式代码长度。下面的代码块就证明了这点。没有 FMV.X 等指令，就要多 60% 的指令，并可能会导致数据缓存未命中，降低性能。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs nasm">fmv.x.s a0, fa0 					addi sp, sp, -16<br>srli a0, a0, 23 					fsw fa0, 0(sp)<br>andi a0, a0, 0xff 				lw a0, 0(sp)<br>addi a0, a0, -127 				srli a0, a0, 23<br>jalr x0, ra, 0 					andi a0, a0, 0xff<br>								addi a0, a0, -127<br>								addi sp, sp, 16<br>								jalr x0, ra, 0<br><br>;WITH FMV.X.S 					WITHOUT FMV.X.S<br></code></pre></td></tr></table></figure>
@@ -546,7 +546,7 @@
 <h2 id="双精度浮点运算">双精度浮点运算</h2>
 <p>大多数通用系统都需要单精度和双精度浮点数，主要是因为单精度对于某些算法来说不够精确，还因为现代编程语言对双精度运算有偏见。<u>然而，我们认为最好还是将 <strong>RISC-V F</strong> 与 <strong>RISC-V D</strong> 分开，因为在有些嵌入式领域，单精度浮点数就足够了，双精度就太昂贵了</u>。主流的 ARM Cortex-M4 ，一个 32 位的微控制器，以及无数的数字信号处理器都体现了这点。</p>
 <center>
-<img src="/img/RV64D.png" srcset="/img/background.bmp" lazyload />
+<img src="/img/RV64D.png" srcset="/img/loading.gif" lazyload />
 </center>
 <p><strong>D</strong> 扩展的结构与 <strong>F</strong> 扩展非常相似，当然 <strong>F</strong> 扩展也有存在的必要。浮点寄存器的位宽变为了 64 位，且增加了对双精度数值进行操作的新指令。32 位和 64 位浮点数不能在计算指令中自由混合，但是在格式之间转换的指令（FCVT.D.S 和 FCVT.S.D），可以支持混合格式代码。</p>
 <p>我们曾设想了另一种设计：寄存器仍为 32 位宽，双精度值对齐地存储在寄存器对中，就像在 SPARC 和 MIPS 一样。然而，这种设计不太适合寄存器重命名的实现，因为寄存器重命名会导致值的两半可能在物理上不再相邻。更重要的是，这种设计将使可用于双精度程序的寄存器数量减半，会导致寄存器阻塞，并增加指令数量。扩大寄存器的位宽似乎是最好的选择，尽管会带来额外的硬件资源消耗。</p>

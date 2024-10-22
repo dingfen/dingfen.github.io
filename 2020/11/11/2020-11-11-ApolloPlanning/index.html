@@ -83,7 +83,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -301,18 +301,18 @@
                 <h1>Apollo Planning 模块</h1>
 <h2 id="前言">前言</h2>
 <p>本篇博客对 Apollo 的规划（Planning）模块做详细介绍。根据官方文档<sup>1</sup>，规划模块的主要功能是对自动驾驶车辆未来的时空轨迹进行规划。为了让读者对规划模块在整个 Apollo 系统中的位置有一个大致的印象，我特意从官网上截取此图👇。可以看到规划模块的数据上游是定位（Localization），预测（Prediction），感知（Perception）模块，而下游是控制（Control）模块。</p>
-<p><img src="/img/Apollo_3_5_software_architecture.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/Apollo_3_5_software_architecture.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <h2 id="场景">场景</h2>
 <p>规划模块中，Apollo 设计团队引入了场景的概念，每个驾驶案例都被当做为一个不同的驾驶场景，这使得规划模块更具模块化，且更有针对性。更重要的是，对一个特定场景的修改不会影响其他场景。Apollo 5.5 主要注重于城市道路上的沿车道线自动驾驶，并引入了两种新的规划场景<sup>2</sup>。这里主要介绍 5 种驾驶场景，由于篇幅原因，我就在这里做简要介绍，详细内容可以点击<a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/r5.5.0/modules/planning/README.md">参考文献 [2]</a>。</p>
 <h3 id="沿车道线行驶">沿车道线行驶</h3>
 <p>默认场景模式，该场景包括但不限于遵守基本交通规则，或者基本转弯的单车道（例如巡航）或变道。</p>
 <center>
-    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/Planning_default.png" srcset="/img/background.bmp" lazyload width="80%"/>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/Planning_default.png" srcset="/img/loading.gif" lazyload width="80%"/>
 </center>
 <h3 id="会车">会车</h3>
 <p>该场景包括了在有停:stop_sign: 标志的、有交通灯 :traffic_light: 的、什么都没有的十字路口上的会车情况。总的来说，自动驾驶车辆在遇到这些十字路口时，都会先抵达十字路口边，然后注意观察来往车辆并小心前进，最终通过十字路口</p>
 <center>
-	<img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/unprotected1.png" srcset="/img/background.bmp" lazyload width="80%"/>
+	<img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/unprotected1.png" srcset="/img/loading.gif" lazyload width="80%"/>
 </center>
 <h3 id="停车">停车</h3>
 <p>停车场景中采用了一个令 Apollo 团队感到非常骄傲的 <a target="_blank" rel="noopener" href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md">Open Space Planner</a> 算法，该规划算法尤其适用于停车场景。文档中，一共介绍了两个子场景：</p>
@@ -320,20 +320,20 @@
 <li>
 <p>Valet 场景，用于将车辆停放在一个目标车位中</p>
   <center>
-      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/parking2.png" srcset="/img/background.bmp" lazyload width="80%"/>
+      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/parking2.png" srcset="/img/loading.gif" lazyload width="80%"/>
   </center>
 </li>
 <li>
 <p>Pull Over 场景，用于到达目的地后，完成的路边停车任务。</p>
   <center>
-      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/pull_over1.png" srcset="/img/background.bmp" lazyload width="80%"/>
+      <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/pull_over1.png" srcset="/img/loading.gif" lazyload width="80%"/>
   </center>
 </li>
 </ul>
 <h3 id="即停即走（Park-and-go）">即停即走（Park-and-go）</h3>
 <p>即停即走场景用于路边停车，并开始生成到达下一个目的地的新路径，有点像出租车放下一名乘客后的场景，对于路边交付，乘客接送或下车等情况非常有用。该场景将 Open Space Planner 算法与其他传统的轨迹规划算法结合在一起，以确保汽车不仅安全停车，而且还能够按照生成的轨迹驶出停车位。</p>
 <center>
-    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/park_and_go.png" srcset="/img/background.bmp" lazyload width="80%"/>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/park_and_go.png" srcset="/img/loading.gif" lazyload width="80%"/>
 </center>
 <h3 id="紧急状况">紧急状况</h3>
 <p>紧急场景是为确保在给定触发事件的情况下（通过人工输入或由于一个或多个软硬件故障）让车辆能安全停下。 该场景对于城市驾驶极为重要，因为在道路上经常会遇到几种无法预料的情况，要求车辆完全停车。例如，有两种类型的紧急停车：</p>
@@ -342,13 +342,13 @@
 <li>在车道停止，自动驾驶汽车在充分意识到周遭安全的情况下，在车道内停车</li>
 </ul>
 <center>
-    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/emergency.png" srcset="/img/background.bmp" lazyload width="80%"/>
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/emergency.png" srcset="/img/loading.gif" lazyload width="80%"/>
 </center>
 <h2 id="规划模块的体系结构">规划模块的体系结构</h2>
 <p>在 Apollo 5.5 版本中，Apollo 团队对规划模块的体系结构进行了修改，以纳入城市道路上的新驾驶方案。 如下图所示，因为新加入了有两种复杂方案：紧急情况和即停即走。为了有效地使用这些方案，团队引入了 2 个新的决策器—路径重用决策器（Path Reuse Decider）和限速决策器（Speed Bound Decider），并更新了现有决策器，使规划体系结构既强大又灵活，足以应付许多不同类型的城市道路驾驶方案。</p>
 <p>每个驾驶场景都有其独特的驾驶参数集，使其更安全，高效，更易于自定义和调试，也更加灵活。</p>
 <center>
-    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/architecture_5.5.png" srcset="/img/background.bmp" lazyload />
+    <img src="https://github.com/ApolloAuto/apollo/raw/r5.5.0/modules/planning/images/architecture_5.5.png" srcset="/img/loading.gif" lazyload />
 </center>
 ## 规划模块之组件类
 <p>如果你认真了解了 <a href="https://dingfen.github.io/apollo/2020/10/25/CyberComponent.html">Apollo Cyber RT 组件</a>的相关知识，就明白模块的起点就是 <code>Component</code> 类，一切的模块都是继承 <code>Component</code> 类而来的。自然地，我把这它作为全面认识规划模块的切入点。</p>

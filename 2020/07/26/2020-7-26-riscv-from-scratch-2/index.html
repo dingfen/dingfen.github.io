@@ -76,7 +76,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -321,7 +321,7 @@
 <p>最后，让程序继续运行，直到遇见断点。</p>
 <figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs erlang">(gdb) c<br>        Continuing.<br></code></pre></td></tr></table></figure>
 <p>很快，你就会发现程序一直卡死在这里，不会遇到我们之前设置的断点。这到底是怎么一回事呢？我们可以先看一下 GDB 给我们提供的信息：</p>
-<p><img src="https://twilco.github.io/img/naive_gdb.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="https://twilco.github.io/img/naive_gdb.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>看一下图中的几个红框：</p>
 <ol>
 <li>GDB 无法找到源代码，这原本是展示源代码和断点位置的地方</li>
@@ -430,7 +430,7 @@
 <p>设置断点并运行：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">(gdb) b main<br>Breakpoint 1 at 0x8000001e: file add.c, line 2.<br><br>(gdb) c<br>Continuing.<br><br>Breakpoint 1, main () at add.c:2<br></code></pre></td></tr></table></figure>
 <p>啊哈，你会注意到程序真的在你的断点处停下来了，并且 GDB 内部还有很多相关的地址、数据信息，要是想查看寄存器值，使用命令 <code>info all-registers</code> 就可以了：</p>
-<p><img src="https://twilco.github.io/img/working_gdb.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="https://twilco.github.io/img/working_gdb.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <h2 id="接下来">接下来</h2>
 <p>在我们的下一篇文章中，我们将通过在<code>virt</code> QEMU 机器上开始实现 <code>UART</code> 的驱动程序，继续在 RISC-V组装上积累知识。期望了解 UART 是什么以及它如何工作，其他设备树(device tree)属性，实现与NS16550A 兼容的 UART 驱动程序所需的基本构造块等。</p>
 

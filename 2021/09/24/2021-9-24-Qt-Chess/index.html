@@ -80,7 +80,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/background.bmp","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -301,14 +301,14 @@
 <p>安装 Qt 并不麻烦，就是网速有点慢。推荐使用国内镜像代理下载。</p>
 <p>首先进入 <a target="_blank" rel="noopener" href="https://www.qt.io/download">Qt 官网</a>，在 Try Qt 处点击 Download Qt，填完基本信息后，点击提交就可以下载 Qt 下载器了。当然，你也可以直接去国内镜像站上下载 Qt 下载器。</p>
 <center>
-<img src="/img/Qt/download_Qt.png" srcset="/img/background.bmp" lazyload style="zoom:50%;"/>
+<img src="/img/Qt/download_Qt.png" srcset="/img/loading.gif" lazyload style="zoom:50%;"/>
 </center>
 <p>打开 Qt 下载器，注册 Qt 账户，并登录，同意协议。<strong>若要使用国内镜像代理，点击左下角的配置图标。</strong></p>
-<p><img src="/img/Qt/qt_proxy.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/Qt/qt_proxy.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>然后从百度上选择一个国内镜像站，我这里选用<a target="_blank" rel="noopener" href="https://mirrors.ustc.edu.cn/">中科大的镜像站</a>，参考中科大镜像站上的<a href="%5Bhttps://mirrors.ustc.edu.cn/help/qtproject.html%5D">帮助文档</a>，我们需要把 <a target="_blank" rel="noopener" href="http://mirrors.ustc.edu.cn/qtproject/online/qtsdkrepository/windows_x86/root/qt/">http://mirrors.ustc.edu.cn/qtproject/online/qtsdkrepository/windows_x86/root/qt/</a> 加入到 repository 列中（注意这是在 Windows 操作系统下），加入后先别急着关，可以点击 test 测试一下镜像站连接是否成功。现在，下载器就会从国内镜像站中获取下载数据了，速度会快不少。</p>
-<p><img src="/img/Qt/qt_setting.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/Qt/qt_setting.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>之后的安装就很无脑了，一路选择确定和安装位置，然后选择需要安装的 Qt 部件。推荐安装最新的 Qt 6 或者 Qt 5.12，最好选择所有的 Qt 核心功能，以及合适的编译器和调试器，当然别忘了相关的开发和设计工具，比如 Qt Creator 和 CMake、Ninja 等。</p>
-<p><img src="/img/Qt/qt_select.png" srcset="/img/background.bmp" lazyload alt=""></p>
+<p><img src="/img/Qt/qt_select.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>点击确认后，就可以等待下载完成了！</p>
 <p>如果安装上遇到困难，或者单纯不想看文字，建议<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1yN411d7d2/">去b站上看视频</a>跟着走一遍，亲测有效。</p>
 <h2 id="学习-Qt">学习 Qt</h2>
@@ -340,7 +340,7 @@
 <h2 id="关于中国象棋">关于中国象棋</h2>
 <p>工程源代码可从 <a target="_blank" rel="noopener" href="https://github.com/dingfen/Qt_Chess">github</a> 下载。所有模块使用 C++ 实现，AI 算法采用传统的最小最大搜索算法实现，其中，评价函数以及数值参考了《PC游戏编程——人机博弈》中的内容。下图是试运行画面：</p>
 <center>
-<img src="/img/Qt/chess.png" srcset="/img/background.bmp" lazyload style="zoom:80%;"/>
+<img src="/img/Qt/chess.png" srcset="/img/loading.gif" lazyload style="zoom:80%;"/>
 </center>
 <p>目前进展如下：</p>
 <h3 id="已完成的">已完成的</h3>
