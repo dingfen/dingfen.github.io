@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
 <meta property="article:published_time" content="2024-10-13T08:13:00.000Z">
-<meta property="article:modified_time" content="2024-10-22T16:01:16.024Z">
+<meta property="article:modified_time" content="2024-10-22T16:19:49.300Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta name="twitter:card" content="summary_large_image">
@@ -226,7 +226,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.4k 字
+          1.7k 字
         
       </span>
     
@@ -237,7 +237,7 @@
         
         
         
-          12 分钟
+          15 分钟
         
       </span>
     
@@ -280,7 +280,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-10-23T00:01:16+08:00
+                    更新于：2024-10-23T00:19:49+08:00
                   
                   
 
@@ -324,7 +324,37 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker pull nvcr.io/nvidia/pytorch:24.06-py3<br></code></pre></td></tr></table></figure>
 <p>进入 docker：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker run --priviledged=<span class="hljs-literal">true</span> --pid=host --ipc=host --network=host --shm-size=8g --<span class="hljs-built_in">ulimit</span> memlock=-1 \<br>  --<span class="hljs-built_in">ulimit</span> stack=67108864 --init -it -v &lt;dir-you-want-to-mnt-on-the-docker&gt;:&lt;path-in-the-docker&gt; \<br>  -w /workspace --name=&lt;container-name&gt; nvcr.io/nvidia/pytorch:24.06-py3 bash<br></code></pre></td></tr></table></figure>
-<p>简单给大家解释一下启动 docker 的命令。</p>
+<p>简单给大家解释一下启动 docker 的命令。<br>
+这个命令是用来在Docker中运行一个容器的，它包含了多个选项（options）来配置容器的运行环境。下面是对每一个选项的详细解释：</p>
+<ul>
+<li>
+<p><strong><code>--privileged=true</code></strong>：给容器内部 root 权限</p>
+</li>
+<li>
+<p><strong><code>--pid=host</code></strong>：允许容器共享宿主机的PID（进程ID）命名空间</p>
+</li>
+<li>
+<p><strong><code>--ipc=host</code></strong>：允许容器能够使用宿主机的IPC（进程间通信）命名空间</p>
+</li>
+<li>
+<p><strong><code>--network=host</code></strong>：允许容器直接使用宿主机的网络堆栈</p>
+</li>
+<li>
+<p><strong><code>--shm-size=8g</code></strong>：设置了容器内共享内存（SHM）的大小为8GB</p>
+</li>
+<li>
+<p><strong><code>--ulimit memlock=-1</code></strong>：设置容器内进程的内存锁定（memlock）限制。<code>-1</code>表示取消限制，允许进程锁定任意数量的内存。</p>
+</li>
+<li>
+<p><strong><code>--ulimit stack=67108864</code></strong>：设置了容器内进程的栈大小限制为64MB（67108864字节）。</p>
+</li>
+<li>
+<p><strong><code>--init</code></strong>：这个选项在容器内运行一个小的初始化进程（通常是<code>tini</code>或<code>dummy-init</code>），这个进程会作为PID 1运行，并负责处理僵尸进程和信号转发。</p>
+</li>
+<li>
+<p><strong><code>-it</code></strong>：这是两个选项的组合。<code>-i</code>（或<code>--interactive</code>）保持容器的标准输入开放，而<code>-t</code>（或<code>--tty</code>）分配一个伪终端。这两个选项通常一起使用，以提供一个交互式shell。</p>
+</li>
+</ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip3 install --upgrade pip<br>pip3 install setuptools==69.5.1<br></code></pre></td></tr></table></figure>
 <p>进入到 FastChat 目录后，从源码编译安装 FastChat：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip3 install -e <span class="hljs-string">&quot;.[model_worker,webui]&quot;</span><br></code></pre></td></tr></table></figure>
