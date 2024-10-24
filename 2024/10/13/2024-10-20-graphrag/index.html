@@ -16,16 +16,16 @@
   <meta name="author" content="Bill Ding">
   <meta name="keywords" content="">
   
-    <meta name="description" content="如何本地运行 graphrag 有条件的朋友们可以在本地部署 graphrag 哦，然后可以将你的私人文档喂进去，成为你自己的私有得力助手！ 需要的工具 本篇指导内容将基于你的个人电脑来构建 graphrag，在开始之前，需要你的电脑有：  Nvidia GPU 一张，显存最好大于 8 GB 内存空间不少于 16 GB 硬盘空间不少于 50 GB  检查好设备后，还需要你有如下的软件环境：  Li">
+    <meta name="description" content="3060 TI 玩转大模型">
 <meta property="og:type" content="article">
 <meta property="og:title" content="GraphRAG 个人部署">
 <meta property="og:url" content="https://dingfen.github.io/2024/10/13/2024-10-20-graphrag/index.html">
 <meta property="og:site_name" content="峰子的乐园">
-<meta property="og:description" content="如何本地运行 graphrag 有条件的朋友们可以在本地部署 graphrag 哦，然后可以将你的私人文档喂进去，成为你自己的私有得力助手！ 需要的工具 本篇指导内容将基于你的个人电脑来构建 graphrag，在开始之前，需要你的电脑有：  Nvidia GPU 一张，显存最好大于 8 GB 内存空间不少于 16 GB 硬盘空间不少于 50 GB  检查好设备后，还需要你有如下的软件环境：  Li">
+<meta property="og:description" content="3060 TI 玩转大模型">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
 <meta property="article:published_time" content="2024-10-13T08:13:00.000Z">
-<meta property="article:modified_time" content="2024-10-22T16:19:49.300Z">
+<meta property="article:modified_time" content="2024-10-24T16:02:47.046Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta name="twitter:card" content="summary_large_image">
@@ -226,7 +226,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.7k 字
+          2.4k 字
         
       </span>
     
@@ -237,7 +237,7 @@
         
         
         
-          15 分钟
+          21 分钟
         
       </span>
     
@@ -280,7 +280,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-10-23T00:19:49+08:00
+                    更新于：2024-10-25T00:02:47+08:00
                   
                   
 
@@ -295,7 +295,7 @@
 <h2 id="需要的工具">需要的工具</h2>
 <p>本篇指导内容将基于你的个人电脑来构建 graphrag，在开始之前，需要你的电脑有：</p>
 <ul>
-<li>Nvidia GPU 一张，显存最好大于 8 GB</li>
+<li>3060TI GPU 一张，显存为 8 GB</li>
 <li>内存空间不少于 16 GB</li>
 <li>硬盘空间不少于 50 GB</li>
 </ul>
@@ -357,47 +357,61 @@
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip3 install --upgrade pip<br>pip3 install setuptools==69.5.1<br></code></pre></td></tr></table></figure>
 <p>进入到 FastChat 目录后，从源码编译安装 FastChat：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip3 install -e <span class="hljs-string">&quot;.[model_worker,webui]&quot;</span><br></code></pre></td></tr></table></figure>
-<p>根据 <a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/developing/">graphrag 官网 get start</a>，需要安装 pipx 和 poetry</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">apt update &amp;&amp; apt install pipx<br>pipx install poetry<br></code></pre></td></tr></table></figure>
-<p>FastChat 源码安装：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip3 install -e <span class="hljs-string">&quot;.[model_worker,webui]&quot;</span><br></code></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> FastChat<br>pip3 install -e <span class="hljs-string">&quot;.[model_worker,webui]&quot;</span><br></code></pre></td></tr></table></figure>
 <p>安装 vllm，需要根据你镜像中使用的 pytorch 版本来决定 vllm 的版本，一般来说安装的 vllm 版本越新越好。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install vllm<br></code></pre></td></tr></table></figure>
-<p>安装 graphrag，源码安装：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> graphrag<br>poetry build<br>pip install dist/graphrag*.whl<br>```·<br><br>pip install 安装：<br>```bash<br>pip install graphrag==0.3.0<br></code></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install vllm==0.6.0<br></code></pre></td></tr></table></figure>
+<p>安装 vllm 期间，pip 可能会自动帮你安装 pytorch、transformers 等库，这些也都是必要的。</p>
+<p>需要额外提一嘴的是，flash-attention-2 这个包的编译过程对我们小电脑来说极为不友好，参考这里的<a target="_blank" rel="noopener" href="https://github.com/Dao-AILab/flash-attention/issues/945">链接</a>。而安装 2.4.2 版本的 flash-attn 还会出现 undefined symbol 错误，我的建议是不如直接删了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip uninstall flash-attn -y<br></code></pre></td></tr></table></figure>
+<p>这里力荐 vllm 最近发布了专用版的 vllm-flash-attn，安装相对简单，速度也不逊于真正的 flash-attn。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install vllm==2.6.1<br></code></pre></td></tr></table></figure>
+<p>安装 graphrag，源码安装开发版，可根据 <a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/developing/">graphrag 官网 get start</a>，需要先安装 pipx 和 poetry</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">apt update &amp;&amp; apt install pipx<br>pipx install poetry<br>poetry install<br></code></pre></td></tr></table></figure>
+<p>我推荐你直接 pip install 安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install graphrag==0.3.6<br></code></pre></td></tr></table></figure>
 <p>至此，环境基本安装完成了！</p>
 <h2 id="graphrag-运行">graphrag 运行</h2>
-<h3 id="文件配置">文件配置</h3>
+<h3 id="初始化与文件配置">初始化与文件配置</h3>
 <p>前面提到，要让 graphrag 在本地运行，需要三个模型权重：</p>
 <ul>
-<li>对话 LLM 权重数据，受设备限制，我选择了 <a target="_blank" rel="noopener" href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct">Qwen2.5-1.5B-Instruct</a> （不得不说 Qwen 系列的模型真的很丰富）</li>
-<li>embedding 权重模型，同样受设备限制，并且考虑到主要使用语言是中文，因此选择了 <a target="_blank" rel="noopener" href="https://huggingface.co/TencentBAC/Conan-embedding-v1">TencentBAC/Conan-embedding-v1</a></li>
+<li>对话 LLM 权重数据，受设备限制，我选择了 <a target="_blank" rel="noopener" href="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-AWQ">Qwen2.5-3B-Instruct-AWQ</a> （不得不说 Qwen 系列的模型真的很丰富）</li>
+<li>embedding 权重模型，同样受设备限制，并且考虑到主要使用语言是中文，因此选择了 <a target="_blank" rel="noopener" href="https://huggingface.co/BAAI/bge-base-zh-v1.5">BAAI/bge-base-zh-v1.5</a></li>
 <li>cl100k_base tiktoken model 分词模型</li>
 </ul>
 <p>首先，我们需要离线地使用 cl100k_base 分词模型，下载方式参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_35054222/article/details/137127660">这篇博客</a>。</p>
 <p>加入下面的全局变量，使之使用本地的 cl100k_base tiktoken model：9b5ad71b2ce5302211f9c61530b329a4922fc6a4</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> TIKTOKEN_CACHE_DIR=asd<br></code></pre></td></tr></table></figure>
-<p>创建 ragtest 文件夹，并初始化它。该文件夹中可以放置我们的输入文档资料，graphrag 配置以及输出日志，文档向量数据等等：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> -p ./ragtest/input<br><span class="hljs-comment"># 将咱们要喂进去的文档放到 ./ragtest/input/ 下面 这里仅作示例</span><br>curl https://www.gutenberg.org/cache/epub/24022/pg24022.txt &gt; ./ragtest/input/book.txt<br><span class="hljs-comment"># 初始化 ragtest</span><br>python -m graphrag.index --init --root ./ragtest<br></code></pre></td></tr></table></figure>
-<p>初始化完成后，ragtest 文件夹内会存在一个 <code>settings.yaml</code> 的配置文件，其中包含了很多关于 graphrag 和 FastChat 连接的配置信息，需要我们根据实际情况做调整后部署 graphrag，以下是配置文件示例：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">encoding_model:</span> <span class="hljs-string">cl100k_base</span>		<span class="hljs-comment"># use encoding model: cl100k_base</span><br><span class="hljs-attr">skip_workflows:</span> []<br><span class="hljs-attr">llm:</span><br>  <span class="hljs-attr">api_key:</span> <span class="hljs-string">$&#123;GRAPHRAG_API_KEY&#125;</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">openai_chat</span>             <span class="hljs-comment"># or azure_openai_chat</span><br>  <span class="hljs-attr">model:</span> <span class="hljs-string">Qwen2.5-1.5B-Instruct</span>  <span class="hljs-comment"># 对应了我们使用的 LLM 模型</span><br>  <span class="hljs-attr">model_supports_json:</span> <span class="hljs-literal">true</span>     <span class="hljs-comment"># recommended if this is available for your model.</span><br>  <span class="hljs-attr">max_tokens:</span> <span class="hljs-number">8000</span>              <span class="hljs-comment"># Qwen2.5 支持最大上下文 128K 我们这里先设 8K</span><br>  <span class="hljs-attr">request_timeout:</span> <span class="hljs-number">100.0</span><br>  <span class="hljs-attr">api_base:</span> <span class="hljs-string">http://localhost:8000/v1</span>  <span class="hljs-comment"># 对应了 openai server 的端口</span><br><br><span class="hljs-comment">## ...</span><br><br><span class="hljs-attr">embeddings:</span><br>  <span class="hljs-attr">async_mode:</span> <span class="hljs-string">threaded</span>          <span class="hljs-comment"># or asyncio </span><br>  <span class="hljs-attr">llm:</span><br>    <span class="hljs-attr">api_key:</span> <span class="hljs-string">$&#123;GRAPHRAG_API_KEY&#125;</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">openai_embedding</span>      <span class="hljs-comment"># or azure_openai_embedding</span><br>    <span class="hljs-attr">model:</span> <span class="hljs-string">Conan-embedding-v1</span>						<span class="hljs-comment"># 对应了我们使用的 embedding 模型</span><br>    <span class="hljs-attr">api_base:</span> <span class="hljs-string">http://localhost:8000/v1</span>	<span class="hljs-comment"># 对应了 openai server 的端口</span><br><span class="hljs-comment">## ...</span><br></code></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> TIKTOKEN_CACHE_DIR=&lt;path-to-cl100k_base tiktoken model-without-filename&gt;<br></code></pre></td></tr></table></figure>
+<p>创建 ragtest 文件夹，并初始化它。该文件夹中可以放置我们的输入文档资料，graphrag 配置以及输出日志，文档向量数据等等：下面的步骤与官方给出的<a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/get_started/">开始文档</a>一致</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> -p ./ragtest/input<br><span class="hljs-comment"># 将咱们要喂进去的文档放到 ./ragtest/input/ 下面 这里仅作示例</span><br>curl https://www.gutenberg.org/cache/epub/24022/pg24022.txt &gt; ./ragtest/input/book.txt<br></code></pre></td></tr></table></figure>
+<p>初始化 ragtest：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.index --init --root ./ragtest<br></code></pre></td></tr></table></figure>
+<p>初始化完成后，ragtest 文件夹内会存在一个 <code>settings.yaml</code> 的配置文件，其中包含了很多关于 graphrag 和 FastChat 连接的配置信息。因为我们是本地运行，所以需要我们根据实际情况做调整后部署 graphrag，以下是配置文件示例：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">encoding_model:</span> <span class="hljs-string">cl100k_base</span>		<span class="hljs-comment"># use encoding model: cl100k_base</span><br><span class="hljs-attr">skip_workflows:</span> []<br><span class="hljs-attr">llm:</span><br>  <span class="hljs-attr">api_key:</span> <span class="hljs-string">$&#123;GRAPHRAG_API_KEY&#125;</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">openai_chat</span>               <span class="hljs-comment"># or azure_openai_chat</span><br>  <span class="hljs-attr">model:</span> <span class="hljs-string">Qwen2.5-3B-Instruct-AWQ</span>  <span class="hljs-comment"># 对应了我们使用的 LLM 模型</span><br>  <span class="hljs-attr">model_supports_json:</span> <span class="hljs-literal">true</span>       <span class="hljs-comment"># recommended if this is available for your model.</span><br>  <span class="hljs-attr">max_tokens:</span> <span class="hljs-number">8000</span>                <span class="hljs-comment"># Qwen2.5 支持最大上下文 128K 我们这里先设 8K</span><br>  <span class="hljs-attr">request_timeout:</span> <span class="hljs-number">100.0</span><br>  <span class="hljs-attr">api_base:</span> <span class="hljs-string">http://localhost:8000/v1</span>  <span class="hljs-comment"># 对应了 openai server 的端口</span><br><br><span class="hljs-comment">## ...</span><br><br><span class="hljs-attr">embeddings:</span><br>  <span class="hljs-attr">async_mode:</span> <span class="hljs-string">threaded</span>          <span class="hljs-comment"># or asyncio </span><br>  <span class="hljs-attr">llm:</span><br>    <span class="hljs-attr">api_key:</span> <span class="hljs-string">$&#123;GRAPHRAG_API_KEY&#125;</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">openai_embedding</span>      <span class="hljs-comment"># or azure_openai_embedding</span><br>    <span class="hljs-attr">model:</span> <span class="hljs-string">bge-base-zh-v1.5</span>						  <span class="hljs-comment"># 对应了我们使用的 embedding 模型</span><br>    <span class="hljs-attr">api_base:</span> <span class="hljs-string">http://localhost:8000/v1</span>	<span class="hljs-comment"># 对应了 openai server 的端口</span><br><span class="hljs-comment">## ...</span><br></code></pre></td></tr></table></figure>
 <h3 id="启动模型">启动模型</h3>
 <p>graphrag 能顺利运行的前提就是大模型能顺利运行，因此首先需要启动大模型后端。</p>
 <p>Fastchat 是控制和管理大模型后端服务的框架，我们首先启动控制器：</p>
 <p>启动 fastchat controller，默认端口 21001：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.controller --host 0.0.0.0 \<br>  &gt;&gt; fastchat_controller.log  2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
-<p>使用 Fastchat 启动 vllm_worker Qwen2.5-1.5B 模型，启动的 vllm work 端口要与 controller 连接上：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.vllm_worker \<br>  --model-path Qwen2.5-1.5B-Instruct \<br>  --trust-remote-code --tensor-parallel-size 8 --dtype bfloat16 \<br>  --host 0.0.0.0 --port 8001 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8001 &gt;&gt; fastchat_worker_qwen.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
-<p>使用 Fastchat 启动 bge-m3 embedding 模型，同样端口要与 controller 连接上：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.model_worker \<br>  --model-path Conan-embedding-v1 \<br>  --host 0.0.0.0 --port 8002 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8002 &gt;&gt; fastchat_worker_bge.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+<p>使用 Fastchat 启动 vllm_worker Qwen2.5-3B-Instruct-AWQ 模型，启动的 vllm work 端口要与 controller 连接上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.vllm_worker \<br>  --model-path ../Qwen2.5-3B-Instruct-AWQ --trust-remote-code --max-model-len 16000 \<br>  --host 0.0.0.0 --port 8001 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8001 &gt;&gt; fastchat_worker_qwen.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+<p>在选择 LLM 这块我经过多次尝试，发现 8GB 显存的显卡最好选择 3B 的量化模型，太小的模型（1.5B）因为能力不足无法构建 graphrag 的知识图谱，而太大的模型（7B量化）就只能允许使用不到 5000 的上下文长度（model len）了。虽然 3B 量化模型很小，但 8GB 显存依然只能将 model-len 设置为 16K，过大的 model-len 会导致 KV-Cache 占用的显存超出 GPU 的显存能力范围。</p>
+<p>从下面图可以看到，model-len 为 16K 已经是贴着 GPU 的最大内存在跑了：</p>
+<p><img src="/source/img/LLM/graphrag/gpu.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>使用 Fastchat 启动 bge-base-zh-v1.5 embedding 模型，同样端口要与 controller 连接上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.model_worker \<br>  --model-path ../bge-base-zh-v1.5 \<br>  --host 0.0.0.0 --port 8002 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8002 &gt;&gt; fastchat_worker_bge.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
 <p>这些模型的权重文件数据都比较大，需要耐心等待若干分钟，待模型权重load完成，后端服务成功启动后，再启动 Fastchat 内的 openai API server</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -m fastchat.serve.openai_api_server \<br>  --host 0.0.0.0 --port 8000 &gt;&gt; fastchat_server.log  2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+<p>这一切都完成后，使用 <code>curl</code> 来验证一下模型是否都成功运行了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl http://localhost:8000/v1/models<br></code></pre></td></tr></table></figure>
+<p>发现返回是这个，说明成功了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">&#123;<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;list&quot;</span>,<span class="hljs-string">&quot;data&quot;</span>:[&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;Qwen2.5-3B-Instruct-AWQ&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;owned_by&quot;</span>:<span class="hljs-string">&quot;fastchat&quot;</span>,<span class="hljs-string">&quot;root&quot;</span>:<span class="hljs-string">&quot;Qwen2.5-3B-Instruct-AWQ&quot;</span>,<span class="hljs-string">&quot;parent&quot;</span>:null,<span class="hljs-string">&quot;permission&quot;</span>:[&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;modelperm-HYV9FyQLtN3VmgJbB5JGZr&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model_permission&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;allow_create_engine&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;allow_sampling&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_logprobs&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_search_indices&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_view&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_fine_tuning&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;organization&quot;</span>:<span class="hljs-string">&quot;*&quot;</span>,<span class="hljs-string">&quot;group&quot;</span>:null,<span class="hljs-string">&quot;is_blocking&quot;</span>:<span class="hljs-literal">false</span>&#125;]&#125;,&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;bge-base-zh-v1.5&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;owned_by&quot;</span>:<span class="hljs-string">&quot;fastchat&quot;</span>,<span class="hljs-string">&quot;root&quot;</span>:<span class="hljs-string">&quot;bge-base-zh-v1.5&quot;</span>,<span class="hljs-string">&quot;parent&quot;</span>:null,<span class="hljs-string">&quot;permission&quot;</span>:[&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;modelperm-i6VUn5ahHcW6bN2FywLqV2&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model_permission&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;allow_create_engine&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;allow_sampling&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_logprobs&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_search_indices&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_view&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_fine_tuning&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;organization&quot;</span>:<span class="hljs-string">&quot;*&quot;</span>,<span class="hljs-string">&quot;group&quot;</span>:null,<span class="hljs-string">&quot;is_blocking&quot;</span>:<span class="hljs-literal">false</span>&#125;]&#125;]&#125;<br></code></pre></td></tr></table></figure>
 <p>然后，就是我们的 graphrag 大显身手的时候了！</p>
 <h3 id="离线处理">离线处理</h3>
 <p>启动 indexing pipeline，graphrag 开始调用后端的 embedding LLM 等模型对文档做离线切分，创建知识图谱，构建社区总结等等工作，该步骤会花费很长时间，可以离线完成：完成后，数据将会保存在 ragtest/output/${timestamp} 下面</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.index --root ./ragtest<br></code></pre></td></tr></table></figure>
-<p><img src="https://microsoft.github.io/graphrag/img/pipeline-running.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/source/img/LLM/graphrag/index.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>我的 3060TI 孜孜不倦地跑了近二十分钟后，它终于构建出了知识图谱，完成了索引阶段的工作：</p>
+<p><img src="/source/img/LLM/graphrag/success.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <h3 id="在线查询">在线查询</h3>
 <p>全局查询：当用户提出的问题需要模型查询多个文档块，做出综合性地、归纳性地回答时使用，</p>
 <p>CLI 查询示例：</p>
@@ -406,6 +420,8 @@
 <p>CLI 查询示例</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.query \<br>--root ./ragtest \<br>--method <span class="hljs-built_in">local</span> \<br><span class="hljs-string">&quot;Who is Scrooge, and what are his main relationships?&quot;</span><br></code></pre></td></tr></table></figure>
 <p>更多使用细节和配置方法，请详细<a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/">参考官方文档</a></p>
+<p>我自己的实践中，我使用<a target="_blank" rel="noopener" href="https://www.gov.cn/zhengce/content/2020-12/31/content_5575804.htm">这篇文档</a>作为输入，随后针对我给出的文档，向 graphrag 提出了下面的问题，它给出了针对性的回答，以及模型内部自己知识的回答：</p>
+<p><img src="/source/img/LLM/graphrag/example.png" srcset="/img/loading.gif" lazyload alt=""></p>
 
                 
               </div>
@@ -470,7 +486,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年10月23日</div>
+          <div>2024年10月25日</div>
         </div>
       
       
