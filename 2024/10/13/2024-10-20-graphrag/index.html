@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
 <meta property="article:published_time" content="2024-10-13T08:13:00.000Z">
-<meta property="article:modified_time" content="2024-10-24T16:02:47.046Z">
+<meta property="article:modified_time" content="2024-11-09T02:22:19.954Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta name="twitter:card" content="summary_large_image">
@@ -280,7 +280,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-10-25T00:02:47+08:00
+                    更新于：2024-11-09T10:22:19+08:00
                   
                   
 
@@ -396,7 +396,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.vllm_worker \<br>  --model-path ../Qwen2.5-3B-Instruct-AWQ --trust-remote-code --max-model-len 16000 \<br>  --host 0.0.0.0 --port 8001 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8001 &gt;&gt; fastchat_worker_qwen.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
 <p>在选择 LLM 这块我经过多次尝试，发现 8GB 显存的显卡最好选择 3B 的量化模型，太小的模型（1.5B）因为能力不足无法构建 graphrag 的知识图谱，而太大的模型（7B量化）就只能允许使用不到 5000 的上下文长度（model len）了。虽然 3B 量化模型很小，但 8GB 显存依然只能将 model-len 设置为 16K，过大的 model-len 会导致 KV-Cache 占用的显存超出 GPU 的显存能力范围。</p>
 <p>从下面图可以看到，model-len 为 16K 已经是贴着 GPU 的最大内存在跑了：</p>
-<p><img src="/source/img/LLM/graphrag/gpu.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/graphrag/gpu.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>使用 Fastchat 启动 bge-base-zh-v1.5 embedding 模型，同样端口要与 controller 连接上：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.model_worker \<br>  --model-path ../bge-base-zh-v1.5 \<br>  --host 0.0.0.0 --port 8002 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8002 &gt;&gt; fastchat_worker_bge.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
 <p>这些模型的权重文件数据都比较大，需要耐心等待若干分钟，待模型权重load完成，后端服务成功启动后，再启动 Fastchat 内的 openai API server</p>
@@ -409,9 +409,9 @@
 <h3 id="离线处理">离线处理</h3>
 <p>启动 indexing pipeline，graphrag 开始调用后端的 embedding LLM 等模型对文档做离线切分，创建知识图谱，构建社区总结等等工作，该步骤会花费很长时间，可以离线完成：完成后，数据将会保存在 ragtest/output/${timestamp} 下面</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.index --root ./ragtest<br></code></pre></td></tr></table></figure>
-<p><img src="/source/img/LLM/graphrag/index.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/graphrag/index.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>我的 3060TI 孜孜不倦地跑了近二十分钟后，它终于构建出了知识图谱，完成了索引阶段的工作：</p>
-<p><img src="/source/img/LLM/graphrag/success.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/graphrag/success.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <h3 id="在线查询">在线查询</h3>
 <p>全局查询：当用户提出的问题需要模型查询多个文档块，做出综合性地、归纳性地回答时使用，</p>
 <p>CLI 查询示例：</p>
@@ -486,7 +486,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年10月25日</div>
+          <div>2024年11月9日</div>
         </div>
       
       

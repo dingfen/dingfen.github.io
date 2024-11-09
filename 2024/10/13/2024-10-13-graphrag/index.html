@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
 <meta property="article:published_time" content="2024-10-13T08:13:00.000Z">
-<meta property="article:modified_time" content="2024-10-22T15:23:07.484Z">
+<meta property="article:modified_time" content="2024-11-09T02:22:19.954Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta name="twitter:card" content="summary_large_image">
@@ -280,7 +280,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2024-10-22T23:23:07+08:00
+                    更新于：2024-11-09T10:22:19+08:00
                   
                   
 
@@ -296,18 +296,18 @@
 <h1>框架概述</h1>
 <h2 id="工作流程">工作流程</h2>
 <p>让我们先总览地看一下 graphrag 的具体流程。下图是 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2404.16130">graphrag 论文</a>中给出了工作过程的总体情况。与其他 RAG 系统类似，GraphRAG 整个 Pipeline 也可划分为索引（Indexing 左半部分）与查询（Query 右半部分）两个阶段。索引过程利用 LLM 提取出节点（如实体）、边（如关系）和协变量（如 claim），然后利用社区检测技术对整个知识图谱进行划分，再利用 LLM 进一步总结。最终针对特定的查询，可以汇总所有与之相关的社区摘要生成一个全局性的答案。</p>
-<p><img src="/source/img/LLM/graphrag-pipeline.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/graphrag-pipeline.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>接下来我们一步步地具体解释其流程。</p>
 <h3 id="文件切割为文件块">文件切割为文件块</h3>
 <p>首先是将输入的原文档变成一个结构化的知识图谱，但显然，用户输入的大量文件太多太长无法直接处理。因此需要将输入的文档分割为若干个大小相同的文件块（text chunk）。这些文件块后续会被喂给 LLM 来提取其中的信息。</p>
 <p>因此，文件块的大小设计很有讲究。更大的文件块会更少地调用 LLM，加快索引过程，但也更容易因过长的文件块而产生信息召回率下降。</p>
-<p><img src="/source/img/LLM/graphrag-gleaning.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/graphrag-gleaning.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>论文指出，在样本数据集 (HotPotQA, Yang et al., 2018) 上，使用 600 个 token 的块大小提取的实体连接引用几乎是使用 2400 个 token 的块大小的两倍。虽然引用越多越好，但任何提取过程都需要平衡目标召回率和准确率。</p>
 <p>图中的 gleanings 指 graphrag 对文本的多轮信息采集，这是为了让 LLM 尽可能不遗漏任何实体（entities）。graphrag 会首先要求 LLM 自查是否提取了所有实体，如果 LLM 回应说遗漏了，那么 graphrag 会继续鼓励 LLM 收集这些缺失的实体。这种方法允许我们使用更大的块大小，而不会降低质量（图 2）或强制引入噪音。（ps：好狠的 PUA）</p>
 <h3 id="文件块到图元素">文件块到图元素</h3>
 <p>然后，graphrag 需要从文件块中识别和提取 graph node 和 edge。它会首先识别文本块中的所有实体，包括其名称、类型和描述，这些实体会被当作 graph node。然后明确相关的实体之间的所有关系，包括源实体和目标实体以及它们的关系描述，用来表示 graph edge。两种元素实例都输出在一个分隔元组列表中。</p>
 <p>看到这你可能会怀疑，LLM 是否真的具备实体辨识能力（Named Entity Recognition）。事实上，LLM 一直具备此能力，这个 youtube 上的<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=OagbDJvywJI&amp;t=122s">视频</a>可以帮助你打消这个顾虑。</p>
-<p><img src="/source/img/LLM/graphrag-NER.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/LLM/graphrag-NER.png" srcset="/img/loading.gif" lazyload alt=""></p>
 <p>然而，对于一些专业知识领域（例如科学、医学、法律专用词），LLM 就需要一些 few-shot 例子才能更好地完成这个任务，此外 graphrag 还支持针对 graph node 关联的其他协变量的二次提取 prompt。默认的协变量 prompt 旨在提取与实体相关的信息，包括主题、对象、类型、描述、源文本跨度以及开始和结束日期等。</p>
 <h3 id="图的构建与元素总结">图的构建与元素总结</h3>
 <p>从文本块中提取到 entities，以及他们的属性、相互关系后，就可以建立出 graph 了。可以将这些 entities 作为图的 node，相互关系是图的 edge。整张图就是同构无向权重图，</p>
@@ -423,7 +423,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2024年10月22日</div>
+          <div>2024年11月9日</div>
         </div>
       
       
