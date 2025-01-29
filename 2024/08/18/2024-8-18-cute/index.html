@@ -1,0 +1,886 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Layout（一）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入 CUTLASS 之 CuTe 详解">
+<meta property="og:url" content="https://dingfen.github.io/2024/08/18/2024-8-18-cute/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="Layout（一）">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/cutlass_index.jpg">
+<meta property="article:published_time" content="2024-08-18T11:13:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="CUTLASS">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/cutlass_index.jpg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入 CUTLASS 之 CuTe 详解 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/LLM/cutlass.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入 CUTLASS 之 CuTe 详解"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-08-18 19:13" pubdate>
+          2024年8月18日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入 CUTLASS 之 CuTe 详解</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>什么是 CuTe</h1>
+<p>CuTe 就是 CUDA Tensor。更准确地说，是 nvidia 在 <a target="_blank" rel="noopener" href="https://github.com/NVIDIA/cutlass/tree/main">CUTLASS 3.0项目</a>中开发并提供的一组 C++ CUDA Template 抽象工具，它主要用于定义和操作在 CUDA 中的有多维分层 layout 的线程和数据。</p>
+<p>CuTe 最主要的概念就是 Layout 和 Tensor：</p>
+<ul>
+<li>Layout&lt;Shape, Stride&gt; 可以把它理解成 function，作用就是将 n 维的连续坐标映射到 1 维的存储空间中</li>
+<li>Tensor 有了 Layout 之后，就可以将指针传给 Tensor，于是 Tensor 就可以用来做计算了！</li>
+</ul>
+<p>此外，还需要特别注意的是，<strong>对于一个同样的连续地址空间，使用不同的 Layout 可以让 Tensor 的维度和排布不同</strong>。这就给了 CuTe 很大的灵活性，让它能够处理复杂的地址变换，帮助程序员摆脱 CUDA 编程中繁琐复杂的数据线程排布，让程序员可以专注于算法的逻辑描述。</p>
+<p>当然，程序员也不太可能完全不关系数据（或线程）的排布方式，CuTe 也提供了许多健壮的 API 来帮助程序员更好地操控数据。</p>
+<p>在真正的效果面前，文字都是苍白的。我们来看个具体的例子：</p>
+<p>在 CuTe 之前，我们为了高性能地执行 CUDA 并行，需要花费大量时间在理解每个线程和线程块要处理哪部分数据，最终写出左边的“丑陋代码”：不仅不易阅读理解，更不容易调试和维护；而在 CuTe 之后，<strong>只要</strong>程序员掌握了它的 API，并正确地理清数据和线程的布局，准确地使用 layout 等模板类，代码可读性就能大幅提高了，也更容易调试修改。</p>
+<center>
+ <img src="/img/PP/before.PNG" srcset="/img/loading.gif" lazyload width="45%"/>
+ <img src="/img/PP/after.PNG" srcset="/img/loading.gif" lazyload width="45%"/>
+</center>
+<p>轻松驾驭 CuTe 也绝非易事。首先，它用大量天书般的 C++ Template 编写，因此需要程序员有扎实的 C++ 功底；其次由于 CuTe 的核心抽象是分层地多维 layout，并且它必须足够强大到表示 CUDA 并行计算时的几乎一切操作，这也意味着有时要理解它也十分困难。总之，CuTe 的学习曲线非常陡峭，一点都不 cute ！</p>
+<p>本博客致力于和大家一起探讨 CuTe 的相关使用，尽可能降低学习曲线。</p>
+<p>在开始前，还是提醒各位读者，若有不明白的地方，可以速览参考<a target="_blank" rel="noopener" href="https://github.com/NVIDIA/cutlass/blob/main/media/docs/cute/00_quickstart.md">官方文档</a>。</p>
+<h1>Layout</h1>
+<p><code>Layout</code> 是 CuTe 的核心抽象，弄懂了 <code>Layout</code> 就基本学会了一半 CuTe。<code>Layout</code> 概念提供了一种快速找到多维数据与坐标的映射关系，使得程序员更好地操作线程做并行运算，其本质就是如何快速地将“多维”坐标映射在“一维”的内存上，因此也可以说：</p>
+<blockquote>
+<p>Layouts 是整数（逻辑一维坐标）到整数（一维索引）的函数<br>
+Layouts are functions from integers to integers.</p>
+</blockquote>
+<h2 id="从例子开始">从例子开始</h2>
+<p>先来看几个使用 Layout 来摆布数据的例子，直观地感受一下 CuTe Layout：</p>
+<h3 id="例一">例一</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;cute/tensor.hpp&gt;</span></span><br><span class="hljs-comment">// ...</span><br>  <span class="hljs-keyword">auto</span> tensor_shape = <span class="hljs-built_in">make_shape</span>(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>);<br>  <span class="hljs-keyword">auto</span> tensor_stride = <span class="hljs-built_in">make_stride</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>);<br>  <span class="hljs-built_in">print_layout</span>(<span class="hljs-built_in">make_layout</span>(tensor_shape, tensor_stride));<br></code></pre></td></tr></table></figure>
+<p>输出结果：</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs tap">(2,3):(1,2)<br>     <span class="hljs-number"> 0 </span> <span class="hljs-number"> 1 </span> <span class="hljs-number"> 2 </span><br>    +---+---+---+<br><span class="hljs-number"> 0 </span> |<span class="hljs-number"> 0 </span>|<span class="hljs-number"> 2 </span>|<span class="hljs-number"> 4 </span>|<br>    +---+---+---+<br><span class="hljs-number"> 1 </span> |<span class="hljs-number"> 1 </span>|<span class="hljs-number"> 3 </span>|<span class="hljs-number"> 5 </span>|<br>    +---+---+---+<br></code></pre></td></tr></table></figure>
+<p>(2,3):(1,2) 中前面的括号表示 Tensor 的形状，后面的括号表示在不同维度下的 Stride。这里我们定义了一个 2x3 的 tensor，2 行 3 列。至于 stride，在前一维度（行维度），stride=1，表示映射到一维空间中，按行方向递增时，stride +1；在后一维度（列维度），stride=2，表示映射到一维空间中，按列方向递增时，stride +2。</p>
+<h3 id="例二">例二</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++">tensor_shape = <span class="hljs-built_in">make_shape</span>(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>);<br>tensor_stride = <span class="hljs-built_in">make_stride</span>(<span class="hljs-number">3</span>, <span class="hljs-number">1</span>);<br><span class="hljs-built_in">print_layout</span>(<span class="hljs-built_in">make_layout</span>(tensor_shape, tensor_stride));<br></code></pre></td></tr></table></figure>
+<p>输出结果：</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs tap">(2,3):(3,1)<br>     <span class="hljs-number"> 0 </span> <span class="hljs-number"> 1 </span> <span class="hljs-number"> 2 </span><br>    +---+---+---+<br><span class="hljs-number"> 0 </span> |<span class="hljs-number"> 0 </span>|<span class="hljs-number"> 1 </span>|<span class="hljs-number"> 2 </span>|<br>    +---+---+---+<br><span class="hljs-number"> 1 </span> |<span class="hljs-number"> 3 </span>|<span class="hljs-number"> 4 </span>|<span class="hljs-number"> 5 </span>|<br>    +---+---+---+<br></code></pre></td></tr></table></figure>
+<p>定义了一个 2x3 的 tensor，2 行 3 列。至于 stride，在前一维度（行维度），stride=3，表示映射到一维空间中，按行方向递增时，stride +3；在后一维度（列维度），stride=2，表示映射到一维空间中，按列方向递增时，stride +1。</p>
+<h3 id="例三">例三</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++">Layout layout = <span class="hljs-built_in">make_layout</span>(<span class="hljs-built_in">make_shape</span> (<span class="hljs-built_in">make_shape</span> (<span class="hljs-number">2</span>,<span class="hljs-number">2</span>), <span class="hljs-number">2</span>),<br>                            <span class="hljs-built_in">make_stride</span>(<span class="hljs-built_in">make_stride</span>(<span class="hljs-number">4</span>,<span class="hljs-number">2</span>), <span class="hljs-number">1</span>));<br><span class="hljs-built_in">print_layout</span>(layout);<br></code></pre></td></tr></table></figure>
+<p>输出结果：</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs tap">((2,2),2):((4,2),1)<br>     <span class="hljs-number"> 0 </span> <span class="hljs-number"> 1 </span><br>    +---+---+<br><span class="hljs-number"> 0 </span> |<span class="hljs-number"> 0 </span>|<span class="hljs-number"> 1 </span>|<br>    +---+---+<br><span class="hljs-number"> 1 </span> |<span class="hljs-number"> 4 </span>|<span class="hljs-number"> 5 </span>|<br>    +---+---+<br><span class="hljs-number"> 2 </span> |<span class="hljs-number"> 2 </span>|<span class="hljs-number"> 3 </span>|<br>    +---+---+<br><span class="hljs-number"> 3 </span> |<span class="hljs-number"> 6 </span>|<span class="hljs-number"> 7 </span>|<br>    +---+---+<br></code></pre></td></tr></table></figure>
+<p>可以这样理解，在行维度上，我们有未知的子 tensor，该子 tensor 有两行（此为 shape 第一个2），行之间的 stride 为 4（所以 stride 第一个数为 4）；然后该子 tensor 在整个大 tensor 中会重复两次（此为 shape 的第二个 2），相对应地，子 tensor 间的 stride 为 2（此为 stride 的第二个 2）。</p>
+<h3 id="例四">例四</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++">Layout layout = <span class="hljs-built_in">make_layout</span>(<span class="hljs-built_in">make_shape</span> (<span class="hljs-number">8</span>,<span class="hljs-built_in">make_shape</span> (<span class="hljs-number">2</span>,<span class="hljs-number">2</span>)),<br>                            <span class="hljs-built_in">make_stride</span>(<span class="hljs-number">2</span>,<span class="hljs-built_in">make_stride</span>(<span class="hljs-number">1</span>,<span class="hljs-number">16</span>)));<br><span class="hljs-built_in">print_layout</span>(layout);<br></code></pre></td></tr></table></figure>
+<p>输出结果：</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs tap">(8,(2,2)):(2,(1,16))<br>      <span class="hljs-number"> 0 </span>  <span class="hljs-number"> 1 </span>  <span class="hljs-number"> 2 </span>  <span class="hljs-number"> 3 </span><br>    +----+----+----+----+<br><span class="hljs-number"> 0 </span> | <span class="hljs-number"> 0 </span>| <span class="hljs-number"> 1 </span>|<span class="hljs-number"> 16 </span>|<span class="hljs-number"> 17 </span>|<br>    +----+----+----+----+<br><span class="hljs-number"> 1 </span> | <span class="hljs-number"> 2 </span>| <span class="hljs-number"> 3 </span>|<span class="hljs-number"> 18 </span>|<span class="hljs-number"> 19 </span>|<br>    +----+----+----+----+<br><span class="hljs-number"> 2 </span> | <span class="hljs-number"> 4 </span>| <span class="hljs-number"> 5 </span>|<span class="hljs-number"> 20 </span>|<span class="hljs-number"> 21 </span>|<br>    +----+----+----+----+<br><span class="hljs-number"> 3 </span> | <span class="hljs-number"> 6 </span>| <span class="hljs-number"> 7 </span>|<span class="hljs-number"> 22 </span>|<span class="hljs-number"> 23 </span>|<br>    +----+----+----+----+<br><span class="hljs-number"> 4 </span> | <span class="hljs-number"> 8 </span>| <span class="hljs-number"> 9 </span>|<span class="hljs-number"> 24 </span>|<span class="hljs-number"> 25 </span>|<br>    +----+----+----+----+<br><span class="hljs-number"> 5 </span> |<span class="hljs-number"> 10 </span>|<span class="hljs-number"> 11 </span>|<span class="hljs-number"> 26 </span>|<span class="hljs-number"> 27 </span>|<br>    +----+----+----+----+<br><span class="hljs-number"> 6 </span> |<span class="hljs-number"> 12 </span>|<span class="hljs-number"> 13 </span>|<span class="hljs-number"> 28 </span>|<span class="hljs-number"> 29 </span>|<br>    +----+----+----+----+<br><span class="hljs-number"> 7 </span> |<span class="hljs-number"> 14 </span>|<span class="hljs-number"> 15 </span>|<span class="hljs-number"> 30 </span>|<span class="hljs-number"> 31 </span>|<br>    +----+----+----+----+<br></code></pre></td></tr></table></figure>
+<p>同理可知道，在列方向上，Shape 的第一个 2 表示，列内的子 tensor pattern 有两列，第二个 2 表示列一共有两个子 pattern 。Stride 的 1 表示在这个子 pattern 内的 stride 为 1，16 表示子 pattern 间的 stride 为 16。</p>
+<h2 id="基本类型和概念">基本类型和概念</h2>
+<p>相信前面的三个例子给到了读者对 Layout 的一个基本理解。因此在本小节中，我们来系统地梳理一下 CuTe Layout。</p>
+<h3 id="Tuple">Tuple</h3>
+<p>CuTe 以元组（tuple） 为起始，<code>cute::tuple</code> 包含了若干个元素组成的有限序列元组，其行为与 <code>std::tuple</code> 类似，但引入了一些 C++ templates arguments 的限制，并削减了部分实现以提升性能。</p>
+<h3 id="IntTuple">IntTuple</h3>
+<p>cuTe 还定义了 <code>IntTuple</code> 概念。为的就是实现上面例三、例四中令大家一时感到费解的 make_shape 嵌套。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">make_shape</span> (<span class="hljs-built_in">make_shape</span> (<span class="hljs-number">2</span>,<span class="hljs-number">2</span>), <span class="hljs-number">2</span>)<br></code></pre></td></tr></table></figure>
+<p>IntTuple 既可作为一个整数，也可作为一个 Tuple 类型。这个递归定义允许我们构建任意嵌套的 Layout。以下任何一个都是 IntTuple 的有效模板参数：</p>
+<ul>
+<li><code>int&#123;2&#125;</code> 运行时整数，或者称之为动态整数，就是 C++ 的正常整数类型比如 <code>int</code> <code>size_t</code> 等等，只要是 <code>std::is_integral&lt;T&gt;</code> 的都是</li>
+<li><code>Int&lt;3&gt;&#123;&#125;</code> 编译期整数，或称之为静态整数。CuTe 通过 <code>cute::C&lt;Value&gt;</code> 来定义 CUDA 兼容的静态整数类型，使得这些整数的计算能在编译期内完成。CuTe 将别名 <code>_1</code>、<code>_2</code>、<code>_3</code>等定义为 <code>Int&lt;1&gt;</code>、<code>Int&lt;2&gt;</code>、<code>Int&lt;3&gt;</code>等类型。</li>
+<li>带有任何模板参数的 IntTuple，比如 <code>make_tuple(int&#123;2&#125;, Int&lt;3&gt;&#123;&#125;)</code></li>
+</ul>
+<p>CuTe 不仅将 IntTuple 用在了 Layout 上，还会在很多其他的地方比如 Step 和 Coord 等用到它。</p>
+<p>IntTuple 的相关 API 操作：</p>
+<ul>
+<li><code>rank(IntTuple)</code>: 返回 IntTuple 的元素个数</li>
+<li><code>get&lt;I&gt;(IntTuple)</code>: 返回 IntTuple 的第Ith 个元素</li>
+<li><code>depth(IntTuple)</code>: 返回 IntTuple 的嵌套层数，整数为 0</li>
+<li><code>size(IntTuple)</code>: 返回 IntTuple 中所有元素的乘积。</li>
+</ul>
+<h2 id="Layout-的使用">Layout 的使用</h2>
+<p>Layout 本质上就是由一对 IntTuple 组成，Shape 和 Stride。Shape 定义了 Tensor 的大小，Stride 定义了元素间的距离。因此 Layout 也有许多与 IntTuple 类似的操作：</p>
+<ul>
+<li><code>rank(Layout)</code>: Layout 的维度，等同于 Shape 的 <code>rank(IntTuple)</code></li>
+<li><code>get&lt;I&gt;(Layout)</code>: 返回 Layout 的第 Ith 个元素</li>
+<li><code>depth(Layout)</code>: 返回 Layout 的嵌套层数，整数为 0</li>
+<li><code>shape(Layout)</code>: The shape of the Layout</li>
+<li><code>stride(Layout)</code>: The stride of the Layout</li>
+<li><code>size(Layout)</code>: 返回 Layout 中所有元素的乘积。等同于 <code>size(shape(Layout))</code></li>
+<li><code>cosize(Layout)</code>: The size of the Layout function’s codomain (not necessarily the range). Equivalent to A(size(A) - 1) + 1</li>
+</ul>
+<h3 id="Layout-坐标与索引">Layout 坐标与索引</h3>
+<p>刚才我们给出的例子都是二维的矩阵，事实上一维 vector 也是可以用 CuTe 表示的，只不过 Layout 维度 rank == 1。例如，Layout 8:1 就是 8 个元素的连续 vector</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Layout</span>:  <span class="hljs-number">8</span>:<span class="hljs-number">1</span><br><span class="hljs-attribute">Coord</span> :  <span class="hljs-number">0</span>  <span class="hljs-number">1</span>  <span class="hljs-number">2</span>  <span class="hljs-number">3</span>  <span class="hljs-number">4</span>  <span class="hljs-number">5</span>  <span class="hljs-number">6</span>  <span class="hljs-number">7</span><br><span class="hljs-attribute">Index</span> :  <span class="hljs-number">0</span>  <span class="hljs-number">1</span>  <span class="hljs-number">2</span>  <span class="hljs-number">3</span>  <span class="hljs-number">4</span>  <span class="hljs-number">5</span>  <span class="hljs-number">6</span>  <span class="hljs-number">7</span><br></code></pre></td></tr></table></figure>
+<p>这里我们开始引入 Coord 坐标来表示数据在 Tensor 的相对位置。使用 index 索引来表示数据在内存上的位置，使用 <code>print_layout</code> 打印出来的都是 index。</p>
+<p>相似的，Layout 8:2 中，Coord 是不变的（仍然是 8 个元素），但 index 因为 Stride 为 2，内存上会空一个存一个数据：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Layout</span>:  <span class="hljs-number">8</span>:<span class="hljs-number">2</span><br><span class="hljs-attribute">Coord</span> :  <span class="hljs-number">0</span>  <span class="hljs-number">1</span>  <span class="hljs-number">2</span>  <span class="hljs-number">3</span>  <span class="hljs-number">4</span>  <span class="hljs-number">5</span>  <span class="hljs-number">6</span>  <span class="hljs-number">7</span><br><span class="hljs-attribute">Index</span> :  <span class="hljs-number">0</span>  <span class="hljs-number">2</span>  <span class="hljs-number">4</span>  <span class="hljs-number">6</span>  <span class="hljs-number">8</span> <span class="hljs-number">10</span> <span class="hljs-number">12</span> <span class="hljs-number">14</span><br></code></pre></td></tr></table></figure>
+<p>所有的多维矩阵在内存上都是一维存储的。要想将二维 Layout 要转化为一维 vector ，需要在最外层套上一层括号，即将 (4,2):(2,1) 改写为 ((4,2)):((2,1))。顺序是列主序，从第一列开始拆解，从上到下从左到右一个个按序写入：</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs tap">Layout:  ((4,2)):((2,1))<br>     <span class="hljs-number"> 0 </span> <span class="hljs-number"> 1 </span><br>    +---+---+<br><span class="hljs-number"> 0 </span> |<span class="hljs-number"> 0 </span>|<span class="hljs-number"> 1 </span>|<br>    +---+---+<br><span class="hljs-number"> 1 </span> |<span class="hljs-number"> 2 </span>|<span class="hljs-number"> 3 </span>|<br>    +---+---+<br><span class="hljs-number"> 2 </span> |<span class="hljs-number"> 4 </span>|<span class="hljs-number"> 5 </span>|<br>    +---+---+<br><span class="hljs-number"> 3 </span> |<span class="hljs-number"> 6 </span>|<span class="hljs-number"> 7 </span>|<br>    +---+---+<br>Coord : <span class="hljs-number"> 0 </span><span class="hljs-number"> 1 </span><span class="hljs-number"> 2 </span><span class="hljs-number"> 3 </span><span class="hljs-number"> 4 </span><span class="hljs-number"> 5 </span><span class="hljs-number"> 6 </span> 7<br>Index : <span class="hljs-number"> 0 </span><span class="hljs-number"> 2 </span><span class="hljs-number"> 4 </span><span class="hljs-number"> 6 </span><span class="hljs-number"> 1 </span><span class="hljs-number"> 3 </span><span class="hljs-number"> 5 </span> 7<br><br>Layout:  ((4,2)):((1,4))<br>     <span class="hljs-number"> 0 </span> <span class="hljs-number"> 1 </span><br>    +---+---+<br><span class="hljs-number"> 0 </span> |<span class="hljs-number"> 0 </span>|<span class="hljs-number"> 4 </span>|<br>    +---+---+<br><span class="hljs-number"> 1 </span> |<span class="hljs-number"> 1 </span>|<span class="hljs-number"> 5 </span>|<br>    +---+---+<br><span class="hljs-number"> 2 </span> |<span class="hljs-number"> 2 </span>|<span class="hljs-number"> 6 </span>|<br>    +---+---+<br><span class="hljs-number"> 3 </span> |<span class="hljs-number"> 3 </span>|<span class="hljs-number"> 7 </span>|<br>    +---+---+<br>Coord : <span class="hljs-number"> 0 </span><span class="hljs-number"> 1 </span><span class="hljs-number"> 2 </span><span class="hljs-number"> 3 </span><span class="hljs-number"> 4 </span><span class="hljs-number"> 5 </span><span class="hljs-number"> 6 </span> 7<br>Index : <span class="hljs-number"> 0 </span><span class="hljs-number"> 1 </span><span class="hljs-number"> 2 </span><span class="hljs-number"> 3 </span><span class="hljs-number"> 4 </span><span class="hljs-number"> 5 </span><span class="hljs-number"> 6 </span> 7<br></code></pre></td></tr></table></figure>
+<p>除了简单的数字坐标外，还有更复杂更易理解的多维坐标。之前提过，一维坐标是将矩阵以列主序的方式从上到下从左到右；二维坐标则使用行号列号两个数字做寻找，而自然坐标则与 tensor layout 的形式完全一致。数学上，自然坐标与 Stride 做内积可以得到 index 索引。</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs tap">Layout (3, (2, 3)):(3, (12, 1))<br>      <span class="hljs-number"> 0 </span>   <span class="hljs-number"> 1 </span>   <span class="hljs-number"> 2 </span>   <span class="hljs-number"> 3 </span>   <span class="hljs-number"> 4 </span>   <span class="hljs-number"> 5 </span>    &lt;== 1-D col coord<br>     (0,0) (1,0) (0,1) (1,1) (0,2) (1,2)   &lt;== 2-D col coord (j,k)<br>    +-----+-----+-----+-----+-----+-----+<br><span class="hljs-number"> 0 </span> | <span class="hljs-number"> 0 </span> | <span class="hljs-number"> 12 </span>| <span class="hljs-number"> 1 </span> | <span class="hljs-number"> 13 </span>| <span class="hljs-number"> 2 </span> | <span class="hljs-number"> 14 </span>|<br>    +-----+-----+-----+-----+-----+-----+<br><span class="hljs-number"> 1 </span> | <span class="hljs-number"> 3 </span> | <span class="hljs-number"> 15 </span>| <span class="hljs-number"> 4 </span> | <span class="hljs-number"> 16 </span>| <span class="hljs-number"> 5 </span> | <span class="hljs-number"> 17 </span>|<br>    +-----+-----+-----+-----+-----+-----+<br><span class="hljs-number"> 2 </span> | <span class="hljs-number"> 6 </span> | <span class="hljs-number"> 18 </span>| <span class="hljs-number"> 7 </span> | <span class="hljs-number"> 19 </span>| <span class="hljs-number"> 8 </span> | <span class="hljs-number"> 20 </span>|<br>    +-----+-----+-----+-----+-----+-----+<br>对于Tensor中的索引 17，有如下坐标<br>Coord: 16<br>Coord: (1, 5)<br>Coord: (1, (1, 2))<br></code></pre></td></tr></table></figure>
+<p>在 CuTe 中，可使用 <code>idx2crd</code> 将索引转换到坐标：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">auto</span> shape = Shape&lt;_3,Shape&lt;_2,_3&gt;&gt;&#123;&#125;;<br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">idx2crd</span>(   <span class="hljs-number">16</span>, shape));                                <span class="hljs-comment">// (1,(1,2))</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">idx2crd</span>(_16&#123;&#125;, shape));                                <span class="hljs-comment">// (_1,(_1,_2))</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">idx2crd</span>(<span class="hljs-built_in">make_coord</span>(   <span class="hljs-number">1</span>,<span class="hljs-number">5</span>), shape));                   <span class="hljs-comment">// (1,(1,2))</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">idx2crd</span>(<span class="hljs-built_in">make_coord</span>(_1&#123;&#125;,<span class="hljs-number">5</span>), shape));                   <span class="hljs-comment">// (_1,(1,2))</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">idx2crd</span>(<span class="hljs-built_in">make_coord</span>(   <span class="hljs-number">1</span>,<span class="hljs-built_in">make_coord</span>(<span class="hljs-number">1</span>,   <span class="hljs-number">2</span>)), shape));  <span class="hljs-comment">// (1,(1,2))</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">idx2crd</span>(<span class="hljs-built_in">make_coord</span>(_1&#123;&#125;,<span class="hljs-built_in">make_coord</span>(<span class="hljs-number">1</span>,_2&#123;&#125;)), shape));  <span class="hljs-comment">// (_1,(1,_2))</span><br></code></pre></td></tr></table></figure>
+<p>亦可使用 <code>crd2idx</code> 将坐标转换为索引：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">auto</span> shape  = Shape &lt;_3,Shape&lt;  _2,_3&gt;&gt;&#123;&#125;;<br><span class="hljs-keyword">auto</span> stride = Stride&lt;_3,Stride&lt;_12,_1&gt;&gt;&#123;&#125;;<br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">crd2idx</span>(   <span class="hljs-number">16</span>, shape, stride));       <span class="hljs-comment">// 17</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">crd2idx</span>(_16&#123;&#125;, shape, stride));       <span class="hljs-comment">// _17</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">crd2idx</span>(<span class="hljs-built_in">make_coord</span>(   <span class="hljs-number">1</span>,   <span class="hljs-number">5</span>), shape, stride));  <span class="hljs-comment">// 17</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">crd2idx</span>(<span class="hljs-built_in">make_coord</span>(_1&#123;&#125;,   <span class="hljs-number">5</span>), shape, stride));  <span class="hljs-comment">// 17</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">crd2idx</span>(<span class="hljs-built_in">make_coord</span>(_1&#123;&#125;,_5&#123;&#125;), shape, stride));  <span class="hljs-comment">// _17</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">crd2idx</span>(<span class="hljs-built_in">make_coord</span>(   <span class="hljs-number">1</span>,<span class="hljs-built_in">make_coord</span>(   <span class="hljs-number">1</span>,   <span class="hljs-number">2</span>)), shape, stride));  <span class="hljs-comment">// 17</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">crd2idx</span>(<span class="hljs-built_in">make_coord</span>(_1&#123;&#125;,<span class="hljs-built_in">make_coord</span>(_1&#123;&#125;,_2&#123;&#125;)), shape, stride));  <span class="hljs-comment">// _17</span><br></code></pre></td></tr></table></figure>
+<p>CuTe 还支持 Tensor 的一维或多维索引，在本例中，如果我们要索引到 5 这个数字，那么可以通过 Tensor(4) 或者 Tensor(1, 1) 来获得。我们来看一个更复杂的例子</p>
+<h3 id="Layout-兼容">Layout 兼容</h3>
+<p>如果布局A和布局B的形状是兼容的，那么它们就是兼容的。如果A的任何自然坐标也是B的有效坐标，则形状A与形状B兼容。</p>
+<p>Flatten<br>
+“Flatten”操作“un-nest”可能嵌套的Layout。例如</p>
+<h1>Layout 代数学</h1>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/CUTLASS/" class="print-no-link">#CUTLASS</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入 CUTLASS 之 CuTe 详解</div>
+      <div>https://dingfen.github.io/2024/08/18/2024-8-18-cute/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年8月18日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/10/13/2024-10-20-graphrag/" title="GraphRAG 个人部署">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">GraphRAG 个人部署</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/08/02/2024-10-30-vllm/" title="VLLM custom allreduce 实现">
+                        <span class="hidden-mobile">VLLM custom allreduce 实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

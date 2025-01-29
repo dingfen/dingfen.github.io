@@ -1,0 +1,917 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="3060 TI 玩转大模型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GraphRAG 个人部署">
+<meta property="og:url" content="https://dingfen.github.io/2024/10/13/2024-10-20-graphrag/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="3060 TI 玩转大模型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
+<meta property="article:published_time" content="2024-10-13T08:13:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>GraphRAG 个人部署 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/LLM/GraphRag.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="GraphRAG 个人部署"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-10-13 16:13" pubdate>
+          2024年10月13日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">GraphRAG 个人部署</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>如何本地运行 graphrag</h1>
+<p>有条件的朋友们可以在本地部署 graphrag 哦，然后可以将你的私人文档喂进去，成为你自己的私有得力助手！</p>
+<h2 id="需要的工具">需要的工具</h2>
+<p>本篇指导内容将基于你的个人电脑来构建 graphrag，在开始之前，需要你的电脑有：</p>
+<ul>
+<li>3060TI GPU 一张，显存为 8 GB</li>
+<li>内存空间不少于 16 GB</li>
+<li>硬盘空间不少于 50 GB</li>
+</ul>
+<p>检查好设备后，还需要你有如下的软件环境：</p>
+<ul>
+<li>Linux 系统或 WSL2</li>
+<li>docker</li>
+<li>Nvidia 的 docker 镜像，例如：<a target="_blank" rel="noopener" href="http://nvcr.io/nvidia/pytorch:24.06-py3">nvcr.io/nvidia/pytorch:24.06-py3</a></li>
+</ul>
+<p>docker内需要下载：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/microsoft/graphrag/tree/v0.3.0">graphrag 源码</a>，我当前用的版本是 0.3.0</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/lm-sys/FastChat">FastChat</a> 这是基于大模型的训练、服务开源框架</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm">Vllm</a> 加速大模型推理的推理开源框架</li>
+</ul>
+<p>此外，我们还需要用到一些 LLM 权重，你可以自己挑选你喜欢的模型，也可以按照后面的教程下载：</p>
+<ul>
+<li>下载好的 LLM 权重数据（你可以从<a target="_blank" rel="noopener" href="https://huggingface.co/">huggingface网站</a>上选择可以在本地运行的合适的大模型）</li>
+<li>下载好的 LLM embedding 模型权重数据（同样也需要从<a target="_blank" rel="noopener" href="https://huggingface.co/">huggingface网站</a>上下载）</li>
+<li>下载好的 encode 模型（参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_35054222/article/details/137127660">这篇博客</a>下载）</li>
+</ul>
+<p>好，准备好后就可以开始了！</p>
+<h2 id="环境安装流程">环境安装流程</h2>
+<p>首先，启动 docker：</p>
+<p>docker 内拉取 Nvidia 发布的 pytorch docker 镜像，不宜选择太老的镜像，最好是 2.2 版本以后，可以选择这个镜像：<a target="_blank" rel="noopener" href="http://nvcr.io/nvidia/pytorch:24.06-py3">nvcr.io/nvidia/pytorch:24.06-py3</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker pull nvcr.io/nvidia/pytorch:24.06-py3<br></code></pre></td></tr></table></figure>
+<p>进入 docker：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker run --priviledged=<span class="hljs-literal">true</span> --pid=host --ipc=host --network=host --shm-size=8g --<span class="hljs-built_in">ulimit</span> memlock=-1 \<br>  --<span class="hljs-built_in">ulimit</span> stack=67108864 --init -it -v &lt;dir-you-want-to-mnt-on-the-docker&gt;:&lt;path-in-the-docker&gt; \<br>  -w /workspace --name=&lt;container-name&gt; nvcr.io/nvidia/pytorch:24.06-py3 bash<br></code></pre></td></tr></table></figure>
+<p>简单给大家解释一下启动 docker 的命令。<br>
+这个命令是用来在Docker中运行一个容器的，它包含了多个选项（options）来配置容器的运行环境。下面是对每一个选项的详细解释：</p>
+<ul>
+<li>
+<p><strong><code>--privileged=true</code></strong>：给容器内部 root 权限</p>
+</li>
+<li>
+<p><strong><code>--pid=host</code></strong>：允许容器共享宿主机的PID（进程ID）命名空间</p>
+</li>
+<li>
+<p><strong><code>--ipc=host</code></strong>：允许容器能够使用宿主机的IPC（进程间通信）命名空间</p>
+</li>
+<li>
+<p><strong><code>--network=host</code></strong>：允许容器直接使用宿主机的网络堆栈</p>
+</li>
+<li>
+<p><strong><code>--shm-size=8g</code></strong>：设置了容器内共享内存（SHM）的大小为8GB</p>
+</li>
+<li>
+<p><strong><code>--ulimit memlock=-1</code></strong>：设置容器内进程的内存锁定（memlock）限制。<code>-1</code>表示取消限制，允许进程锁定任意数量的内存。</p>
+</li>
+<li>
+<p><strong><code>--ulimit stack=67108864</code></strong>：设置了容器内进程的栈大小限制为64MB（67108864字节）。</p>
+</li>
+<li>
+<p><strong><code>--init</code></strong>：这个选项在容器内运行一个小的初始化进程（通常是<code>tini</code>或<code>dummy-init</code>），这个进程会作为PID 1运行，并负责处理僵尸进程和信号转发。</p>
+</li>
+<li>
+<p><strong><code>-it</code></strong>：这是两个选项的组合。<code>-i</code>（或<code>--interactive</code>）保持容器的标准输入开放，而<code>-t</code>（或<code>--tty</code>）分配一个伪终端。这两个选项通常一起使用，以提供一个交互式shell。</p>
+</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip3 install --upgrade pip<br>pip3 install setuptools==69.5.1<br></code></pre></td></tr></table></figure>
+<p>进入到 FastChat 目录后，从源码编译安装 FastChat：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> FastChat<br>pip3 install -e <span class="hljs-string">&quot;.[model_worker,webui]&quot;</span><br></code></pre></td></tr></table></figure>
+<p>安装 vllm，需要根据你镜像中使用的 pytorch 版本来决定 vllm 的版本，一般来说安装的 vllm 版本越新越好。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install vllm==0.6.0<br></code></pre></td></tr></table></figure>
+<p>安装 vllm 期间，pip 可能会自动帮你安装 pytorch、transformers 等库，这些也都是必要的。</p>
+<p>需要额外提一嘴的是，flash-attention-2 这个包的编译过程对我们小电脑来说极为不友好，参考这里的<a target="_blank" rel="noopener" href="https://github.com/Dao-AILab/flash-attention/issues/945">链接</a>。而安装 2.4.2 版本的 flash-attn 还会出现 undefined symbol 错误，我的建议是不如直接删了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip uninstall flash-attn -y<br></code></pre></td></tr></table></figure>
+<p>这里力荐 vllm 最近发布了专用版的 vllm-flash-attn，安装相对简单，速度也不逊于真正的 flash-attn。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install vllm==2.6.1<br></code></pre></td></tr></table></figure>
+<p>安装 graphrag，源码安装开发版，可根据 <a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/developing/">graphrag 官网 get start</a>，需要先安装 pipx 和 poetry</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">apt update &amp;&amp; apt install pipx<br>pipx install poetry<br>poetry install<br></code></pre></td></tr></table></figure>
+<p>我推荐你直接 pip install 安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pip install graphrag==0.3.6<br></code></pre></td></tr></table></figure>
+<p>至此，环境基本安装完成了！</p>
+<h2 id="graphrag-运行">graphrag 运行</h2>
+<h3 id="初始化与文件配置">初始化与文件配置</h3>
+<p>前面提到，要让 graphrag 在本地运行，需要三个模型权重：</p>
+<ul>
+<li>对话 LLM 权重数据，受设备限制，我选择了 <a target="_blank" rel="noopener" href="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-AWQ">Qwen2.5-3B-Instruct-AWQ</a> （不得不说 Qwen 系列的模型真的很丰富）</li>
+<li>embedding 权重模型，同样受设备限制，并且考虑到主要使用语言是中文，因此选择了 <a target="_blank" rel="noopener" href="https://huggingface.co/BAAI/bge-base-zh-v1.5">BAAI/bge-base-zh-v1.5</a></li>
+<li>cl100k_base tiktoken model 分词模型</li>
+</ul>
+<p>首先，我们需要离线地使用 cl100k_base 分词模型，下载方式参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_35054222/article/details/137127660">这篇博客</a>。</p>
+<p>加入下面的全局变量，使之使用本地的 cl100k_base tiktoken model：9b5ad71b2ce5302211f9c61530b329a4922fc6a4</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> TIKTOKEN_CACHE_DIR=&lt;path-to-cl100k_base tiktoken model-without-filename&gt;<br></code></pre></td></tr></table></figure>
+<p>创建 ragtest 文件夹，并初始化它。该文件夹中可以放置我们的输入文档资料，graphrag 配置以及输出日志，文档向量数据等等：下面的步骤与官方给出的<a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/get_started/">开始文档</a>一致</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> -p ./ragtest/input<br><span class="hljs-comment"># 将咱们要喂进去的文档放到 ./ragtest/input/ 下面 这里仅作示例</span><br>curl https://www.gutenberg.org/cache/epub/24022/pg24022.txt &gt; ./ragtest/input/book.txt<br></code></pre></td></tr></table></figure>
+<p>初始化 ragtest：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.index --init --root ./ragtest<br></code></pre></td></tr></table></figure>
+<p>初始化完成后，ragtest 文件夹内会存在一个 <code>settings.yaml</code> 的配置文件，其中包含了很多关于 graphrag 和 FastChat 连接的配置信息。因为我们是本地运行，所以需要我们根据实际情况做调整后部署 graphrag，以下是配置文件示例：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">encoding_model:</span> <span class="hljs-string">cl100k_base</span>		<span class="hljs-comment"># use encoding model: cl100k_base</span><br><span class="hljs-attr">skip_workflows:</span> []<br><span class="hljs-attr">llm:</span><br>  <span class="hljs-attr">api_key:</span> <span class="hljs-string">$&#123;GRAPHRAG_API_KEY&#125;</span><br>  <span class="hljs-attr">type:</span> <span class="hljs-string">openai_chat</span>               <span class="hljs-comment"># or azure_openai_chat</span><br>  <span class="hljs-attr">model:</span> <span class="hljs-string">Qwen2.5-3B-Instruct-AWQ</span>  <span class="hljs-comment"># 对应了我们使用的 LLM 模型</span><br>  <span class="hljs-attr">model_supports_json:</span> <span class="hljs-literal">true</span>       <span class="hljs-comment"># recommended if this is available for your model.</span><br>  <span class="hljs-attr">max_tokens:</span> <span class="hljs-number">8000</span>                <span class="hljs-comment"># Qwen2.5 支持最大上下文 128K 我们这里先设 8K</span><br>  <span class="hljs-attr">request_timeout:</span> <span class="hljs-number">100.0</span><br>  <span class="hljs-attr">api_base:</span> <span class="hljs-string">http://localhost:8000/v1</span>  <span class="hljs-comment"># 对应了 openai server 的端口</span><br><br><span class="hljs-comment">## ...</span><br><br><span class="hljs-attr">embeddings:</span><br>  <span class="hljs-attr">async_mode:</span> <span class="hljs-string">threaded</span>          <span class="hljs-comment"># or asyncio </span><br>  <span class="hljs-attr">llm:</span><br>    <span class="hljs-attr">api_key:</span> <span class="hljs-string">$&#123;GRAPHRAG_API_KEY&#125;</span><br>    <span class="hljs-attr">type:</span> <span class="hljs-string">openai_embedding</span>      <span class="hljs-comment"># or azure_openai_embedding</span><br>    <span class="hljs-attr">model:</span> <span class="hljs-string">bge-base-zh-v1.5</span>						  <span class="hljs-comment"># 对应了我们使用的 embedding 模型</span><br>    <span class="hljs-attr">api_base:</span> <span class="hljs-string">http://localhost:8000/v1</span>	<span class="hljs-comment"># 对应了 openai server 的端口</span><br><span class="hljs-comment">## ...</span><br></code></pre></td></tr></table></figure>
+<h3 id="启动模型">启动模型</h3>
+<p>graphrag 能顺利运行的前提就是大模型能顺利运行，因此首先需要启动大模型后端。</p>
+<p>Fastchat 是控制和管理大模型后端服务的框架，我们首先启动控制器：</p>
+<p>启动 fastchat controller，默认端口 21001：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.controller --host 0.0.0.0 \<br>  &gt;&gt; fastchat_controller.log  2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+<p>使用 Fastchat 启动 vllm_worker Qwen2.5-3B-Instruct-AWQ 模型，启动的 vllm work 端口要与 controller 连接上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.vllm_worker \<br>  --model-path ../Qwen2.5-3B-Instruct-AWQ --trust-remote-code --max-model-len 16000 \<br>  --host 0.0.0.0 --port 8001 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8001 &gt;&gt; fastchat_worker_qwen.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+<p>在选择 LLM 这块我经过多次尝试，发现 8GB 显存的显卡最好选择 3B 的量化模型，太小的模型（1.5B）因为能力不足无法构建 graphrag 的知识图谱，而太大的模型（7B量化）就只能允许使用不到 5000 的上下文长度（model len）了。虽然 3B 量化模型很小，但 8GB 显存依然只能将 model-len 设置为 16K，过大的 model-len 会导致 KV-Cache 占用的显存超出 GPU 的显存能力范围。</p>
+<p>从下面图可以看到，model-len 为 16K 已经是贴着 GPU 的最大内存在跑了：</p>
+<p><img src="/img/LLM/graphrag/gpu.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>使用 Fastchat 启动 bge-base-zh-v1.5 embedding 模型，同样端口要与 controller 连接上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -u -m fastchat.serve.model_worker \<br>  --model-path ../bge-base-zh-v1.5 \<br>  --host 0.0.0.0 --port 8002 --controller-address http://localhost:21001 \<br>  --worker-address http://localhost:8002 &gt;&gt; fastchat_worker_bge.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+<p>这些模型的权重文件数据都比较大，需要耐心等待若干分钟，待模型权重load完成，后端服务成功启动后，再启动 Fastchat 内的 openai API server</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">nohup</span> python -m fastchat.serve.openai_api_server \<br>  --host 0.0.0.0 --port 8000 &gt;&gt; fastchat_server.log  2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+<p>这一切都完成后，使用 <code>curl</code> 来验证一下模型是否都成功运行了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl http://localhost:8000/v1/models<br></code></pre></td></tr></table></figure>
+<p>发现返回是这个，说明成功了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">&#123;<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;list&quot;</span>,<span class="hljs-string">&quot;data&quot;</span>:[&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;Qwen2.5-3B-Instruct-AWQ&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;owned_by&quot;</span>:<span class="hljs-string">&quot;fastchat&quot;</span>,<span class="hljs-string">&quot;root&quot;</span>:<span class="hljs-string">&quot;Qwen2.5-3B-Instruct-AWQ&quot;</span>,<span class="hljs-string">&quot;parent&quot;</span>:null,<span class="hljs-string">&quot;permission&quot;</span>:[&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;modelperm-HYV9FyQLtN3VmgJbB5JGZr&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model_permission&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;allow_create_engine&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;allow_sampling&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_logprobs&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_search_indices&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_view&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_fine_tuning&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;organization&quot;</span>:<span class="hljs-string">&quot;*&quot;</span>,<span class="hljs-string">&quot;group&quot;</span>:null,<span class="hljs-string">&quot;is_blocking&quot;</span>:<span class="hljs-literal">false</span>&#125;]&#125;,&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;bge-base-zh-v1.5&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;owned_by&quot;</span>:<span class="hljs-string">&quot;fastchat&quot;</span>,<span class="hljs-string">&quot;root&quot;</span>:<span class="hljs-string">&quot;bge-base-zh-v1.5&quot;</span>,<span class="hljs-string">&quot;parent&quot;</span>:null,<span class="hljs-string">&quot;permission&quot;</span>:[&#123;<span class="hljs-string">&quot;id&quot;</span>:<span class="hljs-string">&quot;modelperm-i6VUn5ahHcW6bN2FywLqV2&quot;</span>,<span class="hljs-string">&quot;object&quot;</span>:<span class="hljs-string">&quot;model_permission&quot;</span>,<span class="hljs-string">&quot;created&quot;</span>:1729782366,<span class="hljs-string">&quot;allow_create_engine&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;allow_sampling&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_logprobs&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_search_indices&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_view&quot;</span>:<span class="hljs-literal">true</span>,<span class="hljs-string">&quot;allow_fine_tuning&quot;</span>:<span class="hljs-literal">false</span>,<span class="hljs-string">&quot;organization&quot;</span>:<span class="hljs-string">&quot;*&quot;</span>,<span class="hljs-string">&quot;group&quot;</span>:null,<span class="hljs-string">&quot;is_blocking&quot;</span>:<span class="hljs-literal">false</span>&#125;]&#125;]&#125;<br></code></pre></td></tr></table></figure>
+<p>然后，就是我们的 graphrag 大显身手的时候了！</p>
+<h3 id="离线处理">离线处理</h3>
+<p>启动 indexing pipeline，graphrag 开始调用后端的 embedding LLM 等模型对文档做离线切分，创建知识图谱，构建社区总结等等工作，该步骤会花费很长时间，可以离线完成：完成后，数据将会保存在 ragtest/output/${timestamp} 下面</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.index --root ./ragtest<br></code></pre></td></tr></table></figure>
+<p><img src="/img/LLM/graphrag/index.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>我的 3060TI 孜孜不倦地跑了近二十分钟后，它终于构建出了知识图谱，完成了索引阶段的工作：</p>
+<p><img src="/img/LLM/graphrag/success.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="在线查询">在线查询</h3>
+<p>全局查询：当用户提出的问题需要模型查询多个文档块，做出综合性地、归纳性地回答时使用，</p>
+<p>CLI 查询示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.query \<br>--root ./ragtest \<br>--method global \<br><span class="hljs-string">&quot;What are the top themes in this story?&quot;</span><br></code></pre></td></tr></table></figure>
+<p>局部查询：当用户提出的问题需要模型仔细查阅文档细节后将答案提前出来时使用，</p>
+<p>CLI 查询示例</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">python -m graphrag.query \<br>--root ./ragtest \<br>--method <span class="hljs-built_in">local</span> \<br><span class="hljs-string">&quot;Who is Scrooge, and what are his main relationships?&quot;</span><br></code></pre></td></tr></table></figure>
+<p>更多使用细节和配置方法，请详细<a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/">参考官方文档</a></p>
+<p>我自己的实践中，我使用<a target="_blank" rel="noopener" href="https://www.gov.cn/zhengce/content/2020-12/31/content_5575804.htm">这篇文档</a>作为输入，随后针对我给出的文档，向 graphrag 提出了下面的问题，它给出了针对性的回答，以及模型内部自己知识的回答：</p>
+<p><img src="/source/img/LLM/graphrag/example.png" srcset="/img/loading.gif" lazyload alt=""></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>GraphRAG 个人部署</div>
+      <div>https://dingfen.github.io/2024/10/13/2024-10-20-graphrag/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年10月13日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/10/13/2024-10-13-graphrag/" title="GraphRAG 框架">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">GraphRAG 框架</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/08/18/2024-8-18-cute/" title="深入 CUTLASS 之 CuTe 详解">
+                        <span class="hidden-mobile">深入 CUTLASS 之 CuTe 详解</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

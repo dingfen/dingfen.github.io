@@ -1,0 +1,870 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="主机与设备间的数据传输">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CUDA 进阶之内存优化">
+<meta property="og:url" content="https://dingfen.github.io/2023/09/10/2023-9-10-cuda-mem/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="主机与设备间的数据传输">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg">
+<meta property="og:image" content="https://docs.nvidia.com/cuda/archive/11.7.0/cuda-c-best-practices-guide/graphics/timeline-comparison-for-copy-and-kernel-execution.png">
+<meta property="article:published_time" content="2023-09-10T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="CUDA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>CUDA 进阶之内存优化 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="CUDA 进阶之内存优化"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-09-10 12:00" pubdate>
+          2023年9月10日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          39 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">CUDA 进阶之内存优化</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>CUDA 进阶之内存优化 关于主机与设备间的数据传输</h1>
+<h2 id="前言">前言</h2>
+<p>内存优化是性能优化主题中最重要的部分，其目标是通过最大化带宽来提高硬件的使用率和满载率。在具体实践中，我们期望尽可能多地使用快速内存，而尽可能少地使用慢速内存。本博客主要讨论主机与设备间的数据迁移以及涉及到的各种内存，并试图回答如何最好地设置、使用内存以提高 CUDA 程序的运行效率这一问题。</p>
+<p>以英伟达的 V100 设备为例，设备间内存的理论最大带宽（898 GB/s）远比设备与主机间的理论最大带宽（16 GB/s for PCIe3x16）快得多。因此，为获得最佳性能，应尽量减少主机与设备间的数据传输，即使是 GPU 上运行的内核与主机的 CPU 相比没有任何优势。更多情况下，我们应在设备内存中创建中间数据结构， 交由设备计算，最后在没有映射到主机内存的情况下销毁。</p>
+<p>此外，由于每次传输都有相关的固定开销，因此将许多小数据包装成一个较大的数据包进行传输，会比多次传输小数据包要好得多！即使这样做需要：1）将不连续的内存区域打包到一个连续的缓冲区，2）消耗一定资源来封装和解封。</p>
+<p>最后，主机和设备之间的高带宽通常是通过 page-locked（或 pinned）来实现，接下来我们将重点阐述 pinned 内存。</p>
+<h2 id="pinned-内存">pinned 内存</h2>
+<h3 id="原理">原理</h3>
+<p>pinned 内存有时也会被称作为页锁定内存，或者固定内存。本文中皆以 pinned 内存指代。</p>
+<p>pinned 内存是相对于一般的页可分配内存而言的。一般地，主机上的内存都会被操作系统采用分页机制管理，我们平时编程中遇到的“地址”事实上都是虚拟地址，需要通过地址转换才能获得物理地址（有时甚至不在物理内存中，会发生缺页），进而获得数据。</p>
+<p>因此对于页可分配内存，由于 GPU 获得的地址是虚拟内存的地址，不可直接获得对应物理内存页上的数据，因此要想实现主机与设备间的数据传输，必须先将页可分配内存上的数据转移到一个临时的 pinned 内存页上，再实现内存传输，如下图。</p>
+<p><img src="https://developer-blogs.nvidia.com/wp-content/uploads/2012/12/pinned-1024x541.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>而对于 pinned 内存，操作系统不会对其进行分页和交换操作，其内存页会被“固定存储”在物理内存中，GPU 获得的地址就是物理地址，因此可直接通过 DMA 机制在主机和 GPU 之间快速传输数据。</p>
+<p>正因如此，pinned 内存传输速率接近理论峰值。例如，在使用 PCIe3x16 的机器上，pinned 内存可以达到大约 12 GB/s 的传输速率。</p>
+<h3 id="使用">使用</h3>
+<p>pinned 内存是使用 <code>cudaHostAlloc()</code> 分配，使用 <code>cudaFreeHost()</code> 回收。对于那些已经被分配的内存区域，可使用 <code>cudaHostRegister()</code> 来 pin 住内存，无需重新分配单独的 pinned 内存再将数据拷入其中。</p>
+<p>虽然 pinned 内存速度快，但不应被过度地使用，因为它减少了操作系统和其他程序可用的物理内存量，从而拖累系统的整体性能。因此 pinned 内存其实是个稀缺资源，但令人头疼的是到底多少合适是很难知晓的。此外，pinned 内存分配可能会失败，因此应该始终检查错误，譬如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++">cudaError_t status = <span class="hljs-built_in">cudaMallocHost</span>((<span class="hljs-type">void</span>**)&amp;h_aPinned, bytes);<br><span class="hljs-keyword">if</span> (status != cudaSuccess)<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Error allocating pinned host memory\n&quot;</span>);<br></code></pre></td></tr></table></figure>
+<h3 id="示例">示例</h3>
+<p>使用 pinned 内存传输数据时仍可使用 <code>cudaMemcpy()</code> 这类函数。下面我们做个实验来看看到底 pinned 内存比一般内存要快多少。</p>
+<p>先是分配内存：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">float</span> *h_aPageable = (<span class="hljs-type">float</span>*)<span class="hljs-built_in">malloc</span>(bytes);                    <span class="hljs-comment">// host pageable</span><br><span class="hljs-type">float</span> *h_bPageable = (<span class="hljs-type">float</span>*)<span class="hljs-built_in">malloc</span>(bytes);                    <span class="hljs-comment">// host pageable</span><br><span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaMallocHost</span>((<span class="hljs-type">void</span>**)&amp;h_aPinned, bytes) );        <span class="hljs-comment">// host pinned</span><br><span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaMallocHost</span>((<span class="hljs-type">void</span>**)&amp;h_bPinned, bytes) );        <span class="hljs-comment">// host pinned</span><br><span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span>**)&amp;d_a, bytes) );                  <span class="hljs-comment">// device</span><br></code></pre></td></tr></table></figure>
+<p>然后我们需要定义一个拷贝函数，让不同的内存页来分别执行：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">profileCopies</span><span class="hljs-params">(<span class="hljs-type">float</span> *h_a, <span class="hljs-type">float</span> *h_b, <span class="hljs-type">float</span> *d, </span></span><br><span class="hljs-params"><span class="hljs-function">                   <span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> n, <span class="hljs-type">char</span> *desc)</span> </span>&#123;<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\n%s transfers\n&quot;</span>, desc);<br>  <span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> bytes = n * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>);<br><br>  <span class="hljs-comment">// events for timing</span><br>  cudaEvent_t startEvent, stopEvent; <br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventCreate</span>(&amp;startEvent) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventCreate</span>(&amp;stopEvent) );<br><br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventRecord</span>(startEvent, <span class="hljs-number">0</span>) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaMemcpy</span>(d, h_a, bytes, cudaMemcpyHostToDevice) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventRecord</span>(stopEvent, <span class="hljs-number">0</span>) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventSynchronize</span>(stopEvent) );<br><br>  <span class="hljs-type">float</span> time;<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventElapsedTime</span>(&amp;time, startEvent, stopEvent) );<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;  Host to Device bandwidth (GB/s): %f\n&quot;</span>, bytes * <span class="hljs-number">1e-6</span> / time);<br><br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventRecord</span>(startEvent, <span class="hljs-number">0</span>) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaMemcpy</span>(h_b, d, bytes, cudaMemcpyDeviceToHost) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventRecord</span>(stopEvent, <span class="hljs-number">0</span>) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventSynchronize</span>(stopEvent) );<br><br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventElapsedTime</span>(&amp;time, startEvent, stopEvent) );<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;  Device to Host bandwidth (GB/s): %f\n&quot;</span>, bytes * <span class="hljs-number">1e-6</span> / time);<br><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; n; ++i) &#123;<br>    <span class="hljs-keyword">if</span> (h_a[i] != h_b[i]) &#123;<br>      <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;*** %s transfers failed ***\n&quot;</span>, desc);<br>      <span class="hljs-keyword">break</span>;<br>    &#125;<br>  &#125;<br><br>  <span class="hljs-comment">// clean up events</span><br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventDestroy</span>(startEvent) );<br>  <span class="hljs-built_in">checkCuda</span>( <span class="hljs-built_in">cudaEventDestroy</span>(stopEvent) );<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后让他们分别执行：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// perform copies and report bandwidth</span><br><span class="hljs-built_in">profileCopies</span>(h_aPageable, h_bPageable, d_a, nElements, <span class="hljs-string">&quot;Pageable&quot;</span>);<br><span class="hljs-built_in">profileCopies</span>(h_aPinned, h_bPinned, d_a, nElements, <span class="hljs-string">&quot;Pinned&quot;</span>);<br></code></pre></td></tr></table></figure>
+<p>首先说明一下本人机器型号及规格：</p>
+<ul>
+<li>NVIDIA GeForce RTX 3060 Ti，Compute capability: 8.6</li>
+<li>AMD Ryzen 5 5600X 6-Core Processor 3.70 GHz</li>
+</ul>
+<p>然后咱们来看看性能差距究竟如何：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Device</span>: NVIDIA GeForce RTX <span class="hljs-number">3060</span> Ti<br><span class="hljs-attribute">Transfer</span> size (MB): <span class="hljs-number">16</span><br><br><span class="hljs-attribute">Pageable</span> transfers<br>  <span class="hljs-attribute">Host</span> to Device bandwidth (GB/s): <span class="hljs-number">10</span>.<span class="hljs-number">284997</span><br>  <span class="hljs-attribute">Device</span> to Host bandwidth (GB/s): <span class="hljs-number">8</span>.<span class="hljs-number">528336</span><br><br><span class="hljs-attribute">Pinned</span> transfers<br>  <span class="hljs-attribute">Host</span> to Device bandwidth (GB/s): <span class="hljs-number">24</span>.<span class="hljs-number">013557</span><br>  <span class="hljs-attribute">Device</span> to Host bandwidth (GB/s): <span class="hljs-number">24</span>.<span class="hljs-number">253503</span><br></code></pre></td></tr></table></figure>
+<p>可以看到，使用 pinned 内存可以让带宽提升2-3倍，这对于内存受限的应用而言是一个巨大的福音。pinned 内存对于 CUDA 程序的内存优化有非常重要的意义，之后本文介绍的优化技术都与它相关。</p>
+<h2 id="异步传输">异步传输</h2>
+<h3 id="原理-2">原理</h3>
+<p>常用的 <code>cudaMemcpy()</code> 函数实际上是一个阻塞函数，即主线程必须等待数据拷贝完毕后才会将控制返回。而使用 <code>cudaMemcpyAsync()</code> 这种非阻塞的异步函数，主线程会在数据传输启动后就返回，并继续执行。异步传输<strong>需要 pinned 内存</strong>（参见上节），且它需要一个额外的参数，stream ID。这个 stream ID 可以理解为 GPU 设备上按顺序执行的一系列操作（指令），设计人员很形象地将其比喻为流水，由一系列指令构成的运行流。不同流中的操作可以交错执行，在某些情况下可以重叠。所谓的重叠是指 GPU 在同一时间段内完成数据传输和计算任务，于是数据传输所花的时间被计算时间“重叠”了，花费的总时间也就少了。</p>
+<h3 id="使用-2">使用</h3>
+<p>下例子展示了主机计算与数据的重叠：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">cudaMemcpyAsync</span>(a_d, a_h, size, cudaMemcpyHostToDevice, <span class="hljs-number">0</span>);<br>kernel&lt;&lt;&lt;grid, block&gt;&gt;&gt;(a_d);<br><span class="hljs-built_in">cpuFunction</span>();<br></code></pre></td></tr></table></figure>
+<p><code>cudaMempyAsync()</code> 函数的最后一个参数是 stream ID，这是相比 <code>cudaMemcpy()</code> 额外多出来的参数。在本例中使用默认流，流0。内核也使用默认流，它不会开始执行，直到内存复制完成。因此，不需要显式同步。因为内存拷贝和内核都立即将控制权返回给主机，所以主机函数 <code>cpuFunction()</code> 的执行会与数据传输重叠。</p>
+<p>当然，对于异步传输，我们显然更希望将 GPU 的计算时间与数据传输时间重叠，这样这项技术才有真正的用武之地。在刚刚的例子中，数据复制和内核执行仍然是顺序发生的（先执行 MemcpyAsync 在执行 kernel 函数，而主机端的 <code>cpuFunction()</code> 可以先执行）。在<em>能够并发复制和计算</em>的设备上，可以将设备上的内核执行与主机和设备之间的数据传输重叠。设备是否具有此功能，可以通过 <code>cudaDeviceProp()</code> 返回的 <code>asyncEngineCount</code> 字段指示。在具有此功能的设备上，重叠再次需要固定的主机内存，此外，数据传输和执行计算的内核必须使用不同的非默认流（strem id非零的流）。这种重叠必须使用非默认流，因为默认流上的操作（包括内存复制、内核调用等等），只有在设备的其他所有流都“没事做”时才开始，根本无法重叠。下一个例子展示了两个流之间的重叠：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">cudaStreamCreate</span>(&amp;stream1);<br><span class="hljs-built_in">cudaStreamCreate</span>(&amp;stream2);<br><span class="hljs-built_in">cudaMemcpyAsync</span>(a_d, a_h, size, cudaMemcpyHostToDevice, stream1);<br>kernel&lt;&lt;&lt;grid, block, <span class="hljs-number">0</span>, stream2&gt;&gt;&gt;(otherData_d);<br></code></pre></td></tr></table></figure>
+<p>在上面的示例中，创建了两个流，分别在数据传输和内核执行中使用，<code>cudaMemcpyAsync</code> 调用的最后一个参数指明使用了流1，而内核执行配置指明使用流2。此时这两个流可以并发执行，一个拷贝数据一个计算（当然前提是他们不能相互依赖）。</p>
+<p>并发传输和执行演示了如何使内核执行与异步数据传输重叠。当数据依赖关系可以将数据分解成块并分多个阶段传输时，可以使用此技术，并在数据到达时启动多个内核对每个块进行操作。下图不严谨地展示了这一技巧的优点。其中第一个柱状图表示将数据先全体搬运到设备内存，再执行运算所需要的时间（浅绿色表示数据传输时间，红色表示数据计算时间），第二个柱状图表示使用并发异步传输任务的完成情况，可以很明显地看到使用异步传输的总时间要短不少：</p>
+<p><img src="https://docs.nvidia.com/cuda/archive/11.7.0/cuda-c-best-practices-guide/graphics/timeline-comparison-for-copy-and-kernel-execution.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>但这里出现了个问题，前言中本文说到：</p>
+<blockquote>
+<p>由于每次传输都有相关的固定开销，因此将许多小数据包装成一个较大的数据包进行传输，会比多次传输小数据包要好得多</p>
+</blockquote>
+<p>而在这里，我们又说将数据分解成块并分多个阶段传输可以重叠传输时间，提升性能。那么这两种叙述是否存在冲突？如何更好地理解这两句看似矛盾的话？</p>
+<h3 id="示例-2">示例</h3>
+<p>为了证明其效率，也为了解答刚才提出的问题，我们比较下面两个例子：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// sequential transfer and execute</span><br><span class="hljs-built_in">cudaMemcpy</span>(d_a, a, bytes, cudaMemcpyHostToDevice);<br>kernel&lt;&lt;&lt;n/blockSize, blockSize&gt;&gt;&gt;(d_a, <span class="hljs-number">0</span>);<br><span class="hljs-built_in">cudaMemcpy</span>(a, d_a, bytes, cudaMemcpyDeviceToHost);<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// Staged concurrent copy and execute</span><br>size = N*<span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>) / nStreams;<br><span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; nStreams; i++) &#123;<br>    offset = i * N / nStreams;<br>    <span class="hljs-built_in">cudaMemcpyAsync</span>(a_d+offset, a_h+offset, size, dir, stream[i]);<br>    kernel&lt;&lt;&lt; N / (nThreads*nStreams), nThreads, <span class="hljs-number">0</span>,  <br>          stream[i] &gt;&gt;&gt; (a_d+offset);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>顺序复制和执行以及阶段并发复制和执行证明了这一点。它们产生相同的结果。第一部分展示了引用顺序实现，它传输和操作一个包含N个浮点数的数组(其中N被假定可以被nThreads平均整除)。</p>
+<p>仍然是在我的主机上做了实验，该实验中，<code>blocksize</code> 为 256 ，一共 4 个流，每个流处理 4KB 的数据（太小的数据结果不明显），因此总共需要处理 <code>4x1024x256x4</code> Bytes 的数据。为了同时测量计算的精确度，我让 GPU 计算一个相对有意义的核函数，随后计算该结果与正确值的差距，具体如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">kernel</span><span class="hljs-params">(<span class="hljs-type">float</span> *a, <span class="hljs-type">int</span> offset)</span> </span>&#123;<br>    <span class="hljs-type">int</span> i = offset + threadIdx.x + blockIdx.x * blockDim.x;<br>    <span class="hljs-type">float</span> x = (<span class="hljs-type">float</span>)i;<br>    <span class="hljs-type">float</span> s = <span class="hljs-built_in">sinf</span>(x);<br>    <span class="hljs-type">float</span> c = <span class="hljs-built_in">cosf</span>(x);<br>    a[i] = a[i] + <span class="hljs-built_in">sqrtf</span>(s * s + c * c);<br>&#125;<br><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; n; i++) &#123;<br>      <span class="hljs-type">float</span> error = <span class="hljs-built_in">fabs</span>(a[i] - <span class="hljs-number">1.0f</span>);<br>      <span class="hljs-keyword">if</span> (error &gt; maxE)<br>          maxE = error;<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>计算结果如下，精度上两者没有差别，但由于传输时间与计算时间相互重叠，异步方法的总时间更少。这一结果也证明了，一次性传大批量的数据并不能提升性能，相反可能浪费了可以利用的异步机会。但烦恼的是，到底多大的数据传输才是最佳的仍需要依靠程序员的经验决定。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Device</span> : NVIDIA GeForce RTX <span class="hljs-number">3060</span> Ti<br><span class="hljs-attribute">Time</span> for sequential transfer and execute (ms): <span class="hljs-number">1</span>.<span class="hljs-number">693760</span><br>  <span class="hljs-attribute">max</span> error: <span class="hljs-number">1</span>.<span class="hljs-number">192093</span>e-<span class="hljs-number">07</span><br><span class="hljs-attribute">Time</span> for asynchronous transfer and execute (ms): <span class="hljs-number">1</span>.<span class="hljs-number">320736</span><br>  <span class="hljs-attribute">max</span> error: <span class="hljs-number">1</span>.<span class="hljs-number">192093</span>e-<span class="hljs-number">07</span><br></code></pre></td></tr></table></figure>
+<h2 id="零拷贝">零拷贝</h2>
+<h3 id="原理-3">原理</h3>
+<p>上面提出的优化方案仍需要将数据从主机传输到设备，有没有可能让显卡直接使用主机内的数据，无需传输呢？可以的，这就是零拷贝。</p>
+<p>零拷贝能使 GPU 线程直接访问主机内存。而通常，操作系统会使用内存分页机制将内存搞得“乱七八糟”的，因此零拷贝仍然要求使用 pinned 内存，它可将内存页固定住，从而让 GPU 能通过指针映射的方式访问数据。在集显上，映射主机上的 pinned 内存是很简单的事，且总能获得性能增益，因为集显和主机内存在物理上是相同的。只需通过 <code>cudaHostGetDevicePointer()</code> 便可获得映射的指针。</p>
+<p>而在独显上，映射 pinned 内存仅在某些情况下是有利的。当数据没有缓存在 GPU 上时，被映射的 pinned 内存只能读取或写入一次，并且读写内存的全局加载和存储应该合并。零拷贝可以用来代替流，因为 kernel-originated 数据传输会自动重叠内核计算，不需要程序员手动设置和确定流的数量。</p>
+<p>下面的代码展示了如何使用零拷贝技术：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">float</span> *a_h, *a_map;<br>...<br><span class="hljs-built_in">cudaGetDeviceProperties</span>(&amp;prop, <span class="hljs-number">0</span>);<br><span class="hljs-keyword">if</span> (!prop.canMapHostMemory)<br>    <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);<br><span class="hljs-built_in">cudaSetDeviceFlags</span>(cudaDeviceMapHost);<br><span class="hljs-built_in">cudaHostAlloc</span>(&amp;a_h, nBytes, cudaHostAllocMapped);<br><span class="hljs-built_in">cudaHostGetDevicePointer</span>(&amp;a_map, a_h, <span class="hljs-number">0</span>);<br>kernel&lt;&lt;&lt;gridSize, blockSize&gt;&gt;&gt;(a_map);<br></code></pre></td></tr></table></figure>
+<p>在这段代码中，<code>cudaGetDeviceProperties()</code> 返回结构体中的 <code>canMapHostMemory</code> 字段用于检查设备是否支持将主机内存映射到设备的地址空间。如果可以的话，程序通过调用 <code>cudaSetDeviceFlags(cudaDeviceMapHost)</code> 来启用页锁定内存映射。注意，该函数必须在设置设备或进行 CUDA 调用之前使用（即在创建上下文之前，在本例中，必须在分配内存执行核函数之前）。启用页锁定内存后，系统就知晓设备需要使用主机的内存。此时使用 <code>cudaHostAlloc()</code> 分配主机 pinned 内存，再通过 <code>cudaHostGetDevicePointer()</code> 函数，GPU 就可获得指向主机内存的指针。于是，在上面的代码中，<code>kernel()</code> 可以直接使用指针 <code>a_map</code> 使用主机内存上的数据。</p>
+<h3 id="示例-3">示例</h3>
+<p>本人使用的显卡是独显，我想试试在这种情况下使用零拷贝会发生什么，核心代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// decide if can use zero copy and set it</span><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaGetDeviceProperties</span>(&amp;prop, <span class="hljs-number">0</span>));<br><span class="hljs-keyword">if</span> (!prop.canMapHostMemory) &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Sorry, but your device is not able to use zero copy.\n&quot;</span>);<br>    <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);<br>&#125;<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaSetDeviceFlags</span>(cudaDeviceMapHost));<br><span class="hljs-comment">// malloc the pinned mem pointed by `a_h`</span><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaHostAlloc</span>(&amp;a_h, nBytes, cudaHostAllocMapped));<br><br><span class="hljs-comment">// zero copy</span><br><span class="hljs-comment">// get Device mem pointer `a_map` from `a_h`</span><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaHostGetDevicePointer</span>(&amp;a_map, a_h, <span class="hljs-number">0</span>));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventRecord</span>(startEvent, <span class="hljs-number">0</span>));<br>kernel&lt;&lt;&lt;gridSize, blockSize&gt;&gt;&gt;(a_map, <span class="hljs-number">0</span>);<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventRecord</span>(stopEvent, <span class="hljs-number">0</span>));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventSynchronize</span>(stopEvent));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventElapsedTime</span>(&amp;ms, startEvent, stopEvent));<br><span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Time for zero copy execute (ms): %f\n&quot;</span>, ms);<br><span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;  max error: %e\n&quot;</span>, <span class="hljs-built_in">maxError</span>(a_h, gridSize * blockSize));<br></code></pre></td></tr></table></figure>
+<p>我们仍在之前的平台上运行示例程序，获得的结果如下。可以看出，使用零拷贝技术所需的时间大大减少，尤其是后续的运行，由于数据已存在于 GPU 缓存中，拷贝执行时间会变得非常少！也就是说，只要主机内存只会被写入一次（不被频繁地更新），那么 pinned 内存页上的数据会被放入缓存中，且不会失效。即使使用独显（显存和主机内存不同），系统也会先将数据放入 GPU 缓存中，只要不在程序运行时被主机频繁更改，那么零拷贝方案也是可行的。</p>
+<figure class="highlight smali"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs smali"><span class="hljs-comment"># first execute</span><br>Time for MemCpy<span class="hljs-built_in"> execute </span>(ms): 1.400864<br>Time for asynchronous transfer<span class="hljs-built_in"> and </span>execute (ms): 1.291712<br>Time for zero copy<span class="hljs-built_in"> execute </span>(ms): 0.229344<br><span class="hljs-comment"># execute again</span><br>Time for MemCpy<span class="hljs-built_in"> execute </span>(ms): 1.433408<br>Time for asynchronous transfer<span class="hljs-built_in"> and </span>execute (ms): 1.291616<br>Time for zero copy<span class="hljs-built_in"> execute </span>(ms): 0.039264<br></code></pre></td></tr></table></figure>
+<h2 id="统一虚拟地址空间">统一虚拟地址空间</h2>
+<p>统一虚拟地址空间(Unified Virtual Address, UVA)将主机物理内存和设备物理内存统一在同一个虚拟地址空间下。因此，无论pinned 内存实际驻留在系统中的何处，所有设备和主机看到的指针值都是一样的。</p>
+<p>于是，GPU 内运行的指针可以访问非设备内存空间上的数据，可以认为，在运行时指针对数据在哪个物理内存是无感知的。当然，程序员也可以通过 <code>cudaPointerGetAttributes()</code> 函数来知晓指针指向的物理内存空间。</p>
+<p>在 UVA 中，将数据从任何设备的内存空间移出或者移入时，<code>cudaMemcpyKind</code> 参数可以设置为 <code>cudaMemcpyDefault</code>，以让 CUDA 自己根据指针确定数据拷贝方向。这也适用于没有通过 CUDA 分配的主机指针，只要当前设备使用了 UVA 技术。</p>
+<p>在 UVA 中，使用 <code>cudaHostAlloc()</code> 分配的 pinned 内存获得的指针在主机和设备上都是一致的且有效的，此时指针可以直接在 CUDA 内核函数使用。然而，通过 <code>cudaHostRegister()</code> 在事后固定的主机内存，就不会有与主机指针相同的设备指针，因此在这种情况下使用 <code>cudaHostGetDevicePointer()</code> 仍然是必要的。</p>
+<p>其实，无论是所谓的 pinned 内存还是零拷贝技术，可以说都是通过 UVA 机制实现的。因为 UVA 很强大，只要 pinned 内存按照上文介绍的方式分配，那么无论它们驻留在系统中的何处，所有设备和主机看到的指针值都是一样的。然而，虽然零拷贝技术允许设备代码直接访问主机内存，提供了统一内存的一些便利。但由于它实际上是通过PCIe传输数据的，因此PCIe的低带宽和高延迟拖累了它的性能。</p>
+<p>正因为它使用 PCIe 传输数据，所以 UVA 机制也是实现多卡间点对点（P2P）数据传输的必要前提，GPUs 可绕过主机内存，通过 PCIe 总线或NVLink 传输数据。</p>
+<p><strong>注意：</strong></p>
+<p>UVA 是统一虚拟地址空间，不是 nvidia 在 CUDA 6 时加入的统一内存（UM）机制。统一内存可以在 CUDA runtime 将数据从一个物理位置迁移到另一个物理位置，对程序员透明。由于统一内存能够在主机和设备内存之间的单个页面级别自动迁移数据，因此这其实需要大量工程代码来实现。因为它需要在CUDA运行时，设备驱动程序甚至操作系统内核中提供新功能。</p>
+<h2 id="总结">总结</h2>
+<p>针对内存带宽的优化利用是高性能计算中永恒不变的主题。本博客主要罗列了几个CUDA中常用的针对内存优化的编程技术，主要包括了两方面：其一是使用固定内存来缩短设备获得数据的时间，这主要是通过优化内存地址转换实现的；其二是使用异步方法，这主要通过隐藏数据传输时间实现。当然，对于内存优化的方法不止一种，之后我会再更新其他的优化方法。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/CUDA/" class="print-no-link">#CUDA</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>CUDA 进阶之内存优化</div>
+      <div>https://dingfen.github.io/2023/09/10/2023-9-10-cuda-mem/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年9月10日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/10/22/2023-10-22-transformer/" title="大话 transformer 架构">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">大话 transformer 架构</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/02/06/2023-2-6-recommender_systems/" title="推荐系统简介">
+                        <span class="hidden-mobile">推荐系统简介</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

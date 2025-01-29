@@ -1,0 +1,1043 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Paged Attention 简介 Paged Attention 是 vllm 在 decode 阶段用来解决 KV cache 利用率不高的加速技术。它仿照了操作系统中经典的分页技术（paging）。Paged Attention 通过切分一个 sequence 序列中的 KV cache 为多个 KV blocks 的方法，允许在非连续的内存空间存储连续的 key 和 value。每一个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VLLM Paged Attention 实现">
+<meta property="og:url" content="https://dingfen.github.io/2024/08/02/2024-5-9-vllm/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="Paged Attention 简介 Paged Attention 是 vllm 在 decode 阶段用来解决 KV cache 利用率不高的加速技术。它仿照了操作系统中经典的分页技术（paging）。Paged Attention 通过切分一个 sequence 序列中的 KV cache 为多个 KV blocks 的方法，允许在非连续的内存空间存储连续的 key 和 value。每一个">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png">
+<meta property="article:published_time" content="2024-08-02T13:10:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>VLLM Paged Attention 实现 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://raw.githubusercontent.com/vllm-project/vllm/main/docs/source/assets/logos/vllm-logo-text-light.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="VLLM Paged Attention 实现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-08-02 21:10" pubdate>
+          2024年8月2日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          43 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">VLLM Paged Attention 实现</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Paged Attention 简介</h1>
+<p>Paged Attention 是 vllm <strong>在 decode 阶段</strong>用来解决 KV cache 利用率不高的加速技术。它仿照了操作系统中经典的分页技术（paging）。Paged Attention 通过切分一个 sequence 序列中的 KV cache 为多个 KV blocks 的方法，允许在非连续的内存空间存储连续的 key 和 value。每一个 KV block 会存储一定数量 tokens 的 K，V 向量，这样就将原本 KV cache 切分成一块块 KV blocks，如下图所示：</p>
+<p><img src="/img/LLM/vllm_page_attn.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>为了获得更快的性能，VLLM 针对 attention kernel 有专门的内存布局和访问设计，尤其是线程从全局内存中读取数据到共享内存的环节。</p>
+<p>今天，我们来一起看一下 VLLM 对于 Paged Attention 的具体实现细节，本文参考 <a target="_blank" rel="noopener" href="https://docs.vllm.ai/en/stable/dev/kernel/paged_attention.html">vLLM Paged Attention</a>。本文涉及到的 VLLM 代码版本为 0.5.3。</p>
+<h1>输入</h1>
+<p>先来看一下 paged_attention_kernel 的总入口：我们先要理解一下函数的输入输出情况</p>
+<h2 id="paged-attention-kernel-的声明">paged_attention_kernel 的声明</h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span>&lt;<br>  <span class="hljs-keyword">typename</span> <span class="hljs-type">scalar_t</span>,<br>  <span class="hljs-keyword">typename</span> <span class="hljs-type">cache_t</span>,<br>  <span class="hljs-type">int</span> HEAD_SIZE,<br>  <span class="hljs-type">int</span> BLOCK_SIZE,<br>  <span class="hljs-type">int</span> NUM_THREADS,<br>  <span class="hljs-type">bool</span> IS_FP8_E5M2_KV_CACHE,<br>  <span class="hljs-type">int</span> PARTITION_SIZE = <span class="hljs-number">0</span>&gt; <span class="hljs-comment">// Zero means no partitioning.</span><br>__device__ <span class="hljs-type">void</span> <span class="hljs-built_in">paged_attention_kernel</span>(<br>  <span class="hljs-type">float</span>* __restrict__ exp_sums,           <span class="hljs-comment">// [num_seqs, num_heads, max_num_partitions]</span><br>  <span class="hljs-type">float</span>* __restrict__ max_logits,         <span class="hljs-comment">// [num_seqs, num_heads, max_num_partitions]</span><br>  <span class="hljs-type">scalar_t</span>* __restrict__ out,             <span class="hljs-comment">// [num_seqs, num_heads, max_num_partitions, head_size]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">scalar_t</span>* __restrict__ q,         <span class="hljs-comment">// [num_seqs, num_heads, head_size]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">cache_t</span>* __restrict__ k_cache,    <span class="hljs-comment">// [num_blocks, num_kv_heads, head_size/x, block_size, x]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">cache_t</span>* __restrict__ v_cache,    <span class="hljs-comment">// [num_blocks, num_kv_heads, head_size, block_size]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> num_kv_heads,                 <span class="hljs-comment">// [num_heads]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">float</span> scale,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span>* __restrict__ block_tables,   <span class="hljs-comment">// [num_seqs, max_num_blocks_per_seq]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span>* __restrict__ context_lens,   <span class="hljs-comment">// [num_seqs]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> max_num_blocks_per_seq,<br>  <span class="hljs-type">const</span> <span class="hljs-type">float</span>* __restrict__ alibi_slopes, <span class="hljs-comment">// [num_heads]</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> q_stride,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> kv_block_stride,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> kv_head_stride,<br>  <span class="hljs-type">const</span> <span class="hljs-type">float</span> k_scale, <span class="hljs-type">const</span> <span class="hljs-type">float</span> v_scale, <span class="hljs-type">const</span> <span class="hljs-type">int</span> tp_rank,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> blocksparse_local_blocks, <span class="hljs-type">const</span> <span class="hljs-type">int</span> blocksparse_vert_stride,<br>  <span class="hljs-type">const</span> <span class="hljs-type">int</span> blocksparse_block_size, <span class="hljs-type">const</span> <span class="hljs-type">int</span> blocksparse_head_sliding_step)<br></code></pre></td></tr></table></figure>
+<p>可见，该 kernel 函数需要读入许多参数，用于当前线程执行。其中最重要的三个参数是输入指针 <code>q</code>、<code>k_cache</code> 和 <code>v_cache</code>，它们指向全局内存中需要读取和处理的 query、key 和 value 数据，输出指针 <code>out</code> 指向全局内存，结果会存放在该处。这四个指针实际上是多维数组的引用，但每个线程只访问分配给它的数据部分。</p>
+<p>在函数声明中，还有一系列的模板参数值得我们注意，这些参数是在编译时确定的。<code>scalar_t</code> 表示 query、key 和 value 数据元素的数据类型，例如 FP16。<code>HEAD_SIZE</code> 表示每个头部中元素的数量。<code>BLOCK_SIZE</code> 指的是每个块中 token 的数量。<code>NUM_THREADS</code> 表示每个线程块中线程的数量。<code>PARTITION_SIZE</code> 代表张量并行GPU的数量（为简单起见，后文都假设此值为0，即禁用了张量并行）。</p>
+<p>从注释中，我们获得了几个有用信息：</p>
+<table>
+<thead>
+<tr>
+<th>张量名字</th>
+<th>维度</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>out</td>
+<td>(num_seqs, num_heads, head_size)</td>
+<td>注意力计算结果</td>
+</tr>
+<tr>
+<td>q</td>
+<td>(num_seqs, num_heads, head_size)</td>
+<td>query 张量</td>
+</tr>
+<tr>
+<td>k_cache</td>
+<td>(num_blocks, num_kv_heads, head_size/x, block_size, x)</td>
+<td>key cache 张量</td>
+</tr>
+<tr>
+<td>v_cache</td>
+<td>(num_blocks, num_kv_heads, head_size, block_size)</td>
+<td>value cache 张量</td>
+</tr>
+</tbody>
+</table>
+<p>了解完函数的输入后，我想先解释一些后续部分需要用到的概念。对基本概念的完全理解可以帮助我们更好地理解代码实现</p>
+<h1>概念</h1>
+<p>如果你遇到任何困惑的术语，你可以跳过这一节并稍后返回。</p>
+<ul>
+<li>
+<p><strong>Sequence</strong>：Sequence 可以理解为客户端的一个请求，包括了与大模型对话的语句。例如，由 <code>q</code> 指向的数据具有形状 <code>[num_seqs, num_heads, head_size]</code>。这表示总共有 <code>num_seqs</code> 个查询 sequence 数据被 <code>q</code> 指向。由于 paged attention kernel 只是一个<strong>在 decode 阶段</strong>才会被使用的注意力函数，因此计算时每个 sequence 只会有一个 query token。因此，<code>num_seqs</code> 等于 batch 中处理的所有 token 总数。</p>
+</li>
+<li>
+<p><strong>Context</strong>：context 包括从 sequence 已经生成的 tokens。例如，<code>[&quot;What&quot;, &quot;is&quot;, &quot;your&quot;]</code> 是已经产生的 context token，输入 query token 为 <code>&quot;name&quot;</code>。那么下一步，模型可能会生成 token <code>&quot;?&quot;</code>。</p>
+</li>
+<li>
+<p><strong>Vec</strong>：vec 是被<strong>一个线程</strong>一起的 load 到内存并执行计算的元素数组。对于 query 和 key 张量，vec 大小（<code>VEC_SIZE</code>）是通过计算一个 thread group 一次 load 和计算 16 字节单位的数据多少来确定的。对于 value 张量，则根据一个 thread 一次 load 和计算 16 字节数据量来确定 <code>V_VEC_SIZE</code> 大小。例如，如果 <code>scalar_t</code> 为 FP16（2字节）且 <code>THREAD_GROUP_SIZE</code> 为 2，则 <code>VEC_SIZE</code> 将为 16/2/2=4，而 <code>V_VEC_SIZE</code> 将为 16/2=8。</p>
+</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">constexpr</span> <span class="hljs-type">int</span> VEC_SIZE = <span class="hljs-built_in">MAX</span>(<span class="hljs-number">16</span> / (THREAD_GROUP_SIZE * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">scalar_t</span>)), <span class="hljs-number">1</span>);<br></code></pre></td></tr></table></figure>
+<ul>
+<li>
+<p><strong>Thread group</strong>：Thread group 就是一小组(<code>THREAD_GROUP_SIZE</code> 个)线程，它们一次 load 并计算一个 query 和 key token 的 QK。注意：Thread group 中的一个线程只处理一部分 token 数据！下面的图示中我们会看到这样的例子。而又因为一个 token 向量维度往往较大，会在 cacheline 上跨越多个 bank，所以线程读取数据时更偏向于条状方式（tiled）读取。我们将一个 thread group 处理的元素总数记为 <code>x</code>。例如，如果线程组包含 2 个线程，并且 head size 为 8，那么 thread 0 处理会index 为 0、2、4、6 的 query 和 key token，而 thread 1 处理 index 为 1、3、5、7 的 token。</p>
+</li>
+<li>
+<p><strong>Block</strong>：vLLM paged attention 最关键的实现就是分块存储 key value。每个 block 存储了固定数量(<code>BLOCK_SIZE</code>个 head token) 的 tokens。注意，一个 Block 里的 token 是不完整的，是只包括了一个注意力头的 token 数据！每个 block 可能只包含 context 中部分的 tokens。例如，如果 block 大小是 16，head size 是 128，那么对于一个注意力头，一个 block 包含了 16*128=2048 个元素。相比之下，大模型一层 transformer 可能有 32 个注意力头，hidden size 为 4096（即 token 向量维度）。</p>
+</li>
+<li>
+<p><strong>Warp</strong>：CUDA中，一个 warp 包含了 32 个线程（<code>WARP_SIZE</code>），它们在流多处理器（SM）上同时执行。在这个 kernel 中，每个 warp 一次处理一个 query token 和整块的 key tokens 之间的计算（可能会在多次迭代中处理多个块）。例如，如果有 4 个 warps 和 6 个 blocks 用于一个 context，则分配如下：warp 0 处理第 0、4 号块，warp 1 处理第 1、5 号块，warp 2处理第2号块，而warp 3 则处理第 3 号块。</p>
+</li>
+<li>
+<p><strong>Thread block</strong>：线程块是一组可以访问相同共享内存的线程（<code>NUM_THREADS</code>）。每个线程块包含多个 warps（<code>NUM_WARPS</code>），在本 kernel 函数中，一个线程块处理一个 query token 和整个 context 的 key tokens 的计算。</p>
+</li>
+<li>
+<p><strong>Grid</strong>： grid 由线程块组成，在本 kernel 函数中，grid 的维度为 <code>(num_heads, num_seqs, max_num_partitions)</code>。因此，每个线程块只负责处理一个头部、一个 sequence 的一个分部。当然，我们这里先假设 partitions 为 1，不分部。</p>
+</li>
+</ul>
+<h2 id="线程与数据的布局层次">线程与数据的布局层次</h2>
+<table>
+<thead>
+<tr>
+<th>线程层次</th>
+<th>数据层次</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grid</td>
+<td>batch 内所有 sequence</td>
+<td>一次计算 num_seqs   个 sequence</td>
+</tr>
+<tr>
+<td>Thread Block</td>
+<td>sequence</td>
+<td>一次计算 一个 query 和整个context 的 key tokens</td>
+</tr>
+<tr>
+<td>Warp</td>
+<td>KV block token</td>
+<td>一次计算一个 query 与整块 key token</td>
+</tr>
+<tr>
+<td>Thread group</td>
+<td>token</td>
+<td>一次计算一个 query 与一个 key token</td>
+</tr>
+<tr>
+<td>Thread</td>
+<td>part of token</td>
+<td>一次计算部分 query 与 部分 key token</td>
+</tr>
+</tbody>
+</table>
+<h1>Query</h1>
+<p>这一节来介绍一下 query 张量的内存布局以及如何被线程 load 并计算的过程。上文提到过，每个 thread group 会 load 一个完整的 query token 张量，因此分摊到每个线程只会 load 部分 token 张量。而在一个 warp 中，所有的 thread group 都会 load 相同的 query token 张量，同时也会 load 多个同一 KV block 内的不同的 key token 张量。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">const</span> <span class="hljs-type">scalar_t</span>* q_ptr = q + seq_idx * q_stride + head_idx * HEAD_SIZE;<br></code></pre></td></tr></table></figure>
+<p><img src="https://docs.vllm.ai/en/stable/_images/query.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>上图所示的是一个注意力头中，一个 query token 的数据，当 <code>VEC_SIZE</code> 是 4，<code>HEAD_SIZE</code> 是 128, 那么就包含了一共 128 / 4 = 32 vecs。在每个线程内，定义了一个线程私有的 <code>q_ptr</code>，指向它需要 load 的 query token 数据，见下图，每一行都是一个线程 load 的 token 数据。</p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/q_vecs.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++">__shared__ Q_vec q_vecs[THREAD_GROUP_SIZE][NUM_VECS_PER_THREAD];<br><span class="hljs-comment">// 从 global mem load 到 shared mem，一个线程管一行 循环一次 load 一个 vec</span><br><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = thread_group_idx; i &lt; NUM_VECS_PER_THREAD; i += NUM_THREAD_GROUPS) &#123;<br>    <span class="hljs-type">const</span> <span class="hljs-type">int</span> vec_idx = thread_group_offset + i * THREAD_GROUP_SIZE;<br>    q_vecs[thread_group_offset][i] = *<span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">const</span> Q_vec*&gt;(q_ptr + vec_idx * VEC_SIZE);<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>这些线程组织起来，我们就需要一个 <code>q_vecs</code> 来管理它们。注意，<code>q_ptr</code> 指向的是全局内存 query，cuda 程序会将它们 load 到共享内存，组成 <code>q_vecs</code> 数组。每个线程负责处理 <code>q_vecs</code> 中一行的数据。上图中，如果 <code>THREAD_GROUP_SIZE</code> 是 2, thread 0 则会处理第 0 行的 vecs，而 thread 1 处理第 1 行 vecs。这样读取 query 数据的好处是，相邻的线程能读取到相邻的内存数据，利用了内存合并（memory coalescing）获得性能上的提升。</p>
+<p>这部分内容理解起来不算困难，但请大家记住这一个例子：</p>
+<ul>
+<li><code>VEC_SIZE</code> 是 4</li>
+<li><code>HEAD_SIZE</code> 是 128</li>
+<li><code>V_VEC_SIZE</code> 将为 8</li>
+<li>thread 0 load 了 vec0 vec2 vec4 等偶数项</li>
+</ul>
+<h1>Key</h1>
+<p>与上节相似，这一节我们介绍一下 key 张量的内存排布以及 load 过程。上文提到，每个 thread group 只会处理一个 query token，但要多个 key tokens 参与计算。而每个 warp 会多次循环，以处理每个 KV block 的 key token，从而确保所有 context tokens 被一个 thread group 计算到（即将 query 与所有相关 key 做点乘）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">const</span> <span class="hljs-type">scalar_t</span>* k_ptr = k_cache + physical_block_number * kv_block_stride<br>                    + kv_head_idx * kv_head_stride<br>                    + physical_block_offset * x;<br></code></pre></td></tr></table></figure>
+<p>与 <code>q_ptr</code> 不同，在每次循环中，每个线程的 <code>k_ptr</code> 指向的是不同 key token 张量。就如上面的代码所述，<code>physical_block_offset</code> 就是 block 内的偏移量，<code>k_ptr</code> 的值取决于 KV cache 的 block 块，kv head 和现在读到的 kv token 偏移。</p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/key.png" srcset="/img/loading.gif" lazyload alt="Key data of all context tokens at one head"></p>
+<p>上面这张图解释了 key 张量的内存布局。我们假设 <code>BLOCK_SIZE</code> 为 16，<code>HEAD_SIZE</code> 是 128，<code>x</code>（即一个 thread group 处理的元素个数）是 8，<code>THREAD_GROUP_SIZE</code> 是 2，这里一共有 4 个 warps。可以看出，左半部图中 block0 有 16 个 token 编号 0-15，每个 token 内有 32 个 vec。右半边图展示了 4 个 warps 分别处理不同的 block，四个一循环后 warp0 的下一个外循环会处理 block4。每个大矩形代表一个注意力头计算时需要的 key token 数据，它们由一个 thread group 完成计算。</p>
+<p>还记得之前请大家记住的例子么，这里的数据沿用了之前的例子，所以 thread 0 仍然 load query token 的 vec0 vec2 vec4 等偶数项，相对应地，thread 0 还 load 了 key token 的偶数项。load 完成后，可以直接计算它们的 QK 值了。</p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/k_vecs.png" srcset="/img/loading.gif" lazyload alt=" for one thread"></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">K_vec k_vecs[NUM_VECS_PER_THREAD]<br></code></pre></td></tr></table></figure>
+<p>下面，我们来看一下从 <code>k_ptr</code> 全局内存读入 key token，存储到 <code>k_vecs</code> 的寄存器内存。<code>k_vecs</code> 之所以使用寄存器内存是因为它一次只会被一个线程访问，而上文介绍的 <code>q_vecs</code> 会被多个线程多次访问。每个 <code>k_vecs</code> 会包含多个 vec 用于后续计算。每个 vec 在内循环中使用。同一 warp 内的相邻线程可以一起将相邻的 vecs 的读取进来，这里又利用了内存的 CUDA 内存合并以提升性能。举例说明，thread 0 读取 vec0，thread 1 读取 vec1，在下一个内循环中，thread 0 读取 vec2，thread 1 读取 vec3。</p>
+<p>也许你会对上面的过程感到困惑，不必担心，接下去的 QK 节会更详细、清晰地解释 query 和 key 如何完成计算过程。</p>
+<h1>QK</h1>
+<p>在 query 部分，我们用代码展示了，在程序准备计算之前，会用一个 for 循环 load 一个 query token，并存放在 <code>q_vecs</code> 内。然后，这里有三层循环来描述 QK 的计算过程。在最外面的循环控制着 KV block 的变更，对应了 key 章节图中的右半部分。在第二层循环中，<code>k_vecs</code> 会被循环地指向不同的 tokens，而在最内循环中 <code>k_vecs</code> 会去一个个地 load 对应的 key vec。最后在第二层循环中计算 <code>q_vecs</code> 和 每个 <code>k_vecs</code> 的点乘运算。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++">q_vecs = ...<br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> block_idx = start_block_idx + warp_idx; block_idx &lt; end_block_idx; block_idx += NUM_WARPS) &#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; NUM_TOKENS_PER_THREAD_GROUP; i++) &#123;<br>        k_ptr = ...<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>; j &lt; NUM_VECS_PER_THREAD; j++) &#123;<br>            k_vecs[i] = ...<br>        &#125;<br>        ...<br>        <span class="hljs-type">float</span> qk = scale * Qk_dot&lt;<span class="hljs-type">scalar_t</span>, THREAD_GROUP_SIZE&gt;::<span class="hljs-built_in">dot</span>(q_vecs[thread_group_offset], k_vecs);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>之前提到，对于每个 thread，它一次只会读入部分 query 和 key token 张量。然而，在计算 <code>Qk_dot&lt;&gt;::dot</code> 内部，thread group 内所有线程都已经执行了 reduction。 所以 <code>qk</code> 返回的结果不是部分 query 和 key，而是整个 query 和 key token 的点乘相加的结果。</p>
+<p>例如，如果 <code>HEAD_SIZE</code> 是 128，<code>THREAD_GROUP_SIZE</code> 是 2，每个线程的 <code>k_vecs</code> 就会包含总共 64 个元素。然而，计算返回值 <code>qk</code> 实际上是 128 个 query 元素和 128 个 key 元素的点乘值。</p>
+<p>接下来，我们来仔细看看 <code>Qk_dot&lt;&gt;::dot</code> 的实现，看它是否如上面文字描述的那样完成了这些计算和归一。因为 <code>Qk_dot&lt;&gt;::dot</code> 最终调用了函数 <code>qk_dot_</code>，我们直接来看它的实现。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs C++"><span class="hljs-comment">// Q*K^T operation.</span><br><span class="hljs-function"><span class="hljs-keyword">template</span>&lt;<span class="hljs-type">int</span> THREAD_GROUP_SIZE, <span class="hljs-keyword">typename</span> Vec, <span class="hljs-type">int</span> N&gt;</span><br><span class="hljs-function"><span class="hljs-keyword">inline</span> __device__ <span class="hljs-type">float</span> <span class="hljs-title">qk_dot_</span><span class="hljs-params">(<span class="hljs-type">const</span> Vec (&amp;q)[N], <span class="hljs-type">const</span> Vec (&amp;k)[N])</span> </span>&#123;<br>  <span class="hljs-keyword">using</span> A_vec = <span class="hljs-keyword">typename</span> FloatVec&lt;Vec&gt;::Type;<br>  <span class="hljs-comment">// Compute the parallel products for Q*K^T (treat vector lanes separately).</span><br>  A_vec qk_vec = <span class="hljs-built_in">mul</span>&lt;A_vec, Vec, Vec&gt;(q[<span class="hljs-number">0</span>], k[<span class="hljs-number">0</span>]);<br><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> ii = <span class="hljs-number">1</span>; ii &lt; N; ++ii) &#123;<br>    qk_vec = <span class="hljs-built_in">fma</span>(q[ii], k[ii], qk_vec);<br>  &#125;<br><br>  <span class="hljs-comment">// Finalize the reduction across lanes.</span><br>  <span class="hljs-type">float</span> qk = <span class="hljs-built_in">sum</span>(qk_vec);<br><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> mask = THREAD_GROUP_SIZE / <span class="hljs-number">2</span>; mask &gt;= <span class="hljs-number">1</span>; mask /= <span class="hljs-number">2</span>) &#123;<br>    qk += <span class="hljs-built_in">VLLM_SHFL_XOR_SYNC</span>(qk, mask);<br>  &#125;<br>  <span class="hljs-keyword">return</span> qk;<br>&#125;<br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> VLLM_SHFL_XOR_SYNC(var, lane_mask) __shfl_xor_sync(uint32_t(-1), var, lane_mask)</span><br></code></pre></td></tr></table></figure>
+<p>前半部分就是在计算 <code>q</code> 和 <code>k</code> 张量的内积。</p>
+<p>最后的部分归一值得一看，它使用了我之前文章里介绍的<a href="https://dingfen.github.io/2020/12/17/2020-12-17-PP02/">使用蝶式算法并行求和的方法</a>。每个线程同其相邻的线程完成数字交换，并相加，一层层地迭代计算后，最终所有线程都计算得到了总和值。</p>
+<p><code>__shfl_xor_sync(uint32_t(-1), var, lane_mask)</code> 是 CUDA 线程束内的 shuffle 指令，它通过对线程调用者的 ID 进行按位异或来计算目标线程的 ID，并获得目标线程的变量值。</p>
+<h1>Softmax</h1>
+<p>计算完 <code>qk</code> 值后，我们需要计算这些值的 softmax，下面的公式展示了 softmax 计算的具体过程，其中 x 表示 <code>qk</code> 返回的值。为了计算 m(x)，我们必须获得 <code>qk</code> 张量的 reduced 值 <code>qk_max</code> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">m(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">m</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span>，以及 <code>exp_sum</code>值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">l(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span>。当然，这些 reduced 值必须横跨整个 thread block 来获得，因为前文我们说过，只有整个 thread block 才有 query token 和整个 context 的 key token。</p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>m</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><munder><mrow><mi>max</mi><mo>⁡</mo></mrow><mi>i</mi></munder><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">m(x)=\max_i{x_i}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">m</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1582em;vertical-align:-0.7277em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.4306em;"><span style="top:-2.3723em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">max</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7277em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">[</mo><msup><mi>e</mi><mrow><msub><mi>x</mi><mn>1</mn></msub><mo>−</mo><mi>m</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></msup><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo separator="true">,</mo><msup><mi>e</mi><mrow><msub><mi>x</mi><mi>B</mi></msub><mo>−</mo><mi>m</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></msup><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">f(x)=[e^{x_1-m(x)},...,e^{x_B-m(x)}]
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.188em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span><span class="mbin mtight">−</span><span class="mord mathnormal mtight">m</span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">x</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">...</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3567em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1433em;"><span></span></span></span></span></span></span><span class="mbin mtight">−</span><span class="mord mathnormal mtight">m</span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">x</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mclose">]</span></span></span></span></span></p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>l</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><msub><mo stretchy="false">)</mo><mi>i</mi></msub></mrow></mrow><annotation encoding="application/x-tex">l(x)=\sum_i{f(x)_i}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3277em;vertical-align:-1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>s</mi><mi>o</mi><mi>f</mi><mi>t</mi><mi>m</mi><mi>a</mi><mi>x</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><mrow><mi>l</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">softmax(x)=\frac{f(x)}{l(x)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">so</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">t</span><span class="mord mathnormal">ma</span><span class="mord mathnormal">x</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.363em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>这与理论计算中的 softmax 公式有略微的区别，主要是因为防止 exp 计算出来的值过大导致溢出，因此在计算前需要用一个最大值减去。</p>
+<h2 id="qk-max-and-logits"><code>qk_max</code> and <code>logits</code></h2>
+<p>得到了 <code>qk</code> 值的计算结果后，我们可以将临时地用 <code>logits</code> 数组存放 <code>qk</code> 的结果。当然，最后 <code>logits</code> 变量应当是归一化后的值。随后，我们在 thread group 中先计算出 <code>qk_max</code> 的值：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">if</span> (thread_group_offset == <span class="hljs-number">0</span>) &#123;<br>   <span class="hljs-type">const</span> <span class="hljs-type">bool</span> mask = token_idx &gt;= context_len;<br>   logits[token_idx - start_token_idx] = mask ? <span class="hljs-number">0.f</span> : qk;<br>   qk_max = mask ? qk_max : <span class="hljs-built_in">fmaxf</span>(qk_max, qk);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>注意，<code>logits</code> 变量位于共享内存上，所以每个 thread group 会在同一 <code>logits</code> 数组的不同 token 位置完成赋值。最终，<code>logits</code> 数组的长度应当就是 context token 的长度。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> mask = WARP_SIZE / <span class="hljs-number">2</span>; mask &gt;= THREAD_GROUP_SIZE; mask /= <span class="hljs-number">2</span>) &#123;<br>    qk_max = <span class="hljs-built_in">fmaxf</span>(qk_max, <span class="hljs-built_in">VLLM_SHFL_XOR_SYNC</span>(qk_max, mask));<br>&#125;<br><br><span class="hljs-keyword">if</span> (lane == <span class="hljs-number">0</span>) &#123;<br>   red_smem[warp_idx] = qk_max;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>紧接着，VLLM 仍使用之前的蝶式求和法，将每个 warp 中的最大 <code>qk_max</code> 值找到。即让每个相邻的线程进行通信，比较出最大的 <code>qk_max</code> 值，最终获胜的一定是最大值。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> mask = NUM_WARPS / <span class="hljs-number">2</span>; mask &gt;= <span class="hljs-number">1</span>; mask /= <span class="hljs-number">2</span>) &#123;<br>    qk_max = <span class="hljs-built_in">fmaxf</span>(qk_max, <span class="hljs-built_in">VLLM_SHFL_XOR_SYNC</span>(qk_max, mask));<br>&#125;<br>qk_max = <span class="hljs-built_in">VLLM_SHFL_SYNC</span>(qk_max, <span class="hljs-number">0</span>);<br></code></pre></td></tr></table></figure>
+<p>同样的方法，我们在 thread block 中比较每个 warp 的 <code>qk_max</code> 值，这样我们就能获得整个 thread block 的 <code>qk_max</code>，然后，我们需要将它广播给所有线程。</p>
+<h2 id="exp-sum"><code>exp_sum</code></h2>
+<p>与 <code>qk_max</code> 的计算方法类似，我们也需要获得整个 thread block 的 reduced 求和值。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = thread_idx; i &lt; num_tokens; i += NUM_THREADS) &#123;<br>    <span class="hljs-type">float</span> val = __expf(logits[i] - qk_max);<br>    logits[i] = val;<br>    exp_sum += val;<br>&#125;<br><span class="hljs-comment">//...</span><br>exp_sum = <span class="hljs-built_in">block_sum</span>&lt;NUM_WARPS&gt;(&amp;red_smem[NUM_WARPS], exp_sum);<br></code></pre></td></tr></table></figure>
+<p>首先，我们在一个 thread group 内求和得到所有 exp 值的总和。但首先，需要将 <code>logits</code> 数组内的 <code>qk</code> 值（上一步我们存放的）转变为 <code>exp(qk-qk_max)</code>值。请注意，上一步的 <code>qk_max</code> 已经被广播给了所有 thread，因此这一步是可以完成的。</p>
+<p>然后，我们可以对 <code>exp_sum</code> 做归一求和，使用之前一样的蝶式求和法。两个线程做通信，求得各自的 <code>exp_sum</code> 和即可。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">const</span> <span class="hljs-type">float</span> inv_sum = __fdividef(<span class="hljs-number">1.f</span>, exp_sum + <span class="hljs-number">1e-6</span>f);<br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = thread_idx; i &lt; num_tokens; i += NUM_THREADS) &#123;<br>   logits[i] *= inv_sum;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后，当我们求得了 <code>exp_sum</code> 后，就可以计算出最终的归一 softmax 值，并存放到 <code>results</code>。该变量会在后续的步骤中被用于与 value 张量做点乘运算。</p>
+<h1>Value</h1>
+<p>在执行完前文描述的步骤后，现在它们已经获得了 <code>logits</code> 数组了，又因为 QK 的计算会被 reduce 到 warp 上所有的线程，以及 4 个 warp 对所有 context 的 block 的遍历，所以每个线程现在都有 <code>HEAD_SIZE</code> * <code>BLOCK_SIZE</code> 个 <code>logits</code> 值。</p>
+<p>搞明白了这个前提后，再来看看 value 张量的内存布局和 load 情况吧。</p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/value.png" srcset="/img/loading.gif" lazyload alt="Value data of all context tokens at one head"></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/logits_vec.png" srcset="/img/loading.gif" lazyload alt=" for one thread"></p>
+<p><img src="https://docs.vllm.ai/en/stable/_images/v_vec.png" srcset="/img/loading.gif" lazyload alt="List of  for one thread"></p>
+<p>先来看第一张图，虽然 value 部分不涉及到 thread group 的东西，但为了理解方便图中仍然画出了两个 thread，这是之前计算 QK 时留下的一组 thread group。</p>
+<p>我们需要检索 value 张量，然后计算与 <code>logits</code> 的点乘了。不像 query 和 key，value 处理数据是跨 token 的，它会同时计算不同 token 的数据，且没有涉及到 thread group。第一张图中展示了 value 的内存排布，同一列的元素对应着同一个 value token，不同列就是不同的 token 了。</p>
+<p>对于一个 block 的 value 数据，它有 <code>HEAD_SIZE</code> 行和 <code>BLOCK_SIZE</code> 列，每个部分都被分成 <code>v_vecs</code>。其中 thread 0 则 load 了 32 的倍数的 v_vec，thread 1 则 load 了 32 的倍数余 1 的 v_vec。在之前举出的例子中，v_vec 的大小为 8，因此图二画了 8 个 vec，每个 vec 分别对应了不同的 token。</p>
+<p>再来重点关注最后一张图，每个线程一次从 <code>V_VEC_SIZE</code> 个 token 中 load <code>V_VEC_SIZE</code> 个元素。以 thread 0 为例，在内循环中，它会检索多个不同行但同一列的 <code>v_vecs</code> 。对于每个 <code>v_vec</code>，他需要与相应的 <code>logits_vec</code> 做点乘，这里 <code>logits_vec</code> 变量就是上节计算得到的 <code>V_VEC_SIZE</code> 个 <code>logits</code> 的数组元素。总的来看，多个内循环中，每个 warp 会处理一个 block 的 value tokens，经过多个外循环后，整个 context value token 都会被计算到。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">float</span> accs[NUM_ROWS_PER_THREAD];<br><span class="hljs-comment">// Iteration over different blocks.</span><br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> block_idx = start_block_idx + warp_idx; block_idx &lt; end_block_idx; block_idx += NUM_WARPS) &#123;<br>    logits_vec = *<span class="hljs-built_in">reinterpret_cast</span>&lt;Float_L_vec*&gt;(logits + token_idx - start_token_idx)<br>    <span class="hljs-comment">// Iteration over different rows.</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; NUM_ROWS_PER_THREAD; i++) &#123;<br>        <span class="hljs-type">const</span> <span class="hljs-type">cache_t</span>* v_ptr = v_cache + physical_block_number * kv_block_stride<br>                                + kv_head_idx * kv_head_stride;<br>        v_vec = *<span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">const</span> V_vec*&gt;(v_ptr + offset);<br>        ...<br>        accs[i] += <span class="hljs-built_in">dot</span>(logits_vec, v_vec);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>从上面的代码可以看到，在外层循环，与 <code>k_ptr</code> 有些类似，<code>logits_vec</code> 会先读取不同 blocks 的 <code>logits</code> 数据，读取 <code>V_VEC_SIZE</code> 个元素用于内循环的计算。在内循环中，每个 thread 读取了 <code>V_VEC_SIZE</code> 个 token 的元素，存放在 <code>v_vec</code> 中，最后计算点乘。重要的是，每个内循环中，thread 会 load 相同 8 个 token 下的不同的注意力头元素。点乘计算出来的值会被累加到 <code>accs</code> 中。因此 <code>accs</code> 变量会被映射到对应 thread 的注意力头处。</p>
+<p>还是上面的例子， <code>BLOCK_SIZE</code> 是 16，<code>V_VEC_SIZE</code> 是 8，每个 thread 会一次 load 8 个 value 数据给 8 个 tokens。这些数据是来自不同 token 。若 <code>HEAD_SIZE</code> 是 128，<code>WARP_SIZE</code> 是 32，那么对于每个内循环，一个 warp 会需要 load <code>WARP_SIZE * V_VEC_SIZE = 256</code> 个元素。这意味着这个 warp 总共需要 128 * 16 / 256 = 8 个内循环来计算整个 block 的 value 值。每个 thread 中的 <code>accs</code> 则会包含 8 个元素的相加，这 8 个元素是来自 8 个不同的注意力头位置，比如上面的图中， thread 0 的 <code>accs</code> 变量包含了 8 个元素，它们分别来自 0th, 32th … 224th 元素的注意力头，它们都会被累加起来并赋值给 8 个 tokens。</p>
+<h1>LV</h1>
+<p>现在，我们已经将每个 warp 这些点乘值累加起来，存放到 <code>accs</code> 中。下面我们要进一步累加这些 <code>accs</code> 值，并在一个 block 中累加给所有注意力头的位置。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; NUM_ROWS_PER_THREAD; i++) &#123;<br>   <span class="hljs-type">float</span> acc = accs[i];<br>   <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> mask = NUM_V_VECS_PER_ROW / <span class="hljs-number">2</span>; mask &gt;= <span class="hljs-number">1</span>; mask /= <span class="hljs-number">2</span>) &#123;<br>      acc += <span class="hljs-built_in">VLLM_SHFL_XOR_SYNC</span>(acc, mask);<br>   &#125;<br>   accs[i] = acc;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后，我们需要计算所有 warps 的 <code>acc</code> 的归一求和值，然后让每个 thread 都有注意力头位置处的 <code>accs</code> 的所有 context token 的最终求和值。注意，每个 thread 的 <code>accs</code> 变量仅保存了整个注意力头中部分元素的累加值。不过，经过上面的计算后，所有输出结果都会被计算出来，存放再不同线程的寄存器内存中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">float</span>* out_smem = <span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">float</span>*&gt;(shared_mem);<br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = NUM_WARPS; i &gt; <span class="hljs-number">1</span>; i /= <span class="hljs-number">2</span>) &#123;<br>    <span class="hljs-comment">// Upper warps write to shared memory.</span><br>    ...<br>        <span class="hljs-type">float</span>* dst = &amp;out_smem[(warp_idx - mid) * HEAD_SIZE];<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; NUM_ROWS_PER_THREAD; i++) &#123;<br>                ...<br>        dst[row_idx] = accs[i];<br>    &#125;<br><br>    <span class="hljs-comment">// Lower warps update the output.</span><br>        <span class="hljs-type">const</span> <span class="hljs-type">float</span>* src = &amp;out_smem[warp_idx * HEAD_SIZE];<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; NUM_ROWS_PER_THREAD; i++) &#123;<br>                ...<br>        accs[i] += src[row_idx];<br>    &#125;<br>        <span class="hljs-comment">// Write out the accs.</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<h1>Output</h1>
+<p>现在我们可以将计算得到的结果从寄存器内存中写到全局内存中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">scalar_t</span>* out_ptr = out + seq_idx * num_heads * max_num_partitions * HEAD_SIZE<br>                + head_idx * max_num_partitions * HEAD_SIZE<br>                + partition_idx * HEAD_SIZE;<br></code></pre></td></tr></table></figure>
+<p>首先，我们需要定义 <code>out_ptr</code> 变量，它的地址取决于相关 sequence 和注意力头的起始地址。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; NUM_ROWS_PER_THREAD; i++) &#123;<br><span class="hljs-type">const</span> <span class="hljs-type">int</span> row_idx = lane / NUM_V_VECS_PER_ROW + i * NUM_ROWS_PER_ITER;<br><span class="hljs-keyword">if</span> (row_idx &lt; HEAD_SIZE &amp;&amp; lane % NUM_V_VECS_PER_ROW == <span class="hljs-number">0</span>) &#123;<br>    <span class="hljs-built_in">from_float</span>(*(out_ptr + row_idx), accs[i]);<br>&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后，我们需要循环多次，将不同的注意力头位置都写到相对应的累加结果上，并返回 <code>output_ptr</code>。</p>
+<h1>VLLM 代码实现</h1>
+<p>以 llama3-8b 为例，</p>
+<h3 id="参数与数据结构">参数与数据结构</h3>
+<p>参数解释与 llama3-8b 的相关数据情况：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>llama3-8b 中的值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>num_seq</td>
+<td>4(batch_size)</td>
+<td>该推理中 sequence 个数</td>
+</tr>
+<tr>
+<td>num_head</td>
+<td>32</td>
+<td>Query 的 head 个数</td>
+</tr>
+<tr>
+<td>num_kv_heads</td>
+<td>8</td>
+<td>Key、Value 的 head 个数</td>
+</tr>
+<tr>
+<td>hidden_size</td>
+<td>4096</td>
+<td>输入的嵌入张量维度</td>
+</tr>
+<tr>
+<td>head_size</td>
+<td>128</td>
+<td>每个注意力头的维度大小</td>
+</tr>
+<tr>
+<td>x</td>
+<td>2(FP16)</td>
+<td>数据类型的字节数</td>
+</tr>
+<tr>
+<td>scaling</td>
+<td>128^-0.5</td>
+<td>注意力公式中的scale值</td>
+</tr>
+</tbody>
+</table>
+<p>Paged Attention 算法相关的辅助数据结构：</p>
+<p>block_size KVCache page 的最高维，KVCache 是若干个 page 的集合，每个 page 存（block_size, num_head，head_size）个 K、V 的元素。<br>
+context_lens [num_seqs] 用于变长<br>
+max_num_blocks_per_seq<br>
+q_stride<br>
+kv_block_stride<br>
+kv_head_stride</p>
+<p>q_vecs</p>
+<p>head_mapping [num_heads] 用于 MQA, GQA，确定用的 KV_head</p>
+<p>block_tables [num_seqs, max_num_blocks_per_seq] block_tables 映射表，表示每个 sequence 映射到哪几个 block 上</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>VLLM Paged Attention 实现</div>
+      <div>https://dingfen.github.io/2024/08/02/2024-5-9-vllm/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年8月2日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/08/02/2024-10-30-vllm/" title="VLLM custom allreduce 实现">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">VLLM custom allreduce 实现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/07/21/2024-7-21-ai_assist/" title="在基于 hexo 框架的博客上部署定制化 AI 聊天应用">
+                        <span class="hidden-mobile">在基于 hexo 框架的博客上部署定制化 AI 聊天应用</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

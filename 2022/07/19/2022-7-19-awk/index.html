@@ -1,0 +1,915 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="初步入土计划">
+<meta property="og:type" content="article">
+<meta property="og:title" content="awk 从入门到入土">
+<meta property="og:url" content="https://dingfen.github.io/2022/07/19/2022-7-19-awk/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="初步入土计划">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/awk.png">
+<meta property="article:published_time" content="2022-07-19T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/awk.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>awk 从入门到入土 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="awk 从入门到入土"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-07-19 12:00" pubdate>
+          2022年7月19日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">awk 从入门到入土</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>awk 从入门到入土</h1>
+<h2 id="何为-awk-？">何为 awk ？</h2>
+<p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/gawk/manual/gawk.html">awk</a> 是一种用于文本处理、数据提取分析和报告常用的 linux 工具（命令）。与 sed 和 grep 一样，在日常编程和使用 linux 操作系统中，它是提升效率的法宝。</p>
+<p>awk 处理的数据可以来自标准输入(stdin)、文件，或其它命令的输出。它支持用户自定义函数和动态正则表达式等功能，是linux/unix下的一个强大编程工具。它在命令行中使用，但更多是作为脚本来使用。awk 内有完备的“语言”，可以写出数组、函数、分支等复杂结构，且语法与 C 语言的相通之处。相比 sed grep 命令，灵活性是 awk 最大的优势，但其包含了复杂语法、正则表达式、内置变量（函数）也让很多人望而生畏。</p>
+<p>另外，该工具之所以叫 AWK 是因为其取了三位创始人 Alfred Aho，Peter Weinberger, 和 Brian Kernighan 的 Family Name 的首字符。</p>
+<h2 id="awk-到底能做什么？">awk 到底能做什么？</h2>
+<p>awk 功能强大，特点繁杂，若开篇介绍用法会让该博文显得杂乱无章，让人毫无阅读兴趣。我尝试抛开复杂的语法和命令格式，先利用几个例子让读者了解一下 awk 的工作方式和功能是怎样的。相信你一定会被 awk 强大的信息提取能力所折服。当你熟练掌握 awk 后，就再也不会烦恼于数据的格式化输出和信息提取了😄。</p>
+<h3 id="awk-对文件操作">awk 对文件操作</h3>
+<ol>
+<li>
+<p><strong>逐行扫描文件</strong>。awk 的基本功能是搜索/匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
+ <figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例1：打印文件的每行的第一列(域)<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;&#123;print $1&#125;&#x27;</span> filename</span><br><br>例2：打印文件的每一行<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;&#123;print $0&#125;&#x27;</span> filename</span><br></code></pre></td></tr></table></figure>
+<p>print 是 awk 中最常用的操作，可打印出后面的字符，若有多个变量，用’,'连接。虽然脚本中<strong>只写了对一行的操作</strong>，但由于 awk 会以逐行的方式遍历整个文本，因此最终该命令会打印出每一行的结果。</p>
+</li>
+<li>
+<p><strong>将每一行输入拆分为字段</strong>。awk 逐行扫描文件后，再对行中的列（域）做匹配。可以使用 $n 来表示第n列的字符，而 $0 表示整一行。内置变量 $NF 表示字段总数，因此 $NF 可表示倒数第一列。对列的分割默认是空格，但也可以通过改变内置变量 FS 来改变分割符号。</p>
+ <figure class="highlight nsis"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs nsis">例<span class="hljs-number">3</span>：从 /etc/passwd 文件中，按照<span class="hljs-string">&quot;:&quot;</span>分割打印出第<span class="hljs-number">2</span>列和倒数第一列、倒数第二列：<br>&gt; awk -F<span class="hljs-string">&quot;:&quot;</span> <span class="hljs-string">&#x27;&#123;print <span class="hljs-variable">$2</span>,<span class="hljs-variable">$(NF)</span>,<span class="hljs-variable">$(NF-1)</span>&#125;&#x27;</span> /etc/passwd （或）<br>&gt; awk <span class="hljs-string">&#x27;BEGIN&#123;FS=&quot;:&quot;&#125; &#123;print <span class="hljs-variable">$2</span>,<span class="hljs-variable">$(NF)</span>,<span class="hljs-variable">$(NF-1)</span>&#125;&#x27;</span> /etc/passwd<br></code></pre></td></tr></table></figure>
+<p>BEGIN 块表示该脚本块需要在 awk 逐行遍历文件前就执行，且只执行一次，通常用于初始化内部变量或计算数据。与之相反，END 块只能在awk 逐行遍历文件后执行，且执行一次</p>
+</li>
+<li>
+<p><strong>比较输入行/字段与模式</strong>。比较或匹配模式通常要涉及到正则表达式的相关知识，关于正则表达式可参考<a target="_blank" rel="noopener" href="https://www.runoob.com/regexp/regexp-syntax.html">菜鸟教程</a>。但 awk 还提供了类似 C 语言中的判断指令，从而做出更复杂的条件判断和算术逻辑。甚至可以完全抛弃文件，单独做一些复杂计算。</p>
+ <figure class="highlight wasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs wasm">例<span class="hljs-number">4</span>：找到 test.txt 中最后一列大于 <span class="hljs-number">5000</span> 的列并打印出来：<br>&gt; awk &#x27;&#123;<span class="hljs-keyword">if</span> <span class="hljs-punctuation">(</span><span class="hljs-variable">$NF</span> &gt; <span class="hljs-number">5000</span><span class="hljs-punctuation">)</span> print <span class="hljs-variable">$NF</span>&#125;&#x27; test.txt<br><br>例<span class="hljs-number">5</span>：使用 awk 命令计算 exp<span class="hljs-punctuation">(</span><span class="hljs-number">5</span><span class="hljs-punctuation">)</span>：<br>&gt; awk &#x27;BEGIN &#123;<span class="hljs-keyword">param</span> = <span class="hljs-number">5</span>; <span class="hljs-keyword">result</span> = exp<span class="hljs-punctuation">(</span><span class="hljs-keyword">param</span><span class="hljs-punctuation">)</span>; printf <span class="hljs-string">&quot;Result is %f.\n&quot;</span>, <span class="hljs-keyword">result</span>&#125;&#x27;<br></code></pre></td></tr></table></figure>
+<p>awk 有大量的内置变量和内置函数，具体介绍在后小节。</p>
+</li>
+<li>
+<p><strong>对匹配的行执行动作</strong>。awk主要的操作就是print，将数据按规定的格式打印出来。但需要注意，awk 命令一般不直接修改文件，只能将输出信息重定向到某一个文件中（非源文件）。</p>
+</li>
+</ol>
+<center>
+<img src="/img/awk.png" srcset="/img/loading.gif" lazyload width="80%"/>
+</center>
+<p>可用此图再回顾一下 awk 的四步流程。总结一下，awk 适用于数据文件转换和编制格式报告，并且能做到：1、格式化地输出信息。2、各种复杂的算术逻辑运算和字符串操作。3、配合逐行特性，实现条件和循环结构。</p>
+<h2 id="awk-命令格式和选项">awk 命令格式和选项</h2>
+<h3 id="语法形式">语法形式</h3>
+<p>使用 awk 命令时，一般遵循下面两种形式书写：</p>
+<figure class="highlight delphi"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs delphi">&gt; awk [options] <span class="hljs-string">&#x27;script&#x27;</span> [<span class="hljs-keyword">var</span>=value] [<span class="hljs-keyword">file</span>(s) <span class="hljs-keyword">name</span>]<br>&gt; awk [options] -f scriptfile [<span class="hljs-keyword">var</span>=value] [<span class="hljs-keyword">file</span>(s) <span class="hljs-keyword">name</span>]<br></code></pre></td></tr></table></figure>
+<p>接下来的几个小节开始介绍 awk 各个部分的使用规则：</p>
+<h3 id="常用命令选项-——-options">常用命令选项 —— [options]</h3>
+<ul>
+<li>-F &lt;fs&gt; 或 --field-separator &lt;fs&gt; ：fs 为指定输入分隔符，也可以是字符串或正则表达式。默认的分隔符是连续的空格或制表符</li>
+<li>-v &lt;var&gt;=&lt;value&gt; 赋值一个用户定义变量，将外部变量传递给 awk</li>
+<li>-f &lt;scripfile&gt; 从脚本文件中读取awk命令</li>
+<li>-m[fr] &lt;val]&gt; 对 val 值设置内在限制，-mf选项限制分配给val的最大块数目；-mr选项限制记录的最大数目。这两个功能是Bell实验室版awk的扩展功能，在标准awk中不适用。</li>
+</ul>
+<h3 id="awk-模式和操作-——-‘script’">awk 模式和操作 —— ‘script’</h3>
+<p>首先回顾一下前文所说：</p>
+<blockquote>
+<p>awk 的基本功能是搜索/匹配文件中包含特定<strong>模式</strong>的文本。当其中的内容匹配到了该模式时，awk 会在上执行指定的<strong>操作</strong>。awk 基本以行为处理单元，以这种方式一行一行地处理文本，直到遇到文件的末尾。</p>
+</blockquote>
+<p><strong>模式</strong>和<strong>操作</strong>无疑是 awk 命令中最重要的部分，而它们都会在 ‘script’ 处集中表达，其中</p>
+<h4 id="模式">模式</h4>
+<p>模式可以是以下任意一个：</p>
+<ul>
+<li>
+<p>正则表达式：使用通配符的扩展集。</p>
+<figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例6：从 employee.txt 文件中找到含有 manager 的行并打印<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;/manager/ &#123;print&#125;&#x27;</span> employee.<span class="hljs-property">txt</span> </span><br></code></pre></td></tr></table></figure>
+<p>‘/manager/’ 即要匹配字符串中含有 manager 的子串。找到后打印文件所在行，{print} 默认打印一行的所有列。</p>
+</li>
+<li>
+<p>关系表达式：使用运算符进行操作，可以是字符串或数字的比较测试。</p>
+<figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs dart">例<span class="hljs-number">7</span>：打印 log.txt 中第一列大于<span class="hljs-number">2</span>并且第二列等于 <span class="hljs-string">&#x27;Are&#x27;</span> 的行的前三列：<br>&gt; awk <span class="hljs-string">&#x27;<span class="hljs-subst">$1</span>&gt;2 &amp;&amp; <span class="hljs-subst">$2</span>==&quot;Are&quot; &#123;print <span class="hljs-subst">$1</span>,<span class="hljs-subst">$2</span>,<span class="hljs-subst">$3</span>&#125;&#x27;</span> log.txt<br></code></pre></td></tr></table></figure>
+<p>$1&gt;2 &amp;&amp; $2==“Are” 表示第一列大于2且第二列为 ‘Are’，可以仅写一个条件，也可以完整地写出 if 语句结构，见下例。</p>
+</li>
+<li>
+<p>模式匹配表达式：用运算符~（匹配）和!~（不匹配）。</p>
+<figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例8：打印 test.txt 文件中第二列，并匹配以80开头并以80结束的行：<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;&#123;if ($2 ~ /^80$/) print&#125;&#x27;</span> test.<span class="hljs-property">txt</span></span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>BEGIN 语句块、pattern 语句块、END 语句块。</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs maxima">例<span class="hljs-number">9</span>：找到 test.txt 文件中最长行的所占的字符数<br>&gt; awk &#x27;BEGIN&#123;<span class="hljs-built_in">max</span>=<span class="hljs-number">0</span>&#125; &#123;<span class="hljs-keyword">if</span> (<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>) &gt; <span class="hljs-built_in">max</span>) <span class="hljs-built_in">max</span>=<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>)&#125; END&#123;<span class="hljs-built_in">print</span> <span class="hljs-built_in">max</span>&#125;&#x27; test.txt<br></code></pre></td></tr></table></figure>
+<p>由三个语句块组成的模式甚至可看成一个简单 C 程序。length() 是 awk 的内置函数。更多函数可见<a target="_blank" rel="noopener" href="https://www.runoob.com/w3cnote/awk-built-in-functions.html">菜鸟教程的整理</a></p>
+</li>
+</ul>
+<p>由于 awk 的逐行处理文本的特性，很多重要的全局信息往往通过内置变量表达，在书写 awk 命令时常需要快速查表并使用。限于篇幅不详细介绍内置变量的使用了，不太懂的话可以参考这篇<a target="_blank" rel="noopener" href="https://www.zsythink.net/archives/1374">博客</a>：</p>
+<table>
+<thead>
+<tr>
+<th>内置变量</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NF</td>
+<td>字段个数，（读取的列数）</td>
+</tr>
+<tr>
+<td>NR</td>
+<td>记录数（行号），从1开始，新的文件延续上面的计数，新文件不从1开始</td>
+</tr>
+<tr>
+<td>FNR</td>
+<td>读取文件的记录数（行号），从1开始，新的文件重新从1开始计数</td>
+</tr>
+<tr>
+<td>FS</td>
+<td>输入字段分隔符，默认是空格</td>
+</tr>
+<tr>
+<td>OFS</td>
+<td>输出字段分隔符 默认也是空格</td>
+</tr>
+<tr>
+<td>RS</td>
+<td>输入行分隔符，默认为换行符</td>
+</tr>
+<tr>
+<td>ORS</td>
+<td>输出行分隔符，默认为换行符</td>
+</tr>
+<tr>
+<td>FILENAME</td>
+<td>输入的文件名</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs swift">例<span class="hljs-number">10</span>：读出 <span class="hljs-regexp">/etc/</span>passwd 文件的第三和第四列，并用等号连接打印出来<span class="hljs-operator">。</span><br><span class="hljs-operator">&gt;</span> awk <span class="hljs-operator">-</span><span class="hljs-type">F</span>&#x27;:&#x27; &#x27;<span class="hljs-type">BEGIN</span>&#123;<span class="hljs-type">OFS</span><span class="hljs-operator">=</span><span class="hljs-string">&quot;=&quot;</span>;&#125; &#123;print <span class="hljs-variable">$3</span>,<span class="hljs-variable">$4</span>;&#125;&#x27; <span class="hljs-regexp">/etc/</span>passwd<br></code></pre></td></tr></table></figure>
+<h4 id="操作">操作</h4>
+<p>操作由一个或多个命令、函数、表达式组成，之间由换行符或分号隔开，并位于大括号内，主要部分是：</p>
+<p>变量或数组赋值<br>
+输出命令<br>
+内置函数<br>
+控制流语句</p>
+<h3 id="awk-的变量-——-var-value">awk 的变量 —— [var=value]</h3>
+<p>除了之前提到的内置变量外，用户在使用 awk 时也可以自定义变量：<code>var=value</code>。当然也可以直接使用 awk 语言定义</p>
+<figure class="highlight golo"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs golo">例<span class="hljs-number">11</span>：定义变量<span class="hljs-keyword">var</span>并将其打印出来<br>&gt; awk -v <span class="hljs-keyword">var</span>=<span class="hljs-string">&quot;test&quot;</span> &#x27;BEGIN&#123;<span class="hljs-keyword">print</span> <span class="hljs-keyword">var</span>&#125;&#x27;<br><br>例<span class="hljs-number">12</span>：直接在操作中给变量赋值<br>&gt; awk &#x27;BEGIN&#123;<span class="hljs-keyword">var</span>=<span class="hljs-string">&quot;test&quot;</span>; <span class="hljs-keyword">print</span> <span class="hljs-keyword">var</span>&#125;&#x27;<br></code></pre></td></tr></table></figure>
+<p>回顾例9，变量的设置可以帮助程序员用类C的语法完成更加复杂的任务。</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs maxima">例<span class="hljs-number">9</span>：找到 test.txt 文件中最长行的所占的字符数<br>&gt; awk &#x27;BEGIN&#123;<span class="hljs-built_in">max</span>=<span class="hljs-number">0</span>&#125; &#123;<span class="hljs-keyword">if</span> (<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>) &gt; <span class="hljs-built_in">max</span>) <span class="hljs-built_in">max</span>=<span class="hljs-built_in">length</span>($<span class="hljs-number">0</span>)&#125; END&#123;<span class="hljs-built_in">print</span> <span class="hljs-built_in">max</span>&#125;&#x27; test.txt<br></code></pre></td></tr></table></figure>
+<p>awk 常常与其他 shell 指令合用，在传递数据时也需要通过变量：</p>
+<figure class="highlight node-repl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs node-repl">例13：读取文件 a.txt 的行数，并用 awk 打印出来<br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">num=$(cat a.<span class="hljs-property">txt</span> | wc -l)</span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk -v n=$num <span class="hljs-string">&#x27;BEGIN&#123;print n&#125;&#x27;</span> 或者</span><br><span class="hljs-meta prompt_">&gt;</span> <span class="language-javascript">awk <span class="hljs-string">&#x27;BEGIN&#123;print &#x27;</span><span class="hljs-string">&quot;$num&quot;</span><span class="hljs-string">&#x27;&#125;&#x27;</span></span><br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Miscellaneous/" class="category-chain-item">Miscellaneous</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/linux/" class="print-no-link">#linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>awk 从入门到入土</div>
+      <div>https://dingfen.github.io/2022/07/19/2022-7-19-awk/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年7月19日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/02/06/2023-2-6-recommender_systems/" title="推荐系统简介">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">推荐系统简介</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/06/18/2022-6-18-gem5-6/" title="深入理解 Gem5 之五">
+                        <span class="hidden-mobile">深入理解 Gem5 之五</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

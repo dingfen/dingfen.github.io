@@ -1,0 +1,1089 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="来自阿里安全在大模型工程领域积累的实践经验">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型性能优化的总结和分享">
+<meta property="og:url" content="https://dingfen.github.io/2024/05/29/2024-5-29-LLM-perf/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="来自阿里安全在大模型工程领域积累的实践经验">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tse2-mm.cn.bing.net/th/id/OIP-C.wNyK0tqwt9TBBaZmHaptywHaD4?rs=1&pid=ImgDetMain">
+<meta property="article:published_time" content="2024-05-29T14:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://tse2-mm.cn.bing.net/th/id/OIP-C.wNyK0tqwt9TBBaZmHaptywHaD4?rs=1&pid=ImgDetMain">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>大模型性能优化的总结和分享 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://f.msup.com.cn/FsnRZTtOp0N0acrVKxD3AAMTMgUa.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="大模型性能优化的总结和分享"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-29 22:00" pubdate>
+          2024年5月29日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          55 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">大模型性能优化的总结和分享</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>前言</h1>
+<p>给各位对大模型感兴趣的读者分享一篇深度技术好文！原文来自<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/FzimfEEzd_4y7dBIYWj50w">阿里安全使用 NVIDIA NeMo 框架和 TensorRT-LLM 的大模型工程化落地实践</a>。</p>
+<p>随着 ChatGPT 的一夜爆火，大模型如今越来越广泛的应用到各种业务领域中，阿里安全的业务领域对大模型技术的应用也已经 2 年有余。本文对阿里安全在大模型工程领域积累的实践经验做出总结和分享。<br>
+在大模型实际应用实践的过程中，阿里安全采用 NVIDIA NeMo 框架和 TensorRT-LLM 大语言模型推理加速库，显著优化了模型训练与推理性能。其中 NeMo 在多卡环境可实现 2-3 倍的训练加速，TensorRT-LLM 结合 SmoothQuant Int8 可实现领先的推理加速比，动态批处理策略 (Dynamic Batch) 将计算步骤减少 30%，实际 QPS 增益 2-3 倍。Prompt 优化策略在特定业务中提升吞吐高达 10 倍。整体优化成果显著增强了模型性能与业务效率。</p>
+<h1>Transformer 模型 FLOPs</h1>
+<h2 id="Transformer-模型结构">Transformer 模型结构</h2>
+<p>目前市场上主流大模型以 Transformer 网络结构为主，作为阿里安全的工程落地团队来说，全面分析这个模型的结构以和计算其 FLOPs 十分必要。本文首先重温 Transformer 模型的网络结构，结构如图一所示：</p>
+<p><img src="/img/LLM/ali/1.webp" srcset="/img/loading.gif" lazyload alt="图一：Transformer 模型的网络结构"></p>
+<p>Transformer 模型主要包含三个部分：<br>
+Embedding 层，模型的输入层，主要功能是将输入的 input_ids 转成 token 的 embedding, 主要是通过查表的方式实现。</p>
+<p>DecodeLayer, 主要功能是将输入的向量，经过 attention，MLP 的相关计算，求出 next_token 相关的向量。</p>
+<p>OutputLayer, 主要功能是通过一层的 linearLayer 计算，求出 next_token 对应的每个 word 的 logit。</p>
+<p>从上述的模型结构中可以看出，主要的计算量在 decodeLayer, 接下来，我们对该网络（以 Llama2 为例）的计算做详细的分析。</p>
+<h2 id="符号定义">符号定义</h2>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span></td>
+<td>batch size</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span></td>
+<td>seq length</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>s</mi><mi>o</mi></msub></mrow><annotation encoding="application/x-tex">s_o</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></td>
+<td>output length - 1</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></td>
+<td>hidden size</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span></td>
+<td>ffn hidden size</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></td>
+<td>vocab size</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi></mrow><annotation encoding="application/x-tex">l</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span></span></span></span></td>
+<td>num layers</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>u</mi><mi>m</mi><mi mathvariant="normal">_</mi><mi>h</mi><mi>e</mi><mi>a</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">num\_head</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0044em;vertical-align:-0.31em;"></span><span class="mord mathnormal">n</span><span class="mord mathnormal">u</span><span class="mord mathnormal">m</span><span class="mord" style="margin-right:0.02778em;">_</span><span class="mord mathnormal">h</span><span class="mord mathnormal">e</span><span class="mord mathnormal">a</span><span class="mord mathnormal">d</span></span></span></span></td>
+<td>num heads</td>
+</tr>
+<tr>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mi>v</mi><mi mathvariant="normal">_</mi><mi>h</mi><mi>e</mi><mi>a</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">kv\_head</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0044em;vertical-align:-0.31em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mord" style="margin-right:0.02778em;">_</span><span class="mord mathnormal">h</span><span class="mord mathnormal">e</span><span class="mord mathnormal">a</span><span class="mord mathnormal">d</span></span></span></span></td>
+<td>key/value heads</td>
+</tr>
+</tbody>
+</table>
+<p>矩阵乘法 FLOPs：矩阵乘法为乘加过程，用浮点数运算次数 (FLOPs, floating point operations) 表示计算量的大小：</p>
+<p>M [n,m] x N[m,p] =&gt; 2mnp</p>
+<p>上面的矩阵 M 和 N 相乘的 FLOPs 计算量。</p>
+<h2 id="Transformer-FLOPs-具体计算过程">Transformer FLOPs 具体计算过程</h2>
+<p>decode-only Transformer 模型架构包含：</p>
+<ul>
+<li>一个 embedding 层</li>
+<li>transformer layer 层，每层的构造相同，包括：
+<ul>
+<li>Attention 部分</li>
+<li>MLP 部分</li>
+</ul>
+</li>
+<li>一个 output layer 输出层，将 hidden states 转化为词表输出概率</li>
+</ul>
+<p>因此模型的总 FLOPs 为：<br>
+<strong>FLOPs = (attention + mlp) * layers + output_layer</strong></p>
+<p>其中输入 embedding 层不涉及 FLOPs 计算，因为 embedding 层做的事情只是根据输入 token 选择对应行。</p>
+<h3 id="总-FLOPs-与分析">总 FLOPs 与分析</h3>
+<p>首先看 FLOPs 的计算结果：</p>
+<p><img src="/img/LLM/ali/2.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>由于 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi></mrow><annotation encoding="application/x-tex">l</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span> 都是模型的参数，这几个变量是固定的，影响模型计算的 FLOPs 的就剩下 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>s</mi><mi>o</mi></msub></mrow><annotation encoding="application/x-tex">s_o</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 这三个变量，可以总结如下规律：</p>
+<ul>
+<li>batch_size 越大，模型的计算密度越大</li>
+<li>seq_len 越长，first_token 的推理计算密度越大</li>
+<li>推理阶段 first_token 是 compute_bound, 后续的 token 推理是 memory_bound</li>
+<li>当 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>s</mi><mi>o</mi></msub></mrow><annotation encoding="application/x-tex">s_o</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 和 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span> 相等的时候，第一个 token 的推理计算量等于后续所有的 token 的计算之和，因此从这里可以看出，在推理过程中，kv_cache 的 prefill 的代价是比较高的，因此推理的过程中需要考虑到这个因素，才能更加高效的利用 GPU。</li>
+</ul>
+<h1>大模型训练</h1>
+<p>首先，我们从工程的角度，分析并总结了一些大模型训练的相关经验，针对过去 2 年阿里安全工程团队对大模型训练加速这一部分做出分享。</p>
+<h2 id="为什么选择-NVIDIA-NeMo-框架（Megatron-LM）训练">为什么选择 NVIDIA NeMo 框架（Megatron-LM）训练</h2>
+<p>目前开源市场使用人数最多的是 DeepSpeed 和 NVIDIA NeMo 框架 (Megatron-LM) 这两种，本文主要从工程角度（训练速度的角度）来分析训练框架的特点，接下来分别介绍这两个框架的主要特征（feature）。</p>
+<p>DeepSpeed 是微软开发的一款十分受欢迎的大模型训练框架，feature 有很多，对于训练速度提速这块，本文重点介绍其模型并行策略，主要是 ZeRO 相关 feature。</p>
+<ul>
+<li>ZeRO1：将优化器状态（optimizer states）切分到不同的 GPU 上，从而降低单个 GPU 的显存占用，这块节省的显存是最大的。</li>
+<li>ZeRO2：优化器状态 (optimizer states) + 梯度 (gradients) 切分到不同的 GPU 上。</li>
+<li>ZeRO3：把优化器状态 (optimizer states) + 梯度 (gradients) + 模型参数 (parameters) 切分到不同的 GPU 上。</li>
+</ul>
+<p><img src="/img/LLM/ali/3.webp" srcset="/img/loading.gif" lazyload alt="图二：DeepSpeed ZeRO 模型并行"></p>
+<p>假如 GPU 卡数为 N=64，Ψ 是模型参数，假设 Ψ=7.5B，使用 Adam 优化器，K 是优化器的超参，在 64 个 GPU 下 K=12，则：</p>
+<ul>
+<li>如果不用 ZeRO，需要占用 120GB 的显存，一般目前的 GPU 单卡放不下</li>
+<li>如果用 ZeRO1，则占用 31.4GB，显存大于 40GB 的显卡即可直接启动训练，并且单机多卡或多机多卡训练的通信量不变</li>
+<li>如果用 ZeRO2，则占用 16.6GB，通信量同样不变</li>
+<li>如果用 ZeRO3，则占用 1.9GB，但是通信量会变为 1.5 倍</li>
+</ul>
+<p>备注：</p>
+<ul>
+<li>优化器状态 一般包含 FP32 Gradient、FP32 Variance、FP32 Momentum、FP32 Master Parameters。</li>
+<li>梯度和模型参数 一般是 FP16，所以显存主要占用之一就是优化器。</li>
+</ul>
+<p>NVIDIA NeMo 框架 (Megatron-LM) 是 NVIDIA 提供的一个端到端的云原生框架，无论是在本地还是在云上，用户可以灵活地构建、定制和部署生成式 AI 模型。它包含但不限于预训练模型、数据管护工具、模型对齐工具、训练和推理框架、检索增强工具和护栏工具包，为用户使用生成式 AI 提供了一种既方便、又经济的方法，同时，NeMo 也支持多模态模型的训练，包括但不限于 Stable Diffusion, Vision Transformer 等。</p>
+<p>本文关注焦点在于大模型训练框架的速度对比，因此只聚焦 Megatron-Core 部分。在使用 NeMo 进行大模型训练过程中，影响训练速度比较大的 feature 主要如下：</p>
+<ul>
+<li>张量并行（Tensor Parallelism）, 将矩阵乘法中的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mo>×</mo><mi>A</mi></mrow><annotation encoding="application/x-tex">X \times A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span></span></span></span> 分别切分成 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mo>×</mo><mo stretchy="false">{</mo><mi>A</mi><mn>1</mn><mo separator="true">,</mo><mi>A</mi><mn>2</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">X\times \{A1, A2\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord mathnormal">A</span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">A</span><span class="mord">2</span><span class="mclose">}</span></span></span></span> 或者 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>×</mo><mi>Y</mi><mo>×</mo><mn>1</mn><mi>b</mi></mrow><annotation encoding="application/x-tex">B \times Y \times 1b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">1</span><span class="mord mathnormal">b</span></span></span></span> 切分成 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo fence="true">[</mo><mtable rowspacing="0.16em" columnalign="center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><msub><mi>B</mi><mn>1</mn></msub></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><msub><mi>B</mi><mn>2</mn></msub></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow><mo>×</mo><mi>Y</mi></mrow><annotation encoding="application/x-tex">\left[ \begin{matrix} B_1 \\ B_2 \end{matrix} \right]\times Y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.4em;vertical-align:-0.95em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">[</span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.45em;"><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.95em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">]</span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span></span></span></span> 从而降低每个GPU的显存占用，并且将计算平均切分到各个 GPU 上。如下图三所示：</li>
+</ul>
+<p><img src="/img/LLM/ali/4.webp" srcset="/img/loading.gif" lazyload alt="图三：张量并行（TP, Tensor Parallelism）"></p>
+<ul>
+<li>流水线并行（Pipeline Parallelism），该方法是将 Transformers 中多个 layer 分别分配到不同的 device 上，从而降低每个 device 的显存占用和计算量， 如图四所示，为了进一步降低流水线并行过程中 GPU 气泡，可以将流水线并行过程拆分成更小的 stage。</li>
+</ul>
+<p><img src="/img/LLM/ali/5.webp" srcset="/img/loading.gif" lazyload alt="图四：流水线并行（PP, Pipeline Parallelism）"></p>
+<ul>
+<li>
+<p>Layer &amp; Kernel Fusion，Megatron-Core 会将多个算子的计算融合在一起，放在一个 kernel 中计算，提升训练速度。</p>
+</li>
+<li>
+<p>Distributed Opitimizer， Megatron-Core 也和 DeepSpeed 一样，把 OptimizerStates 分配到各个 device 中，减少显存的占用。</p>
+</li>
+</ul>
+<p>当然，NeMo 还有其他的一些 feature，比如计算和通信做 overlap，调用基于 CuDNN 实现的 FlashAttention 等等。</p>
+<h3 id="训练性能对比">训练性能对比</h3>
+<p>在 Megatron-LM 的公开论文中可以看到（如图五所示），Megatron-Core 可以保证在 GPU 水平扩展的时候，单卡的 Flops 基本能保持不变，而 DeepSpeed 有比较大的衰减。175B 模型在 1,536 卡的规模上，Megatron-LM 的性能是 DeepSpeed 的 3 倍多，530B 模型在 2,240 卡规模上Megatron-LM 也是 DeepSpeed 的 3 倍多。</p>
+<p><img src="/img/LLM/ali/6.webp" srcset="/img/loading.gif" lazyload alt="图五：Megatron-LM 论文中性能对比数据"></p>
+<p>我们团队在 Llama2-13B 的模型做了类似的实验，得出的结论也是 NeMo 比 DeepSpeed 性能高，具体的数据如下表所示：</p>
+<p><img src="/img/LLM/ali/7.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>无论在单机 8 卡，还是双机 16 卡的规模上，NeMo 的性能都是 DeepSpeed 的 2 倍。</p>
+<h2 id="NeMo-性能评测小结">NeMo 性能评测小结</h2>
+<ul>
+<li>
+<p>由于训练过程中，模型并行以及梯度交换等需要在多个节点中通信，带宽会成为一个比较重要的瓶颈，在训练大模型的时候，网卡的带宽很容易成为瓶颈，建议使用RDMA+ 多网卡进行大模型训练。</p>
+</li>
+<li>
+<p>为了降低多节点之间的模型的 OptimizerStates 的通信量，同时也保证训练的精度不会太大的影响，可以将 Distributed Optimizer dataType 设置为 FP32，同时将 grad_sync_dtype 设置为 BF16。</p>
+</li>
+</ul>
+<h2 id="NeMo-使用问题总结">NeMo 使用问题总结</h2>
+<ul>
+<li>
+<p>影响训练性能的三个重要参数：</p>
+<ul>
+<li><code>megatron_amp_O2x0</code>；混合精度 O2 优化选项，设为 <code>False</code> 会降低训练性能；</li>
+<li><code>optim.grad_sync_dtype</code> 梯度同步精度选项，跟显存占用相关，使用 FP16 可以减少显存占用</li>
+<li><code>optim.optimizer_dtype</code> optimizer states 参数类型，设为 FP16 或者 BF16 会降低模型精度。</li>
+</ul>
+</li>
+<li>
+<p>SFT Chat 类模型时需要将 NeMo 默认 prompt 配置修改成原来模型的 prompt，否则会造成训练 loss 增大，影响模型最终效果。</p>
+</li>
+<li>
+<p>关于 TP 和 PP 在实践过程中参数如何配置的问题，我们通过实践发现，一般情况下，对于 13B 左右的模型，当卡的规模小于 32，如果有高效的 RDMA 网络，一般只需要开启 TP（TP&gt;1），PP=1 的配置；如果模型更大一些例如 70B 模型，需要同时开启 PP（PP&gt;1）。</p>
+</li>
+</ul>
+<h1>大模型推理</h1>
+<h2 id="大模型快速部署流程">大模型快速部署流程</h2>
+<p>针对大模型推理，NVIDIA 推出了 TensorRT-LLM，实现了业界领先的性能。经多方比较，TensorRT-LLM 被我们选为构建阿里安全大模型高性能推理的基石。在阿里安全的业务中，由于大模型服务比较多，为了让算法同学可以快速部署大模型，工程团队开发了一系列功能让算法同学可以快速、高效、平稳的部署大模型。部署的具体流程图如下：</p>
+<p><img src="/img/LLM/ali/8.webp" srcset="/img/loading.gif" lazyload alt="图六：大模型部署流程"></p>
+<ul>
+<li>模型校验和标准化导出阶段：对用户提供的模型文件和包含相关参数的配置文件进行校验，并生成标准的数据格式，方便后续的模型编译工作。</li>
+<li>模型编译阶段：使用 TensorTR-LLM 将模型编译成 engine 格式。</li>
+<li>服务 DAG 编排阶段：将服务的各个模块定义为 Op，通过 DAG 的方式将其展示在可视化界面中，使得算法同学可以自主编排自己的服务逻辑。</li>
+<li>DAG 调试和构建阶段：用户在 DAG 中可以自己构造服务的输入数据，完成对整个 DAG 进行调试。同时调试是实时的，用户可以在不部署的服务的情况下调试模型服务，调试结束后，可以将 DAG 固化，最后构建成真实的服务配置。</li>
+<li>K8s 服务部署阶段：我们的模型服务都是 K8s 进行部署，便于快速部署，快速复制扩容等。</li>
+</ul>
+<h2 id="大模型服务在线推理架构">大模型服务在线推理架构</h2>
+<h3 id="大模型推理场景有什么特点">大模型推理场景有什么特点</h3>
+<ul>
+<li>每条请求推理耗时的分布是非常不均匀，耗时短的请求可能在几百毫秒能返回，而耗时长的请求可能需要几十秒才能返回，这种情况在非 LLM 的模型上一般是不存在。</li>
+<li>目前的大模型是生成式的模型，在实际应用过程中，会依赖上文的信息，即之前的推理结果需要在后续的推理过程中作为输入再次传进来。</li>
+<li>部署的服务要求能做到实时监控内部的健康状态，因为大模型服务在使用 GPU 过程中，GPU 内部的错误（例如，数组越界等）会导致后续所有的计算都会失败，因此推理框架需要能及时感知这种错误，并且让框架做到快速重启。</li>
+</ul>
+<p>针对这种服务特点，我们采用异步服务进行部署，即上游调用先提交一次请求，然后可以通过轮询或者回调的方式获取服务计算的结果，具体的架构图如下所示：</p>
+<p><img src="/img/LLM/ali/9.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<h4 id="HttpServer-层">HttpServer 层</h4>
+<p>Httpserver 层是服务的前端，它负责服务对外的交互，输入处理和输出处理等事情。</p>
+<ul>
+<li>SocketQueue 和 socket 缓冲队列，将所有接收的请求放到缓冲队列中。</li>
+<li>Flowlimit 是限流模块，会根据当前服务的负载，以及堆积的请求的状况，对服务进行限流，避免服务堆积过多的请求。</li>
+<li>SessionManager 模块的功能主要是管理每个请求的状态，由于异步服务的请求在提交后，需要让外界知晓其当前的处理状态，该模块主要是负责该功能。</li>
+<li>Input&amp;Output 模块主要是负责将输入的请求转换成服务内部的结构化对象以及将结果序列化返回给上游。</li>
+<li>ContextManager 模块管理服务的上下文，例如，上游可能会传一些额外的字段或者信息，服务的内部处理的时候，可能需要使用到这些额外信息。</li>
+</ul>
+<h4 id="ComputeWorker-层">ComputeWorker 层</h4>
+<p>该层是模型服务的核心计算层，服务主要的计算都在这层中完成。</p>
+<ul>
+<li>JobManager，后台计算的时候，会将若干个请求当成一个 job 进行处理，JobManager 主要负责对这些 job 状态进行管理。</li>
+<li>CallbackManager, 对于需要进行回调返回的请求，该模块在 job 处理完成后，会回调相应的接口对结果进行回调。</li>
+<li>LogManager, 本模块对服务的各种处理日志进行管理。</li>
+<li>HealtyChecker, 该模块主要负责监控当前服务的健康状态，如果发现服务处理了异常，或者内部某些功能出现了不可恢复的问题后，会向 k8 集群汇报当前服务是不健康的，让集群对本节点进行重启。</li>
+<li>ServiceDag, 服务中 op 的调度，负责执行 DAG 中的所有的 op。</li>
+<li>ConfigManager, 服务的配置管理。</li>
+<li>DynamicBatch, 对于大模型 batch 数据，进行动态调度管理，并且充分发挥 GPU 算力，不仅让 GPU 能够满负载的运行，而且可以避免有冗余的计算，具体的算法逻辑会在后续介绍。</li>
+<li>LLMLogits, 该模块主要是注册一些钩子函数到 TensorRT-LLM 中，根据业务的需要是否要对模型中的 logits 进行处理。</li>
+<li>TextLLM，对文本大模型一些业务逻辑的封装。</li>
+<li>MultiModalLLM，对多模态大模型的一些业务逻辑的封装。</li>
+<li>TrtLLMOp, 主要是对 TensorRT-LLM 的接口封装。</li>
+<li>StopStrategy，注册一些钩子函数到 TensorRT-LLM 中，可以及时识别出是否要及时中断 generate 的过程，避免算力的浪费。</li>
+</ul>
+<h4 id="Basic-Component-层">Basic Component 层</h4>
+<p>本层是服务中一些基础的模块依赖。</p>
+<ul>
+<li>AsyncData，对服务中各种数据层的组件的功能封装。</li>
+<li>TensorRT-LLM，大模型的服务底层核心的推理计算依赖于 TensorRT-LLM 的推理，TensorRT-LLM 支持 PagedKVCache、in-flight batching、attentionPlugins、Quant（量化）、TP&amp;PP（tensor 并行和 pipeline 并行）、Rope（rope 位置编码）等 feature。</li>
+</ul>
+<p>以上是服务的主要架构，采用该架构基本能 GPU 在服务中做到满负载的工作（凑满 batch 计算），同时可以保障服务的稳定运行。</p>
+<h1>大模型服务性能优化篇</h1>
+<h2 id="动态批处理-（Dynamic-Batch）">动态批处理 （Dynamic Batch）</h2>
+<p>为了进一步提升模型推理的速度，我们仔细分析了大模型在推理过程中一些计算，从上述公式中我们可以看到，要想让推理过程中的计算密度变大，只能调大 batch_size；而 generate 过程中，每个样本的输入长度和输出长度都不太一样，必然会导致算力有浪费的情况，具体的推理过程如下图所示：</p>
+<p><img src="/img/LLM/ali/10.webp" srcset="/img/loading.gif" lazyload alt="图八：大模型 generate 生成过程示意图"></p>
+<p>从上述的案例中可以看到，一共有 4 条样本需要进行推理，而若 GPU 最多只能一次处理 3 条样本，则共需要 9 步完成这三条样本的推理，而第 1 条样本在 step1 的时候就推理结束，input2 在 step5 的时候推理结束，因此在这 9 步推理过程中，出现很多 EOS 的 token（我们把这种叫做气泡），气泡越多，算力浪费越严重；剩余 input4 只能按 batch_size=1 进行推理，算力浪费较为严重。</p>
+<p>在实际的推理服务中，如果一个 batch 中的其中一条输出的 output_len 很大，就可能会导致该 batch 的气泡比例可能超过 80%，就造成了算力的严重浪费，为了解决这种问题，我们提出新的推理算法，算法的逻辑如下：</p>
+<ol>
+<li>准备输入的数据（n = max_batch_size*10），形成一个候选集合 S</li>
+<li>如果集合 S 为空，退出；否则，对集合 S 的文本序列排序</li>
+<li>从集合 S 中取出 m 个文本进行推理，其中 m = find_max_batch_size(current_seq_len)，推理到一定 step（一般取 100），或者本次 batch 的 70% 的样本已推理完并且未推理完成的样本数大于 1/max_batch_size，推理中断退出。</li>
+<li>将上次未推理完成的样本拼接上已生成的部分文本作为一个新文本，插入到候选集合 S 中，然后重复第 2 步；</li>
+</ol>
+<p>算法的核心思想是依据当前是 seq_len 设置每次 batch 的大小（为了让 GPU 内存占满，不造成算力的浪费），并且每次推理过程中会动态检测是否需要提前终止，终止的条件是大部分样本已完成了推理或者推理的 step 到达一定限度。针对图九中的案例，我们使用新的调度思想之后的效果如下图所示：</p>
+<p><img src="/img/LLM/ali/11.webp" srcset="/img/loading.gif" lazyload alt="图九：启用新的调度策略之后的推理"></p>
+<p>采用新的调度逻辑后，这个案例的 step 数从原来的 20 步减少到 14 步；在实际的业务生产过程中，这个 step 的减少数远远大于案例中的 case。我们通过实践发现，在我们的业务中采用上述算法，服务的每秒查询率（QPS）一般有 2-3 倍以上的提升。</p>
+<h2 id="优化-Prompt，提升服务性能">优化 Prompt，提升服务性能</h2>
+<p>一般情况下，优化 prompt 可以提升模型的效果，案例如下：</p>
+<p><img src="/img/LLM/ali/12.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>上述案例是让大模型判断一段文字的正确性，如果错误则说明理由。在实际服务的生产过程中，对于回答是正确的 case，输出的 token 数是 1，对于回答错误的 case，输出的 token 数可能很大，如 Dynamic Batch 一节分析的那样，当输出的长度差别很大的时候，推理过程中产生的气泡会很大，这种情况将造成严重的算力浪费。为了解决该问题，我们可以将问题进行分解，例如对大模型提问两次，第一次让大模型判断问题的正确性，第二次针对事实错误的 case 问大模型原因。</p>
+<p><img src="/img/LLM/ali/13.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>在实际业务实践中，对于这类模式的问题采用上述策略，部分业务的吞吐提升 10 倍以上。</p>
+<h2 id="模型推理量化">模型推理量化</h2>
+<p>我们的模型量化大部分都是基于NVIDIA TensorRT Model Optimizer（简称 ModelOpt，原名 AMMO）做的。 ModelOpt 提供了简明易用的接口，可以对各种第三方模型进行训练后量化 （PTQ），并跟 TensorRT-LLM 实现良好衔接。</p>
+<h3 id="量化原理">量化原理</h3>
+<p>大模型的参数相对较大，占用的显存较多，并且大模型在 generate 过程中 KVCache 也需要占用大量的显存，如果对模型的参数及 KVCache 进行量化，可以显著节省显存，进而在实际服务推理过程中增大服务的 batch_size, 提升服务的吞吐量。而量化的核心是获得一个对应的缩放系数，具体公式如下：</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><mi>R</mi><mi mathvariant="normal">/</mi><mi>S</mi><mo>+</mo><mi>Z</mi></mrow><annotation encoding="application/x-tex">Q = R/S + Z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">Z</span></span></span></span>, (Quantize)</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mo>=</mo><mi>S</mi><mo>∗</mo><mo stretchy="false">(</mo><mi>Q</mi><mo>−</mo><mi>Z</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">R = S * (Q-Z)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">Z</span><span class="mclose">)</span></span></span></span>, (Dequantize)</p>
+<ul>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.00773em;">R</span></span></span></span> 表示量化前的浮点数</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span> 表示量化后的定点数</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span>（Scale）表示缩放因子的数值</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Z</mi></mrow><annotation encoding="application/x-tex">Z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">Z</span></span></span></span>（Zero）表示零点的数值</li>
+</ul>
+<p>如上述公式所表达的那样，模型量化的本质是将一个 FP32 或者 FP16 的数据映射到一个更低 bit 数值区间，进而减少了数据在 memory 间传输的耗时，然后基于不同的算法使用不同数据精度矩阵乘的硬件（如 Int8 的 Tensor Core），最后反量化回原来的数据精度。</p>
+<h3 id="量化方法">量化方法</h3>
+<p>在大模型量化实践中，我们主要尝试了对称量化的方法。</p>
+<p><img src="/img/LLM/ali/14.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<ul>
+<li>Int8 weight only，该方法是对一个权重矩阵求出 S (scale) 和 Z (zero) 后，然后应用上述量化公式进行量化和反量化，S 的求法为：S = max(Wi)，其中 Wi 是 W 的列向量。</li>
+<li>Int4 weight only，该方法和 int8 weight only 类似，只不过量化的数据类型改成 int4。</li>
+<li>SmoothQuant int8，该算法认为：常见模型的 X (或者是activation) 存在 outlier 的现象。如果使用 int8 weight only 等方式进行量化，只能利用 FP16 的 Tensor Core，不能使用 int8 的 Tensor Core，也就意味着不能使用同一硬件下的更强算力。</li>
+<li>SmoothQuant 的方法是找出一个平滑因子，将模型计算改成：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mo stretchy="false">(</mo><mi>X</mi><mi>d</mi><mi>i</mi><mi>a</mi><mi>g</mi><mo stretchy="false">(</mo><mi>s</mi><msup><mo stretchy="false">)</mo><mrow><mo>−</mo><mn>1</mn></mrow></msup><mo>×</mo><mi>d</mi><mi>i</mi><mi>a</mi><mi>g</mi><mo stretchy="false">(</mo><mi>s</mi><mo stretchy="false">)</mo><mi>W</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">Y=(Xdiag(s)^{-1}\times diag(s)W)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">Y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord mathnormal">d</span><span class="mord mathnormal">ia</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">ia</span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mclose">)</span></span></span></span>，通过使用平滑因子 s，解决掉 outlier 的数值问题，进而利用 8bit 的 TensorCore 或者 CudaCore 提升 GEMM 的性能的同时达到精度损失较小的目标。</li>
+</ul>
+<p><img src="/img/LLM/ali/15.webp" srcset="/img/loading.gif" lazyload alt="图十：SmoothQuant 原理【4】"></p>
+<ul>
+<li>AWQ量化，作者通过观察发现，模型的权重不是等价重要的，在大部分场景，大概 1% 的显著权重就可以让模型保持住比较好的精度。实现方式是重要权重不量化。</li>
+<li>GPTQ 量化，该量化思想来源于 OBQ，利用图片 的二阶导数 (hession 矩阵) 来逐步量化模型的权重 W。</li>
+</ul>
+<h3 id="模型量化后的性能表现">模型量化后的性能表现</h3>
+<p>我们分别在 Baichuan2-13B 和 Qwen-14B 的模型上使用了上述各种量化方法进行实验，量化后的性能结果如下：</p>
+<p><img src="/img/LLM/ali/16.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>模型推理我们基于 TensorRT-LLM 进行实现的，从实验中看，在 batch_size 和 seq_len 都相同的条件下，sq_int8 的推理速度是最快的。</p>
+<h3 id="模型量化后的业务效果">模型量化后的业务效果</h3>
+<p>如下是在以实际落地的两个业务说明量化的效果：</p>
+<p><img src="/img/LLM/ali/17.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>我们得出的结论是，业务1 上 smoothQuant int8 表现最好，业务2 上 int8 weight only 表现更好。在我们的实践中发现，并没有哪一种方法始终是最好的，但是相对来说，smoothQuant 在大部分业务场景表现都比较稳健。某些资料表示，smoothQuant int8 对模型精度有一定影响；但在我们的应用场景下，ModelOpt 量化出来的 smoothQuant int8 精度令人满意。</p>
+<h3 id="模型量化经验总结">模型量化经验总结</h3>
+<ul>
+<li>前期是不同量化方法的选择问题，我们会在标准的业务数据集上测试各种量化的效果，然后选取比较稳定的量化方法应用到实际业务中。</li>
+<li>量化后期针对模型在实际业务中存在精度损失问题： 理论上，量化后的模型肯定做不到和未量化的模型的精度相同，但我们在实际业务中能将量化的损失控制在 1% 以内，如果精度损失过大，一般可以调整量化过程中的校准数据集，而校准样本一般 2000-8000 条，而对校准数据集的要求是分布尽可能和实际业务的样本的分布一致。</li>
+</ul>
+<h1>大模型工程落地的一些思考</h1>
+<h2 id="模型性能优化总结">模型性能优化总结</h2>
+<ul>
+<li>Attention 是 Transformers 计算瓶颈，从Transformers 的 FLOPs 分析的最后计算公式中可以看出，Transformer 模型的主要计算是集中在 attention 计算上，过去两年，业内主要的针对 Transformer 模型的优化也集中这块，比如 FlashAttention，FlashAttention-2 等方法都是针对 attention 计算的优化。而TensorRT-LLM 中针对不同模型的 attention，基于 flash 的思想，实现了更加丰富的功能及性能的支持。</li>
+<li>大模型推理解决第 2-n 个推理的加速问题成为最迫切的问题，过去 1 年业内提出的 flash-decoding++ 就是解决这块计算加速的问题，在 TensorRT-LLM 中是对该部分也有特定的性能优化，在此基础上，通过调大 batch_size 的方式进一步提升其吞吐量。</li>
+<li>优化 prompt 减少推理过程中气泡也是性能有重要手段，具体问题具体分析，总体原则是，在一个 batch 推理的过程中要避免 token 无效计算。</li>
+</ul>
+<h2 id="模型效果优化总结">模型效果优化总结</h2>
+<ul>
+<li>Prompt 工程是目前大模型实际应用中非常重要的一环，prompt 设计的好坏，不仅仅影响模型的业务效果，同时也是极大的影响模型服务的吞吐量。prompt 是一个经验工程，需要开发者在实践中不断尝试和总结。</li>
+<li>另外，prompt 的 few-shot 中的 example 的顺序也会影响模型推理的结果。</li>
+<li>为了避免大模型没法输出预期的结果，建议开发者设计多套 prompt，逐步引导大模型正确输出，并在 prompt 中设计结束符，避免大模型出现幻觉。</li>
+<li>对于结构化的 prompt，不推荐直接使用换行或者空格直接把各个部分分开，建议使用 markdown 语法或者 xml 语法，这个可能是大模型在预训练的时候，使用大量的 xml 和 markdown 语料训练。</li>
+<li>Prompt 的设计需要考虑一些边界情况，例如 prompt 中可以添加这样的语句：</li>
+</ul>
+<p><img src="/img/LLM/ali/18.webp" srcset="/img/loading.gif" lazyload alt=""></p>
+<h1>未来计划</h1>
+<ul>
+<li>为了进一步提升大模型的 generate 的速度，后续将会尝试 medusa decode 等解码手段。</li>
+<li>后续会考虑尝试使用 Attention Sink 相关 skills 在长文本中尝试。</li>
+<li>过去 1 年一直没有在 FP8 上进行尝试，后续将会用 FP8 在实际业务中实践。</li>
+<li>RAG 的应用，目前大模型能力有一定限制，后续将会尝试使用 RAG（检索增强）的方式提升大模型在业务中效果。</li>
+<li>持续关注 TensorRT-LLM 最新的进展和 feature，TensorRT-LLM 这个开源项目更新迭代的频率还是挺快的，基本 2-3 个月就会有一个大版本出来。</li>
+</ul>
+<h2 id="感谢">感谢</h2>
+<p>本文最后感谢我的主管和团队，以及 NVIDIA 解决方案技术团队和 GPU 计算专家团队对本文的指导。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Transformer/" class="print-no-link">#Transformer</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>大模型性能优化的总结和分享</div>
+      <div>https://dingfen.github.io/2024/05/29/2024-5-29-LLM-perf/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月29日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/06/12/2024-6-12-deepspeed/" title="深入探索 DeepSpeed（三）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入探索 DeepSpeed（三）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/15/2024-5-15-deepspeed/" title="深入探索 deepspeed（二）">
+                        <span class="hidden-mobile">深入探索 deepspeed（二）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

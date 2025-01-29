@@ -1,0 +1,742 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从一头到另一头">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型采样方法与并行扫描算法">
+<meta property="og:url" content="https://dingfen.github.io/2025/01/26/2024-1-15-LLM-topp/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="从一头到另一头">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://files.readme.io/fb9c5f9-Top-KTop-P_Visual_6.png">
+<meta property="article:published_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://files.readme.io/fb9c5f9-Top-KTop-P_Visual_6.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>大模型采样方法与并行扫描算法 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="大模型采样方法与并行扫描算法"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-26 19:49" pubdate>
+          2025年1月26日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">大模型采样方法与并行扫描算法</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Top p 采样与并行扫描</h1>
+<h2 id="top-p-采样">top p 采样</h2>
+<p>在 transformers 算出下一个词的概率之后，从中选出一个好的输出 token 也是不可或缺的重要环节，但这一环节往往被架构中的“大明星” —— transformers 夺走了过多眼球，以至于少有人注意到，译码策略(decoding strategies)也有可能成为大模型推理的性能瓶颈。</p>
+<p>本博客重点关注 huggingface transformer 框架上常用的采样方法——top-p。 其采样的思路是：在选取每个输出的 token 时，从大到小地累积概率，选中 token，直至超过阈值 p ，再从被选中的 token 集合中进行随机采样。这种方法也被称为核采样（nucleus sampling），因为它只关注概率分布的核心部分，忽略其他的 token 。例如，如果 p=0.15，我们将 token 概率从大到小地累积，达到 0.15 时正好是前两个 token （如下图），于是我们会从这两个 token 中 选择一个 token，而不考虑其他 token。这样可以避免采样到一些不合适或不相关的单词，同时也可以保留一些有趣或有创意的单词。</p>
+<p><img src="https://files.readme.io/fb9c5f9-Top-KTop-P_Visual_6.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>top-p 值通常设置为比较高的值（如0.75），目的是限制低概率 token 的长尾。我们可以同时使用 top-k 和 top-p。如果 k 和 p 同时启用，则 p 在 k 之后起作用。</p>
+<h3 id="实现">实现</h3>
+<p><a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers/blob/c4d4e8bdbd25d9463d41de6398940329c89b7fb6/src/transformers/generation_utils.py#L903">huggingface transformer 中对 top p 代码的实现</a>很简单，我们来一起看一下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> top_p &lt; <span class="hljs-number">1.0</span>:<br>    sorted_logits, sorted_indices = torch.sort(logits, descending=<span class="hljs-literal">True</span>)<br>    cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-<span class="hljs-number">1</span>), dim=-<span class="hljs-number">1</span>)<br><br>    <span class="hljs-comment"># Remove tokens with cumulative probability above the threshold (token with 0 are kept)</span><br>    sorted_indices_to_remove = cumulative_probs &gt; top_p<br>    <span class="hljs-keyword">if</span> min_tokens_to_keep &gt; <span class="hljs-number">1</span>:<br>        <span class="hljs-comment"># Keep at least min_tokens_to_keep (set to min_tokens_to_keep-1 because we add the first one below)</span><br>        sorted_indices_to_remove[..., :min_tokens_to_keep] = <span class="hljs-number">0</span><br>    <span class="hljs-comment"># Shift the indices to the right to keep also the first token above the threshold</span><br>    sorted_indices_to_remove[..., <span class="hljs-number">1</span>:] = sorted_indices_to_remove[..., :-<span class="hljs-number">1</span>].clone()<br>    sorted_indices_to_remove[..., <span class="hljs-number">0</span>] = <span class="hljs-number">0</span><br><br>    <span class="hljs-comment"># scatter sorted tensors to original indexing</span><br>    indices_to_remove = sorted_indices_to_remove.scatter(<span class="hljs-number">1</span>, sorted_indices, sorted_indices_to_remove)<br>    logits[indices_to_remove] = filter_value<br><span class="hljs-keyword">return</span> logits<br></code></pre></td></tr></table></figure>
+<p>首先是对得到的概率张量 <code>logits</code> 进行降序排序，随后使用 <code>cumsum</code> 对最低维累积求和，并准备去除大于 <code>top_p</code> 阈值的张量。即 <code>sorted_indices_to_remove</code> 现在应该是类似 <code>[0, 0, 0, 1, 1, ..., 1]</code> 的样子。当然还可以设置最低 token 保证数量不过少。<code>scatter</code> 函数把 <code>sorted_indices_to_remove</code>  数组中的数据重新分配到 <code>indices_to_remove</code> 中，<code>sorted_indices</code> 是 index 数组，表示分配到的具体位置，如此一来，<code>sorted_indices_to_remove</code> 的 0 值会给到最大的那几个概率中（因为是降序排列的）。最后，<code>logits[indices_to_remove] = filter_value</code> 通过给为 1 的值赋予 <code>-inf</code> 来保证选取时被淘汰。</p>
+<h3 id="CUDA-核函数的情况">CUDA 核函数的情况</h3>
+<p>倘若读者朋友们尝试在自己的显卡上运行一个“不大”的大模型推理，并很感兴趣地在运行时抓取了模型推理的性能 nsys 文件，就不难发现，大模型推理的每个 token 输出除了要经过几十层 transformer 子层的推理，其最后阶段还会有大把的时间在做“奇怪”的运算，这其实就是在对计算得到的概率分布张量 logits 做最后的处理。</p>
+<p>上图是 torch==2.0 transformer==4.30.1？下 chatglm2 推理时的性能 nsys 文件</p>
+<p>很明显可以看到，top p采样算法中，占用时间最多的 kernel 就是 <code>tensor_kernel_scan_innermost</code> 函数。接下来，我们需要研究这个核函数是什么，做了什么，以及为什么这么慢，如何提升其运行速度。</p>
+<h2 id="并行扫描">并行扫描</h2>
+<p><code>tensor_kernel_scan_innermost</code> 函数以及其相关的函数，本质上来说是要完成并行求前缀和（亦称扫描，scan）算法。从函数的字面意思理解，该函数主要完成针对 tensor 的最低维度的扫描。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<br>    <span class="hljs-keyword">typename</span> T,<br>    <span class="hljs-type">int</span> num_threads_x,<br>    <span class="hljs-type">int</span> num_threads_y,<br>    <span class="hljs-keyword">class</span> <span class="hljs-title class_">BinaryFunction</span>&gt;<br>__global__ <span class="hljs-keyword">typename</span> std::enable_if&lt;!c10::is_complex&lt;T&gt;::value, <span class="hljs-type">void</span>&gt;::<span class="hljs-function">type</span><br><span class="hljs-function"><span class="hljs-title">tensor_kernel_scan_innermost_dim</span><span class="hljs-params">(</span></span><br><span class="hljs-params"><span class="hljs-function">    T* tgt_,</span></span><br><span class="hljs-params"><span class="hljs-function">    T* src_,</span></span><br><span class="hljs-params"><span class="hljs-function">    <span class="hljs-type">const</span> <span class="hljs-type">uint32_t</span> num_rows,</span></span><br><span class="hljs-params"><span class="hljs-function">    <span class="hljs-type">const</span> <span class="hljs-type">uint32_t</span> row_size,</span></span><br><span class="hljs-params"><span class="hljs-function">    T init,</span></span><br><span class="hljs-params"><span class="hljs-function">    BinaryFunction binary_op)</span> </span>&#123;<br>  __shared__ T sbuf[num_threads_y][<span class="hljs-number">2</span> * num_threads_x];<br>  T* row_buf = sbuf[threadIdx.y];<br><br>  <span class="hljs-built_in">tensor_kernel_scan_innermost_dim_impl</span>&lt;T, num_threads_x, num_threads_y&gt;(<br>      row_buf, tgt_, src_, num_rows, row_size, init, binary_op);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>函数的整体实现不复杂，但其上下文很复杂。这里它主要调用了 <code>tensor_kernel_scan_innermost_dim_impl</code> 完成具体的功能，除此之外就是自己创建了一个位于共享内存的数组 <code>row_buf</code>。</p>
+<p>该函数的下文，它调用的谁？<code>tensor_kernel_scan_innermost_dim_impl</code>是一个非常复杂的函数，我用这张图来表示它的运行过程，并附加对应部分的代码。</p>
+<p>该函数的上文，谁调用的它？<code>scan_innermost_dim</code> 函数根据输入的 tensor 大小，以及线程数，来决定如何调用它。torch2.0 的代码中，线程块的大小是固定的 (16,32)。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> <span class="hljs-type">scalar_t</span>, <span class="hljs-keyword">class</span> <span class="hljs-title class_">BinaryFunction</span>&gt;<br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">scan_innermost_dim</span><span class="hljs-params">(<span class="hljs-type">const</span> TensorBase&amp; self, <span class="hljs-type">const</span> TensorBase&amp; result,</span></span><br><span class="hljs-params"><span class="hljs-function">                        <span class="hljs-type">scalar_t</span> init, BinaryFunction binary_op)</span> </span>&#123;<br>  <span class="hljs-type">int64_t</span> ndim = self.<span class="hljs-built_in">dim</span>();<br>  <span class="hljs-comment">// Treat all outer dimensions as a single dimension.</span><br>  <span class="hljs-type">int64_t</span> row_size = self.<span class="hljs-built_in">size</span>(ndim - <span class="hljs-number">1</span>);<br>  <span class="hljs-type">int64_t</span> num_rows = self.<span class="hljs-built_in">numel</span>() / row_size;<br><br>  <span class="hljs-function">dim3 <span class="hljs-title">threads</span><span class="hljs-params">(<span class="hljs-number">16</span>, <span class="hljs-number">32</span>)</span></span>;<br>  <span class="hljs-type">int64_t</span> maxGridDim = at::cuda::<span class="hljs-built_in">getCurrentDeviceProperties</span>()-&gt;maxGridSize[<span class="hljs-number">0</span>];<br>  <span class="hljs-function">dim3 <span class="hljs-title">grid</span><span class="hljs-params">(std::min(maxGridDim, ceil_div(num_rows, <span class="hljs-type">int64_t</span>&#123;threads.y&#125;)))</span></span>;<br><br>  <span class="hljs-built_in">check_fits_in_unsigned</span>(num_rows, <span class="hljs-string">&quot;Number of rows (self.numel()/self.size(self.dim()-1))&quot;</span>);<br>  <span class="hljs-built_in">check_fits_in_unsigned</span>(row_size, <span class="hljs-string">&quot;row_size&quot;</span>);<br><br>  tensor_kernel_scan_innermost_dim&lt;<span class="hljs-type">scalar_t</span>, <span class="hljs-number">16</span>, <span class="hljs-number">32</span>&gt;&lt;&lt;&lt;grid, threads, <span class="hljs-number">0</span>, at::cuda::<span class="hljs-built_in">getCurrentCUDAStream</span>()&gt;&gt;&gt;(<br>    result.<span class="hljs-built_in">data_ptr</span>&lt;<span class="hljs-type">scalar_t</span>&gt;(), self.<span class="hljs-built_in">data_ptr</span>&lt;<span class="hljs-type">scalar_t</span>&gt;(),<br>    num_rows, row_size, init, binary_op);<br>  <span class="hljs-built_in">C10_CUDA_KERNEL_LAUNCH_CHECK</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Transformer/" class="print-no-link">#Transformer</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>大模型采样方法与并行扫描算法</div>
+      <div>https://dingfen.github.io/2025/01/26/2024-1-15-LLM-topp/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

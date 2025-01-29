@@ -1,0 +1,883 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="关于gem5中SimObject类">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解 Gem5 之三">
+<meta property="og:url" content="https://dingfen.github.io/2022/03/13/2022-3-13-gem5-3/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="关于gem5中SimObject类">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-03-13T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Cpp">
+<meta property="article:tag" content="gem5">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入理解 Gem5 之三 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入理解 Gem5 之三"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-03-13 12:00" pubdate>
+          2022年3月13日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入理解 Gem5 之三</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>深入理解 Gem5 之三——SimObject</h1>
+<p>之前的两篇博文分别介绍了 gem5 的<a href="https://dingfen.github.io/cpp/2022/02/24/gem5-1.html">事件触发机制</a>和<a href="https://dingfen.github.io/cpp/2022/03/08/gem5-2.html">序列化问题</a>，它们都和 SimObject 类有密切的联系。正所谓万事俱备，只欠东风。基于目前的理解，我可以更深入地看看 SimObject 类的实现方式。</p>
+<h2 id="父类">父类</h2>
+<p>SimObject 类是一个非常复杂但又十分重要的类，它在 Gem5 中占有极为重要的地位。gem5 的模块化设计是围绕 SimObject 类型构建的。 模拟系统中的大多数组件都是 SimObjects 的子类，如CPU、缓存、内存控制器、总线等。gem5 将所有这些对象从其 C++ 实现导出到 python。使用提供的 python 配置脚本便可以创建任何 SimObject 类对象，设置其参数，并指定 SimObject 之间的交互。理解该类的实现有助于我们理解整个 gem5 模拟器的运作逻辑。我们先从它的父类开始讲起，它一共有 5 个父类：EventManger、Serializable、Drainable、statistics::Group、Named。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SimObject</span> : <span class="hljs-keyword">public</span> EventManager, <span class="hljs-keyword">public</span> Serializable, <span class="hljs-keyword">public</span> Drainable,<br>    <span class="hljs-keyword">public</span> statistics::Group, <span class="hljs-keyword">public</span> Named<br></code></pre></td></tr></table></figure>
+<p>其中仅有 statistics::Group 类我未作介绍，最后来理解一下 statistics::Group 的作用及实现。</p>
+<h3 id="statistics-Group">statistics::Group</h3>
+<p>statistics 是 gem5 项目中C++的一个命名空间，statistics::Group 类是统计数据的容器。Group 对象之间可组成一个<strong>树状的层次结构</strong>。数据统计子系统用 Groups 之间的关系来反推 SimObject 层次结构，并暴露对象内部的层次结构，从而可以更方便地将统计数据分组到它们自己的类中，然后合并到父类 Group（通常是一个 SimObject）中。</p>
+<p>Group 类中，有一个指向父节点的指针，以及包含本级信息的数组 stats，和包含了子类 Group 数组的 statGroups 和 mergedStatGroups。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Group</span> &#123;<br>  <span class="hljs-comment">/** Parent pointer if merged into parent */</span><br>  Group *mergedParent;<br>  std::map&lt;std::string, Group *&gt; statGroups;<br>  std::vector&lt;Group *&gt; mergedStatGroups;<br>  std::vector&lt;Info *&gt; stats;<br>&#125;<br><br>Group::<span class="hljs-built_in">Group</span>(Group *parent, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *name)<br>    : <span class="hljs-built_in">mergedParent</span>(<span class="hljs-literal">nullptr</span>) &#123;<br>    <span class="hljs-keyword">if</span> (parent &amp;&amp; name) &#123;<br>        parent-&gt;<span class="hljs-built_in">addStatGroup</span>(name, <span class="hljs-keyword">this</span>);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (parent &amp;&amp; !name) &#123;<br>        parent-&gt;<span class="hljs-built_in">mergeStatGroup</span>(<span class="hljs-keyword">this</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>从构造函数可以看出，当子类 Group 未提供姓名时，使用 mergedStatGroups 存储信息。Group 类可以很轻松地构造出复杂的树状层次，例如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// test code</span><br><span class="hljs-function">statistics::Group <span class="hljs-title">root</span><span class="hljs-params">(<span class="hljs-literal">nullptr</span>)</span></span>;<br><span class="hljs-function">statistics::Group <span class="hljs-title">node1</span><span class="hljs-params">(&amp;root, <span class="hljs-string">&quot;Node1&quot;</span>)</span></span>;<br><span class="hljs-function">statistics::Group <span class="hljs-title">node2</span><span class="hljs-params">(&amp;root, <span class="hljs-string">&quot;Node2&quot;</span>)</span></span>;<br><span class="hljs-function">statistics::Group <span class="hljs-title">node1_1</span><span class="hljs-params">(&amp;node1, <span class="hljs-string">&quot;Node1_1&quot;</span>)</span></span>;<br><span class="hljs-function">statistics::Group <span class="hljs-title">node2_1</span><span class="hljs-params">(&amp;node2, <span class="hljs-string">&quot;Node2_1&quot;</span>)</span></span>;<br><span class="hljs-function">statistics::Group <span class="hljs-title">node2_2</span><span class="hljs-params">(&amp;node2, <span class="hljs-string">&quot;Node2_2&quot;</span>)</span></span>;<br><br><span class="hljs-comment">/* we can get</span><br><span class="hljs-comment"> *        root</span><br><span class="hljs-comment"> *       /     \</span><br><span class="hljs-comment"> *  node1       node2</span><br><span class="hljs-comment"> *    |        /     \</span><br><span class="hljs-comment"> * node1_1  node2_1 node2_2</span><br><span class="hljs-comment"> */</span><br></code></pre></td></tr></table></figure>
+<p>gem5 中用 Info 类维护统计数据以及对象的基本信息，由于和本篇博文主题关系不大，不再赘述。</p>
+<h3 id="小结">小结</h3>
+<p>在正式开始之前，再回顾一下五个父类各自的作用：</p>
+<ul>
+<li>EventManager 类：负责调度、管理、执行事件。EventManager 类是对 EventQueue 类的包装，SimObject 对象中所有的事件实际都由 EventQueue 队列管理。该队列以二维的单链表的形式管理着所有事件，事件以触发时间点从近到远排列。</li>
+<li>Serializable 类：负责对象的序列化。SimObjects 可通过 <code>SimObject::serializeAll()</code> 函数自动完成序列化，写入到自己的 sections 中。Serializable 类根据 SimObject 类对象的名字以及对象间的包含关系，帮助用户构建起了层次化的序列化模型，并使用该模型完成 SimObject 的序列化，以 ini 文件格式输出。</li>
+<li>Drainable 类：负责 drain 对象。DrainManager 类以单例的方式管理整个模拟器的 drain 过程。只有系统中所有的对象都被 drained，才能开始序列化、更改模型等操作。完成后需要使用 <code>DrainManager::resume()</code> 函数将系统回归到正常运行状态。</li>
+<li>statistics::Group 类：负责运行过程中统计、管理数据。Group 对象之间可组成树状层次，从而反应出 SimObject 对象间的树状层次。</li>
+<li>Name 类：负责给 SimObject 起名。</li>
+</ul>
+<h2 id="SimObject">SimObject</h2>
+<p>对其父类有了充足的理解后，我们再来看一下 SimObject 类中的静态变量：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SimObject</span> : <span class="hljs-keyword">public</span> EventManager, <span class="hljs-keyword">public</span> Serializable, <span class="hljs-keyword">public</span> Drainable,<br>                  <span class="hljs-keyword">public</span> statistics::Group, <span class="hljs-keyword">public</span> Named &#123;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-keyword">typedef</span> std::vector&lt;SimObject *&gt; SimObjectList;<br>    <span class="hljs-type">static</span> SimObjectList simObjectList;<br><br>    <span class="hljs-comment">/** Helper to resolve an object given its name. */</span><br>    <span class="hljs-type">static</span> SimObjectResolver *_objNameResolver;<br></code></pre></td></tr></table></figure>
+<p>SimObject 类中维护了一个数组，记录所有被例化的对象，方便统一管理。SimObjectResolver 类根据传入的 SimObject 路径名字，解析出 SimObject 对象；维护 simObjectList 数组的目的是方便实现 <code>serializeAll()</code> 函数，也方便用户通过对象名找到对应的 SimObject。</p>
+<p>再来看看 SimObject 类有哪些成员：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SimObject</span> : <span class="hljs-keyword">public</span> EventManager, <span class="hljs-keyword">public</span> Serializable, <span class="hljs-keyword">public</span> Drainable,<br>                  <span class="hljs-keyword">public</span> statistics::Group, <span class="hljs-keyword">public</span> Named &#123;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-comment">/** Manager coordinates hooking up probe points with listeners. */</span><br>    ProbeManager *probeManager;<br>    <span class="hljs-comment">/** Cached copy of the object parameters. */</span><br>    <span class="hljs-type">const</span> SimObjectParams &amp;_params;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>ProbeManager 类是一个可连接探测点和监视器的协调类。所谓探测点主要用于 PMU(Performance Measurement Unit) 的实现，PMU 在 RTL 实现中，通常用于评估处理器模块的性能。而在 gem5 模拟器中，需要使用探测点（Probe Point）为 SimObject 类实现 PMU 提供了统一的接口，从而易于维护，simobject 对象调用 notify 时，需将事件计数增量作为它的唯一参数。</p>
+<p>从 gem5 的官方文档中，可了解到 <a target="_blank" rel="noopener" href="http://simulate.py">simulate.py</a> 使用以下函数完成对模拟对象的初始化：</p>
+<ul>
+<li><code>SimObject::init()</code> 只有当 C++ SimObject 对象被创建，且所有接口都被连上后，该函数会被调用</li>
+<li><code>SimObject::regStats()</code> 本是 Group 类的回调函数，用于设置需要复杂参数的统计信息。<br>
+（例如，分布）
+<ul>
+<li><code>SimObject::initState()</code> 若 SimObject 不是从检查点恢复时，需要调用该函数。该函数标记了状态的初始点，仅在冷启动时会被使用，让 simobject 回到初始状态。</li>
+<li><code>SimObject::loadState()</code> 若从检查点恢复，调用该函数。其默认实现是调用 <code>unserialize()</code> 函数。因为从检查点恢复的过程就如同序列化后，装载之前保存的状态的过程。</li>
+</ul>
+</li>
+<li><code>SimObject::resetStats()</code> 重置统计数据。</li>
+<li><code>SimObject::startup()</code> 是模拟前的最终的启动函数。此时所有状态都已初始化（包括未序列化的状态，如果有的话，如 <code>curTick()</code> 的值），因此这是调度初始事件的合适时间点。</li>
+<li>Drainable::drainResume() 如果从检查点恢复。</li>
+</ul>
+<p>以上这些函数（除 <code>loadState()</code> 有默认非空的实现）都需要继承 SimObject 类的派生类来实现。SimObject 类只是搭建了模拟对象的运行框架，规定了对象的运行步骤。</p>
+<p>最后再介绍一些有意义的成员函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SimObject</span> &#123;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-function"><span class="hljs-keyword">virtual</span> Port &amp;<span class="hljs-title">getPort</span><span class="hljs-params">(<span class="hljs-type">const</span> std::string &amp;if_name, PortID idx=InvalidPortID)</span></span>;<br>    <span class="hljs-comment">/** Write back dirty buffers to memory using functional writes. */</span><br>    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">memWriteback</span><span class="hljs-params">()</span> </span>&#123;&#125;;<br>    <span class="hljs-comment">/** Invalidate the contents of memory buffers. */</span><br>    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">memInvalidate</span><span class="hljs-params">()</span> </span>&#123;&#125;;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>其中，<code>getPort()</code> 用于获取给定名称和索引的端口。通常在绑定时使用，返回对协议无关端口的引用。</p>
+<p>注意到，gem5 有一对请求和响应端口接口。 所有内存对象都通过端口连接在一起。这些端口在内存对象之间提供了三种不同的内存系统模式：时序(timing)、原子(atomic)和功能(functional)。 最重要的模式是时序模式，即 cycle-level 级别的时序周期模式。其他模式仅在特殊情况下使用，这些端口可以让 SimObject 相互通信。</p>
+<p><code>memWriteback()</code> 函数将脏缓冲区写回内存。函数完成后，对象内所有脏数据都已写回内存。带缓存的系统通常用该函数来为检查点前做准备。<code>memInvalidate()</code> 函数使内存缓冲区的内容无效。当切换到硬件虚拟化 CPU 模型时，我们需要确保系统中没有任何在我们返回时陈旧的缓存数据。该函数将所有此类状态刷新回主存储器，但它不会将任何脏状态写回内存。</p>
+<h2 id="时钟-与-ClockedObject">时钟 与 ClockedObject</h2>
+<p>接下来，研究一个常见的 SimObject 派生类 ClockedObject，同时也了解一下 Gem5 中时钟的实现方式</p>
+<h3 id="时钟">时钟</h3>
+<p><code>curTick()</code> 全局函数，通常使用 <code>curTick()</code> 来获取全局时钟值。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">typedef</span> <span class="hljs-type">uint64_t</span> Tick;<br>__thread Tick *_curTickPtr;<br><br><span class="hljs-function"><span class="hljs-keyword">inline</span> Tick <span class="hljs-title">curTick</span><span class="hljs-params">()</span> </span>&#123; <span class="hljs-keyword">return</span> *Gem5Internal::_curTickPtr; &#125;<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p><code>__thread</code> 将变量存储到线程的局部空间中，在线程的生命周期内有效。因此，在多线程程序中，每个线程都创建了该变量的唯一实例，并在线程终止时销毁。<code>__thread</code> 存储类说明符能被 gcc 识别，可确保线程安全：因为变量被多个线程访问时无需担心竞争，同时避免处理线程同步带来的繁琐编程。</p>
+</blockquote>
+<h3 id="Clocked-类">Clocked 类</h3>
+<p>Clocked 类为 SimObject 类提供时钟周期模拟。Gem5 在模拟 SimObject 对象的工作流程时，会模拟硬件中时钟打拍行为，进而得到准确的模拟性能。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Clocked</span> &#123;<br>  <span class="hljs-comment">/** Tick value of the next clock edge (&gt;= curTick()) at the</span><br><span class="hljs-comment">   *  time of the last call to update() */</span><br>  <span class="hljs-keyword">mutable</span> Tick tick;<br>  <span class="hljs-comment">/* Cycle counter value corresponding to the current value of &#x27;tick&#x27; */</span><br>  <span class="hljs-keyword">mutable</span> Cycles cycle;<br>  <span class="hljs-comment">/* The clock domain this clocked object belongs to */</span><br>  ClockDomain &amp;clockDomain;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>Clocked 类中有三个变量：</p>
+<ul>
+<li>tick 变量类型为 <code>uint64_t</code>，指示下一个时钟边缘沿到来的 tick 值。tick 值是模拟器中时间的最小单位</li>
+<li>cycle 类型为 Cycles，该类表示当前经过的时钟周期总数，其内部包装了 <code>uint64_t</code>。这是硬件中常说的时钟周期。之所以不直接使用 <code>uint64_t</code>，是为避免混淆 Tick 和 Cycles 这两个类型。</li>
+<li>clockDomain 表示位于的时钟域。时钟域是若干个共享同一个时钟的 SimObject 对象集合。其中，<code>clockPeriod()</code> 记录了时钟的周期（单位：Tick）。</li>
+</ul>
+<p>Clocked 类中最重要的函数就是 <code>updateClockPeriod()</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// Update the tick to the current tick</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">updateClockPeriod</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-comment">// tick and cycle update</span><br>  <span class="hljs-built_in">update</span>();<br>  <span class="hljs-comment">// hook function to add extra work.</span><br>  <span class="hljs-built_in">clockPeriodUpdated</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>其中，<code>clockPeriodUpdated()</code> 函数是 hook 函数，由子类负责实现，用来增加一些与时钟周期打拍有关的功能。而 <code>update()</code> 函数的实现如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">update</span><span class="hljs-params">()</span> <span class="hljs-type">const</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (tick &gt;= <span class="hljs-built_in">curTick</span>())<br>    <span class="hljs-keyword">return</span>;<br>  <span class="hljs-comment">/** in most case, add one cycle */</span><br>  tick += <span class="hljs-built_in">clockPeriod</span>();<br>  ++cycle;<br>  <span class="hljs-keyword">if</span> (tick &gt;= <span class="hljs-built_in">curTick</span>()<br>    <span class="hljs-keyword">return</span>;<br>  <span class="hljs-comment">/* special case, add one more cycle. divCeil(a, b): (a + b -1) / b */</span><br>  Cycles <span class="hljs-built_in">elapsedCycles</span>(<span class="hljs-built_in">divCeil</span>(<span class="hljs-built_in">curTick</span>() - tick, <span class="hljs-built_in">clockPeriod</span>()));<br>  cycle += elapsedCycles;<br>  tick += elapsedCycles * <span class="hljs-built_in">clockPeriod</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>update()</code> 对齐了 cycle 和 tick 到下一个时钟沿，若 tick &gt;= curTick()，即当前 tick 已经与全局时钟对齐时，那么时钟就是最新的。大部分情况下，累加一个时钟周期就可以达到最新，但也有例外，需要增加更多的时钟周期才行。</p>
+<p><code>clockEdge()</code> 函数根据传入的 cycles 数，换算出未来达到这一时钟周期数要求的 tick 数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">Tick <span class="hljs-title">clockEdge</span><span class="hljs-params">(Cycles cycles = Cycles(<span class="hljs-number">0</span>))</span> <span class="hljs-type">const</span> </span>&#123;<br>  <span class="hljs-comment">// align tick to the next clock edge</span><br>  <span class="hljs-built_in">update</span>();<br>  <span class="hljs-comment">// figure out when this future cycle is</span><br>  <span class="hljs-keyword">return</span> tick + <span class="hljs-built_in">clockPeriod</span>() * cycles;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="ClockedObject">ClockedObject</h3>
+<p>ClockedObject 类继承了 Clocked 类和 SimObject 类，以 Tick 与对象的 cycle 相关联。其中 PowerState 类也是 SimObject 类的派生类，它提供了描述功耗状态和切换功耗状态的功能。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">ClockedObject</span> : <span class="hljs-keyword">public</span> SimObject, <span class="hljs-keyword">public</span> Clocked &#123;<br>  <span class="hljs-keyword">public</span>:<br>  <span class="hljs-built_in">ClockedObject</span>(<span class="hljs-type">const</span> ClockedObjectParams &amp;p);<br><br>  <span class="hljs-comment">/** Parameters of ClockedObject */</span><br>  <span class="hljs-keyword">using</span> Params = ClockedObjectParams;<br><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">serialize</span><span class="hljs-params">(CheckpointOut &amp;cp)</span> <span class="hljs-type">const</span> <span class="hljs-keyword">override</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">unserialize</span><span class="hljs-params">(CheckpointIn &amp;cp)</span> <span class="hljs-keyword">override</span></span>;<br>  PowerState *powerState;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在 gem5 的教程代码 part2 中，使用 ClockedObject 类实现了一个简单的 Cache：SimpleCache 类。借助这一例子，我们可以从中看出 SimObject 类以及其派生类在模拟系统时的作用。</p>
+<h3 id="SimpleCache">SimpleCache</h3>
+<p>现在，根据我之前对 gem5 底层的了解，我试图理解 SimpleCache 类中的实现原理。SimpleCache 类描述的 Cache 在硬件上是一种</p>
+<ul>
+<li>全相联的 Cache</li>
+<li>使用随机替换算法来实现新旧 Cacheline 替换</li>
+<li>只能同时处理一个请求</li>
+<li>写回式的 Cache</li>
+</ul>
+<p>要实现这样一个 SimpleCache，首先需要1）连接 Cache 的端口。2）Cache 的块大小以及容量，存储数据等。3）Cache 的命中、丢失延迟等。这些需求都在下面的类定义中有所体现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SimpleCache</span> : <span class="hljs-keyword">public</span> ClockedObject &#123;<br>  <span class="hljs-comment">// Latency to check the cache. Number of cycles for both hit and miss</span><br>  <span class="hljs-type">const</span> Cycles latency;<br><br>  <span class="hljs-comment">// The block size for the cache</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">unsigned</span> blockSize;<br><br>  <span class="hljs-comment">// Number of blocks in the cache (size of cache / block size)</span><br>  <span class="hljs-type">const</span> <span class="hljs-type">unsigned</span> capacity;<br><br>  <span class="hljs-comment">// Instantiation of the CPU-side port</span><br>  std::vector&lt;CPUSidePort&gt; cpuPorts;<br><br>  <span class="hljs-comment">// Instantiation of the memory-side port</span><br>  MemSidePort memPort;<br><br>  <span class="hljs-comment">// True if this cache is currently blocked waiting for a response.</span><br>  <span class="hljs-type">bool</span> blocked;<br><br>  <span class="hljs-comment">// Packet that we are currently handling. Used for upgrading to larger</span><br>  <span class="hljs-comment">// cache line sizes</span><br>  PacketPtr originalPacket;<br><br>  <span class="hljs-comment">// The port to send the response when we recieve it back</span><br>  <span class="hljs-type">int</span> waitingPortId;<br><br>  <span class="hljs-comment">// For tracking the miss latency</span><br>  Tick missTime;<br><br>  <span class="hljs-comment">// An incredibly simple cache storage. Maps block addresses to data</span><br>  std::unordered_map&lt;Addr, <span class="hljs-type">uint8_t</span>*&gt; cacheStore;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>对于函数实现，直接看我们能理解的部分。例如，<code>handleRequest()</code> 函数用于处理来自 CPU 的 Cache 访问/读写请求。下面代码展示了请求被处理的过程：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">SimpleCache::handleRequest</span><span class="hljs-params">(PacketPtr pkt, <span class="hljs-type">int</span> port_id)</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (blocked) &#123;<br>    <span class="hljs-comment">// There is currently an outstanding request so we can&#x27;t respond. Stall</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>  &#125;<br>  <span class="hljs-built_in">DPRINTF</span>(SimpleCache, <span class="hljs-string">&quot;Got request for addr %#x\n&quot;</span>, pkt-&gt;<span class="hljs-built_in">getAddr</span>());<br><br>  <span class="hljs-comment">// This cache is now blocked waiting for the response to this packet.</span><br>  blocked = <span class="hljs-literal">true</span>;<br><br>  <span class="hljs-comment">// Store the port for when we get the response</span><br>  <span class="hljs-built_in">assert</span>(waitingPortId == <span class="hljs-number">-1</span>);<br>  waitingPortId = port_id;<br><br>  <span class="hljs-comment">// Schedule an event after cache access latency to actually access</span><br>  <span class="hljs-built_in">schedule</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">EventFunctionWrapper</span>([<span class="hljs-keyword">this</span>, pkt]&#123;<span class="hljs-built_in">accessTiming</span>(pkt);&#125;,<br>    <span class="hljs-built_in">name</span>() + <span class="hljs-string">&quot;.accessEvent&quot;</span>, <span class="hljs-literal">true</span>), <span class="hljs-built_in">clockEdge</span>(latency));<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>由于 Cache 一次只能处理一个请求，因此当 Cache 状态为 blocked 时，请求无法被处理，直接返回 false。否则，将状态设置为 blocked，然后创建一个 Event 事件并调度：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">schedule</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">EventFunctionWrapper</span>([<span class="hljs-keyword">this</span>, pkt]&#123;<span class="hljs-built_in">accessTiming</span>(pkt);&#125;,<br>  <span class="hljs-built_in">name</span>() + <span class="hljs-string">&quot;.accessEvent&quot;</span>, <span class="hljs-literal">true</span>), <span class="hljs-built_in">clockEdge</span>(latency));<br></code></pre></td></tr></table></figure>
+<p>回顾一下之前博客中的分析，<code>schedule()</code> 函数负责事件调度，其参数是将要被执行的事件 event 和具体执行时间 when。在这里，被执行的事件 event 就是 <code>accessTiming(pkt)</code> 函数，它被 EventFunctionWrapper 进一步封装，出入到 <code>schedule()</code> 中，而具体执行的时间，是 <code>clockEdge(latency)</code>。其中 latency 是 Cache 对于检查数据是否命中的延迟，而 <code>clockEdge()</code> 将 latency 的时间单位从 cycles 转换为 ticks 的函数。当时间和事件本身都被设置好后，如同前面提到的那样，事件会按照调度的时间先后顺序，被放入事件队列中等待执行。最后产生的效果就是，等待了 latency 个时钟周期后，这一请求被 Cache 执行并完成。</p>
+<p><code>accessTiming(pkt)</code> 函数功能是访问 Cache，判断读取的请求是否命中，并统计出所需要的延迟。如果命中，那么直接进入返回应答的操作，发送应答消息给 CPU 端：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">SimpleCache::accessTiming</span><span class="hljs-params">(PacketPtr pkt)</span> </span>&#123;<br>  <span class="hljs-type">bool</span> hit = <span class="hljs-built_in">accessFunctional</span>(pkt);<br>  <span class="hljs-built_in">DPRINTF</span>(SimpleCache, <span class="hljs-string">&quot;%s for packet: %s\n&quot;</span>, hit ? <span class="hljs-string">&quot;Hit&quot;</span> : <span class="hljs-string">&quot;Miss&quot;</span>,<br>      pkt-&gt;<span class="hljs-built_in">print</span>());<br><br>  <span class="hljs-keyword">if</span> (hit) &#123;<br>    <span class="hljs-comment">// Respond to the CPU side</span><br>    stats.hits++; <span class="hljs-comment">// update stats</span><br>    <span class="hljs-built_in">DDUMP</span>(SimpleCache, pkt-&gt;<span class="hljs-built_in">getConstPtr</span>&lt;<span class="hljs-type">uint8_t</span>&gt;(), pkt-&gt;<span class="hljs-built_in">getSize</span>());<br>    pkt-&gt;<span class="hljs-built_in">makeResponse</span>();<br>    <span class="hljs-built_in">sendResponse</span>(pkt);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-comment">/* ... */</span><br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>而若没有命中，那么需要先记录开始替换的时刻，然后进行目标块的替换。这里需要注意到，因为请求的地址不一定与块地址大小对齐，而内存端口取 Cache 块大小时要求必须是块的首地址。因此，需要分情况讨论是否可以直接访问内存取块（即forward），若未对齐，那么需要重新生成一个块对齐的 Packet 来访问 DRAM 端。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">else</span> &#123;<br>  stats.misses++; <span class="hljs-comment">// update stats</span><br>  missTime = <span class="hljs-built_in">curTick</span>();<br>  <span class="hljs-comment">// Forward to the memory side.</span><br>  <span class="hljs-comment">// We can&#x27;t directly forward the packet unless it is exactly the size</span><br>  <span class="hljs-comment">// of the cache line, and aligned. Check for that here.</span><br>  Addr addr = pkt-&gt;<span class="hljs-built_in">getAddr</span>();<br>  Addr block_addr = pkt-&gt;<span class="hljs-built_in">getBlockAddr</span>(blockSize);<br>  <span class="hljs-type">unsigned</span> size = pkt-&gt;<span class="hljs-built_in">getSize</span>();<br>  <span class="hljs-keyword">if</span> (addr == block_addr &amp;&amp; size == blockSize) &#123;<br>    <span class="hljs-comment">// Aligned and block size. We can just forward.</span><br>    <span class="hljs-built_in">DPRINTF</span>(SimpleCache, <span class="hljs-string">&quot;forwarding packet\n&quot;</span>);<br>    memPort.<span class="hljs-built_in">sendPacket</span>(pkt);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-built_in">DPRINTF</span>(SimpleCache, <span class="hljs-string">&quot;Upgrading packet to block size\n&quot;</span>);<br>    <span class="hljs-built_in">panic_if</span>(addr - block_addr + size &gt; blockSize,<br>              <span class="hljs-string">&quot;Cannot handle accesses that span multiple cache lines&quot;</span>);<br>    <span class="hljs-comment">// Unaligned access to one cache block</span><br>    <span class="hljs-built_in">assert</span>(pkt-&gt;<span class="hljs-built_in">needsResponse</span>());<br>    MemCmd cmd;<br>    <span class="hljs-keyword">if</span> (pkt-&gt;<span class="hljs-built_in">isWrite</span>() || pkt-&gt;<span class="hljs-built_in">isRead</span>()) &#123;<br>        <span class="hljs-comment">// Read the data from memory to write into the block.</span><br>        <span class="hljs-comment">// We&#x27;ll write the data in the cache (i.e., a writeback cache)</span><br>        cmd = MemCmd::ReadReq;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;Unknown packet type in upgrade size&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">// Create a new packet that is blockSize</span><br>    PacketPtr new_pkt = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Packet</span>(pkt-&gt;req, cmd, blockSize);<br>    new_pkt-&gt;<span class="hljs-built_in">allocate</span>();<br><br>    <span class="hljs-comment">// Should now be block aligned</span><br>    <span class="hljs-built_in">assert</span>(new_pkt-&gt;<span class="hljs-built_in">getAddr</span>() == new_pkt-&gt;<span class="hljs-built_in">getBlockAddr</span>(blockSize));<br><br>    <span class="hljs-comment">// Save the old packet</span><br>    originalPacket = pkt;<br><br>    <span class="hljs-built_in">DPRINTF</span>(SimpleCache, <span class="hljs-string">&quot;forwarding packet\n&quot;</span>);<br>    memPort.<span class="hljs-built_in">sendPacket</span>(new_pkt);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>SimpleCache 类其余部分的实现也非常有意思，但与该博文的主题偏离太远，我们之后再来细细品读。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Cpp/" class="category-chain-item">Cpp</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Cpp/" class="print-no-link">#Cpp</a>
+      
+        <a href="/tags/gem5/" class="print-no-link">#gem5</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入理解 Gem5 之三</div>
+      <div>https://dingfen.github.io/2022/03/13/2022-3-13-gem5-3/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年3月13日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/04/02/2022-4-2-gem5-4/" title="深入理解 Gem5 之四">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入理解 Gem5 之四</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/08/2022-3-8-gem5-2/" title="深入理解 Gem5 之二">
+                        <span class="hidden-mobile">深入理解 Gem5 之二</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

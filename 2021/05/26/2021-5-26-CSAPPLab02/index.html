@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="如何有效提升x86汇编阅读能力和GDB调试器使用能力">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解计算机系统之二进制炸弹实验">
+<meta property="og:url" content="https://dingfen.github.io/2021/05/26/2021-5-26-CSAPPLab02/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="如何有效提升x86汇编阅读能力和GDB调试器使用能力">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/1_1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/2.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/3.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/3_1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/3_2.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/4.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/4_1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/5.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/5_1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/5_2.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/6.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/6_1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/6_3.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/6_2.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/secret.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/s_1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/s_2.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/s_3.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/6_4.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab2/final.png">
+<meta property="article:published_time" content="2021-05-26T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="x86">
+<meta property="article:tag" content="CSAPP">
+<meta property="article:tag" content="BinaryBombs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/CSAPP/lab2/1.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入理解计算机系统之二进制炸弹实验 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入理解计算机系统之二进制炸弹实验"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-05-26 12:00" pubdate>
+          2021年5月26日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入理解计算机系统之二进制炸弹实验</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>深入理解计算机系统——二进制炸弹实验</h1>
+<h2 id="实验简介">实验简介</h2>
+<p>二进制炸弹是一个作为目标代码文件的程序。运行时，它提示用户输入若干个不同的字符串。如果其中一个不正确，炸弹就会“爆炸”，打印出一条错误信息。用户必须通过对程序的反汇编和逆向工程来求出这六个字符串，解决这些炸弹。该实验的主要目的是，深入理解汇编语言，并学习使用 gdb 调试器。</p>
+<p>在本次实验中，我们需要拆解七个炸弹（其中一个为隐藏炸弹）。</p>
+<h2 id="实验预备">实验预备</h2>
+<p>下载完实验材料后，有两个文件值得关注：<code>bomb</code> 和 <code>bomb.c</code> 。<code>bomb</code> 就是要“拆解”的目标文件代码，而 <code>bomb.c</code> 只是辅助理解的部分源代码文件。首先，对 <code>bomb</code> 进行逆向：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">objdump -d bomb &gt;&gt; bomb.s<br></code></pre></td></tr></table></figure>
+<p>得到反汇编文件 <code>bomb.s</code> ，然后，在该文件中找到相关函数的反汇编代码，开始拆解炸弹！</p>
+<h2 id="拆弹">拆弹</h2>
+<h3 id="phase-1">phase_1</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nasm">phase_1:<br>    push   %ebp<br>    mov    %esp,%ebp<br>    sub    $0x8,%esp<br>    movl   $0x8049948,0x4(%esp)<br><br>    mov    0x8(%ebp),%eax<br>    mov    %eax,(%esp)<br>    call    &lt;strings_not_equal&gt;<br>    test   %eax,%eax<br>    je     &lt;phase_1+0x22&gt;<br>    call  &lt;explode_bomb&gt;<br>    leave  <br>    ret    <br></code></pre></td></tr></table></figure>
+<p>比较字符串，若相等就不会爆炸。找到目标字符串。</p>
+<p>gdb找到：</p>
+<p><img src="/img/CSAPP/lab2/1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>成功！</p>
+<p><img src="/img/CSAPP/lab2/1_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="phase-2">phase_2</h3>
+<p>再来看第二个炸弹的反汇编代码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs nasm">phase_2:<br>    push   %ebp		; set up stack size==0x28<br>    mov    %esp,%ebp<br>    sub    $0x28,%esp<br>    lea    -0x1c(%ebp),%eax		; eax=ebp-0x1c<br>    mov    %eax,0x4(%esp)		; ebp-0x1c=(esp+0x4)<br>    mov    0x8(%ebp),%eax		; (ebp+0x8)=(esp)<br>    mov    %eax,(%esp)<br>    call   &lt;read_six_numbers&gt;	; read_six_numbers() needs 2 para<br>    movl   $0x1,-0x4(%ebp)		; loop begin i=0x1<br>    jmp    &lt;phase_2+0x3f&gt;<br>    mov    -0x4(%ebp),%eax		; eax=i<br>    mov    -0x1c(%ebp,%eax,4),%edx	;edx=(ebp-0x1c+4*eax)<br>    mov    -0x4(%ebp),%eax<br>    dec    %eax		; eax=i-1<br>    mov    -0x1c(%ebp,%eax,4),%eax	; eax=(ebp-0x1c+4*eax)<br>    add    $0x5,%eax	; eax+=0x5<br>    cmp    %eax,%edx ; is equal? explode if not<br>    je     &lt;phase_2+0x3c&gt;<br>    call  &lt;explode_bomb&gt;<br>    incl   -0x4(%ebp)	; (ebp-0x4)++<br>    cmpl   $0x5,-0x4(%ebp)	; loop unit i==5<br>    jle   &lt;phase_2+0x21&gt;<br>    leave  <br>    ret    <br><br></code></pre></td></tr></table></figure>
+<p>仔细阅读后发现，程序先调用了 <code>read_six_numbers</code> 的函数，而在之前，程序准备了一个参数放在 <code>%esp+4</code> 处，该参数的意义需要进一步阅读下面的代码才能知晓。之后，程序就进入了一个循环，用于不断测试条件，如果条件不符，炸弹就会爆炸！显然，该循环就是关键，这个炸弹就是考验汇编语言的循环部分了。经整理，循环用 C 代码表示如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c">*a = &amp;(ebp<span class="hljs-number">-0x1c</span>);<br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= <span class="hljs-number">5</span>; i++) &#123;<br>    edx=a[i];<br>    eax=a[i<span class="hljs-number">-1</span>]+<span class="hljs-number">5</span>;<br>    <span class="hljs-keyword">if</span> (eax != edx)<br>        explode_bomb();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>现在，明白 <code>read_six_numbers</code> 函数的参数 <code>ebp-0x1c</code> 是一个数组地址。大致可以猜到，只要输入 6 个数字，相邻两个差为 5 即可拆解炸弹。</p>
+<p>等等，并不是任意的差为 5 的等差数列都满足要求！对首项，<code>read_six_numbers</code> 函数也有要求：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs nasm">read_six_numbers:<br>	; ....<br>	mov    0x8(%ebp),%eax<br>    mov    %eax,(%esp)<br>    call    &lt;sscanf@plt&gt;<br>    mov    %eax,-0xc(%ebp)<br>    cmpl   $0x5,-0xc(%ebp)	; compare with (ebp-0xc) 5<br>    jg      &lt;read_six_numbers+0x62&gt;<br>    call    &lt;explode_bomb&gt;<br>    add    $0x30,%esp<br></code></pre></td></tr></table></figure>
+<p>看起来，输入的首项必须比 5 大，那么首项就是 6 吧 :smile:。</p>
+<p>验证一下：</p>
+<p><img src="/img/CSAPP/lab2/2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="phase-3">phase_3</h3>
+<p>再接再厉，开始拆解第三个炸弹。<code>phase_3</code> 函数的汇编代码明显长了不少，先看第一部分：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs nasm">phase_3:<br>	; ...<br>    movl   $0x0,-0x8(%ebp)<br>    movl   $0x0,-0x4(%ebp)<br>    lea    -0x10(%ebp),%eax<br>    mov    %eax,0xc(%esp)	; (esp+0xc)=ebp-0x10<br>    lea    -0xc(%ebp),%eax<br>    mov    %eax,0x8(%esp)	; (esp+0x8)=ebp-0xc<br>    movl   $0x8049972,0x4(%esp) ; (esp+0x4)=??<br><br>    mov    0x8(%ebp),%eax<br>    mov    %eax,(%esp)<br>    call    &lt;sscanf@plt&gt;<br>    mov    %eax,-0x4(%ebp)<br>    cmpl   $0x1,-0x4(%ebp)	; eax &gt; 1, if not explode!<br>    jg      &lt;phase_3+0x43&gt;<br>    call   &lt;explode_bomb&gt;<br>    mov    -0xc(%ebp),%eax	; eax &gt; 7 will explode!<br>    mov    %eax,-0x14(%ebp)	; (ebp-0xc)-&gt;(ebp-0x14)<br>    cmpl   $0x7,-0x14(%ebp)<br>    ja    &lt;phase_3+0x95&gt; ; jmp to call &lt;explode_bomb&gt;<br></code></pre></td></tr></table></figure>
+<p>注意到，程序调用了函数 <code>sscanf</code> 。该函数的意义是，从第一个参数的字符串中读取变量的值。就本次调用而言，函数共准备了四个参数，分别位于<code>%esp</code>   <code>%esp+0x4</code> 、 <code>%esp+0x8</code> 和  <code>%esp+0xc</code> 。其中，<code>%esp</code> 就是我们输入的行字符串，这 <code>0x8049972</code> 表示的是：</p>
+<p><img src="/img/CSAPP/lab2/3.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>看来是需要输入两个整数。那么，最后的两个参数就一定是输入的整数了，<code>%esp+0x8</code> 是第一个整数地址，<code>%esp+0xc</code> 应该是第二个整数地址。<code>sscanf</code> 函数完成后，读入的两个整数就位于 <code>ebp-0xc</code> 和 <code>ebp-0x10</code> 中。</p>
+<p>然后对这两个整数做简单判断：要求第一个整数要大于 1 且小于等于 7，否则炸弹会爆炸。接下来，看函数的第二部分：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs nasm">;...<br>mov    -0x14(%ebp),%edx		; edx=(ebp-0x14)<br>mov    0x8049978(,%edx,4),%eax	; eax=(edx*4+0x8049978)<br>jmp    *%eax	; a switch table<br>addl   $0x108,-0x8(%ebp)<br>subl   $0x1e5,-0x8(%ebp)<br>addl   $0x19a,-0x8(%ebp)<br>subl   $0x35f,-0x8(%ebp)<br>addl   $0x239,-0x8(%ebp)<br>subl   $0x38e,-0x8(%ebp)<br>addl   $0x38e,-0x8(%ebp)<br>subl   $0xe3,-0x8(%ebp)<br>jmp     &lt;phase_3+0x9a&gt;<br>call    &lt;explode_bomb&gt;<br>mov    -0xc(%ebp),%eax	; eax=(ebp-0xc)<br>cmp    $0x5,%eax	; eax &gt; 5 explode!<br>jg       &lt;phase_3+0xaa&gt;<br>mov    -0x10(%ebp),%eax	; eax=(ebp-0x10)<br>cmp    %eax,-0x8(%ebp)	; compare eax with (ebp-0x8)<br>je       &lt;phase_3+0xaf&gt;<br>call    &lt;explode_bomb&gt;<br>leave  <br>ret    <br></code></pre></td></tr></table></figure>
+<p>第二句汇编又出现了一个奇怪的数字 <code>0x8049978</code> ，在gdb 调试程序中，打开一看，就会发现其中的奥秘：</p>
+<p><img src="/img/CSAPP/lab2/3_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>在<code>0x8049978</code> 处，存放了后面 8 条语句的地址！显然，这就是一个跳转表，PC 接下来该指向哪里，完全取决于 <code>%edx</code> ，也即输入的第一个数字的值。如果第一个数为 2 ，那么程序最终计算 <code>%ebp-0x8</code> 处的值就是 <code>0xff91</code> （当然不是计算得到的，通过gdb调试器得出的结果）。于是输入的数值可以为 2 和 -111。</p>
+<p>经验证，第三颗炸弹已被拆除，感兴趣的话，也可以尝试一下其他数值。不过注意到，程序最后规定，第一个数字不能大于 5 ！</p>
+<p><img src="/img/CSAPP/lab2/3_2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="phase-4">phase_4</h3>
+<p>第四颗炸弹：前面和第三颗炸弹一样，调用了 <code>sscanf</code> 函数。那么这次，<code>sscanf</code> 函数使用了什么字符串呢？看起来只要输入一个整数就行：</p>
+<p><img src="/img/CSAPP/lab2/4.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs nasm">phase_4:<br>    push   %ebp<br>    mov    %esp,%ebp<br>    sub    $0x28,%esp<br>    lea    -0xc(%ebp),%eax<br>    mov    %eax,0x8(%esp)	; (esp+0x8)=(ebp-0xc)<br>    movl   $0x8049998,0x4(%esp) ;(esp+0x4)=??<br>    mov    0x8(%ebp),%eax<br>    mov    %eax,(%esp)<br>    call     &lt;sscanf@plt&gt;<br>    mov    %eax,-0x4(%ebp)<br>    cmpl   $0x1,-0x4(%ebp) ; eax!= 0x1 explode!<br>    jne     &lt;phase_4+0x30&gt;<br>    mov    -0xc(%ebp),%eax<br>    test   %eax,%eax	; eax=(ebp-0xc)<br>    jg      &lt;phase_4+0x35&gt; ; eax &amp; eax &gt; 0, if not explode!<br>    call    &lt;explode_bomb&gt;<br>    mov    -0xc(%ebp),%eax<br>    mov    %eax,(%esp)<br>    call     &lt;func4&gt;<br>    mov    %eax,-0x8(%ebp)<br>    cmpl   $0x37,-0x8(%ebp)<br>    je      &lt;phase_4+0x4e&gt;	; 0x37==eax if not explode!<br>    call   &lt;explode_bomb&gt;<br>    leave  <br>    ret    <br></code></pre></td></tr></table></figure>
+<p>经gdb调试后，<code>%ebp-0xc</code> 是输入的整数，必须大于 0 ，而 <code>sscanf</code> 函数的返回值必须为 1，否则炸弹会引爆。然后，程序就开始调用 <code>func4</code> 函数了。注意到，<code>func4</code> 函数的返回值必须等于 <code>0x37</code> 否则炸弹会爆炸。那么 <code>func4</code> 函数是怎么计算的呢？</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs nasm">func4:<br>	push   %ebp<br>    mov    %esp,%ebp<br>    push   %ebx<br>    sub    $0x8,%esp<br>    cmpl   $0x1,0x8(%ebp)	; (ebp+0x8)&gt;0x1?<br>    jg       &lt;func4+0x16&gt;<br>    movl   $0x1,-0x8(%ebp)	; (ebp-0x8)=0x1<br>    jmp     &lt;func4+0x37&gt;<br>    mov    0x8(%ebp),%eax ; eax=(ebp+0x8)<br>    dec    %eax<br>    mov    %eax,(%esp) ; esp=eax-1<br>    call    &lt;func4&gt;<br>    mov    %eax,%ebx<br>    mov    0x8(%ebp),%eax<br>    sub    $0x2,%eax<br>    mov    %eax,(%esp)<br>    call   &lt;func4&gt;<br>    add    %eax,%ebx ; ebx += eax<br>    mov    %ebx,-0x8(%ebp)	; (ebp-0x8)=ebx<br>    mov    -0x8(%ebp),%eax ; eax=ebx<br>    add    $0x8,%esp<br>    pop    %ebx<br>    pop    %ebp<br>    ret    <br></code></pre></td></tr></table></figure>
+<p>仔细阅读后，整理成如下 C 代码：看起来就是一个斐波那契数列 :joy:。结合 <code>func4</code> 函数的返回值必须是 <code>0x37</code> ，那么很容易想到，问题是让我们求出，斐波那契数列的哪一项是 <code>0x37</code> 。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">func4</span><span class="hljs-params">(<span class="hljs-type">int</span> n)</span> &#123;<br>    <span class="hljs-keyword">if</span> (n &gt; <span class="hljs-number">1</span>) &#123;<br>        sum = func4(n<span class="hljs-number">-1</span>)+func4(n<span class="hljs-number">-2</span>);<br>        <span class="hljs-keyword">return</span> sum;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        eax=<span class="hljs-number">0x1</span><br>        <span class="hljs-keyword">return</span> eax;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>嗯，第 9 项，输入 9 就可以拆除炸弹了。</p>
+<p><img src="/img/CSAPP/lab2/4_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="phase-5">phase_5</h3>
+<p>与炸弹四一样，phase_5 阶段一开始也调用了 <code>sscanf</code> 函数，用 gdb 调试，找到要求输入的字符串：需要给出两个整数。</p>
+<p><img src="/img/CSAPP/lab2/5.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs nasm">phase_5:<br>	push   %ebp<br>	mov    %esp,%ebp<br>	sub    $0x38,%esp<br>	lea    -0x18(%ebp),%eax<br>	mov    %eax,0xc(%esp)	; (%esp+0xc)=&amp;%ebp-0x18<br>	lea    -0x14(%ebp),%eax<br>	mov    %eax,0x8(%esp)	; (%esp+0x8)=&amp;%ebp-0x14<br>	movl   $0x8049972,0x4(%esp) ; (%esp+0x4)=??<br>	mov    0x8(%ebp),%eax<br>	mov    %eax,(%esp)<br>	call   8048868 &lt;sscanf@plt&gt;<br></code></pre></td></tr></table></figure>
+<p>当输入了两个整数后（已经很熟悉了， <code>%esp+0x8</code> 和 <code>%esp+0xc</code> 指向了两个输入整数的地址，而<code>%ebp-x14</code> 和 <code>%ebp-0x18</code> 存放了整数值），接下来看看炸弹怎么对这两个整数进行操作。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs nasm">mov    -0x14(%ebp),%eax<br>and    $0xf,%eax<br>mov    %eax,-0x14(%ebp)	;	first int &amp; 0xf, write back<br>mov    -0x14(%ebp),%eax<br>mov    %eax,-0x8(%ebp)<br>movl   $0x0,-0x10(%ebp)<br>movl   $0x0,-0xc(%ebp)<br>jmp    &lt;phase_5+0x6a&gt;<br>incl   -0x10(%ebp)	; loop i=(%ebp-0x10)<br>mov    -0x14(%ebp),%eax<br>mov    0x804a5c0(,%eax,4),%eax ; 0x804a5c0 ??<br>mov    %eax,-0x14(%ebp)  ; write back <br>mov    -0x14(%ebp),%eax <br>add    %eax,-0xc(%ebp) ; accumulate (%ebp-0xc)<br>mov    -0x14(%ebp),%eax <br>cmp    $0xf,%eax		;; %eax == 0xf ? ne to loop<br>jne    8048d80 &lt;phase_5+0x54&gt;<br>cmpl   $0xb,-0x10(%ebp)<br>jne    8048dac &lt;phase_5+0x80&gt;	; i must be 0xb, or explode!<br>mov    -0x18(%ebp),%eax<br>cmp    %eax,-0xc(%ebp)<br>je     8048db1 &lt;phase_5+0x85&gt; ; second int == (%ebp-0xc). or explode!<br>call   8049656 &lt;explode_bomb&gt;<br>leave  <br>ret    <br></code></pre></td></tr></table></figure>
+<p>仔细阅读汇编代码，初步得出结论：输入的第一个整数会作为一个数组的索引，在一个循环中不断累加，得到的累加值会与输入的第二个整数比较。炸弹不爆炸的条件是：循环次数必须为 11 次（0x1-0xb），且第二个整数的值与累加值相等。</p>
+<p>首先，来看一下位于 <code>0x804a5c0</code> 的数组吧：</p>
+<p><img src="/img/CSAPP/lab2/5_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>由于要求循环次数必须为 11 次，而终止循环的条件是 <code>%eax == 0xf</code> ，也就是说取到数组中的 <code>0xf</code> 才能结束循环，那我们从后往前推，要取到 <code>0xf</code> ，必须取到 <code>0x6</code> （因为 <code>0xf</code> 的索引是 6），取到 <code>0x6</code> ，必须先取到 <code>0xe</code> ……</p>
+<p>于是有：0xf -&gt; 0x6 -&gt; 0xe -&gt; 0x2 -&gt; 0x1 -&gt; 0xa -&gt; 0x0 -&gt; 0x8 -&gt; 0x4 -&gt; 0x9 -&gt; 0xd -&gt; 0xb。累加起来值为（不算0xb）82。于是，输入 11 和 82 就可以拆解炸弹。</p>
+<p><img src="/img/CSAPP/lab2/5_2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="phase-6">phase_6</h3>
+<p>最后一个炸弹，继续前进。注意到，phase_6 先调用了 <code>atoi</code> 函数，看来是要把某个字符串变为整数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs nasm">phase_6:<br>	push   %ebp<br>	mov    %esp,%ebp<br>	sub    $0x18,%esp<br>	movl   $0x804a66c,-0x8(%ebp) ; 0x804a66c ???<br>	mov    0x8(%ebp),%eax	; %ebp+0x8 ??<br>	mov    %eax,(%esp)<br>	call     &lt;atoi@plt&gt;<br></code></pre></td></tr></table></figure>
+<p>首先，还是要用 gdb 调试器看看 <code>0x804a66c</code> 和传入的参数 <code>%ebp+0x8</code> 是什么东西。</p>
+<p><img src="/img/CSAPP/lab2/6.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>得出的信息有点少（主要是看不懂这个字符串），而且 <code>0x804a66c</code> 处的字符串为空。随后，程序很快就调用了 <code>fun6</code> 函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs nasm">call     &lt;atoi@plt&gt;<br>mov    %eax,%edx<br>mov    -0x8(%ebp),%eax<br>mov    %edx,(%eax)	; ((%ebp-0x8)) = %edx<br>mov    -0x8(%ebp),%eax<br>mov    %eax,(%esp)	; %eax as arg<br>call   8048db3 &lt;fun6&gt;<br></code></pre></td></tr></table></figure>
+<p><code>fun6</code> 函数完成后，会进入一个循环，从下面的汇编代码可以看到，循环中不断重复的一条有效指令就是 <code>(%ebp-0x4)=((%ebp-0x4)+0x8)</code> 。从这点上看，可以理解为 <code>(%ebp-0x4)</code> 是一个指针，而这种循环更像是对链表的遍历。后来，根据我的不断尝试，发现该炸弹确实是对一个链表进行操作。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs nasm">mov    %eax,-0x8(%ebp)<br>mov    -0x8(%ebp),%eax	; fun6 return value is %eax<br>mov    %eax,-0x4(%ebp)  ; (%ebp-0x4)=%eax<br>movl   $0x1,-0xc(%ebp)  ; (%ebp-0xc)=1  i=1<br>jmp    8048e8f &lt;phase_6+0x48&gt; ; loop1<br>mov    -0x4(%ebp),%eax <br>mov    0x8(%eax),%eax <br>mov    %eax,-0x4(%ebp) ; (%ebp-0x4)=((%ebp-0x4)+0x8)<br>incl   -0xc(%ebp)	; i++<br>cmpl   $0x4,-0xc(%ebp)<br>jle    8048e83 &lt;phase_6+0x3c&gt; ; (%ebp-0xc) &lt;= 4 to loop<br>mov    -0x4(%ebp),%eax<br>mov    (%eax),%edx	; %edx=((%ebp-0x4)) =[0x804a60c]<br>mov    0x804a66c,%eax<br>cmp    %eax,%edx	; %edx == 0x804a66c ??<br>je     8048ea8 &lt;phase_6+0x61&gt; ; if not eq, explode!<br>call   8049656 &lt;explode_bomb&gt;<br>leave  <br>ret    <br></code></pre></td></tr></table></figure>
+<p><code>fun6</code> 函数非常复杂，但仔细观察发现，该函数运行后产生的结果与我们给的输入无关。那么就有一个技巧，可以用gdb调试器在 <code>fun6</code> 函数返回后设置断点，观察其返回值 <code>%eax==0x804a618</code> 。然后，上述汇编代码的循环会执行 5 次，我使用 gdb 调试器将整个链表的值都打印在下图中。<code>0x804a618</code> 对应的是 node7，而上面汇编代码中，要求 <code>%edx==[0x804a66c]</code> ，其对应的是 node0，经过多次实验，我发现，node0 为用户输入的值（见下图，输入 5 时）。</p>
+<p><img src="/img/CSAPP/lab2/6_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>那么问题来了，应该输入什么才能拆解炸弹呢？顺着程序过一遍，一开始 <code>%eax=0x804a618</code>，指向了 node7，然后根据 <code>(%ebp-0x4)=((%ebp-0x4)+0x8)</code> ，链接到下一个节点，一共执行 5 次，先后是 node3、node5、node9、node8 ，遍历后， <code>%ebp-0x4</code>中的值应该为 <code>0x804a60c</code>（见下图），当从中取出的值也为 <code>0x20e</code> 时，才能拆解炸弹。</p>
+<p><img src="/img/CSAPP/lab2/6_3.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>如下图，已经成功拆解完 6 个炸弹。</p>
+<p><img src="/img/CSAPP/lab2/6_2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="secret-phase">secret_phase</h3>
+<p>一切还没结束，从汇编代码看，我们还剩一个隐藏炸弹没有拆解掉。首先，我们需要找到隐藏炸弹的输入入口。否则，gdb 调试器是帮不了我们的。全局搜索一下，发现在 <code>phase_defused</code> 函数下找到了 <code>call secret_phase</code> 语句。</p>
+<p>经分析，确认是要在拆解完所有炸弹后，才有机会见到这枚隐藏炸弹。而如何输入密语也是非常考验我们的水平的！因此，先要细细研究 <code>phase_defused</code> 函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs nasm">phase_defused:<br>	;  ...<br>	jne    80496fe &lt;phase_defused+0x7e&gt;<br>	mov    $0x804a990,%eax 	; 0x804a990 ???<br>	mov    %eax,%edx<br>	lea    -0x54(%ebp),%eax	; arg : (%ebp-0x54)<br>	mov    %eax,0xc(%esp)<br>	lea    -0x58(%ebp),%eax	; arg : (%ebp-0x58)<br>	mov    %eax,0x8(%esp)<br>	movl   $0x8049e38,0x4(%esp) ; 0x8049e38 ??<br> <br>	mov    %edx,(%esp)<br>	call   8048868 &lt;sscanf@plt&gt; ; sscanf<br>	mov    %eax,-0x4(%ebp)<br>	cmpl   $0x2,-0x4(%ebp)<br>	jne    80496f2 &lt;phase_defused+0x72&gt;<br>	movl   $0x8049e3e,0x4(%esp)	; 0x8049e3e ??<br> <br>	lea    -0x54(%ebp),%eax<br>	mov    %eax,(%esp)<br>	call   804908f &lt;strings_not_equal&gt;<br>	test   %eax,%eax	; to see if string is equal<br>	jne    80496f2 &lt;phase_defused+0x72&gt;<br>	; ...<br></code></pre></td></tr></table></figure>
+<p>重点是 <code>sscanf</code> 函数及其参数，第一个参数是 <code>%edx</code> ，指向 <code>0x804a990</code> ，第二个参数是 <code>0x8049e38</code>，其实是一个字符串（见下图）， 第三个参数和第四个参数分别是 <code>%ebp-0x58</code> 和 <code>%ebp-0x54</code> 。从后半部分代码看出，要求输入的字符串必须是 austinpowers，且 <code>sscanf</code> 函数返回值为 2，意思是整数和字符串必须都有对应的输入。</p>
+<p><img src="/img/CSAPP/lab2/secret.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab2/s_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>再来看看 <code>0x804a990</code> （见下图），很奇怪的是，它只有一个 “9”，这样的话，<code>sscanf</code> 函数的返回值就只能是 1 了，我们就没法打开隐藏关卡了。还有，这个 <code>&lt;input_string&gt;</code> 是什么？</p>
+<p><img src="/img/CSAPP/lab2/s_2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>看起来，要先解决 <code>&lt;input_string&gt;</code> 的问题，不过，一切来的很轻松（见下图）。看来，我们之前拆炸弹的每一个输入都以 80 字节对齐的方式存放于此！这样看来，就是要在第 4 个炸弹拆解时，后面加上字符串 austinpowers， 就可以发现隐藏炸弹了！</p>
+<p><img src="/img/CSAPP/lab2/s_3.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>终于，我们来到了隐藏炸弹，现在看看这一炸弹的具体代码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs nasm">secret_phase:<br>	push   %ebp<br>	mov    %esp,%ebp<br>	sub    $0x18,%esp<br>	call    &lt;read_line&gt;<br>	mov    %eax,-0xc(%ebp)<br>	mov    -0xc(%ebp),%eax<br>	mov    %eax,(%esp)<br>	call    &lt;atoi@plt&gt;<br></code></pre></td></tr></table></figure>
+<p>看起来，需要读入一行，并且读入的这一行会使用 <code>atoi</code> 函数转为数字。要求数字必须为正数，且小于 <code>0x3e9</code> 。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs nasm">mov    %eax,-0x8(%ebp)<br>cmpl   $0x0,-0x8(%ebp)<br>jle     &lt;secret_phase+0x2b&gt;	 ; %eax &lt;= 0 explode<br>cmpl   $0x3e9,-0x8(%ebp)<br>jle    &lt;secret_phase+0x30&gt; ; %eax &lt;= 0x3e9 <br>call   8049656 &lt;explode_bomb&gt;<br>mov    -0x8(%ebp),%eax<br>mov    %eax,0x4(%esp)	; (%esp+0x4)=int<br>movl   $0x804a720,(%esp) ; 0x804a720 ???<br>call   8048eaa &lt;fun7&gt;<br>mov    %eax,-0x4(%ebp) ; return val=eax<br>cmpl   $0x3,-0x4(%ebp)	; %eax==0x3, or explode <br>je      &lt;secret_phase+0x51&gt;<br>call    &lt;explode_bomb&gt;<br>movl   $0x804999c,(%esp)<br>call   80487c8 &lt;puts@plt&gt;<br>call   8049680 &lt;phase_defused&gt;<br>leave  <br>ret    <br></code></pre></td></tr></table></figure>
+<p>重点是 <code>fun7</code> 函数，其参数有两个，一个是我们输入的数字，另一个是立即数 <code>0x804a720</code>，这个立即数不应当是一个“数字”，更有可能是一个指针。由上面的代码可知，返回值应该为3，否则就会爆炸。接下来，仔细研究一下 <code>fun7</code> 的代码。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs nasm">fun7:<br>	push   %ebp<br>	mov    %esp,%ebp<br>	sub    $0xc,%esp<br>	cmpl   $0x0,0x8(%ebp)	; (%ebp+0x8)=0x804a720<br>	jne     &lt;fun7+0x15&gt;<br>	movl   $0xffffffff,-0x4(%ebp)	; low 2 word is 0 then (%ebp-0x4)=-1<br>	jmp    8048f13 &lt;fun7+0x69&gt;<br>	mov    0x8(%ebp),%eax	<br>	mov    (%eax),%eax<br>	cmp    0xc(%ebp),%eax	; %eax=((%ebp+0x8)) &lt;= (%ebp+0xc)<br>	jle      &lt;fun7+0x3b&gt;<br>	mov    0x8(%ebp),%eax<br>	mov    0x4(%eax),%edx	; %edx = ((%ebp+0x8)+0x4)<br>	mov    0xc(%ebp),%eax<br>	mov    %eax,0x4(%esp)	; (%esp+0x4)=(%ebp+0xc)<br>	mov    %edx,(%esp)<br>	call   8048eaa &lt;fun7&gt;<br>	add    %eax,%eax<br>	mov    %eax,-0x4(%ebp)<br>	jmp    8048f13 &lt;fun7+0x69&gt;<br>	mov    0x8(%ebp),%eax	; <br>	mov    (%eax),%eax<br>	cmp    0xc(%ebp),%eax	; %eax=((%ebp+0x8)) != (%ebp+0xc)<br>	jne    8048ef8 &lt;fun7+0x4e&gt;<br>	movl   $0x0,-0x4(%ebp)<br>	jmp    8048f13 &lt;fun7+0x69&gt;<br>	mov    0x8(%ebp),%eax<br>	mov    0x8(%eax),%edx	; %edx = ((%ebp+0x8)+0x8)<br>	mov    0xc(%ebp),%eax	; <br>	mov    %eax,0x4(%esp)	; (%esp+0x4)=(%ebp+0xc)<br>	mov    %edx,(%esp)<br>	call   8048eaa &lt;fun7&gt; ; call fun7<br>	add    %eax,%eax<br>	inc    %eax<br>	mov    %eax,-0x4(%ebp)<br>	mov    -0x4(%ebp),%eax<br>	leave  <br>	ret    <br></code></pre></td></tr></table></figure>
+<p>转化为 C 代码，可能比较方便理解，可见，还是递归函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">fun7</span><span class="hljs-params">(<span class="hljs-type">int</span> *a, <span class="hljs-type">int</span> b)</span> &#123;<br>    <span class="hljs-keyword">if</span> (*a &amp; <span class="hljs-number">0x0ffff</span> == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">if</span> (*a &lt;= b) &#123;<br>            <span class="hljs-keyword">if</span> (*a != b) &#123;<br>                a+=<span class="hljs-number">8</span> byte;<br>                <span class="hljs-type">int</span> ret = fun7(a, b);<br>                ret += ret;		ret++;<br>                <span class="hljs-keyword">return</span> ret;<br>            &#125; <span class="hljs-keyword">else</span><br>                <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            a+=<span class="hljs-number">4</span> byte;<br>            <span class="hljs-type">int</span> ret = fun7(a, b);<br>            ret += ret;<br>            <span class="hljs-keyword">return</span> ret;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>现在，需要让 <code>fun7</code> 函数返回值为3，应当如何设置a 和 b 的值呢？不难想到，返回值为3，要求最内部的函数返回值为0，然后再返回1，再返回3，但首先，需要知道 <code>0x804a720</code>的值。经过多次尝试，求出如下数据：</p>
+<p><img src="/img/CSAPP/lab2/6_4.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>根据之前的推算，需要调用三层 <code>fun7</code> 函数，第一次需走入 <code>*a&lt;b</code> 的分支，第二次也是，第三次需要走入 <code>*a==b</code> 的分支，这样返回的值才能为3。倒推回去，第一次指针为 <code>0x804a720</code> ，第二次需要 +8，指针地址为 <code>0x804a708</code> ，然后再加8，为 <code>0x804a6d8</code> ，此时指针指向的值是 <code>0x6b</code> 。要求输入的值与 <code>0x6b</code> 相等，才能返回3，因此，拆解该炸弹的答案是 107。</p>
+<p>最后的最后，解答成功！</p>
+<p><img src="/img/CSAPP/lab2/final.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="总结">总结</h2>
+<p>回头看这几颗炸弹的拆解过程，每颗炸弹难度递增，考点不一但都极具代表性。第一阶段考察了字符串比较，需要我们熟练使用 gdb 调试器。第二阶段考察了汇编语言的循环部分，能否理解循环非常关键。第三阶段考察了汇编语言的 <code>switch</code> 语句的实现。第四阶段考察了递归函数调用，第五阶段考察了数组索引以及循环结构，第六阶段则是关于链表的遍历。最后的秘密阶段更是融合了多个考点，做完之后很有成就感！</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/CSAPP/" class="category-chain-item">CSAPP</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/x86/" class="print-no-link">#x86</a>
+      
+        <a href="/tags/CSAPP/" class="print-no-link">#CSAPP</a>
+      
+        <a href="/tags/BinaryBombs/" class="print-no-link">#BinaryBombs</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入理解计算机系统之二进制炸弹实验</div>
+      <div>https://dingfen.github.io/2021/05/26/2021-5-26-CSAPPLab02/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年5月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/05/27/2021-5-27-CSAPPLab03/" title="深入理解计算机系统之缓冲区溢出炸弹实验">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入理解计算机系统之缓冲区溢出炸弹实验</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/04/30/2021-4-30-CSAPPLab01/" title="深入理解计算机系统之位操作实验">
+                        <span class="hidden-mobile">深入理解计算机系统之位操作实验</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

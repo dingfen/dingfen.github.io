@@ -1,0 +1,862 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="并行正则采样排序是一个非常适合新手快速上手MPI的项目">
+<meta property="og:type" content="article">
+<meta property="og:title" content="并行正则采样排序之 MPI 实现">
+<meta property="og:url" content="https://dingfen.github.io/2021/01/23/2021-1-23-psrs_sort/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="并行正则采样排序是一个非常适合新手快速上手MPI的项目">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/psrs.png">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/Scatter&Gather.png">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/Alltoall.png">
+<meta property="article:published_time" content="2021-01-23T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="MPI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/PP/psrs.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>并行正则采样排序之 MPI 实现 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="并行正则采样排序之 MPI 实现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-23 12:00" pubdate>
+          2021年1月23日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">并行正则采样排序之 MPI 实现</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>并行正则采样排序之 MPI 实现</h1>
+<h2 id="算法介绍与原理">算法介绍与原理</h2>
+<p>在并行计算中，流行一种比快速排序更高效的算法——并行正则采样排序算法。<strong>并行正则采样排序 PSRS</strong>（Parallel Sorting by Regular Sampling），是一种基于<strong>均匀划分</strong>（Uniform Partition）原理的负载均衡的并行排序算法。假定待排序的元素有 n 个，系统中有 p 个处理器，算法将</p>
+<ol>
+<li>将 n 个元素均匀地分割成 p 段，每段含有 n/p 个元素</li>
+<li>给每段元素指派一个处理器，每个处理器对各自管辖的这部分元素进行<strong>快速排序</strong></li>
+<li>从各段元素中抽取几个代表元素，再从它们产生出 p-1 个主元</li>
+<li>找出这些主元与原来的各局部有序的元素之间的偏序关系，进而将各个局部有序段重新划分成 p 段</li>
+<li>通过全局交换将各个段中的对应部分集合到一起，最后将集合到一起的元素采用<strong>多路归并</strong>方法进行排序</li>
+</ol>
+<p>不得不说，整个算法步骤较多，过程复杂，令人一时难以理解，博主通过图片的形式再描述一遍算法，希望能帮助各位。</p>
+<center>
+   <img src="/img/PP/psrs.png" srcset="/img/loading.gif" lazyload/>
+</center>
+<h2 id="具体实现">具体实现</h2>
+<p>首先，还是老规矩，先生成随机数组，然后使用单个处理器（这里使用 <code>Proc#0</code>）排序，得到最终答案，用于检验并行程序的正确性。在做好这些初始化工作后，并行正则采样排序的实现正式开始！:muscle:</p>
+<h3 id="分段快排">分段快排</h3>
+<p>由 <code>Proc#0</code> 将所有数据分段发送给所有的处理器，每个处理器均匀地接收到部分数据，并调用 <code>qsort()</code> 函数进行快排。然而，均匀地分派给各处理器，就不得不考虑<strong>均分后的余数问题</strong>。当然，我们可以用 <code>MPI_Send</code> 和 <code>MPI_Recv</code>  函数，外加一个循环，来实现数据分派。但这样做 1）编程复杂，容易出错。2）不易阅读，难以理解。这里我采用了一个比较厉害的函数：<a target="_blank" rel="noopener" href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Scatterv.html">MPI_Scatterv</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">MPI_Scatterv</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">void</span> *sendbuf, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *sendcounts, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *displs,</span><br><span class="hljs-params">                 MPI_Datatype sendtype, <span class="hljs-type">void</span> *recvbuf, <span class="hljs-type">int</span> recvcount,</span><br><span class="hljs-params">                 MPI_Datatype recvtype,</span><br><span class="hljs-params">                 <span class="hljs-type">int</span> root, MPI_Comm comm)</span><br></code></pre></td></tr></table></figure>
+<p>总的来说，就是将一个处理器中包含的内容，全都<strong>散播</strong>到各个处理器中。当然，具体到每个处理器应该获得多长的数据，以及获得哪部分的数据，就分别由 <code>sendcounts</code> 和 <code>displs</code> 这两个数组决定了。</p>
+<p>回到本问题，我将除法计算中得到的余数，全部扔给了最后一个处理器，那么 <code>sendcounts</code> 的最后一个元素长度就需要加上余数，其余不变。于是便有如下实现：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 分段数据 移交各个处理器  group = 数组长度n / 处理器数p</span><br><span class="hljs-type">int</span> sendcounts[num_procs];<br><span class="hljs-type">int</span> displs[num_procs];<br><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; num_procs; i++) &#123;<br>    sendcounts[i] = group;<br>    displs[i] = i*group;<br>&#125;<br>sendcounts[num_procs<span class="hljs-number">-1</span>] = group+mod;<br>MPI_Scatterv(<span class="hljs-built_in">array</span>, sendcounts, displs, MPI_INT, a, group+mod, MPI_INT, <span class="hljs-number">0</span>, MPI_COMM_WORLD);<br><br>group_len = sendcounts[id_procs];<br><span class="hljs-comment">// 均匀划分 局部排序</span><br>qsort(a, group_len, <span class="hljs-keyword">sizeof</span>(<span class="hljs-type">int</span>), compare);<br></code></pre></td></tr></table></figure>
+<h3 id="抽取代表">抽取代表</h3>
+<p>让每个处理器从已经排好序的数据中，抽取出第$ w, 2w, 3w, … (p-1)w <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>个代表元素，其中</mtext></mrow><annotation encoding="application/x-tex">个代表元素，其中</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord cjk_fallback">个代表元素，其中</span></span></span></span> w = n/p^2 $。每个处理器抽取好 p-1 个数据后，全部送到 <code>Proc#0</code> 处理器中，由它来完成对代表元素的排序。</p>
+<p>很有意思哈，第一步要求 <code>Proc#0</code> 把数据发送给各个处理器，而第二步是要求 <code>Proc#0</code> 接收来自各处理器的数据。</p>
+<center>
+    <img src="/img/PP/Scatter&Gather.png" srcset="/img/loading.gif" lazyload/>
+</center>
+<p>简单介绍一下，<code>MPI_Scatterv</code>  的反操作 <a target="_blank" rel="noopener" href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Gatherv.html">MPI_Gatherv</a>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">MPI_Gatherv</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">void</span> *sendbuf, <span class="hljs-type">int</span> sendcount, MPI_Datatype sendtype,</span><br><span class="hljs-params">                <span class="hljs-type">void</span> *recvbuf, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *recvcounts, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *displs,</span><br><span class="hljs-params">                MPI_Datatype recvtype, <span class="hljs-type">int</span> root, MPI_Comm comm)</span><br></code></pre></td></tr></table></figure>
+<p>其中的参数要求与 <code>MPI_Scatter</code> 相似，毕竟是镜像操作。</p>
+<p>有了之前的编程经验，相信收集数据的编程就不难了，不过还是要注意一下，偏移量和长度等细节问题。细心的读者可能发现了，这边接收数据的长度都为常值，因此可以使用一个更简单的函数 <a target="_blank" rel="noopener" href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Gather.html">MPI_Gather</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 正则采样</span><br><span class="hljs-type">int</span> recvcounts[num_procs];<br><span class="hljs-type">int</span> samples[num_procs * num_procs];<br><span class="hljs-type">int</span> s[num_procs];    <br><span class="hljs-keyword">for</span> (i = <span class="hljs-number">1</span>; i &lt; num_procs; i++)<br>    s[i<span class="hljs-number">-1</span>] = a[i * group / num_procs];<br><span class="hljs-comment">// 采到样本 收集到Proc#0</span><br><span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; num_procs; i++) &#123;<br>    recvcounts[i] = num_procs<span class="hljs-number">-1</span>;<br>    displs[i] = i * (num_procs<span class="hljs-number">-1</span>);<br>&#125;<br>MPI_Gatherv(s, num_procs<span class="hljs-number">-1</span>, MPI_INT, samples, recvcounts, displs, MPI_INT, <span class="hljs-number">0</span>, MPI_COMM_WORLD);<br><br><span class="hljs-comment">// 采样排序</span><br><span class="hljs-keyword">if</span> (id_procs == <span class="hljs-number">0</span>)<br>    qsort(samples, (num_procs<span class="hljs-number">-1</span>)*num_procs, <span class="hljs-keyword">sizeof</span>(<span class="hljs-type">int</span>), compare);<br></code></pre></td></tr></table></figure>
+<h3 id="主元划分">主元划分</h3>
+<p>上小节中，<code>Proc#0</code> 处理器对代表元素完成排序后，需要从中抽取第$ p-1,2(p-1),…,(p-1)(p-1) $ 个主元，并将它们全部广播到所有处理器中。然后，每个处理器根据这 p-1 个主元，将自己的数据划分为 p 段。</p>
+<p>将有序数组划分为 p 段，还是很简单的吧 :laughing:。只需要遍历一下有序数组，就可以了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 进行主元划分</span><br>index = <span class="hljs-number">0</span>;<br><span class="hljs-type">int</span> pcounts[num_procs];<br><span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; num_procs; i++)<br>    pcounts[i] = <span class="hljs-number">0</span>;<br>pivot[num_procs<span class="hljs-number">-1</span>] = INT32_MAX;<br><br><span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; group_len; i++) &#123;<br>    <span class="hljs-keyword">if</span>(a[i] &lt;= pivot[index])<br>        pcounts[index]++;<br>    <span class="hljs-keyword">else</span> &#123;<br>        i--;<br>        index++;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="全局交换">全局交换</h3>
+<p>上小节中，每个处理器都将自己的数据划分为 p 段。为表述方便，记$ W^j_i $ 为 <code>Proc#i</code> 中的第 j 段。将所有处理器的$ W^j $ 都发送给 <code>Proc#j</code> 处理器，然后每个处理器再对接收到的数据使用<strong>归并排序</strong>。完成任务后，将所有有序数据发回给 <code>Proc#0</code> ，让它完成答案校验。</p>
+<p>让我们再补充一个 MPI 的函数 <a target="_blank" rel="noopener" href="https://www.mpich.org/static/docs/v3.2/www3/MPI_Alltoallv.html">MPI_Alltoallv</a> :</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">MPI_Alltoallv</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">void</span> *sendbuf, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *sendcounts,</span><br><span class="hljs-params">                  <span class="hljs-type">const</span> <span class="hljs-type">int</span> *sdispls, MPI_Datatype sendtype, <span class="hljs-type">void</span> *recvbuf,</span><br><span class="hljs-params">                  <span class="hljs-type">const</span> <span class="hljs-type">int</span> *recvcounts, <span class="hljs-type">const</span> <span class="hljs-type">int</span> *rdispls, MPI_Datatype recvtype,</span><br><span class="hljs-params">                  MPI_Comm comm)</span><br></code></pre></td></tr></table></figure>
+<p>该函数的功能是，让每个处理器发送一个消息给所有处理器（包括自己），这些消息都在它的发送缓冲中以处理器标识符号的顺序有序地存放。如下图所示，每个处理器都从所有处理器接收到一个消息，并以标号的顺序存放在缓冲区中。</p>
+<center>
+   <img src="/img/PP/Alltoall.png" srcset="/img/loading.gif" lazyload />
+</center>
+<p>回到本次实现，不难发现，对$ W^j_i $ 的操作，就是全局交换，与 <code>MPI_Alltoall</code> 函数所描述的功能完全一致。那么紧接着的一个问题是，如何编码呢？</p>
+<p>首先，明确一个坏消息：$ W^j_i $ 的长度都是不定的，且只有本地的处理器知道它的长度。这意味着，在直接使用 <code>MPI_Alltoallv</code> 函数来完成全局交换之前，所有处理器还需要<strong>全局交换每个数据段的长度</strong>:scream: 。否则，我无法赋值 <code>MPI_Alltoallv</code> 函数中的各个数组值。好在，这部分代码很简单，就当做正式作战之前的一次热身吧。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 发送各个段的长度</span><br><span class="hljs-type">int</span> rcounts[num_procs];<br>MPI_Alltoall(pcounts, <span class="hljs-number">1</span>, MPI_INT, rcounts, <span class="hljs-number">1</span>, MPI_INT, MPI_COMM_WORLD);<br></code></pre></td></tr></table></figure>
+<p>现在，每个处理器都已经知道了自己要发多长的消息，也知道了自己要收多长的消息。还需要知道，这些消息在哪，也就是它们的偏移量是什么。其实也简单，毕竟一个紧挨着一个，只要根据长度累加起来就可以。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 计算位移</span><br><span class="hljs-type">int</span> rdispls[num_procs];<br>sdispls[<span class="hljs-number">0</span>] = <span class="hljs-number">0</span>; rdispls[<span class="hljs-number">0</span>] = <span class="hljs-number">0</span>;<br><span class="hljs-keyword">for</span>(i = <span class="hljs-number">1</span>;i &lt; num_procs;i++) &#123;<br>    sdispls[i] = sdispls[i<span class="hljs-number">-1</span>] + pcounts[i<span class="hljs-number">-1</span>];<br>    rdispls[i] = rdispls[i<span class="hljs-number">-1</span>] + rcounts[i<span class="hljs-number">-1</span>];<br>&#125;<br><span class="hljs-comment">// 计算总长度</span><br><span class="hljs-type">int</span> totalcounts = <span class="hljs-number">0</span>;<br><span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; num_procs; i++)<br>    totalcounts += rcounts[i];<br></code></pre></td></tr></table></figure>
+<p>然后，就是创造一个接收缓冲区，并调用函数，归并排序！</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> *b = (<span class="hljs-type">int</span> *)<span class="hljs-built_in">malloc</span>(totalcounts*<span class="hljs-keyword">sizeof</span>(<span class="hljs-type">int</span>));<br><span class="hljs-comment">// 每个处理器发送数据给其他所有处理器，且每个处理发送的数据长度都不同</span><br><span class="hljs-comment">// 故有长度数组和位移数组</span><br>MPI_Alltoallv(a, pcounts, sdispls, MPI_INT, b, rcounts, rdispls, MPI_INT, MPI_COMM_WORLD);<br><span class="hljs-comment">// 归并排序</span><br>merge_sort(b, <span class="hljs-number">0</span>, totalcounts<span class="hljs-number">-1</span>);<br></code></pre></td></tr></table></figure>
+<h3 id="收集数组">收集数组</h3>
+<p>现在，排序任务已经完成，只剩接收工作了。</p>
+<p>回想一下，MPI 是如何收集数据的？使用 <code>MPI_Gather</code> 函数！注意到，<code>Proc#0</code> 不清楚各处理器中到底有多少有序元素。所以说，还是和上一小节一样，需要先收集各处理器中数组的长度。正所谓，兵马未动粮草先行。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">MPI_Gather(&amp;totalcounts, <span class="hljs-number">1</span>, MPI_INT, rcounts, <span class="hljs-number">1</span>, MPI_INT, <span class="hljs-number">0</span>, MPI_COMM_WORLD);<br></code></pre></td></tr></table></figure>
+<p>然后，根据得到的长度，计算偏移量，再使用 <code>MPI_Gatherv</code> 函数（这里为方便，复用了一些之前定义的数组）</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c">rdispls[<span class="hljs-number">0</span>] = <span class="hljs-number">0</span>;<br><span class="hljs-keyword">for</span>(i = <span class="hljs-number">1</span>; i &lt; num_procs; i++)<br>    rdispls[i] = rdispls[i<span class="hljs-number">-1</span>] + rcounts[i<span class="hljs-number">-1</span>];<br>MPI_Gatherv(b, totalcounts, MPI_INT, result, rcounts, rdispls, MPI_INT, <span class="hljs-number">0</span>, MPI_COMM_WORLD);<br></code></pre></td></tr></table></figure>
+<p>于是，现在所有的有序数组都存放在 <code>result</code> 数组中了 :smile:。</p>
+<h2 id="复杂度分析">复杂度分析</h2>
+<p>完成了 PSRS 排序的实现后，我简单地讨论一下 PSRS 算法的复杂度。在第一部分的快速排序中，时间复杂度为$ O(k \log k)，k=n/p <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>。然后，各处理器选择</mtext><mi>p</mi><mo>−</mo><mn>1</mn><mtext>个代表元素，代价为</mtext></mrow><annotation encoding="application/x-tex">。然后，各处理器选择 p-1 个代表元素，代价为</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord cjk_fallback">。然后，各处理器选择</span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">1</span><span class="mord cjk_fallback">个代表元素，代价为</span></span></span></span> O(p) <span class='katex-error' title='ParseError: KaTeX parse error: Expected &#039;EOF&#039;, got &#039;#&#039; at position 10: 。再由 `Proc#̲0` 对所有送来的代表元素进行…'>。再由 `Proc#0` 对所有送来的代表元素进行排序，然后选出主元，这里若使用快速排序，代价为</span> O(p^2 \log p^2) <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>，而若使用归并排序，则所需代价为</mtext></mrow><annotation encoding="application/x-tex">，而若使用归并排序，则所需代价为</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord cjk_fallback">，而若使用归并排序，则所需代价为</span></span></span></span> O(p^2) <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>。每个处理器接收到主元后，再对有序数组进行划分，代价为</mtext></mrow><annotation encoding="application/x-tex">。每个处理器接收到主元后，再对有序数组进行划分，代价为</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord cjk_fallback">。每个处理器接收到主元后，再对有序数组进行划分，代价为</span></span></span></span> O(k+p) <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>，最后，各个处理器全局交换，并行归并排序，代价为</mtext></mrow><annotation encoding="application/x-tex">，最后，各个处理器全局交换，并行归并排序，代价为</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord cjk_fallback">，最后，各个处理器全局交换，并行归并排序，代价为</span></span></span></span> O(k+\log p) $。考虑到实际应用中，需要排序的数据长度 n 一定远远多于现有的处理器 p，此时可以视 p 为一个小常数，那么 PSRS 排序算法的时间复杂度，就可以简化为 $ O(k\log k+k) $。</p>
+<p>从消息复杂度的角度看，<code>Proc#0</code> 收集代表元素，并播送主元的复杂度为 $ O(p^2+p) $。在全局交换部分的消息复杂度与具体算法实现相关，但其最大值不会超过 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>。</p>
+<h2 id="总结">总结</h2>
+<p>PSRS 排序过程复杂，编写 MPI 容易出错。在实现时，建议尽量地借助<strong>群集通信</strong>的相关函数，可以有效地减少代码量，减少错误，增强代码的可读性。同时，借助这次对 PSRS 排序的实现，提高对这些群集通信函数的熟练度，因此作为一个练手项目，是一个不错的选择。</p>
+<p>博主本人的实现见<a target="_blank" rel="noopener" href="https://github.com/dingfen/ParallelComputing/blob/master/sort/psrs_sort.c">PSRS排序</a>。</p>
+<head>
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            tex2jax: {
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            inlineMath: [['$','$']]
+            }
+        });
+    </script>
+</head>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MPI/" class="print-no-link">#MPI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>并行正则采样排序之 MPI 实现</div>
+      <div>https://dingfen.github.io/2021/01/23/2021-1-23-psrs_sort/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月23日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/04/05/2021-4-5-selenium/" title="python 自动化——获取学生提交的作业">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">python 自动化——获取学生提交的作业</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/12/17/2020-12-17-PP02/" title="并行程序中的求和">
+                        <span class="hidden-mobile">并行程序中的求和</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

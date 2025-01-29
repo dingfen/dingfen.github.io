@@ -1,0 +1,1216 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="gem5中的内存系统">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解 Gem5 之四">
+<meta property="og:url" content="https://dingfen.github.io/2022/04/02/2022-4-2-gem5-4/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="gem5中的内存系统">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/gem5/gem5-4-M2S.PNG">
+<meta property="og:image" content="https://dingfen.github.io/img/gem5/gem5-4-M2SR.PNG">
+<meta property="og:image" content="https://dingfen.github.io/img/gem5/gem5-4-M2SRR.PNG">
+<meta property="article:published_time" content="2022-04-02T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Cpp">
+<meta property="article:tag" content="gem5">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/gem5/gem5-4-M2S.PNG">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入理解 Gem5 之四 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入理解 Gem5 之四"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-04-02 12:00" pubdate>
+          2022年4月2日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入理解 Gem5 之四</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Gem5 中的内存系统</h1>
+<p>本文部分内容参考官方文档中<a target="_blank" rel="noopener" href="https://www.gem5.org/documentation/general_docs/memory_system/">关于内存系统的相关说明</a>，<a target="_blank" rel="noopener" href="https://www.gem5.org/documentation/learning_gem5/part2/memoryobject/">内存系统中创建 SimObjects</a></p>
+<h2 id="MemObjects">MemObjects</h2>
+<p>之前的 gem5 版本中，所有连接到内存系统的对象都派生于 MemObject 类。然而，在最新版本（v21.0.1.0）中，该类被删去了。</p>
+<p>那么现在用什么类呢？猜测是 SimObject</p>
+<h2 id="Ports">Ports</h2>
+<p>在深入研究内存系统之前，我们应该首先理解 gem5 中的端口类 Port。因为所有在内存系统内的对象都要通过端口来建立连接，因而它们总是成对出现，这使得 gem5 的设计更加模块化。</p>
+<h3 id="memory-system-modes">memory system modes</h3>
+<p>Port 类实现了三种不同的内存系统模式：时序（timing）、原子（Atomic）和功能（functional），最重要的模式是时序模式。时序模式是产生正确仿真结果的唯一模式。其他模式仅在特殊情况下使用：</p>
+<ol>
+<li>Atomic mode 原子模式常用于快进到感兴趣的模拟区域，以及预热缓存，这种模式假设在内存系统中不会产生任何事件。相反，所有的内存请求都通过一个长调用链执行。除非它将在快进或模拟器预热期间使用，否则不需要实现对内存对象的原子访问。</li>
+<li>Functional mode 功能模式更适合描述为调试模式。功能模式用于从 host 读取数据到模拟器内存等操作。它在 Syscall Emulation(SE) 模式中被大量使用。例如，函数模式使用 <code>process.cmd</code> 从 host 中加载二进制文件，这样模拟系统就可以访问它。不论数据在何处，函数的读操作总能返回最新的数据，而其写操作中需要更新所有可能的有效数据（比如多个有效的缓存块中）。</li>
+</ol>
+<h3 id="Port">Port</h3>
+<p>Port 类（端口）是 SimObject 之间的交互接口。在 gem5 中，Port 类是所有交互接口类（包括网络连接以及硬件模块端口连接等）的父类，其地位可见一斑。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Port</span> &#123;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-type">const</span> std::string portName;<br>    <span class="hljs-type">const</span> PortID id;<br>    Port *_peer;<br>    <span class="hljs-type">bool</span> _connected;<br>  <span class="hljs-keyword">protected</span>:<br>	<span class="hljs-keyword">class</span> <span class="hljs-title class_">UnboundPortException</span> &#123;&#125;;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">Port</span>(<span class="hljs-type">const</span> std::string&amp; _name, PortID _id)<br>      : <span class="hljs-built_in">portName</span>(_name), <span class="hljs-built_in">id</span>(_id), _peer(<span class="hljs-literal">nullptr</span>), _connected(<span class="hljs-literal">false</span>)<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>portName 是端口的描述名，id 类型为 <code>typename int16_t PortID</code>，用于在 vector 中区分并识别端口，当 id 为负数时，指示端口不在 vector 中。_peer 指向与该端口相连的端口，_connected 表示端口是否有一个端口与之相连。此外，Port 类中还定义了一个空类 UnboundPortException，用于在程序发现未绑定端口时 throw 出特定的错误。</p>
+<p>成对的两个端口如何进行绑定与解绑呢？很简单，只需要改变 _peer 指针就行：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">/** Attach to a peer port. */</span><br><span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">bind</span><span class="hljs-params">(Port &amp;peer)</span> </span>&#123;<br>  _peer = &amp;peer;<br>  _connected = <span class="hljs-literal">true</span>;<br>&#125;<br><br><span class="hljs-comment">/** Dettach from a peer port. */</span><br><span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">unbind</span><span class="hljs-params">()</span> </span>&#123;<br>  _peer = <span class="hljs-literal">nullptr</span>;<br>  _connected = <span class="hljs-literal">false</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>takeOverFrom()</code> 函数也提供了快速交换两个端口之间连接的方法。它将原本与 old 绑定的端口绑定。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">takeOverFrom</span><span class="hljs-params">(Port *old)</span> </span>&#123;<br>  Port &amp;peer = old-&gt;<span class="hljs-built_in">getPeer</span>();<br>  <span class="hljs-comment">// Disconnect the original binding.</span><br>  old-&gt;<span class="hljs-built_in">unbind</span>();<br>  peer.<span class="hljs-built_in">unbind</span>();<br>  <span class="hljs-comment">// Connect the new binding.</span><br>  peer.<span class="hljs-built_in">bind</span>(*<span class="hljs-keyword">this</span>);<br>  <span class="hljs-built_in">bind</span>(peer);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="Master-vs-Slave-Request-vs-Response">Master-vs-Slave ? Request-vs-Response !</h3>
+<p>Port 类分别派生出了两种不同的子类，RequestPort 类和 ResponsePort 类。其中，RequsetPort 类是请求端口，用于发送接受请求，RespondPort 则用于发送应答。<strong>在之前的版本中，RequestPort 被称为 MasterPort，而 RespondPort 被称为 SlavePort</strong>，且官方文档中仍旧使用这些名称，为方便统一，下文使用 RequestPort 和 ResponsePort。一个主模块，如 CPU，通常有一个或多个 RequestPort 实例，从 Cache 中请求想要的数据。从模块，例如内存，具有一个或多个 ResponsePort，响应请求发回对应的数据。一个互连组件，例如缓存、网桥或总线，通常同时具有 RequestPort 和 ResponsePort 实例。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">RequestPort</span>: <span class="hljs-keyword">public</span> Port, <span class="hljs-keyword">public</span> AtomicRequestProtocol,<br>    <span class="hljs-keyword">public</span> TimingRequestProtocol, <span class="hljs-keyword">public</span> FunctionalRequestProtocol &#123;<br>  <span class="hljs-keyword">friend</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ResponsePort</span>;<br>  <span class="hljs-keyword">private</span>:<br>    ResponsePort *_responsePort;<br>  <span class="hljs-keyword">protected</span>:<br>    SimObject &amp;owner;<br>&#125;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">ResponsePort</span> : <span class="hljs-keyword">public</span> Port, <span class="hljs-keyword">public</span> AtomicResponseProtocol,<br>    <span class="hljs-keyword">public</span> TimingResponseProtocol, <span class="hljs-keyword">public</span> FunctionalResponseProtocol &#123;<br>  <span class="hljs-keyword">friend</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">RequestPort</span>;<br>  <span class="hljs-keyword">private</span>:<br>    RequestPort* _requestPort;<br>    <span class="hljs-type">bool</span> defaultBackdoorWarned;<br>  <span class="hljs-keyword">protected</span>:<br>    SimObject&amp; owner;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>以 RequestPort 类为例，RequestPort 类中包含了指向应答端口的指针 _responsePort 和拥有该请求端口的 SimObject。它还继承了三个不同级别的传输协议类：AtomicRequestProtocol、TimingRequestProtocol 和 FunctionalRequestProtocol。除了发送数据包的基本功能外，它还可以更改接收范围和侦听（snoop）端口的功能。</p>
+<h3 id="时序传输数据流程">时序传输数据流程</h3>
+<p>时序模式下传输数据在 gem5 中非常常见，因此我们先来了解一下时序模式下的数据传输实现。gem5 中的数据传输，都是靠 Packet 类来完成。因此不论是 send 还是 recv 函数，都需要传递 Packet 类指针：PacketPtr。</p>
+<p>当主模块需要下游传来数据时，会通过 RequestPort 调用 <code>sendTimingReq(pkt)</code> 发送请求， pkt 是 Packet 的指针，内含有请求数据、应执行的指令、状态等。然而实际上 <code>sendTimingReq(pkt)</code> 的实现就是调用 <code>peer-&gt;recvTimingReq(pkt)</code> 并返回该函数的返回值：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">RequestPort::sendTimingReq</span><span class="hljs-params">(PacketPtr pkt)</span> </span>&#123;<br>  <span class="hljs-keyword">try</span> &#123;<br>    <span class="hljs-keyword">return</span> TimingRequestProtocol::<span class="hljs-built_in">sendReq</span>(_responsePort, pkt);<br>  &#125; <span class="hljs-built_in">catch</span> (UnboundPortException) &#123;<br>    <span class="hljs-built_in">reportUnbound</span>();<br>  &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">TimingRequestProtocol::sendReq</span><span class="hljs-params">(TimingResponseProtocol *peer, PacketPtr pkt)</span> </span>&#123;<br>    <span class="hljs-built_in">assert</span>(pkt-&gt;<span class="hljs-built_in">isRequest</span>());<br>    <span class="hljs-keyword">return</span> peer-&gt;<span class="hljs-built_in">recvTimingReq</span>(pkt);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>于是，PacketPtr 通过函数参数的方式传给了 RespondPort，而 RespondPort 事实上是处于从模块中，所以现在数据就移动到了下游从模块。注意，<code>recvTimingReq()</code> 的返回值给最终会 return 到 <code>sendTimingReq</code> 函数中。因此主模块可以知晓请求是否被从模块接收，true 表示该数据包已被收到。false 意味着从模块目前无法接收请求，必须在未来的某个时刻重试。</p>
+<p>若 RespondPort 成功接收了 PacketPtr，此时主模块会继续自己的运行，从模块则会处理 Packet，双方都不会被阻塞。当从模块完成处理后，需向主模块发送响应：调用 <code>sendTimingResp(pkt)</code>（此时 pkt 是与请求相同的指针，但它现在指向一个响应包）。类似的是，<code>sendTimingResp(pkt)</code> 内部实现还是直接调用 <code>peer-&gt;recvTimingResp(pkt)</code> 并返回该函数的返回值。若 master 的 <code>recvTimingResp()</code> 函数返回 true，表明 master 已经收到应答，如此一来，该请求的交互就完成了（见下图）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">sendTimingResp</span><span class="hljs-params">(PacketPtr pkt)</span> </span>&#123;<br>  <span class="hljs-keyword">try</span> &#123;<br>    <span class="hljs-keyword">return</span> TimingResponseProtocol::<span class="hljs-built_in">sendResp</span>(_requestPort, pkt);<br>  &#125; <span class="hljs-built_in">catch</span> (UnboundPortException) &#123;<br>    <span class="hljs-built_in">reportUnbound</span>();<br>  &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">TimingResponseProtocol::sendResp</span><span class="hljs-params">(TimingRequestProtocol *peer, PacketPtr pkt)</span> </span>&#123;<br>  <span class="hljs-built_in">assert</span>(pkt-&gt;<span class="hljs-built_in">isResponse</span>());<br>  <span class="hljs-keyword">return</span> peer-&gt;<span class="hljs-built_in">recvTimingResp</span>(pkt);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="/img/gem5/gem5-4-M2S.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>之前说的都是非常顺利的情况，若出现从模块因某些原因暂无法接收。那么 <code>recvTimingReq()</code> 的返回值为 false，于是主模块会得知从模块正在忙碌，当从模块可以接受数据后，会调用 <code>sendReqRetry()</code> 函数来通知主模块再次发送请求。而主模块也只有在等到 <code>recvReqRetry()</code> 执行后，才能再次调用 <code>sendTimingReq()</code> 函数来发送请求。当然，第二次发送请求失败也是有可能的，因此上述过程可能会发生很多次。注意：主模块负责保存失败的 PacketPtr，而不是从模块，从模块不保留失败的 PacketPtr。</p>
+<p><img src="/img/gem5/gem5-4-M2SR.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>当然，也可能出现主模块因忙碌而无法接收应答的情况，从模块通过 <code>sendTimingResp</code> 的返回值可知应答未被主模块接收，那么从模块需要等待主模块调用 <code>sendRespRetry()</code> 函数，然后才能再次发送应答。</p>
+<p><img src="/img/gem5/gem5-4-M2SRR.PNG" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>最后，补上官方文档中关于时序数据流控制的说明：</p>
+<blockquote>
+<p>当 <code>sendTiming()</code> 函数返回 false 时，相同的 Packet 就不应当再次发送，直到 <code>recvRetry()</code> 函数被调用时，才可以再次调用 <code>sendTiming()</code> 函数，然而此时也不必一定要重发之前的 Packet，可以发送一个优先级更高的 Packet。Once sendTiming() returns true, the packet may still not be able to make it to its destination. For packets that require a response (i.e. pkt-&gt;needsResponse() is true), any memory object can refuse to acknowledge the packet by changing its result to Nacked and sending it back to its source. However, if it is a response packet, this can not be done. The true/false return is intended to be used for local flow control, while nacking is for global flow control. In both cases a response can not be nacked.</p>
+</blockquote>
+<h2 id="Packet">Packet</h2>
+<h3 id="简介">简介</h3>
+<p>如上文所述，Packet 类通常表示内存对象之间传输的数据。因此，单个 Request 从请求者一直传输到最终目的地，然后再返回，可能是由几个不同 Packet 在这个过程中传输的。</p>
+<p>各种类中的 accessor 函数可以访问并使用 Packet 类中的信息，并进而验证读入的数据是否有效。比如，在 SimpleCache 的例子中，<code>accessFunctional()</code> 函数内使用了 Packet 类的地址、块大小、读/写操作等信息：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 在cache中根据块的首地址 找出对应的块做读写操作</span><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">SimpleCache::accessFunctional</span><span class="hljs-params">(PacketPtr pkt)</span> </span>&#123;<br>  Addr block_addr = pkt-&gt;<span class="hljs-built_in">getBlockAddr</span>(blockSize);<br>  <span class="hljs-keyword">auto</span> it = cacheStore.<span class="hljs-built_in">find</span>(block_addr);<br>  <span class="hljs-keyword">if</span> (it != cacheStore.<span class="hljs-built_in">end</span>()) &#123;<br>    <span class="hljs-keyword">if</span> (pkt-&gt;<span class="hljs-built_in">isWrite</span>()) &#123;<br>      <span class="hljs-comment">// Write the data into the block in the cache</span><br>      pkt-&gt;<span class="hljs-built_in">writeDataToBlock</span>(it-&gt;second, blockSize);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pkt-&gt;<span class="hljs-built_in">isRead</span>()) &#123;<br>      <span class="hljs-comment">// Read the data out of the cache block into the packet</span><br>      pkt-&gt;<span class="hljs-built_in">setDataFromBlock</span>(it-&gt;second, blockSize);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      <span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;Unknown packet type!&quot;</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="Packet-类">Packet 类</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Packet</span> : <span class="hljs-keyword">public</span> Printable &#123;<br><span class="hljs-keyword">private</span>:<br>  Flags flags;        <span class="hljs-comment">// 标志位</span><br>  PacketDataPtr data; <span class="hljs-comment">// 指向被传输数据的指针</span><br><span class="hljs-keyword">public</span>:<br>  MemCmd cmd;         <span class="hljs-comment">// 包内要求内存对象执行的命令</span><br>  <span class="hljs-type">const</span> PacketId id;  <span class="hljs-comment">// 包 ID</span><br>  RequestPtr req;     <span class="hljs-comment">// 指向原本请求的指针</span><br>  Addr addr;          <span class="hljs-comment">// 请求的地址，虚拟地址或物理地址</span><br>  <span class="hljs-type">unsigned</span> size;      <span class="hljs-comment">// 请求的大小</span><br>  <span class="hljs-type">uint32_t</span> headerDelay; <span class="hljs-comment">// 从看到包到发送报头的额外延迟。这个延迟是用来传递交叉转发延迟到相邻的对象(例如缓存)，实际上使数据包等待。</span><br>  <span class="hljs-type">uint32_t</span> snoopDelay;  <span class="hljs-comment">// 在向内存系统发送请求之前，跟踪由向上窥探引起的额外延迟。这被相干交叉条用来解释额外的请求延迟。</span><br>  <span class="hljs-type">uint32_t</span> payloadDelay; <span class="hljs-comment">// 从看到数据包到负载结束的额外流水线延迟。这包括报头延迟。与报头延迟类似，这是用来弥补交叉条不会使包等待的事实。</span><br><br>  SenderState *senderState; <span class="hljs-comment">// 此数据包的发送者状态。</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>其中 Printable 类是为更方便调试、打印信息而存在的抽象类。</p>
+<p>而 Flags 类描述了 Packet 对象内具体状态信息，包括侦听、拷贝、应答、共享、有效位等：</p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>COPY_FLAGS</td>
+<td>Flags to transfer across when copying a packet</td>
+</tr>
+<tr>
+<td>RESPONDER_FLAGS</td>
+<td>used to create reponse packets</td>
+</tr>
+<tr>
+<td>HAS_SHARERS</td>
+<td>packet have sharers (which means it should not be considered writable) or not.</td>
+</tr>
+<tr>
+<td>EXPRESS_SNOOP</td>
+<td>Special timing-mode atomic snoop for multi-level coherence.</td>
+</tr>
+<tr>
+<td>RESPONDER_HAD_WRITABLE</td>
+<td>Allow a responding cache to inform the cache hierarchy that it had a writable copy before responding.</td>
+</tr>
+<tr>
+<td>CACHE_RESPONDING</td>
+<td>Snoop co-ordination flag to indicate that a cache is responding to a snoop.</td>
+</tr>
+<tr>
+<td>WRITE_THROUGH</td>
+<td>The writeback/writeclean</td>
+</tr>
+<tr>
+<td>SATISFIED</td>
+<td>Response co-ordination flag for cache maintenance</td>
+</tr>
+<tr>
+<td>FAILS_TRANSACTION</td>
+<td>Indicates that this packet/request has returned from the cache hierarchy in a failed transaction.</td>
+</tr>
+<tr>
+<td>FROM_TRANSACTION</td>
+<td>Indicates that this packet/request originates in the CPU executing in transactional mode</td>
+</tr>
+<tr>
+<td>VALID_ADDR</td>
+<td>addr valid fields</td>
+</tr>
+<tr>
+<td>VALID_SIZE</td>
+<td>size valid fields</td>
+</tr>
+<tr>
+<td>STATIC_DATA</td>
+<td>The data pointers to a value that shouldn’t be freed when the packet is destroyed.</td>
+</tr>
+<tr>
+<td>DYNAMIC_DATA</td>
+<td>The data pointers to a value that should be freed when the packet is destroyed.</td>
+</tr>
+<tr>
+<td>SUPPRESS_FUNC_ERROR</td>
+<td>suppress the error if this packet encounters a functional access failure.</td>
+</tr>
+<tr>
+<td>BLOCK_CACHED</td>
+<td>Signal block present to squash prefetch and cache evict packets through express snoop flag</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Memcmd">Memcmd</h4>
+<p>MemCmd 类定义了与命令相关的属性和其他数据。MemCmd 类中有所有关于cache/memory 的操作和属性。关于cache的命令操作，可分为以下几大类：</p>
+<ul>
+<li>无效</li>
+<li>读取</li>
+<li>预取</li>
+<li>写入</li>
+<li>清除</li>
+<li>升级</li>
+<li>同步</li>
+</ul>
+<p>这些命令操作也会配上<strong>数据包</strong>的属性，且命令与数据通常有固定搭配，不完全举例如下：</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>属性字符</th>
+<th>应答命令</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>InvalidCmd</td>
+<td>-</td>
+<td>InvalidCmd（即不应答）</td>
+<td>无效命令</td>
+</tr>
+<tr>
+<td>ReadReq</td>
+<td>IsRead, IsRequest, NeedsResponse</td>
+<td>ReadResp</td>
+<td>由非缓存代理（例如 CPU 或设备）发出的读取，对对齐没有限制</td>
+</tr>
+<tr>
+<td>ReadResp</td>
+<td>IsRead, IsResponse, HasData</td>
+<td>InvalidCmd</td>
+<td>从 requester 到 responder 的数据流</td>
+</tr>
+<tr>
+<td>ReadRespWithInvalidate</td>
+<td>IsRead, IsResponse, HasData, IsInvalidate</td>
+<td>InvalidCmd</td>
+<td>是否是要升级的数据</td>
+</tr>
+<tr>
+<td>WriteReq</td>
+<td>IsWrite, NeedsWritable, IsRequest, NeedsResponse, HasData</td>
+<td>WriteResp</td>
+<td></td>
+</tr>
+<tr>
+<td>WriteResp</td>
+<td>IsWrite, IsResponse</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>WriteCompleteResp</td>
+<td>IsWrite, IsResponse</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>WritebackDirty</td>
+<td>IsWrite, IsRequest, IsEviction, HasData, FromCache</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>WritebackClean</td>
+<td>IsWrite, IsRequest, IsEviction, HasData, FromCache</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>WriteClean</td>
+<td>IsWrite, IsRequest, HasData, FromCache</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>CleanEvict</td>
+<td>IsRequest, IsEviction, FromCache</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>SoftPFReq</td>
+<td>IsRead, IsRequest, IsSWPrefetch, NeedsResponse</td>
+<td>SoftPFResp</td>
+<td></td>
+</tr>
+<tr>
+<td>SoftPFExReq</td>
+<td>IsRead, NeedsWritable, IsInvalidate, IsRequest, IsSWPrefetch, NeedsResponse</td>
+<td>SoftPFResp</td>
+<td></td>
+</tr>
+<tr>
+<td>HardPFReq</td>
+<td>IsRead, IsRequest, IsHWPrefetch, NeedsResponse, FromCache</td>
+<td>HardPFResp</td>
+<td></td>
+</tr>
+<tr>
+<td>SoftPFResp</td>
+<td>IsRead, IsResponse, IsHWPrefetch, HasData</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>HardPFResp</td>
+<td>IsRead, IsResponse, IsHWPrefetch, HasData</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>WriteLineReq</td>
+<td>IsWrite, NeedsWritable, IsRequest, NeedsResponse, HasData</td>
+<td>WriteResp</td>
+<td></td>
+</tr>
+<tr>
+<td>UpgradeReq</td>
+<td>IsInvalidate, NeedsWritable, IsUpgrade, IsRequest, NeedsResponse, FromCache</td>
+<td>UpgradeResp</td>
+<td></td>
+</tr>
+<tr>
+<td>SCUpgradeReq</td>
+<td>IsInvalidate, NeedsWritable, IsUpgrade, IsLlsc, IsRequest, NeedsResponse, FromCache</td>
+<td>UpgradeResp</td>
+<td>IsUpgrade, IsResponse</td>
+</tr>
+<tr>
+<td>SCUpgradeFailReq</td>
+<td>sRead, NeedsWritable, IsInvalidate, IsLlsc, IsRequest, NeedsResponse, FromCache</td>
+<td>UpgradeFailResp</td>
+<td></td>
+</tr>
+<tr>
+<td>UpgradeFailResp</td>
+<td>IsRead, IsResponse, HasData</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>ReadExReq</td>
+<td>IsRead, NeedsWritable, IsInvalidate, IsRequest, NeedsResponse, FromCache</td>
+<td>ReadExResp</td>
+<td></td>
+</tr>
+<tr>
+<td>ReadExResp</td>
+<td>IsRead, IsResponse, HasData</td>
+<td>InvalidCmd</td>
+<td></td>
+</tr>
+<tr>
+<td>ReadCleanReq</td>
+<td>IsRead, IsRequest, NeedsResponse, FromCache</td>
+<td>ReadResp</td>
+<td></td>
+</tr>
+<tr>
+<td>ReadSharedReq</td>
+<td>IsRead, IsRequest, NeedsResponse, FromCache</td>
+<td>ReadResp</td>
+<td></td>
+</tr>
+<tr>
+<td>LoadLockedReq</td>
+<td>IsRead, IsLlsc, IsRequest, NeedsResponse</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>StoreCondReq</td>
+<td>sWrite, NeedsWritable, IsLlsc, IsRequest, NeedsResponse, HasData</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>StoreCondFailReq</td>
+<td>IsWrite, NeedsWritable, IsLlsc, IsRequest, NeedsResponse, HasData</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>StoreCondResp</td>
+<td>IsWrite, IsLlsc, IsResponse</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SwapReq</td>
+<td>IsRead, IsWrite, NeedsWritable, IsRequest, HasData, NeedsResponse</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SwapResp</td>
+<td>IsRead, IsWrite, IsResponse, HasData</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MemFenceReq</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MemSyncReq</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MemSyncResp</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MemFenceResp</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CleanSharedReq</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CleanSharedResp</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CleanInvalidReq</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CleanInvalidResp</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>gem5 中为方便两者相连，使用了很有技巧的编程手段。定义 MemCmd::CommandInfo 结构体如下，位域中通过位图表示的多个属性，在初始化时命令和属性就会被捆绑起来，保存在静态变量数组 <code>commandInfo[]</code> 中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">struct</span> <span class="hljs-title class_">CommandInfo</span> &#123;<br>  <span class="hljs-comment">/// Set of attribute flags.</span><br>  <span class="hljs-type">const</span> std::bitset&lt;NUM_COMMAND_ATTRIBUTES&gt; attributes;<br>  <span class="hljs-comment">/// Corresponding response for requests; InvalidCmd if no</span><br>  <span class="hljs-comment">/// response is applicable.</span><br>  <span class="hljs-type">const</span> Command response;<br>  <span class="hljs-comment">/// String representation (for printing)</span><br>  <span class="hljs-type">const</span> std::string str;<br><br>  <span class="hljs-built_in">CommandInfo</span>(std::initializer_list&lt;Attribute&gt; attrs,<br>        Command _response, <span class="hljs-type">const</span> std::string &amp;_str) :<br>    <span class="hljs-built_in">attributes</span>(<span class="hljs-built_in">buildAttributes</span>(attrs)), <span class="hljs-built_in">response</span>(_response), <span class="hljs-built_in">str</span>(_str)<br>    &#123;&#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>使用 <code>testCmdAttrib</code> 函数和静态类数组 <code>commandInfo</code>（包含了所有命令），就可以简洁地实现测试标志位的函数，如 <code>isRead()</code>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">static</span> <span class="hljs-type">const</span> CommandInfo commandInfo[];<br><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">testCmdAttrib</span><span class="hljs-params">(MemCmd::Attribute attrib)</span> <span class="hljs-type">const</span> </span>&#123;<br>  <span class="hljs-keyword">return</span> commandInfo[cmd].attributes[attrib] != <span class="hljs-number">0</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">isRead</span><span class="hljs-params">()</span> <span class="hljs-type">const</span> </span>&#123; <span class="hljs-keyword">return</span> <span class="hljs-built_in">testCmdAttrib</span>(IsRead); &#125;<br></code></pre></td></tr></table></figure>
+<p><code>SenderState</code> 类描述 Packet 的发送者状态。对于看到该 <code>Packet</code> 的 <code>SimObject</code> 对象而言，<code>SenderState</code> 类可以用于保存与 Packet 相关的状态（例如，MSHR）。</p>
+<blockquote>
+<p>MSHR(Miss Status and handling Register) 保存并处理缓存丢失所需的所有信息，包括要请求的目标列表。</p>
+</blockquote>
+<p>指向 <code>SenderState</code> 类的指针会在应答 <code>Packet</code> 的函数中被返回，如此一来，SimObject 对象可以迅速查看 <code>Packet</code> 中的状态位，并进行相应的处理（见 <code>findNextSenderState()</code> 函数）。 <code>SenderState</code> 类以链表的形式相串起来：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">struct</span> <span class="hljs-title class_">SenderState</span> &#123;<br>  SenderState* predecessor;<br>  <span class="hljs-built_in">SenderState</span>() : <span class="hljs-built_in">predecessor</span>(<span class="hljs-literal">NULL</span>) &#123;&#125;<br>  <span class="hljs-keyword">virtual</span> ~<span class="hljs-built_in">SenderState</span>() &#123;&#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>在响应该 Packet 时，会返回一个 SenderState* 类型的指针，以便 SimObject 对象可以快速查找处理它所需的状态。要遍历发送者组成的链表，返回第一个符合类型T的实例，需使用 <code>findNextSenderState()</code> 函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">/**</span><br><span class="hljs-comment">  * 遍历发送者组成的链表，返回第一个符合类型T的实例</span><br><span class="hljs-comment">  * @return The topmost state of type T</span><br><span class="hljs-comment">  */</span><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-function">T * <span class="hljs-title">findNextSenderState</span><span class="hljs-params">()</span> <span class="hljs-type">const</span> </span>&#123;<br>    T *t = <span class="hljs-literal">NULL</span>;<br>    SenderState* sender_state = senderState;<br>    <span class="hljs-keyword">while</span> (t == <span class="hljs-literal">NULL</span> &amp;&amp; sender_state != <span class="hljs-literal">NULL</span>) &#123;<br>        t = <span class="hljs-built_in">dynamic_cast</span>&lt;T*&gt;(sender_state);<br>        sender_state = sender_state-&gt;predecessor;<br>    &#125;<br>    <span class="hljs-keyword">return</span> t;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>有时，为处理特殊发送设备的状态，程序员也可以从该类中派生出相对应的子类。由于多个 <code>SimObject</code> 对象都可以从自己的视角出发来添加新的 <code>SenderState</code>，只要在响应返回时，能恢复之前的 <code>SenderState</code> 对象即可。因此，在修改 <code>Packet</code> 类中的 <code>SenderState</code> 字段之前，应该始终维护 <code>SenderState</code> 链表。</p>
+<h3 id="Packet-功能">Packet 功能</h3>
+<p>通常来说，<code>Packet</code> 类中包含了以下内容，可被函数使用：</p>
+<ul>
+<li>地址。 通过 <code>getAddr()</code> 函数获得。该地址将用于将 Packet 路由到其目的地（若未明确设置目的地）并在目标处处理 Packet 的地址。通常，它是发起请求对象的物理地址，某些情况下也可能是虚拟地址：在执行地址转换之前访问虚拟 Cache。但有时也可能是需要获取的数据地址：例如，在 Cache 未命中时，Packet 地址可能是要获取的块的地址，而非请求地址。</li>
+<li>请求或包的大小。 通过 <code>getSize()</code> 获得。请求所占的空间大小</li>
+<li>指向 Packet 中数据的指针。在不同层次结构中，数据可能是不同的，因此在设计上它位于 Packet 对象，而不是 request。
+<ul>
+<li>用 <code>dataStatic()</code> <code>dataDynamic()</code> 函数设置的数据，在 Packet 对象被 free 时，其内的数据分别应：不被 free、不使用 delete [] 进行 free。</li>
+<li>用 <code>allocate()</code> 函数分配空间时，数据会在 Packet 被释放时 free</li>
+<li>通过 <code>getPtr()</code> 获得指针</li>
+<li>使用 <code>get()</code> 函数获取，<code>set()</code> 函数设置</li>
+</ul>
+</li>
+<li>状态 包括以下几种：Success, BadAddress, Not Acknowleged, and Unknown.</li>
+<li>List of command attributes 需要对 Packet 施加的命令和属性，由 MemCmd 维护。注意：状态字段和命令属性中的数据有一些重叠。这在很大程度上是为了使包在打包时可以很容易地重新初始化，或者在原子访问或函数访问时很容易重用。</li>
+<li>Pointer to SenderState 携带特定的发送设备的状态。在包的响应中返回一个指向该状态的指针，以便发送方可以快速查找处理它所需的状态。</li>
+<li>Pointer to CoherenceState 用于保存 Coherence 一致性相关的状态。</li>
+<li>Pointer to request 指向请求的指针</li>
+</ul>
+<h2 id="Request">Request</h2>
+<p><code>Request</code> 对象封装了 CPU 或 I/O 设备发出的原始请求。<code>Request</code> 的参数在整个事务中是持久的。因此对于一给定的 <code>Request</code>，其字段最多只需写入一次。但也有一些构造函数和 update 方法允许在不同时间（或根本不）写入对象的某些字段。用户可通过 <code>accessor()</code> 函数获取 Request 字段的读取权限，同时也可验证正在读取的字段中的数据是否有效。注意，Request 中的字段通常不适用于真实系统中的设备，通常用于统计或调试，不能作为真实的系统架构。</p>
+<p><code>Request</code> 对象的字段包括了：</p>
+<ul>
+<li>Virtual Address 虚拟地址。当该请求直接表示为物理地址时该字段无效（如 DMA I/O 设备发出的请求）</li>
+<li>Physical Address 物理地址</li>
+<li>Data Size 数据大小</li>
+<li>Time the request was created 创建时间</li>
+<li>The ID of the CPU/thread that caused this request. 创建该请求的 CPU 或线程 ID</li>
+<li>The PC that caused this request 产生该请求的指令 PC 值。若不是由 CPU 发送的，那么该字段无效</li>
+</ul>
+<h3 id="Request-类">Request 类</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Request</span> &#123;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-comment">// The physical address of the request. </span><br>    Addr _paddr = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">// The virtual address of the request.</span><br>    Addr _vaddr = MaxAddr;<br><br>    <span class="hljs-comment">// The size of the request. Always valid as long as vir/phy address fields is valid.</span><br>    <span class="hljs-type">unsigned</span> _size = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">/** Byte-enable mask for writes. */</span><br>    std::vector&lt;<span class="hljs-type">bool</span>&gt; _byteEnable;<br><br>    <span class="hljs-comment">// The requestor ID which is unique in the system for all ports</span><br>    <span class="hljs-comment">// that are capable of issuing a transaction</span><br>    RequestorID _requestorId = invldRequestorId;<br><br>    <span class="hljs-comment">/** Flag structure for the request. */</span><br>    Flags _flags;<br><br>    <span class="hljs-comment">/** Flags that control how downstream cache system maintains coherence*/</span><br>    CacheCoherenceFlags _cacheCoherenceFlags;<br><br>    <span class="hljs-comment">/** Private flags for field validity checking. */</span><br>    PrivateFlags privateFlags;<br><br>    <span class="hljs-comment">// The time this request was started. Used to calculate latencies. </span><br>    Tick _time = MaxTick;<br><br>    <span class="hljs-comment">// The task id associated with this request</span><br>    <span class="hljs-type">uint32_t</span> _taskId = context_switch_task_id::Unknown;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * The stream ID uniquely identifies a device behind the</span><br><span class="hljs-comment">     * SMMU/IOMMU Each transaction arriving at the SMMU/IOMMU is</span><br><span class="hljs-comment">     * associated with exactly one stream ID.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-type">uint32_t</span> _streamId = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * The substream ID identifies an &quot;execution context&quot; within a</span><br><span class="hljs-comment">     * device behind an SMMU/IOMMU. It&#x27;s intended to map 1-to-1 to</span><br><span class="hljs-comment">     * PCIe PASID (Process Address Space ID). The presence of a</span><br><span class="hljs-comment">     * substream ID is optional.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-type">uint32_t</span> _substreamId = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Extra data for the request, such as the return value of</span><br><span class="hljs-comment">     * store conditional or the compare value for a CAS. */</span><br>    <span class="hljs-type">uint64_t</span> _extraData = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">/** The context ID (for statistics, locks, and wakeups). */</span><br>    ContextID _contextId = InvalidContextID;<br><br>    <span class="hljs-comment">/** program counter of initiating access; for tracing/debugging */</span><br>    Addr _pc = MaxAddr;<br><br>    <span class="hljs-comment">/** Sequence number of the instruction that creates the request */</span><br>    InstSeqNum _reqInstSeqNum = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">/** A pointer to an atomic operation */</span><br>    AtomicOpFunctorPtr atomicOpFunctor = <span class="hljs-literal">nullptr</span>;<br><br>    LocalAccessor _localAccessor;<br><br>    <span class="hljs-comment">/** The instruction count at the time this request is created */</span><br>    Counter _instCount = <span class="hljs-number">0</span>;<br>&#125;;<br><br><br><span class="hljs-built_in">Request</span>(Addr vaddr, <span class="hljs-type">unsigned</span> size, Flags flags,<br>            RequestorID id, Addr pc, ContextID cid,<br>            AtomicOpFunctorPtr atomic_op=<span class="hljs-literal">nullptr</span>)<br>    &#123;<br>        <span class="hljs-built_in">setVirt</span>(vaddr, size, flags, id, pc, std::<span class="hljs-built_in">move</span>(atomic_op));<br>        <span class="hljs-built_in">setContext</span>(cid);<br>        _byteEnable = std::<span class="hljs-built_in">vector</span>&lt;<span class="hljs-type">bool</span>&gt;(size, <span class="hljs-literal">true</span>);<br>    &#125;<br><br><br>    <span class="hljs-function"><span class="hljs-type">void</span></span><br><span class="hljs-function">    <span class="hljs-title">setVirt</span><span class="hljs-params">(Addr vaddr, <span class="hljs-type">unsigned</span> size, Flags flags, RequestorID id, Addr pc,</span></span><br><span class="hljs-params"><span class="hljs-function">            AtomicOpFunctorPtr amo_op=<span class="hljs-literal">nullptr</span>)</span></span><br><span class="hljs-function">    </span>&#123;<br>        _vaddr = vaddr;<br>        _size = size;<br>        _requestorId = id;<br>        _pc = pc;<br>        _time = <span class="hljs-built_in">curTick</span>();<br><br>        _flags.<span class="hljs-built_in">clear</span>(~STICKY_FLAGS);<br>        _flags.<span class="hljs-built_in">set</span>(flags);<br>        privateFlags.<span class="hljs-built_in">clear</span>(~STICKY_PRIVATE_FLAGS);<br>        privateFlags.<span class="hljs-built_in">set</span>(VALID_VADDR|VALID_SIZE|VALID_PC);<br>        depth = <span class="hljs-number">0</span>;<br>        accessDelta = <span class="hljs-number">0</span>;<br>        translateDelta = <span class="hljs-number">0</span>;<br>        atomicOpFunctor = std::<span class="hljs-built_in">move</span>(amo_op);<br>        _localAccessor = <span class="hljs-literal">nullptr</span>;<br>    &#125;<br><br>        <span class="hljs-function"><span class="hljs-type">void</span></span><br><span class="hljs-function">    <span class="hljs-title">setContext</span><span class="hljs-params">(ContextID context_id)</span></span><br><span class="hljs-function">    </span>&#123;<br>        _contextId = context_id;<br>        privateFlags.<span class="hljs-built_in">set</span>(VALID_CONTEXT_ID);<br>    &#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Cpp/" class="category-chain-item">Cpp</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Cpp/" class="print-no-link">#Cpp</a>
+      
+        <a href="/tags/gem5/" class="print-no-link">#gem5</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入理解 Gem5 之四</div>
+      <div>https://dingfen.github.io/2022/04/02/2022-4-2-gem5-4/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年4月2日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/06/18/2022-6-18-gem5-6/" title="深入理解 Gem5 之五">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入理解 Gem5 之五</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/03/13/2022-3-13-gem5-3/" title="深入理解 Gem5 之三">
+                        <span class="hidden-mobile">深入理解 Gem5 之三</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

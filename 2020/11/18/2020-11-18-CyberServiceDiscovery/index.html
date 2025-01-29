@@ -1,0 +1,938 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="对 Cyber RT 的通信的最后一部分内容">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apollo Cyber RT 服务与服务发现">
+<meta property="og:url" content="https://dingfen.github.io/2020/11/18/2020-11-18-CyberServiceDiscovery/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="对 Cyber RT 的通信的最后一部分内容">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-11-18T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Apollo">
+<meta property="article:tag" content="Cyber RT">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Apollo Cyber RT 服务与服务发现 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Apollo Cyber RT 服务与服务发现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-11-18 12:00" pubdate>
+          2020年11月18日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          50 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Apollo Cyber RT 服务与服务发现</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Apollo Cyber 服务与服务发现</h1>
+<h2 id="前言">前言</h2>
+<p>现在我们开始介绍 Cyber RT 通信部分的最后一块内容——服务发现。在 <a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">Cyber RT 通信（上）</a>中，我说过，Cyber RT 支持两种通信方式：</p>
+<ul>
+<li><strong>发布—订阅通信方式</strong>（Publish-Subscribe），也叫基于信道的通信方式</li>
+<li><strong>服务—客户通信方式</strong>（Service-Client），也叫基于服务的通信方式</li>
+</ul>
+<p>在 <a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">Cyber RT 通信（上）</a>和 <a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">Cyber RT 通信（下）</a>中，我已经详细地介绍了发布—订阅通信方式，之所以先对该发布—订阅方式进行介绍，是因为该方式使用的场景比较多。考虑到对系统认识的完整性以及后面的研究工作，我觉得还是有必要说一下服务—客户通信方式。</p>
+<p>与发布—订阅方式最大的不同是，服务—客户通信方式需要两个节点之间完成<strong>请求（Request）和应答（Response）<strong>才可完成通信，常用于节点之间</strong>双向</strong>通信的场景。</p>
+<p>回顾在<a href="https://dingfen.github.io/apollo/2020/11/03/CyberCommu1.html">Cyber RT 通信（上）</a>讲过的底层通信方式，一共有如下三种</p>
+<ul>
+<li><strong>同一进程内</strong>。在同一个进程节点之间的相互通信，对于进程内的数据，<strong>直接传递消息对象的指针</strong>，避免消息数据复制的开销</li>
+<li><strong>同主机进程间</strong>。在不同进程之间的节点传播信息，可以利用<strong>共享内存传输</strong>，减少传输中的数据复制，显著提升传输效率，并满足一对多的传输场景</li>
+<li><strong>跨主机</strong>。跨主机的数据利用 socket 传输，跨主机通信采用了第三方的开源库 <a target="_blank" rel="noopener" href="https://www.eprosima.com/index.php/resources-all/rtps">Fast RTPS</a>（Real Time Publish Subscribe Protocol，实时发布订阅协议），是 DDS（Data Distribution Service）标准的一个非常流行的开源实现，支持 RTPS 协议版本的一个订阅发布消息组件，具有高性能，实时性高，多平台支持等优点</li>
+</ul>
+<p>在服务—客户通信方式中，使用的是第三种通信渠道—— Fast RTPS ，之后会进行介绍。</p>
+<h2 id="从-NodeServiceImpl-说起">从 NodeServiceImpl 说起</h2>
+<p>如果你看过我之前写的博客，就应该知道 <code>Node</code> 类通过 <code>NodeServiceImpl</code> 类来创建 <code>Service</code> 和 <code>Client</code> ，我们以 <code>Service</code> 类为例，其创建过程如下：</p>
+<ol>
+<li>直接创建 <code>Service</code> 对象，并进行初始化 <code>Init()</code></li>
+<li>将创建好的 <code>Service</code> 指针放入到数组 <code>serivce_list_</code> 中，并注册名字获得 id</li>
+<li>调用服务发现的拓扑管理类 <code>service_discovery::TopologyManager</code> 中的 <code>Join()</code> 函数，将其加入到整个服务发现的拓扑结构中</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-function"><span class="hljs-keyword">auto</span> <span class="hljs-title">NodeServiceImpl::CreateService</span><span class="hljs-params">(<span class="hljs-type">const</span> std::string&amp; service_name,</span></span><br><span class="hljs-params"><span class="hljs-function"> <span class="hljs-type">const</span> <span class="hljs-keyword">typename</span> Service&lt;Request, Response&gt;::ServiceCallback&amp; service_callback)</span></span><br><span class="hljs-function"> -&gt; <span class="hljs-keyword">typename</span> std::shared_ptr&lt;Service&lt;Request, Response&gt;&gt; </span>&#123;<br>  <span class="hljs-keyword">auto</span> service_ptr = std::make_shared&lt;Service&lt;Request, Response&gt;&gt;(<br>     node_name_, service_name, service_callback);<br>  <span class="hljs-built_in">RETURN_VAL_IF</span>(!service_ptr-&gt;<span class="hljs-built_in">Init</span>(), <span class="hljs-literal">nullptr</span>);<br><br>  service_list_.<span class="hljs-built_in">emplace_back</span>(service_ptr);<br>  attr_.<span class="hljs-built_in">set_service_name</span>(service_name);<br>  <span class="hljs-keyword">auto</span> service_id = common::GlobalData::<span class="hljs-built_in">RegisterService</span>(service_name);<br>  attr_.<span class="hljs-built_in">set_service_id</span>(service_id);<br>  service_discovery::TopologyManager::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">service_manager</span>()-&gt;<span class="hljs-built_in">Join</span>(<br>      attr_, RoleType::ROLE_SERVER);<br>  <span class="hljs-keyword">return</span> service_ptr;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>创建 <code>Client</code> 的过程与 <code>Service</code> 极为相似，这里不过多介绍。接下来，我们不妨从以上三步出发，仔细盘一盘 <code>Service</code> 和 <code>Client</code> 类的实现过程，进而理解一下服务发现的功能。</p>
+<h2 id="Service-Client">Service &amp; Client</h2>
+<h3 id="Service">Service</h3>
+<p>先来看看它的构造函数以及它们的成员。<code>Service</code> 模板类继承了 <code>ServiceBase</code> 类，此类只包含了一个服务名称，算是一个实现 <code>Service</code> 类的接口。在构造函数中，<code>Service</code> 接收三个参数，一个是所在节点的名称，一个是通信服务的名称，最后一个是服务的回调函数，在接收到消息后执行。关于 <code>Service</code> 具体的成员，还请仔细看一下下面的代码:point_down:，为了简洁，我删去了不少多线程相关的变量。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">Service</span>(<span class="hljs-type">const</span> std::string&amp; node_name, <span class="hljs-type">const</span> std::string&amp; service_name, <br>        <span class="hljs-type">const</span> ServiceCallback&amp; service_callback)<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Service</span> : <span class="hljs-keyword">public</span> ServiceBase &#123;<br>  <span class="hljs-keyword">private</span>:<br>  std::string node_name_;	<span class="hljs-comment">// 创建服务的节点名称</span><br>  ServiceCallback service_callback_;	<span class="hljs-comment">// 服务的回调函数</span><br>  std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">const</span> std::shared_ptr&lt;Request&gt;&amp;,<br>          <span class="hljs-type">const</span> transport::MessageInfo&amp;)&gt; request_callback_; <span class="hljs-comment">// 请求回调函数</span><br>  std::shared_ptr&lt;transport::Transmitter&lt;Response&gt;&gt; response_transmitter_; <span class="hljs-comment">// 应答的写者</span><br>  std::shared_ptr&lt;transport::Receiver&lt;Request&gt;&gt; request_receiver_;  <span class="hljs-comment">// 请求的读者</span><br>  std::string request_channel_;	<span class="hljs-comment">// 请求“信道”</span><br>  std::string response_channel_;	<span class="hljs-comment">// 应答“信道”</span><br>  std::thread thread_;  <span class="hljs-comment">// 线程</span><br>  std::list&lt;std::function&lt;<span class="hljs-type">void</span>()&gt;&gt; tasks_;  <span class="hljs-comment">// 任务队列</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>啊哈，在<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html">上篇博客</a>我说过，<code>Reader</code> 和 <code>Writer</code> 的底层实现是 <code>Receiver</code> 和 <code>Transmitter</code> ，从包含类的成员来看，<code>Service</code> 和 <code>Client</code> 的底层也是靠 <code>Receiver</code> 和 <code>Transmitter</code> 实现的。所以说，我之前博客里大书特书的订阅—发布通信模式，其底层的通信办法与服务—客户通信方式还是一致的。<code>Reader</code> 创建时用的信道，和这里 <code>Service</code> 中的“信道”，其实本质是一样的，它们都是<strong>字符串</strong>，在系统中充当消息传递的“桥梁”，当然为作区分以及避免误解，我在 <code>Service</code> 这边的“信道”打个引号。同时，<code>Service</code> 这边有线程也有任务队列，意味着消息会在 <code>Service</code> 内部得到处理，不需要理会调度器，也不需要使用那边的协程。</p>
+<p>再来瞧一瞧 <code>Service::Init()</code>  函数，它在构造函数完成后，立刻被调用执行。因为代码有点长，我将不重要的部分略去，突出重点。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">bool</span> Service&lt;Request, Response&gt;::<span class="hljs-built_in">Init</span>() &#123;<br>  <span class="hljs-comment">/*  RoleAttribute 的赋值 初始化  */</span><br>  <span class="hljs-keyword">auto</span> transport = transport::Transport::<span class="hljs-built_in">Instance</span>();<br>  response_transmitter_ =<br>      transport-&gt;<span class="hljs-built_in">CreateTransmitter</span>&lt;Response&gt;(role, proto::OptionalMode::RTPS);<br>  request_callback_ =<br>      std::<span class="hljs-built_in">bind</span>(&amp;Service&lt;Request, Response&gt;::HandleRequest, <span class="hljs-keyword">this</span>,<br>                std::placeholders::_1, std::placeholders::_2);<br>  <span class="hljs-comment">/*  ....  */</span><br>  request_receiver_ = transport-&gt;<span class="hljs-built_in">CreateReceiver</span>&lt;Request&gt;(<br>      role,<br>      [=](<span class="hljs-type">const</span> std::shared_ptr&lt;Request&gt;&amp; request,<br>          <span class="hljs-type">const</span> transport::MessageInfo&amp; message_info,<br>          <span class="hljs-type">const</span> proto::RoleAttributes&amp; reader_attr) &#123;<br>        (<span class="hljs-type">void</span>)reader_attr;<br>          <span class="hljs-comment">// 创建 task 函数</span><br>        <span class="hljs-keyword">auto</span> task = [<span class="hljs-keyword">this</span>, request, message_info]() &#123;<br>          <span class="hljs-keyword">this</span>-&gt;<span class="hljs-built_in">HandleRequest</span>(request, message_info);<br>        &#125;;<br>          <span class="hljs-comment">// 将其放入任务队列</span><br>        <span class="hljs-built_in">Enqueue</span>(std::<span class="hljs-built_in">move</span>(task));<br>      &#125;,<br>      proto::OptionalMode::RTPS);<br>  thread_ = std::<span class="hljs-built_in">thread</span>(&amp;Service&lt;Request, Response&gt;::Process, <span class="hljs-keyword">this</span>);<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>仔细梳理一下，<code>Init()</code> 函数一共做了：</p>
+<ol>
+<li>
+<p>判断是否已经初始化，若没有，继续往下做，将 RoleAttribute 的值填充好，略去不说</p>
+</li>
+<li>
+<p>获得 <code>Transport</code> 全局对象（该类我已经在<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html#transport">这里</a>讨论过了），并创建 <code>Transmitter</code> 对象</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">CreateTransmitter</span>&lt;Response&gt;(role, proto::OptionalMode::RTPS);<br></code></pre></td></tr></table></figure>
+<p>注意到，这边的通信渠道选择的是 RTPS，意味着在服务—客户通信方式中，底层使用的都是 <strong>Fast RTPS 协议</strong>进行通信。</p>
+</li>
+<li>
+<p>创建请求回调函数。请求回调函数，与 <code>HandleRequest</code> 函数做了绑定，我猜测 <code>Service</code> 在接收到服务请求后，就会调用这个函数进行处理。</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::<span class="hljs-built_in">bind</span>(&amp;Service&lt;Request, Response&gt;::HandleRequest, <span class="hljs-keyword">this</span>,<br>      std::placeholders::_1, std::placeholders::_2);<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>最复杂的来了，创建 <code>Receiver</code> 对象，这部分我在<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html#transport">这里</a>也讨论过了。需要注意的是传入的 <code>MessageListener</code> ，即那个复杂的 Lambda 表达式，其内部又套了一个 Lambda 表达式。<code>MessageListerner</code> 这个回调函数会在 <code>Receiver</code> 接收到新消息后被调用。其动作是：建立一个函数 <code>task</code> ，<code>task</code> 函数调用 <code>HandleRequest()</code> 函数对消息进行处理，然后将 <code>task</code> 入队列。简单地说，就是每当一个新消息到来，就会创建一个针对该消息的处理函数，然后把它放入到任务队列中。</p>
+</li>
+<li>
+<p>创建线程，开始运行 <code>Process()</code> 函数。</p>
+</li>
+</ol>
+<p>很自然地，你会好奇 <code>Process()</code> 函数是如何运作的，其实很简单，就是维护了一个先进先出的任务队列。程序中的<a target="_blank" rel="noopener" href="http://www.cplusplus.com/reference/condition_variable/condition_variable/">条件变量</a>会不断地检查 <code>!inited_ || !this-&gt;tasks_.empty()</code> 这个布尔值，一旦为真，那就 unblock 自己，从任务队列的最前端取出任务并运行。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">void</span> Service&lt;Request, Response&gt;::<span class="hljs-built_in">Process</span>() &#123;<br>  <span class="hljs-keyword">while</span> (!cyber::<span class="hljs-built_in">IsShutdown</span>()) &#123;<br>    <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">ul</span><span class="hljs-params">(queue_mutex_)</span></span>;<br>    condition_.<span class="hljs-built_in">wait</span>(ul, [<span class="hljs-keyword">this</span>]() &#123; <span class="hljs-keyword">return</span> !inited_ || !<span class="hljs-keyword">this</span>-&gt;tasks_.<span class="hljs-built_in">empty</span>(); &#125;);<br>    <span class="hljs-keyword">if</span> (!inited_)<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">if</span> (!tasks_.<span class="hljs-built_in">empty</span>()) &#123;<br>      <span class="hljs-keyword">auto</span> task = tasks_.<span class="hljs-built_in">front</span>();<br>      tasks_.<span class="hljs-built_in">pop_front</span>();<br>      ul.<span class="hljs-built_in">unlock</span>();<br>      <span class="hljs-built_in">task</span>();<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后，<code>HandleRequest()</code> 函数要做什么呢？<code>Service</code> 是如何处理接收到的请求呢？:point_down:在下面的代码中：</p>
+<ol>
+<li>创建一个 <code>Response</code> 对象，并执行 <code>service_callback_</code> 函数，如前所述，该函数在构造时就已经传入</li>
+<li>用 copy 构造函数创建一个 <code>MessageInfo</code> ，然后更新发送者的 id</li>
+<li>调用 <code>SendResponse()</code> 函数</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-type">void</span> Service&lt;Request, Response&gt;::<span class="hljs-built_in">HandleRequest</span>(<br>    <span class="hljs-type">const</span> std::shared_ptr&lt;Request&gt;&amp; request,<br>    <span class="hljs-type">const</span> transport::MessageInfo&amp; message_info) &#123;<br>  <span class="hljs-comment">/* .... */</span><br>  <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lk</span><span class="hljs-params">(service_handle_request_mutex_)</span></span>;<br>  <span class="hljs-keyword">auto</span> response = std::<span class="hljs-built_in">make_shared</span>&lt;Response&gt;();<br>  <span class="hljs-built_in">service_callback_</span>(request, response);<br>  <span class="hljs-function">transport::MessageInfo <span class="hljs-title">msg_info</span><span class="hljs-params">(message_info)</span></span>;<br>  msg_info.<span class="hljs-built_in">set_sender_id</span>(response_transmitter_-&gt;<span class="hljs-built_in">id</span>());<br>  <span class="hljs-built_in">SendResponse</span>(msg_info, response);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>SendResponse()</code> 函数也是十分简单，它只是将 <code>Response</code> 对象通过 <code>Transmit()</code> 函数发送出去。这往后的技术细节我就不再讨论了，不过要注意的是，<code>response_transmitter_</code> 的类型是 <code>RtpsTransmitter</code> ，如果你想往下研究的话，只需要看这个类的 <code>Transmit()</code> 函数就可以了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-type">void</span> Service&lt;Request, Response&gt;::<span class="hljs-built_in">SendResponse</span>(<br>    <span class="hljs-type">const</span> transport::MessageInfo&amp; message_info,<br>    <span class="hljs-type">const</span> std::shared_ptr&lt;Response&gt;&amp; response) &#123;<br>   <span class="hljs-comment">/*  ....   */</span><br>    response_transmitter_-&gt;<span class="hljs-built_in">Transmit</span>(response, message_info);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="Client">Client</h3>
+<p><code>Client</code> 类的实现与 <code>Service</code> 类有很多相似的地方，但也有很多不同。<code>Client</code> 类继承了 <code>ClientBase</code> 类，与 <code>ServiceBase</code> 类似，<code>ClientBase</code> 也就是个接口。<code>Client</code> 类的成员与 <code>Service</code> 的有点镜像关系 :joy:，也有很多不同。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Client</span> : <span class="hljs-keyword">public</span> ClientBase &#123;  <br>  std::string node_name_;	<span class="hljs-comment">// 创建客户的节点名称</span><br>  std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">const</span> std::shared_ptr&lt;Response&gt;&amp;,<br>      <span class="hljs-type">const</span> transport::MessageInfo&amp;)&gt; response_callback_;	<span class="hljs-comment">// 应答回调函数</span><br><br>  std::unordered_map&lt;<span class="hljs-type">uint64_t</span>,<br>                     std::tuple&lt;SharedPromise, CallbackType, SharedFuture&gt;&gt;<br>      pending_requests_;  <span class="hljs-comment">// 正在提交的请求</span><br>  std::shared_ptr&lt;transport::Transmitter&lt;Request&gt;&gt; request_transmitter_;	<span class="hljs-comment">// 请求的写者</span><br>  std::shared_ptr&lt;transport::Receiver&lt;Response&gt;&gt; response_receiver_;	<span class="hljs-comment">// 应答的读者</span><br>  std::string request_channel_;		<span class="hljs-comment">// 请求“信道”</span><br>  std::string response_channel_;	<span class="hljs-comment">// 应答“信道”</span><br>  transport::Identity writer_id_;	<span class="hljs-comment">// 写者 id</span><br>  <span class="hljs-type">uint64_t</span> sequence_number_;	<span class="hljs-comment">// 序列号</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>与 <code>Service</code> 有明显不同的是，<code>Client</code> 多了 <code>pending_requests_</code> 表，其类型也十分复杂：<code>std::unordered_map&lt;uint64_t, std::tuple&lt;SharedPromise, CallbackType, SharedFuture&gt;&gt;</code>，它的含义是正在提交的请求，该成员与发出请求和接收应答的过程密切相关。</p>
+<p>现在让我们先来看一下 <code>Client::Init()</code> 函数，代码有点长，因而略去了一些不重要的东西：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-type">bool</span> Client&lt;Request, Response&gt;::<span class="hljs-built_in">Init</span>() &#123;<br>    <span class="hljs-comment">/*  RoleAttribute 的赋值 初始化  */</span><br>  <span class="hljs-keyword">auto</span> transport = transport::Transport::<span class="hljs-built_in">Instance</span>();<br>  request_transmitter_ =<br>      transport-&gt;<span class="hljs-built_in">CreateTransmitter</span>&lt;Request&gt;(role, proto::OptionalMode::RTPS);<br>  writer_id_ = request_transmitter_-&gt;<span class="hljs-built_in">id</span>();<br><br>  response_callback_ =<br>      std::<span class="hljs-built_in">bind</span>(&amp;Client&lt;Request, Response&gt;::HandleResponse, <span class="hljs-keyword">this</span>,<br>                std::placeholders::_1, std::placeholders::_2);<br> <span class="hljs-comment">/*  ....   */</span><br>  response_receiver_ = transport-&gt;<span class="hljs-built_in">CreateReceiver</span>&lt;Response&gt;(<br>      role,<br>      [=](<span class="hljs-type">const</span> std::shared_ptr&lt;Response&gt;&amp; response,<br>          <span class="hljs-type">const</span> transport::MessageInfo&amp; message_info,<br>          <span class="hljs-type">const</span> proto::RoleAttributes&amp; reader_attr) &#123;<br>        (<span class="hljs-type">void</span>)message_info;<br>        (<span class="hljs-type">void</span>)reader_attr;<br>        <span class="hljs-built_in">response_callback_</span>(response, message_info);<br>      &#125;,<br>      proto::OptionalMode::RTPS);<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>Client::Init()</code> 函数做的事情好像和 <code>Service::Init()</code> 的差不多，就简单说一下：</p>
+<ol>
+<li>
+<p>判断是否已经初始化，并将 RoleAttribute 的值填充好</p>
+</li>
+<li>
+<p>通过 <code>Transport</code> 类创建 <code>Transmitter</code> 对象，用于发送请求</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">CreateTransmitter</span>&lt;Request&gt;(role, proto::OptionalMode::RTPS);<br></code></pre></td></tr></table></figure>
+<p>注意到，这边的通信渠道依然是 RTPS</p>
+</li>
+<li>
+<p>创建应答回调函数 <code>response_callback_</code>，并与 <code>HandleResponse()</code> 函数做了绑定</p>
+</li>
+<li>
+<p>创建 <code>Receiver</code> 对象，仍然要注意那个 Lambda 表达式，该函数直接调用了 <code>response_callback_</code> 回调函数。回顾我在<a href="https://dingfen.github.io/apollo/2020/11/07/CyberCommu2.html#receiver--transmitter-1">这里</a>讨论过的 <code>OnNewMessage()</code> 函数，<code>Receiver</code> 会在接收到新的应答后立即调用 <code>response_callback_</code>，这就是证明我所言的最直接的证据</p>
+</li>
+</ol>
+<p>从 <code>Init()</code> 函数中，可以了解到，<code>Client</code> 在接收到 Response 后，会调用 <code>HandleResponse()</code> 对 Response 进行处理，让我们快速过一遍：</p>
+<ol>
+<li>检查请求是否由该 <code>Client</code> 对象发出</li>
+<li>从 <code>MessageInfo</code> 中获得序列号。有趣的是，这个序列号实际上是 <code>Client</code> 自己给的，仔细看一下， <code>MessageInfo</code> 发送到 <code>Service</code> 后，<code>Service</code> 只改变了它的发送者 id，然后就立马将它塞入 Response 中传回</li>
+<li>根据序列号，从 <code>pending_request_</code> 获得消息，然后执行操作：将得到的应答消息放入 <code>std::promise</code> 中，然后调用回调函数，处理这个消息。如果你对 C++ 的多线程不太熟悉，建议猛戳<a target="_blank" rel="noopener" href="http://www.cplusplus.com/reference/future/promise/">此链接</a></li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">void</span> Client&lt;Request, Response&gt;::<span class="hljs-built_in">HandleResponse</span>(<br>    <span class="hljs-type">const</span> std::shared_ptr&lt;Response&gt;&amp; response,<br>    <span class="hljs-type">const</span> transport::MessageInfo&amp; request_header) &#123;<br>  <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(pending_requests_mutex_)</span></span>;<br>  <span class="hljs-comment">// 检查请求是否是该client发出的</span><br>  <span class="hljs-keyword">if</span> (request_header.<span class="hljs-built_in">spare_id</span>() != writer_id_)<br>    <span class="hljs-keyword">return</span>;<br>  <span class="hljs-comment">// 从请求 消息中获得序列号</span><br>  <span class="hljs-type">uint64_t</span> sequence_number = request_header.<span class="hljs-built_in">seq_num</span>();<br>  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>-&gt;pending_requests_.<span class="hljs-built_in">count</span>(sequence_number) == <span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">return</span>;<br>  <span class="hljs-keyword">auto</span> tuple = <span class="hljs-keyword">this</span>-&gt;pending_requests_[sequence_number];<br>  <span class="hljs-keyword">auto</span> call_promise = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">0</span>&gt;(tuple);<br>  <span class="hljs-keyword">auto</span> callback = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">1</span>&gt;(tuple);<br>  <span class="hljs-keyword">auto</span> future = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">2</span>&gt;(tuple);<br>  <span class="hljs-keyword">this</span>-&gt;pending_requests_.<span class="hljs-built_in">erase</span>(sequence_number);<br>   <span class="hljs-comment">// 放入应答消息，并调用回调函数</span><br>  call_promise-&gt;<span class="hljs-built_in">set_value</span>(response);<br>  <span class="hljs-built_in">callback</span>(future);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>看完了应答消息的处理，再来看一下 <code>Client</code> 如何发送请求。在 <code>SendRequest</code> 函数中，变量 <code>future</code> 在发送了一个异步请求后，会等待一定时间（默认为 5 秒），期待接收到一个应答。这其中涉及到 <code>AsyncSendRequest</code> 函数，它先创建了一个 <code>MessageInfo</code>，然后将它和 Request 通过 <code>Transmitter</code> 发送出去，之后就是建立一个 tuple，把在“未来”会接收到的消息提前布局在了成员变量 <code>pending_request_</code> 中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-keyword">typename</span> Client&lt;Request, Response&gt;::SharedResponse<br>Client&lt;Request, Response&gt;::<span class="hljs-built_in">SendRequest</span>(SharedRequest request,<br>                                       <span class="hljs-type">const</span> std::chrono::seconds&amp; timeout_s) &#123;<br> <span class="hljs-comment">/* ....  */</span><br>  <span class="hljs-keyword">auto</span> future = <span class="hljs-built_in">AsyncSendRequest</span>(request);<br>  <span class="hljs-comment">/* ....  */</span><br>  <span class="hljs-keyword">auto</span> status = future.<span class="hljs-built_in">wait_for</span>(timeout_s);<br>  <span class="hljs-keyword">if</span> (status == std::future_status::ready)<br>    <span class="hljs-keyword">return</span> future.<span class="hljs-built_in">get</span>();<br>  <span class="hljs-keyword">else</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nullptr</span>;<br>&#125;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> Request, <span class="hljs-keyword">typename</span> Response&gt;<br><span class="hljs-keyword">typename</span> Client&lt;Request, Response&gt;::SharedFuture<br>Client&lt;Request, Response&gt;::<span class="hljs-built_in">AsyncSendRequest</span>(SharedRequest request,<br>                                            CallbackType&amp;&amp; cb) &#123;<br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">IsInit</span>()) &#123;<br>    <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(pending_requests_mutex_)</span></span>;<br>    sequence_number_++;		<span class="hljs-comment">// 序列号自加  创建 MessageInfo</span><br>    <span class="hljs-function">transport::MessageInfo <span class="hljs-title">info</span><span class="hljs-params">(writer_id_, sequence_number_, writer_id_)</span></span>;<br>    request_transmitter_-&gt;<span class="hljs-built_in">Transmit</span>(request, info);<br>     <span class="hljs-comment">// 建立一个 tuple </span><br>    SharedPromise call_promise = std::<span class="hljs-built_in">make_shared</span>&lt;Promise&gt;();<br>    <span class="hljs-function">SharedFuture <span class="hljs-title">f</span><span class="hljs-params">(call_promise-&gt;get_future())</span></span>;<br>    pending_requests_[info.<span class="hljs-built_in">seq_num</span>()] =<br>        std::<span class="hljs-built_in">make_tuple</span>(call_promise, std::forward&lt;CallbackType&gt;(cb), f);<br>    <span class="hljs-keyword">return</span> f;<br>  &#125; <span class="hljs-keyword">else</span><br>    <span class="hljs-keyword">return</span> std::shared_future&lt;std::shared_ptr&lt;Response&gt;&gt;();<br>&#125;<br><br><span class="hljs-comment">// pending_request_ 类型</span><br>std::unordered_map&lt;<span class="hljs-type">uint64_t</span>,<br>  std::tuple&lt;SharedPromise, CallbackType, SharedFuture&gt;&gt; pending_requests_<br></code></pre></td></tr></table></figure>
+<p>也许上面的只言片语让你感到困惑， <code>pending_request_</code> 到底何方神圣？:point_up_2:综合之前所说的发布请求和应答接收过程，<code>pending_request_</code> 表记录下了正在发送的请求。表中用序列号作为主键，而后面的值是一个 tuple，放入了 <code>std::promise</code> ，它用于放入“未来”接收到的 Response （在 <code>HandleResponse()</code> 中一清二楚），而最后面的 <code>std::future</code> 用于获取它，中间的 <code>CallbackType</code> 则是处理这个 Response 的回调函数。兵马未动粮草先行，在将请求发出后，<code>Client</code> 就准备好了这一系列东西，因而 <code>HandleResponse()</code> 在处理应答时就显得游刃有余，简洁明了:slightly_smiling_face:。当然，因为这是记录正在发送的请求，收到后一定要将它删去。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">auto</span> tuple = <span class="hljs-keyword">this</span>-&gt;pending_requests_[sequence_number];<br><span class="hljs-keyword">auto</span> call_promise = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">0</span>&gt;(tuple);<br><span class="hljs-keyword">auto</span> callback = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">1</span>&gt;(tuple);<br><span class="hljs-keyword">auto</span> future = std::<span class="hljs-built_in">get</span>&lt;<span class="hljs-number">2</span>&gt;(tuple);<br><span class="hljs-keyword">this</span>-&gt;pending_requests_.<span class="hljs-built_in">erase</span>(sequence_number);<br>call_promise-&gt;<span class="hljs-built_in">set_value</span>(response);<br><span class="hljs-built_in">callback</span>(future);<br></code></pre></td></tr></table></figure>
+<h2 id="服务发现">服务发现</h2>
+<p>让我们回到最初的地方，在 <code>NodeServiceImpl</code> 类创建 <code>Service</code> 完后，服务发现的拓扑管理类 <code>service_discovery::TopologyManager</code> 中的 <code>Join()</code> 函数，会将刚创建的 <code>Service</code> 加入到整个服务发现的拓扑结构中，而在早先时候，我们就遇到过，在 <code>Reader</code> 和 <code>Writer</code> 初始化的最后，会调用到 <code>JoinTheTopology</code> 函数。这些都和服务发现相关，接下来我们就重点聊一聊这部分内容。</p>
+<p>先明确，服务发现不负责具体消息的传递（这些我们已经在之前讲的很清楚了），主要负责监测 cyber RT 中通信节点的情况，并且处理新节点加入或旧节点退出等操作，在其中起主要作用负责的就是 <code>TopologyManager</code> 。</p>
+<p>网络拓扑结构是如何来的？事实上就是节点、信道、读者、写者、服务、客户之间的通信关系的抽象表达。在之前的博客里，我说过 <code>Node</code> 类包含了 <code>Server</code>、<code>Client</code>、<code>Writer</code>、<code>Reader</code> 这四类，而它们可以看做是网络中的顶点，信道就是 <code>Writer</code> 到 <code>Reader</code> 的有向边（因为信息只能从 <code>Writer</code> 传到 <code>Reader</code> ），<code>Service</code> 是 <code>Server</code> 与 <code>Client</code> 的边。Cyber RT 中把 <code>Writer</code> 和 <code>Server</code> 称作 Upstream，另外两个是 Downstream。</p>
+<h3 id="TopologyManager">TopologyManager</h3>
+<p><code>TopologyManager</code> 是个单例，这很明显，因为系统中只需要有一个“监管员”来负责监控网络拓扑就足够了。<code>TopologyManager</code> 有三个子管理器，并有共同的基类 <code>Manager</code>。它们分别为：</p>
+<p>- <code>NodeManager</code> 用于管理网络拓扑中的节点<br>
+  - <code>ChannelManager</code> 用于管理信道以及 <code>Reader</code> 和 <code>Writer</code><br>
+  - <code>ServiceManager</code> 用于管理 <code>Service</code> 和 <code>Client</code></p>
+<p>除此之外，它还有其他的成员 :point_down:。</p>
+<ul>
+<li><code>participant_</code> ，意为通信网络中使用 RTPS 的参与者，不要忘了虽然 <code>TopologyManager</code> 监管整个网络，但它也使用 RTPS ，也是其中的一员，该变量就是指 <code>TopologyManager</code> 自身。</li>
+<li><code>participant_listener_</code> 会在之后介绍</li>
+<li><code>change_signal_</code> 类似于 Qt 中的信号槽机制，通过调用 <code>AddChangeListener()</code> 函数， 连接（connect）了相应的监听器，一有风吹草动，就会立马调用它</li>
+<li><code>participant_names_</code> 目前网络中的参与者 rtps::id 与参与者名称对应的表格</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">using</span> PartNameContainer =<br>     std::map&lt;eprosima::fastrtps::rtps::GUID_t, std::string&gt;;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">TopologyManager</span> &#123;<br>  NodeManagerPtr node_manager_;        <span class="hljs-comment">// shared ptr of NodeManager</span><br>  ChannelManagerPtr channel_manager_;  <span class="hljs-comment">// shared ptr of ChannelManager</span><br>  ServiceManagerPtr service_manager_;  <span class="hljs-comment">// shared ptr of ServiceManager</span><br>  <span class="hljs-comment">// rtps participant to publish and subscribe</span><br>  transport::ParticipantPtr participant_;<br>  ParticipantListener* participant_listener_;<br>  ChangeSignal change_signal_;           <span class="hljs-comment">// topology changing signal,</span><br>                                         <span class="hljs-comment">// &lt; connect to `ChangeFunc`s</span><br>  PartNameContainer participant_names_;  <span class="hljs-comment">// other participant in the topology</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>TopologyManager</code> 的初始化非常简单，就是先创建参与者 <code>Participant</code> ，然后初始化 <code>NodeManager</code>、<code>ChannelManager</code> 和 <code>ServiceManager</code>。先说说 <code>Participant</code> 的创建：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">TopologyManager::CreateParticipant</span><span class="hljs-params">()</span> </span>&#123;<br>  std::string participant_name =<br>      common::GlobalData::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">HostName</span>() + <span class="hljs-string">&#x27;+&#x27;</span> +<br>      std::<span class="hljs-built_in">to_string</span>(common::GlobalData::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">ProcessId</span>());<br>  participant_listener_ = <span class="hljs-keyword">new</span> <span class="hljs-built_in">ParticipantListener</span>(std::<span class="hljs-built_in">bind</span>(<br>      &amp;TopologyManager::OnParticipantChange, <span class="hljs-keyword">this</span>, std::placeholders::_1));<br>  participant_ = std::<span class="hljs-built_in">make_shared</span>&lt;transport::Participant&gt;(<br>      participant_name, <span class="hljs-number">11511</span>, participant_listener_);<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>看起来很复杂，其实很简单，<code>Participant</code> 的名字从全局变量中的 <code>HostName()</code> 和 <code>ProcessId()</code> 获得。然后就是创建监听器 <code>participant_listener_</code>，它与 <code>OnParticipantChange</code> 绑定，在参与者发生变化时被调用，设置监听的端口为 11511，进而构造出 <code>Participant</code> 对象，该类牵扯的技术细节比较繁琐，我在此不进一步介绍。</p>
+<p>我们关心的是，在参与者发生了变化后（加入、离去），<code>TopologyManager</code> 会做出何种反应？请允许我隆重介绍一下<strong>基于 Fast RTPS 的发现机制</strong><sup>2</sup>。之所以这么起名，是因为这层拓扑监控主要是通过 Fast RTPS 提供的自动发现机制。若进程意外退出，则要将各管理类中相应信息进行更新。优点在于，如果进程出错或设备断开，该机制也可以工作，但粒度比较粗，且不是非常及时（比如断开时）。对于该机制的内容，都在 <code>OnParticipantChange()</code> 函数里了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">TopologyManager::OnParticipantChange</span><span class="hljs-params">(<span class="hljs-type">const</span> PartInfo&amp; info)</span> </span>&#123;<br>  ChangeMsg msg;<br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">Convert</span>(info, &amp;msg))<br>    <span class="hljs-keyword">return</span>;<br>  <span class="hljs-comment">/*  ....  */</span><br>  <span class="hljs-keyword">if</span> (msg.<span class="hljs-built_in">operate_type</span>() == OperateType::OPT_LEAVE) &#123;<br>    <span class="hljs-keyword">auto</span>&amp; host_name = msg.<span class="hljs-built_in">role_attr</span>().<span class="hljs-built_in">host_name</span>();<br>    <span class="hljs-type">int</span> process_id = msg.<span class="hljs-built_in">role_attr</span>().<span class="hljs-built_in">process_id</span>();<br>    node_manager_-&gt;<span class="hljs-built_in">OnTopoModuleLeave</span>(host_name, process_id);<br>    channel_manager_-&gt;<span class="hljs-built_in">OnTopoModuleLeave</span>(host_name, process_id);<br>    service_manager_-&gt;<span class="hljs-built_in">OnTopoModuleLeave</span>(host_name, process_id);<br>  &#125;<br>  <span class="hljs-built_in">change_signal_</span>(msg);<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>先来看第一步：<code>TopologyManager::Convert()</code> 函数。就是一个数据类型的转换函数，它将 Fast RTPS 中的 <code>ParticipantDiscoveryInfo</code> 也就是参与者的变动信息，包装为 Cyber RT 中所需要的信息类型 <code>ChangeMsg</code>，同时根据消息的类型（加入还是离去），更新 <code>participant_names_</code> 表格。也就是说，现在主要信息源从 <code>info</code> 转移到了 <code>msg</code> 中。</p>
+<p>第二步，如果检查发现该参与者要离去，那么 <code>OnParticipantChange()</code> 会通知三个通信网络的管理器，即调用 <code>OnTopoModuleLeave()</code> 函数，让各自的管理者把将离去的参与者排除在外。而加入的时候就不需要考虑，因为这些参与者在创建时，就会调用相应的函数加入到这个网络中。</p>
+<p>第三步，就是这句话 <code>change_signal_(msg)</code>，<code>change_signal_</code> 的本质就是若干个回调函数组成的列表。这句话就是在调用:point_down:这个函数（为简单，去掉了加锁），将所有的、调用过 <code>AddChangeListener()</code> 函数后与之 connect 的回调函数全部执行，相当于是监听器在监听到变化后，开始工作了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">operator</span><span class="hljs-params">()</span><span class="hljs-params">(Args... args)</span> </span>&#123;<br>    SlotList local;    <span class="hljs-comment">// Slot 就相当于一个 std::function</span><br>      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; slot : slots_) &#123;<br>        local.<span class="hljs-built_in">emplace_back</span>(slot);<br>      &#125;<br><br>    <span class="hljs-keyword">if</span> (!local.<span class="hljs-built_in">empty</span>()) &#123;<br>      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; slot : local)<br>        (*slot)(args...);<br>    &#125;<br>    <span class="hljs-built_in">ClearDisconnectedSlots</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>好，<code>TopologyManager</code> 的功能基本就说完了，接下来让我们看看它的三个成员。</p>
+<h3 id="Manager">Manager</h3>
+<p>我承认这部分内容对了解整个 Apollo 系统有帮助，但这些内容也有点偏离我所在的课题组最初的任务目标，而且考虑到这里面细节繁多，想要逐一了解完全会花费许多精力，但缺少这部分内容又显得不太完整，因此我打算对这部分内容作一个简短的说明，部分解释会不到位甚至出现错误，也请理解。如果想进一步了解，可以参考一下文后的参考链接。</p>
+<p>先来说说这三者的基类——<code>Manager</code> 。<code>Manager</code> 类的成员主要就是一个 Fast RTPS 的 <code>publisher_</code> 和一个 <code>subscriber_</code> ，订阅者对应的回调函数 <code>listener_</code> 和 <code>signal_</code> 信号槽。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Manager</span> &#123;<br>  <span class="hljs-comment">/* ....  */</span><br>  ChangeType change_type_;<br>  std::string host_name_;	<span class="hljs-comment">// </span><br>  <span class="hljs-type">int</span> process_id_;<br>  std::string channel_name_;<br>  eprosima::fastrtps::Publisher* publisher_;<br>  eprosima::fastrtps::Subscriber* subscriber_;<br>  SubscriberListener* listener_;<br>  ChangeSignal signal_;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>在 <code>TopologyManager</code> 初始化时，我说过 <code>NodeManager</code> 、<code>ChannelManager</code> 和 <code>ServiceManager</code> 在这时被创建并初始化的。</p>
+<p>在 <code>CreateSubscriber()</code> 创建订阅者时，<code>listener_</code> 绑定了 <code>Manager::OnRemoteChange()</code> 函数。而 <code>OnRemoteChange</code> 函数会调用 <code>Dispose()</code> 来对这些远处传来的消息进行处理。每当通信网络中有参与者加入或离开拓扑结构时，程序会调用 <code>Manager::Join()</code> 或 <code>Manager::Leave()</code>，这两个函数会通过 RTPS 底层库发布相应的消息，然后订阅者的回调函数 <code>listener_</code> 就被调用了。<br>
+与 <code>TopologyManager</code> 类一样，有一类似于 Qt 的信号槽机制，<code>signal_</code> ——有若干个注册过的回调函数。该信号在 <code>Manager::Notify()</code> 时就会调用，执行内部所有的回调函数（与 TopologyManager 那一节所描述的一样）。与你想的一样，注册槽的函数是 <code>Manager::AddChangeListener()</code>。</p>
+<h3 id="NodeManager">NodeManager</h3>
+<p>相比基类，<code>NodeManager</code> 多了一个<code>SingleValueWarehouse</code> 类型的成员。<code>SingleValueWarehouse</code> 类，实质就是一个更高级的线程安全 <code>std::unordered_map</code> 表 。加入和离开拓扑，就是向表中 <code>Add()</code> 或 <code>Remove()</code> 节点。而对于 <code>NodeManager::Dispose()</code> 函数，它会根据消息种类来向表中加入或删除节点，然后调用 <code>Notify()</code> 函数，通知（执行）等待该信号槽的回调函数。</p>
+<p>我们知道，<code>NodeManager</code> 类管理 <code>Node</code> 网络拓扑。那么它具体体现在哪里呢？令我惊讶的是，他居然在 <code>NodeChannelImpl</code> 类中。当 <code>Node</code> 被创建或销毁的时候，进行<code>Join()</code>  或 <code>Leave()</code> 操作。Node 网络主要是监察所有节点的存活，并提供查询接口。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">NodeChannelImpl</span>(<span class="hljs-type">const</span> std::string&amp; node_name)<br>      : <span class="hljs-built_in">is_reality_mode_</span>(<span class="hljs-literal">true</span>), <span class="hljs-built_in">node_name_</span>(node_name) &#123;<br>     <span class="hljs-comment">/*  给 node_attr 赋值  */</span><br>    <span class="hljs-type">uint64_t</span> node_id = common::GlobalData::<span class="hljs-built_in">RegisterNode</span>(node_name);<br>    node_attr_.<span class="hljs-built_in">set_node_id</span>(node_id);<br>    is_reality_mode_ = common::GlobalData::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">IsRealityMode</span>();<br>    <span class="hljs-keyword">if</span> (is_reality_mode_) &#123;<br>      node_manager_ =<br>          service_discovery::TopologyManager::<span class="hljs-built_in">Instance</span>()-&gt;<span class="hljs-built_in">node_manager</span>();<br>      node_manager_-&gt;<span class="hljs-built_in">Join</span>(node_attr_, RoleType::ROLE_NODE);<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">virtual</span> ~<span class="hljs-built_in">NodeChannelImpl</span>() &#123;<br>    <span class="hljs-keyword">if</span> (is_reality_mode_) &#123;<br>      node_manager_-&gt;<span class="hljs-built_in">Leave</span>(node_attr_, RoleType::ROLE_NODE);<br>      node_manager_ = <span class="hljs-literal">nullptr</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="ChannelManager">ChannelManager</h3>
+<p>相比基类，<code>ChannelManager</code> 多了四个<code>MultiValueWarehouse</code> 类型（其本质是线程安全的 <code>std::unordered_multimap</code>）的成员，还有一个 <code>Graph</code> 类。它们分别记录读写者间的关系及它们形成的网络图结构，并分别以 node id 和 channel id 为主键来保存读写者。其他过程与 <code>NodeManager</code> 类似，保存的信息和索引方式略有不同。</p>
+<p><code>ChannelManager</code> 类管理 <code>Reader</code> 和 <code>Writer</code> 的信道拓扑网络。<code>Reader</code> 和 <code>Writer</code> 对象在初始化时会调用 <code>JoinTheTopology()</code> 函数加入拓扑结构，而在它们被 <code>Shutdown()</code> 时调用 <code>LeaveTheTopology()</code> 函数离开拓扑。以 <code>Reader</code> 的情况为例：</p>
+<ul>
+<li><code>JoinTheTopology()</code> 函数会先把 <code>Reader &amp; Writer::OnChannelChange()</code> 注册到<code>ChannelManager</code> 的信号槽中，这样当信道拓扑结构发生变化时，回调函数 <code>OnChannelChange()</code> 就会被执行，<code>Reader</code> 就会得知信道已经改变。</li>
+<li>获取信道中所有的 <code>Writer</code> ，并调整自己的 <code>receiver_</code> ，让这些写者发出的信息能被 <code>Reader</code> 获取。<code>Enable()</code> 函数实际上也是让某一回调函数加入到信号槽中，真是一招鲜吃遍天 :man_shrugging:</li>
+<li>最后调用 <code>join()</code> 函数，把自己加入信道网络拓扑中。当然，一旦有新参与者加入，就会引起拓扑网络变化，会调用对应信道的节点的回调函数，最终让存在于该信道的 <code>Writer</code> 得知有新的 <code>Reader</code> 加入。</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">void</span> Reader&lt;MessageT&gt;::<span class="hljs-built_in">JoinTheTopology</span>() &#123;<br>  <span class="hljs-comment">// add listener</span><br>  change_conn_ = channel_manager_-&gt;<span class="hljs-built_in">AddChangeListener</span>(std::<span class="hljs-built_in">bind</span>(<br>      &amp;Reader&lt;MessageT&gt;::OnChannelChange, <span class="hljs-keyword">this</span>, std::placeholders::_1));<br><br>  <span class="hljs-comment">// get peer writers</span><br>  <span class="hljs-type">const</span> std::string&amp; channel_name = <span class="hljs-keyword">this</span>-&gt;role_attr_.<span class="hljs-built_in">channel_name</span>();<br>  std::vector&lt;proto::RoleAttributes&gt; writers;<br>  channel_manager_-&gt;<span class="hljs-built_in">GetWritersOfChannel</span>(channel_name, &amp;writers);<br>  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span>&amp; writer : writers) &#123;<br>    receiver_-&gt;<span class="hljs-built_in">Enable</span>(writer);<br>  &#125;<br>  channel_manager_-&gt;<span class="hljs-built_in">Join</span>(<span class="hljs-keyword">this</span>-&gt;role_attr_, proto::RoleType::ROLE_READER,<br>                         message::HasSerializer&lt;MessageT&gt;::value);<br>&#125;<br><br><span class="hljs-type">void</span> Reader&lt;MessageT&gt;::<span class="hljs-built_in">LeaveTheTopology</span>() &#123;<br>  channel_manager_-&gt;<span class="hljs-built_in">RemoveChangeListener</span>(change_conn_);<br>  channel_manager_-&gt;<span class="hljs-built_in">Leave</span>(<span class="hljs-keyword">this</span>-&gt;role_attr_, proto::RoleType::ROLE_READER);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="ServiceManage">ServiceManage</h3>
+<p><code>ServiceManager</code> 类相比其基类，多了一个 <code>MultiValueWarehouse</code> 和 <code>SingleValueWarehouse</code> 类型，分别为 <code>servers_</code>、<code>clients_</code> 两个表。有新的 <code>Server</code> 或 <code>Client</code> 加入时，这两张表会更新，当然这些数据结构也提供了查询功能，判断某一个服务是否存在等。</p>
+<h2 id="总结">总结</h2>
+<p>对于 <code>TopologyManager</code> ，其主要功能就是监视网络拓扑结构中是否有参与者加入或离开。主要的监听任务由 <code>CreateParticipant()</code> 函数中创建的 <code>Participant</code> 对象完成。它包含 host name 和 process id ，还有监听器 <code>ParticipantListener</code> ，本质是一个网络变化后就执行的回调函数。当网络拓扑发生变化时，从底层 Fast RTPS 传上来的信息 ，会先在 <code>Convert()</code> 函数中被转换成 Cyber RT 中的数据结构 <code>ChangeMsg</code>，然后，监听器会执行 <code>OnParticipantChange()</code> ，三个子管理器就开始更新网络信息。</p>
+<h2 id="参考">参考</h2>
+<p>[1] <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_25762163/article/details/104001692#ChannelManager_30">百度Apollo系统学习-Cyber RT 通信-服务发现</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://blog.csdn.net/jinzhuojun/article/details/108066714">自动驾驶平台Apollo 5.5阅读手记：Cyber RT中的通信传输</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Apollo/" class="category-chain-item">Apollo</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Apollo/" class="print-no-link">#Apollo</a>
+      
+        <a href="/tags/Cyber-RT/" class="print-no-link">#Cyber RT</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Apollo Cyber RT 服务与服务发现</div>
+      <div>https://dingfen.github.io/2020/11/18/2020-11-18-CyberServiceDiscovery/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年11月18日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/12/14/2020-12-14-PP01/" title="对一并行程序实验的简单理解">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">对一并行程序实验的简单理解</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/11/11/2020-11-11-ApolloPlanning/" title="Apollo Planning 规划模块">
+                        <span class="hidden-mobile">Apollo Planning 规划模块</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

@@ -1,0 +1,923 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="vllm custom allreduce 实现 动机 用过 vllm 执行大模型的读者应该很清楚， vllm 使用张量并行（tensor parallel）的方式执行多卡推理。在 Self-Attention 和 MLP 层会将张量分布到各个 GPU worker 上计算，因此各个 GPU 上计算的只是一部分矩阵乘的数据，故完成计算后所有的 GPU worker 需要将结果“汇总”起来，即执行">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VLLM custom allreduce 实现">
+<meta property="og:url" content="https://dingfen.github.io/2024/08/02/2024-10-30-vllm/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="vllm custom allreduce 实现 动机 用过 vllm 执行大模型的读者应该很清楚， vllm 使用张量并行（tensor parallel）的方式执行多卡推理。在 Self-Attention 和 MLP 层会将张量分布到各个 GPU worker 上计算，因此各个 GPU 上计算的只是一部分矩阵乘的数据，故完成计算后所有的 GPU worker 需要将结果“汇总”起来，即执行">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png">
+<meta property="article:published_time" content="2024-08-02T13:10:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.vllm.ai/en/latest/_images/vllm-logo-text-light.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>VLLM custom allreduce 实现 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://raw.githubusercontent.com/vllm-project/vllm/main/docs/source/assets/logos/vllm-logo-text-light.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="VLLM custom allreduce 实现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-08-02 21:10" pubdate>
+          2024年8月2日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">VLLM custom allreduce 实现</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>vllm custom allreduce 实现</h1>
+<h2 id="动机">动机</h2>
+<p>用过 vllm 执行大模型的读者应该很清楚， vllm 使用张量并行（tensor parallel）的方式执行多卡推理。在 Self-Attention 和 MLP 层会将张量分布到各个 GPU worker 上计算，因此各个 GPU 上计算的只是一部分矩阵乘的数据，故完成计算后所有的 GPU worker 需要将结果“汇总”起来，即执行 allreduce，才能获得所有的结果，进而开始后续的操作（比如 dropout 或者 layernorm）。</p>
+<p><img src="https://qiankunli.github.io/public/upload/machine/gpu_all_reduce.png" srcset="/img/loading.gif" lazyload alt="allreduce 示例"></p>
+<p>也就是说，执行一次有 N 层 LLM 的推理，多个 GPU worker 间就需要执行至少 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">2\times N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 次 allreduce。考虑到 N 通常为 32-128 之间，且执行 allreduce 会阻塞后续模型的推理进度，因此 allreduce 性能会直接影响 vllm 多卡推理的效率。</p>
+<p>而在 decoding 阶段，对于一个 sequence 来说，vllm 的一次推理只会推出一个 token，因此 decoding 阶段的 allreduce 的通信的数据量非常小。我们以 llama2-70b 模型在推理 batch size 为 32 时的场景为例，其decoding 阶段需要的 allreduce 通信数据量仅为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>32</mn><mo>×</mo><mn>8192</mn><mo>×</mo><mn>2</mn><mo>=</mo><mn>512</mn></mrow><annotation encoding="application/x-tex">32\times 8192 \times 2=512</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">8192</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">512</span></span></span></span> KB。可见即使在 70B 大模型上运行较大的 batch size 所带来的通信量也是非常少的。</p>
+<p>在没有 vllm custom allreduce 时，我们会直接使用 nvidia GPU 的 NCCL 通信库来完成 allreduce。但是，对于上述小 size 的 allreduce 场景，NCCL 存在以下问题：</p>
+<ol>
+<li>多 stage，不是延迟最优的。NCCL 实现的带宽最优的树或环状 allreduce（具体实现可以参考 <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/K8l7H2zCUr9sGzYehizFMA">Ring Allreduce</a>，它们分别具有 O(logn) 和 O(n) 个阶段传输过程（n 为 GPU 数）。考虑到现代 nvidia GPU 间的巨大带宽（A100 的有效双向带宽有 480 GB/s ！）， NCCL 实现的 allreduce 显然更适合大数据传输的场景，对于小 size 场景，我们更希望其延迟中的启动传输（或同步）时间更少，而不必担心数据真正的传输时间太长。</li>
+<li>不利于内核融合。NCCL 对于 vllm 开发人员来说是黑盒，很难被进一步融合优化。而如果 vllm 使用自己的内核，那么就能更轻松地做算子融合操作</li>
+<li>CUDA graph 不友好。NCCL 的 cuda graph 需要插入同步主机的节点，这会阻塞 GPU，导致 GPU 流出现间隙：</li>
+</ol>
+<p><img src="/img/LLM/nccl_cuda.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="机制">机制</h2>
+<h3 id="缓冲区注册">缓冲区注册</h3>
+<p>CUDA IPC (Interprocess Communication) 支持每个 GPU 节点拥有一个指向其他 GPU 节点内存的指针。显然，我们可以使用这些指针来完成 allreduce 操作。具体步骤是，首先在初始化的过程中就先将每个节点的一个 buffer 暴露给其他节点，组成一个 IPC handle，然后在做 allreduce 时，节点只需要从其他所有节点的 buffer 中读取数据即可。</p>
+<h3 id="one-shot-allreduce">one-shot allreduce</h3>
+<p>allreduce 有非常多算法。在小 size 场景下，为尽可能减少 GPU 同步和收发时间，我们当然希望直接了当一些：直接让所有节点的数据同时广播给其他节点。这就是 one-shot allreduce</p>
+<p><img src="/img/LLM/one_shot_allreduce.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>one-shot allreduce 的性能关键设计一个自定义对齐数据类型，方便让每个节点能都快速地读取 allreduce 数据。最好是 128 bits 对齐，因为每个 CUDA 线程一次会读取 16 字节，好让编译器生成 <code>LD.128</code> 和 <code>ST.128</code> 指令。</p>
+<h3 id="two-hop-allreduce">two-hop allreduce</h3>
+<p>在稍微大一些的 size 或节点稍多的场景下，直接让所有节点广播就不太合适了。two-shot allreduce 先执行 reduce scatter，让每个节点从所有节点那读取对应的 1/N 的数据，然后加起来。然后，在做一个 allgather，将所有节点的数据发送给其他节点。</p>
+<p><img src="/img/LLM/two_shot_allreduce.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h1>代码解读</h1>
+<p>本博文涉及的 vllm 代码为 0.6.3，请注意时效性。</p>
+<h2 id="python-开始">python 开始</h2>
+<h3 id="Linear-层到-allreduce">Linear 层到 allreduce</h3>
+<p>首先，让我们回到最初的地方，当多卡 TP 执行推理时，计算 MLP down_proj 等会涉及到了我们目前研究的 custom allreduce：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">RowParallelLinear</span>(<span class="hljs-title class_ inherited__">LinearBase</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, input_</span>):<br>        <span class="hljs-comment"># ...</span><br>        bias_ = <span class="hljs-literal">None</span> <span class="hljs-keyword">if</span> (self.tp_rank &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">or</span> self.skip_bias_add) <span class="hljs-keyword">else</span> self.bias<br>        output_parallel = self.quant_method.apply(self,<br>                                                  input_parallel,<br>                                                  bias=bias_)<br>        <span class="hljs-keyword">if</span> self.reduce_results <span class="hljs-keyword">and</span> self.tp_size &gt; <span class="hljs-number">1</span>:<br>            output = tensor_model_parallel_all_reduce(output_parallel)<br>        <span class="hljs-keyword">else</span>:<br>            output = output_parallel<br>        <span class="hljs-comment"># ...</span><br>        <span class="hljs-keyword">return</span> output, output_bias<br></code></pre></td></tr></table></figure>
+<p>该函数的实现在 vllm/distributed 内</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">tensor_model_parallel_all_reduce</span>(<span class="hljs-params">input_: torch.Tensor</span>) -&gt; torch.Tensor:<br>    <span class="hljs-string">&quot;&quot;&quot;All-reduce the input tensor across model parallel group.&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">return</span> get_tp_group().all_reduce(input_)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_tp_group</span>() -&gt; GroupCoordinator:<br>    <span class="hljs-keyword">assert</span> _TP <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>, (<span class="hljs-string">&quot;tensor model parallel group is not initialized&quot;</span>)<br>    <span class="hljs-keyword">return</span> _TP<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">all_reduce</span>(<span class="hljs-params">self, input_: torch.Tensor</span>) -&gt; torch.Tensor:<br>    <span class="hljs-comment"># ...</span><br>    <span class="hljs-comment"># use custom allreduce</span><br>    <span class="hljs-keyword">return</span> torch.ops.vllm.outplace_all_reduce(input_, group_name=self.unique_name)<br></code></pre></td></tr></table></figure>
+<p>最终，经过几次辗转调用后，python 代码最终接入到 <code>CustomAllreduce</code> 类的地方就是：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_all_reduce_out_place</span>(<span class="hljs-params">self, input_: torch.Tensor</span>) -&gt; torch.Tensor:<br>    ca_comm = self.ca_comm<br>    out = ca_comm.custom_all_reduce(input_)<br>    <span class="hljs-keyword">return</span> out<br></code></pre></td></tr></table></figure>
+<h3 id="allreduce-使用前提">allreduce 使用前提</h3>
+<p>现在，我们再来仔细看 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.6.3/vllm/distributed/device_communicators/custom_all_reduce.py#L46"><code>CustomAllreduce</code></a>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">CustomAllreduce</span>:<br>    _SUPPORTED_WORLD_SIZES = [<span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">6</span>, <span class="hljs-number">8</span>]<br><br>    <span class="hljs-comment"># max_size: max supported allreduce size</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self,</span><br><span class="hljs-params">                 group: ProcessGroup,</span><br><span class="hljs-params">                 device: <span class="hljs-type">Union</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">str</span>, torch.device],</span><br><span class="hljs-params">                 max_size=<span class="hljs-number">8192</span> * <span class="hljs-number">1024</span></span>) -&gt; <span class="hljs-literal">None</span>:<br></code></pre></td></tr></table></figure>
+<p>可以确定， Custom Allreduce 特性仅支持在 2，4，6，8 卡上推理时才能打开，并且最大支持的 allreduce size 为 8 MB。这里的 allreduce size 指的是 MLP 在各个 GPU 上计算出来的张量大小。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">CustomAllreduce</span>:<br>    <span class="hljs-comment"># ...</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">custom_all_reduce</span>(<span class="hljs-params">self, <span class="hljs-built_in">input</span>: torch.Tensor</span>) -&gt; <span class="hljs-type">Optional</span>[torch.Tensor]:<br>        <span class="hljs-keyword">if</span> self.disabled <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> self.should_custom_ar(<span class="hljs-built_in">input</span>):<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span><br>        <span class="hljs-keyword">if</span> self._IS_CAPTURING:<br>            <span class="hljs-keyword">if</span> torch.cuda.is_current_stream_capturing():<br>                <span class="hljs-keyword">return</span> self.all_reduce_reg(<span class="hljs-built_in">input</span>)<br>            <span class="hljs-keyword">else</span>:<br>                <span class="hljs-comment"># if warm up, mimic the allocation pattern</span><br>                <span class="hljs-comment"># since custom allreduce is out-of-place</span><br>                <span class="hljs-keyword">return</span> torch.empty_like(<span class="hljs-built_in">input</span>)<br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-comment"># note: outside of cuda graph context,</span><br>            <span class="hljs-comment"># custom allreduce incurs a cost of cudaMemcpy, which should</span><br>            <span class="hljs-comment"># be small(&lt;=1% of overall latency) compared to the performance</span><br>            <span class="hljs-comment"># gains of using custom kernels</span><br>            <span class="hljs-keyword">return</span> self.all_reduce_unreg(<span class="hljs-built_in">input</span>)<br><br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span><br></code></pre></td></tr></table></figure>
+<p>若我们打开 custom allreduce 特性，<code>custom_all_reduce</code> 会先执行 <code>should_custom_ar</code> ，之后的逻辑可以分为三条</p>
+<ul>
+<li>一条是 <code>self._IS_CAPTURING</code> 为 True，使用 <code>all_reduce_reg</code>，在 CUDA graph capture 该 stream 流调用</li>
+<li>一条是 <code>self._IS_CAPTURING</code> 为 False，使用 <code>all_reduce_unreg</code>，在不是 CUDA graph 或者 CUDA graph 未 capture stream 流调用</li>
+<li>最后是 warm up 时的计算，可以忽略</li>
+</ul>
+<p>先来看 <code>should_custom_ar</code> 来确定 allreduce 的使用前提：</p>
+<ul>
+<li>一条是 <code>self._IS_CAPTURING</code> 为 False，使用 <code>all_reduce_unreg</code></li>
+<li>最后是 warm up 时的计算，可以忽略。</li>
+</ul>
+<p>这两个函数 <code>all_reduce</code> 函数我们先按下不表，我们先来看 <code>should_custom_ar</code> 来确定 allreduce 的使用前提：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">should_custom_ar</span>(<span class="hljs-params">self, inp: torch.Tensor</span>):<br>    <span class="hljs-keyword">if</span> self.disabled:<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br>    inp_size = inp.numel() * inp.element_size()<br>    <span class="hljs-comment"># custom allreduce requires input byte size to be multiples of 16</span><br>    <span class="hljs-keyword">if</span> inp_size % <span class="hljs-number">16</span> != <span class="hljs-number">0</span>:<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_weak_contiguous(inp):<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br>    <span class="hljs-comment"># for 4 or more non NVLink-capable GPUs, custom allreduce provides</span><br>    <span class="hljs-comment"># little performance improvement over NCCL.</span><br>    <span class="hljs-keyword">if</span> self.world_size == <span class="hljs-number">2</span> <span class="hljs-keyword">or</span> self.full_nvlink:<br>        <span class="hljs-keyword">return</span> inp_size &lt; self.max_size<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br></code></pre></td></tr></table></figure>
+<p>不难发现，<code>should_custom_ar</code> 在如下条件会返回 False，allreduce 传输的 tensor 大小不是 16 对齐的，或者不是弱连续（连续或有前置偏移的连续），或者运行环境中有四张以上的非 NVLink 的 GPU 卡。</p>
+<p>总结一下，Custom allreduce 特性在如下条件全部满足方可使用：</p>
+<ul>
+<li>用户没有手动 disable，即未传入 <code>disable_custom_all_reduce=True</code></li>
+<li>机器上有 2，4，6，8 GPU 卡，且当有四张及以上的卡时，他们必须使用 NVLink 连接</li>
+<li>allreduce 的张量大小不超过 8 MB，必须 16 Byte 对齐，必须满足连续条件</li>
+</ul>
+<h3 id="Python-到-C">Python 到 C++</h3>
+<p>之前我们提到，vllm kernel 内的通信数据，是通过每个节点上的 CUDA IPC buffer 来交流实现的。本着怀疑主义的精神，我们来深入追踪一下，当前节点下的 CUDA 进程如何获得其他节点的 IPC buffer 的指针的。</p>
+<p>其关键就藏匿于下面的<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.6.3/vllm/distributed/device_communicators/custom_all_reduce.py#L148-L175">代码</a>中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># buffers memory are owned by this Python class and passed to C++</span><br><span class="hljs-comment"># meta data composes of two parts: meta data for synchronization</span><br><span class="hljs-comment"># (256 bytes) and a temporary buffer for storing intermediate</span><br><span class="hljs-comment"># allreduce results.</span><br>self.meta = torch.zeros(ops.meta_size() + max_size,<br>                        dtype=torch.uint8,<br>                        device=self.device)<br><span class="hljs-comment"># This is a pre-registered IPC buffer. In eager mode, input tensors</span><br><span class="hljs-comment"># are first copied into this buffer before allreduce is performed</span><br>self.buffer = torch.empty(max_size,<br>                            dtype=torch.uint8,<br>                            device=self.device)<br><span class="hljs-comment"># This is a buffer for storing the tuples of pointers pointing to</span><br><span class="hljs-comment"># IPC buffers from all ranks. Each registered tuple has size of</span><br><span class="hljs-comment"># 8*world_size bytes where world_size is at most 8. Allocating 8MB</span><br><span class="hljs-comment"># is enough for 131072 such tuples. The largest model I&#x27;ve seen only</span><br><span class="hljs-comment"># needs less than 10000 of registered tuples.</span><br>self.rank_data = torch.empty(<span class="hljs-number">8</span> * <span class="hljs-number">1024</span> * <span class="hljs-number">1024</span>,<br>                                dtype=torch.uint8,<br>                                device=self.device)<br>self.max_size = max_size<br>self.rank = rank<br>self.world_size = world_size<br></code></pre></td></tr></table></figure>
+<p>逐一地解释一下这些变量，因为它会在下面的篇幅中反复出现，准确地理解它对我们读懂 vllm custom allreduce 实现至关重要。</p>
+<ul>
+<li><code>meta</code> Python 类 owned 的 buffers，可以理解为整个 Python 类的所有字节，包括两部分，用于 GPU 间数据通信的 256 字节和用于暂存 allreduce 数据的 buffer</li>
+<li><code>buffer</code> 用于在该节点上的 CUDA IPC 的暂存数据的 buffer</li>
+<li><code>rank_data</code> 用于接受来自其他节点 CUDA IPC 数据的 buffer</li>
+<li><code>rank</code> 当前节点号</li>
+<li><code>world_size</code> 目前机器下的 GPU 总数</li>
+</ul>
+<h2 id="C-CustomAllreduce">C++ CustomAllreduce</h2>
+<p>后续的指令做了非常重要的几件事，我们一个一个来看：</p>
+<h3 id="通过-CPU-广播所有节点的-IPC-handles">通过 CPU 广播所有节点的 IPC handles</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">handles, offsets = self._get_ipc_meta(self.meta)<br>self.full_nvlink = full_nvlink<br>self._ptr = ops.init_custom_ar(self.meta, self.rank_data, handles,<br>                                offsets, rank, self.full_nvlink)<br>self.register_buffer(self.buffer)<br></code></pre></td></tr></table></figure>
+<p><code>_get_ipc_meta</code> 通过在 CPU 上调用 <code>torch.distributed.broadcast_object_list</code> 的广播手段，使得</p>
+<ul>
+<li><code>handles</code> 获得了<strong>所有其他节点的 ipc handler 指针</strong></li>
+<li><code>offsets</code> 获得了<strong>ipc buffer 下接受来自其他节点数据的目标位置偏移量</strong></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_get_ipc_meta</span>(<span class="hljs-params">self, inp: torch.Tensor</span>):<br>    data = inp.untyped_storage()._share_cuda_()<br>    shard_data = (<br>        data[<span class="hljs-number">1</span>],  <span class="hljs-comment"># ipc handle to base ptr</span><br>        data[<span class="hljs-number">3</span>],  <span class="hljs-comment"># offset of base ptr</span><br>    )<br>    <span class="hljs-keyword">return</span> self._gather_ipc_meta(shard_data)<br></code></pre></td></tr></table></figure>
+<p>一开始我很是不能理解为什么 data[1] 和 data[3] 分别对应 ipc handle 和 offset ，后来我参考了 <a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/blob/main/torch/csrc/StorageSharing.cpp#L353">torch/csrc<br>
+/StorageSharing.cpp 的源码</a>才明白这其中的安排🤭。因为其中的 tuple 1 就是 <code>cudaIpcMemHandle_t</code> handle，3 就是真正 storage 的偏移量的字节数。</p>
+<h3 id="创建与初始化-C-CustomAllreduce">创建与初始化 C++ CustomAllreduce</h3>
+<p><code>ops.init_custom_ar</code> 创建并初始化了 C++ <code>CustomAllreduce</code>。</p>
+<p><code>ops.init_custom_ar</code> 通过 pytorch 的 <code>TORCH_LIBRARY_EXPAND</code>  C++ 扩展（这是用于自定义算子的一个宏）来调用 backend 的 C++ 代码，也就是对应到了下面的 C++ 函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">fptr_t</span> <span class="hljs-title">init_custom_ar</span><span class="hljs-params">(torch::Tensor&amp; meta, torch::Tensor&amp; rank_data,</span></span><br><span class="hljs-params"><span class="hljs-function">                      <span class="hljs-type">const</span> std::vector&lt;std::string&gt;&amp; handles,</span></span><br><span class="hljs-params"><span class="hljs-function">                      <span class="hljs-type">const</span> std::vector&lt;<span class="hljs-type">int64_t</span>&gt;&amp; offsets, <span class="hljs-type">int64_t</span> rank,</span></span><br><span class="hljs-params"><span class="hljs-function">                      <span class="hljs-type">bool</span> full_nvlink)</span> </span>&#123;<br>  <span class="hljs-type">int</span> world_size = offsets.<span class="hljs-built_in">size</span>();<br>  cudaIpcMemHandle_t ipc_handles[<span class="hljs-number">8</span>];<br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; world_size; i++) &#123;<br>    std::<span class="hljs-built_in">memcpy</span>(&amp;ipc_handles[i], handles[i].<span class="hljs-built_in">data</span>(), <span class="hljs-built_in">sizeof</span>(cudaIpcMemHandle_t));<br>  &#125;<br>  <span class="hljs-keyword">return</span> (<span class="hljs-type">fptr_t</span>) <span class="hljs-keyword">new</span> vllm::<span class="hljs-built_in">CustomAllreduce</span>(<br>      <span class="hljs-built_in">reinterpret_cast</span>&lt;vllm::Signal*&gt;(meta.<span class="hljs-built_in">data_ptr</span>()), rank_data.<span class="hljs-built_in">data_ptr</span>(),<br>      rank_data.<span class="hljs-built_in">numel</span>(), ipc_handles, offsets, rank, full_nvlink);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>上面的实现意思很简单，把之前从 CPU 广播拿到的 <code>handles</code> 放入到 <code>CustomAllreduce</code> 类内管理。</p>
+<p>随后就是初始化 <code>CustomAllreduce</code>。该类内部的数组 <code>sg_</code> 最多有 8 个 <code>vllm::Signal</code> 指针，他们分别指向所有 GPU 节点上 <code>CustomAllreduce</code> 的 <code>meta</code> 内存（通过 CUDA IPC handles 和自己内部指针）。</p>
+<p>而为了保证收发不会互相影响或产生死锁，<code>vllm::Signal</code> 将收发数组分开了：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">constexpr</span> <span class="hljs-type">int</span> kMaxBlocks = <span class="hljs-number">36</span>;<br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">Signal</span> &#123;<br>  <span class="hljs-built_in">alignas</span>(<span class="hljs-number">128</span>) FlagType self_counter[kMaxBlocks][<span class="hljs-number">8</span>];<br>  <span class="hljs-built_in">alignas</span>(<span class="hljs-number">128</span>) FlagType peer_counter[<span class="hljs-number">2</span>][kMaxBlocks][<span class="hljs-number">8</span>];<br>&#125;;<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">CustomAllreduce</span>(Signal* meta, <span class="hljs-type">void</span>* rank_data, <span class="hljs-type">size_t</span> rank_data_sz,<br>                <span class="hljs-type">const</span> cudaIpcMemHandle_t* handles,<br>                <span class="hljs-type">const</span> std::vector&lt;<span class="hljs-type">int64_t</span>&gt;&amp; offsets, <span class="hljs-type">int</span> rank,<br>                <span class="hljs-type">bool</span> full_nvlink = <span class="hljs-literal">true</span>)<br>    : <span class="hljs-built_in">rank_</span>(rank), <span class="hljs-built_in">world_size_</span>(offsets.<span class="hljs-built_in">size</span>()),<br>    <span class="hljs-built_in">full_nvlink_</span>(full_nvlink), <span class="hljs-built_in">self_sg_</span>(meta),<br>    <span class="hljs-built_in">d_rank_data_base_</span>(<span class="hljs-built_in">reinterpret_cast</span>&lt;RankData*&gt;(rank_data)),<br>    <span class="hljs-built_in">d_rank_data_end_</span>(d_rank_data_base_ + rank_data_sz / <span class="hljs-built_in">sizeof</span>(RankData)) &#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; world_size_; i++) &#123;<br>        Signal* rank_sg;<br>        <span class="hljs-keyword">if</span> (i != rank_) &#123;<br>            <span class="hljs-type">char</span>* handle = <span class="hljs-built_in">open_ipc_handle</span>(&amp;handles[i]);<br>            handle += offsets[i];<br>            rank_sg = (Signal*)handle;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            rank_sg = self_sg_;<br>        &#125;<br>        sg_.signals[i] = rank_sg;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>函数 <code>open_ipc_handle</code> 的实现可以参考 CUDA IPC API的<a target="_blank" rel="noopener" href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE_1g01050a29fefde385b1042081ada4cde9">使用说明</a>。最后，返回的 <code>char* handle</code> 再加上之前获得的偏移量，就可以直接指向真正存放 storage 数据的内存位置了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">char</span>* <span class="hljs-title">open_ipc_handle</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">void</span>* ipc_handle)</span> </span>&#123;<br>  <span class="hljs-keyword">auto</span> [it, new_handle] =<br>    ipc_handles_.<span class="hljs-built_in">insert</span>(&#123;*((IPC_KEY*)ipc_handle), <span class="hljs-literal">nullptr</span>&#125;);<br>  <span class="hljs-keyword">if</span> (new_handle) &#123;<br>    <span class="hljs-type">char</span>* ipc_ptr;<br>    <span class="hljs-built_in">CUDACHECK</span>(<span class="hljs-built_in">cudaIpcOpenMemHandle</span>((<span class="hljs-type">void</span>**)&amp;ipc_ptr,<br>                                    *((<span class="hljs-type">const</span> cudaIpcMemHandle_t*)ipc_handle),<br>                                    cudaIpcMemLazyEnablePeerAccess));<br>    it-&gt;second = ipc_ptr;<br>  &#125;<br>  <span class="hljs-keyword">return</span> it-&gt;second;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="注册-IPC-buffer">注册 IPC buffer</h3>
+<p><code>register_buffer</code> 函数完成了 CUDA IPC buffer 的注册。</p>
+<p>下面的 C++ 代码会被执行。注意到在程序的最后是 buffer 完成注册最关键的一步：程序会将 <code>handles</code> + <code>offset</code> 全部都 copy 到 <code>d_rank_data_base_</code> 指向的内存，结合 <code>CustomAllreduce</code> 的初始化过程，可以知道这就是将指向用于 allreduce 数据交换的内存的指针移动到了 <code>rank_data</code> 内。</p>
+<p>程序最后的 <code>buffers_</code> 则记录了一张表格，存放着本节点 <code>buffer</code> 与 <code>rank_data</code> 的对应关系。这一步完成之后，本节点的 GPU 就可以通过 <code>buffer</code> 的指针，获知其他 GPU 的对应 <code>buffer</code> 的 IPC 交换地址，那这样也就完成了 register。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// here Tensor t is self.buffer in python</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">register_buffer</span><span class="hljs-params">(<span class="hljs-type">fptr_t</span> _fa, torch::Tensor&amp; t,</span></span><br><span class="hljs-params"><span class="hljs-function">                     <span class="hljs-type">const</span> std::vector&lt;std::string&gt;&amp; handles,</span></span><br><span class="hljs-params"><span class="hljs-function">                     <span class="hljs-type">const</span> std::vector&lt;<span class="hljs-type">int64_t</span>&gt;&amp; offsets)</span> </span>&#123;<br>  <span class="hljs-keyword">auto</span> fa = <span class="hljs-built_in">reinterpret_cast</span>&lt;vllm::CustomAllreduce*&gt;(_fa);<br>  fa-&gt;<span class="hljs-built_in">register_buffer</span>(handles, offsets, t.<span class="hljs-built_in">data_ptr</span>());<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">register_buffer</span><span class="hljs-params">(<span class="hljs-type">const</span> std::vector&lt;std::string&gt;&amp; handles,</span></span><br><span class="hljs-params"><span class="hljs-function">                     <span class="hljs-type">const</span> std::vector&lt;<span class="hljs-type">int64_t</span>&gt;&amp; offsets, <span class="hljs-type">void</span>* self)</span> </span>&#123;<br>    <span class="hljs-built_in">check_rank_data_capacity</span>();<br>    RankData data;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; world_size_; i++) &#123;<br>        <span class="hljs-keyword">if</span> (i != rank_) &#123;<br>            <span class="hljs-type">char</span>* handle = <span class="hljs-built_in">open_ipc_handle</span>(handles[i].<span class="hljs-built_in">data</span>());<br>            handle += offsets[i];<br>            data.ptrs[i] = handle;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            data.ptrs[i] = self;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">auto</span> d_data = d_rank_data_base_++;<br>    <span class="hljs-built_in">CUDACHECK</span>(<span class="hljs-built_in">cudaMemcpy</span>(d_data, &amp;data, <span class="hljs-built_in">sizeof</span>(RankData), cudaMemcpyHostToDevice));<br>    buffers_[self] = d_data;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="all-reduce-reg-与-all-reduce-unreg">all_reduce_reg 与 all_reduce_unreg</h3>
+<p>明白了 <code>CustomAllreduce</code> 中的注册意义后，再来看之前提到的两个 <code>all_reduce_(un)reg</code> 函数就能更好地理解。</p>
+<ul>
+<li><code>all_reduce_reg</code> 在使用前就已经默认输入的 <code>inp</code> 已经完成注册；</li>
+<li><code>all_reduce_unreg</code> 则需要先将 <code>inp</code> 的数据拷贝到完成注册的 <code>self.buffer</code>，再做 allreduce。</li>
+</ul>
+<p>所以，<code>all_reduce_unreg</code> 函数会多一次 <code>cudaMemcpy</code>，幸好这个数据拷贝损失的性能代价不大。它会在 CUDA graph context 外时被调用。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># all reduce, assuming inp tensor is IPC registered with register_buffer,</span><br><span class="hljs-comment"># or, in the context of cuda graphs, register_graph_buffers</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">all_reduce_reg</span>(<span class="hljs-params">self, inp: torch.Tensor, out: torch.Tensor = <span class="hljs-literal">None</span></span>):<br>    <span class="hljs-keyword">if</span> out <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        out = torch.empty_like(inp)<br>    ops.all_reduce_reg(self._ptr, inp, out)<br>    <span class="hljs-keyword">return</span> out<br><br><span class="hljs-comment"># all reduce, assuming inp tensor is NOT IPC registered</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">all_reduce_unreg</span>(<span class="hljs-params">self, inp: torch.Tensor, out: torch.Tensor = <span class="hljs-literal">None</span></span>):<br>    <span class="hljs-keyword">if</span> out <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        out = torch.empty_like(inp)<br>    ops.all_reduce_unreg(self._ptr, inp, self.buffer, out)<br>    <span class="hljs-keyword">return</span> out<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">all_reduce_unreg</span><span class="hljs-params">(<span class="hljs-type">fptr_t</span> _fa, torch::Tensor&amp; inp, torch::Tensor&amp; reg_buffer,</span></span><br><span class="hljs-params"><span class="hljs-function">                      torch::Tensor&amp; out)</span> </span>&#123;<br>  <span class="hljs-type">const</span> at::<span class="hljs-function">cuda::OptionalCUDAGuard <span class="hljs-title">device_guard</span><span class="hljs-params">(device_of(inp))</span></span>;<br>  <span class="hljs-keyword">auto</span> stream = c10::cuda::<span class="hljs-built_in">getCurrentCUDAStream</span>().<span class="hljs-built_in">stream</span>();<br>  <span class="hljs-keyword">auto</span> input_size = inp.<span class="hljs-built_in">numel</span>() * inp.<span class="hljs-built_in">element_size</span>();<br>  <span class="hljs-comment">// async copy the inp to self.buffer</span><br>  <span class="hljs-built_in">AT_CUDA_CHECK</span>(<span class="hljs-built_in">cudaMemcpyAsync</span>(reg_buffer.<span class="hljs-built_in">data_ptr</span>(), inp.<span class="hljs-built_in">data_ptr</span>(),<br>                                input_size, cudaMemcpyDeviceToDevice, stream));<br>  _all_reduce(_fa, reg_buffer, out, stream);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>简单起见，我们重点来看 <code>all_reduce_unreg</code> 这一个的实现，它将输入的 <code>inp</code> 数据拷贝给 <code>self.buffer</code> 后，就会调用 <code>_all_reduce</code> 函数来完成 allreduce。</p>
+<h3 id="allreduce-实现">allreduce 实现</h3>
+<p><code>_all_reduce</code> 函数只是一个启动器，它会依照输入输出的数据类型启动 <code>CustomAllreduce::allreduce</code> 函数。接下来我们重点研究一下 <code>allreduce</code> 函数：</p>
+<p>先来看其中的第一部分，该部分与之前的注册 IPC buffer 内容紧密相关。回顾前文，<code>CustomAllreduce::buffers_</code> 内存放着本节点 <code>buffer</code> 与 <code>rank_data</code> 的对应关系，于是获得的 <code>ptrs</code> 就是指向了 8 个 <code>rank_data</code> 内存的指针数组。当然，还有一种情况是不在当前上下文，那么需要从 <code>d_rank_data_base_</code> 取出对应 <code>rank_data</code> 的指针数组。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">allreduce</span><span class="hljs-params">(cudaStream_t stream, T* input, T* output, <span class="hljs-type">int</span> size,</span></span><br><span class="hljs-params"><span class="hljs-function">               <span class="hljs-type">int</span> threads = <span class="hljs-number">512</span>, <span class="hljs-type">int</span> block_limit = <span class="hljs-number">36</span>)</span> </span>&#123;<br>  <span class="hljs-keyword">auto</span> d = <span class="hljs-type">packed_t</span>&lt;T&gt;::P::size;<br>  <span class="hljs-comment">// ...</span><br>  RankData* ptrs;<br>  cudaStreamCaptureStatus status;<br>  <span class="hljs-built_in">CUDACHECK</span>(<span class="hljs-built_in">cudaStreamIsCapturing</span>(stream, &amp;status));<br>  <span class="hljs-keyword">if</span> (status == cudaStreamCaptureStatusActive) &#123;<br>    ptrs = d_rank_data_base_ + graph_unreg_buffers_.<span class="hljs-built_in">size</span>();<br>    graph_unreg_buffers_.<span class="hljs-built_in">push_back</span>(input);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-keyword">auto</span> it = buffers_.<span class="hljs-built_in">find</span>(input);<br>    <span class="hljs-keyword">if</span> (it == buffers_.<span class="hljs-built_in">end</span>())<br>      <span class="hljs-keyword">throw</span> std::<span class="hljs-built_in">runtime_error</span>(...)<br>    ptrs = it-&gt;second;<br>  &#125;<br></code></pre></td></tr></table></figure>
+<p>取出对应了其他节点 handle 指针后，下一步就是开始 Allreduce 操作了。下面的代码会分情况调用 <code>cross_device_reduce_1stage</code> 或者 <code>cross_device_reduce_2stage</code>。从代码看，对于小节点数小 size 的情况，会使用一阶段 allreduce <code>cross_device_reduce_1stage</code>，反之选择二阶段 <code>cross_device_reduce_2stage</code>。</p>
+<p>CUDA kernel 函数的 blocks 和 threads 是作者试验出来的，他在 A100，A10，A30 和 T4 上尝试了多次，最终选择 36 个 blocks 以获得最好的性能。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs c++">    size /= d;<br>    <span class="hljs-keyword">auto</span> bytes = size * <span class="hljs-built_in">sizeof</span>(<span class="hljs-keyword">typename</span> <span class="hljs-type">packed_t</span>&lt;T&gt;::P);<br>    <span class="hljs-type">int</span> blocks = std::<span class="hljs-built_in">min</span>(block_limit, (size + threads - <span class="hljs-number">1</span>) / threads);<br><span class="hljs-meta">#<span class="hljs-keyword">define</span> KL(ngpus, name)                                                       \</span><br><span class="hljs-meta">  name<span class="hljs-string">&lt;T, ngpus&gt;</span><span class="hljs-string">&lt;&lt;&lt;blocks, threads, 0, stream&gt;</span>&gt;&gt;(ptrs, sg_, self_sg_, output, \</span><br><span class="hljs-meta">                                                 rank_, size);</span><br>    <span class="hljs-comment">// TODO(hanzhi713): Threshold is different for A100 and H100.</span><br>    <span class="hljs-comment">// Add per device threshold.</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REDUCE_CASE(ngpus)                            \</span><br><span class="hljs-meta">  case ngpus: &#123;                                       \</span><br><span class="hljs-meta">    <span class="hljs-keyword">if</span> (world_size_ == 2) &#123;                           \</span><br><span class="hljs-meta">      KL(ngpus, cross_device_reduce_1stage);          \</span><br><span class="hljs-meta">    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (full_nvlink_) &#123;                        \</span><br><span class="hljs-meta">      <span class="hljs-keyword">if</span> ((world_size_ &lt;= 4 &amp;&amp; bytes &lt; 512 * 1024) || \</span><br><span class="hljs-meta">          (world_size_ &lt;= 8 &amp;&amp; bytes &lt; 256 * 1024)) &#123; \</span><br><span class="hljs-meta">        KL(ngpus, cross_device_reduce_1stage);        \</span><br><span class="hljs-meta">      &#125; <span class="hljs-keyword">else</span> &#123;                                        \</span><br><span class="hljs-meta">        KL(ngpus, cross_device_reduce_2stage);        \</span><br><span class="hljs-meta">      &#125;                                               \</span><br><span class="hljs-meta">    &#125;                                                 \</span><br><span class="hljs-meta">    break;                                            \</span><br><span class="hljs-meta">  &#125;</span><br><br>    <span class="hljs-keyword">switch</span> (world_size_) &#123;<br>      <span class="hljs-built_in">REDUCE_CASE</span>(<span class="hljs-number">2</span>)<br>      <span class="hljs-built_in">REDUCE_CASE</span>(<span class="hljs-number">4</span>)<br>      <span class="hljs-built_in">REDUCE_CASE</span>(<span class="hljs-number">6</span>)<br>      <span class="hljs-built_in">REDUCE_CASE</span>(<span class="hljs-number">8</span>)<br>      <span class="hljs-keyword">default</span>:<br>        <span class="hljs-keyword">throw</span> std::<span class="hljs-built_in">runtime_error</span>(...)<br>    &#125;<br><span class="hljs-meta">#<span class="hljs-keyword">undef</span> REDUCE_CASE</span><br><span class="hljs-meta">#<span class="hljs-keyword">undef</span> KL</span><br>  &#125;<br></code></pre></td></tr></table></figure>
+<h3 id="cross-device-reduce-实现">cross_device_reduce 实现</h3>
+<p>cross_device_reduce_1stage 代码实现如下：首先要保证所有的节点都在执行 allreduce 前同步，<code>multi_gpu_barrier&lt;ngpus, true&gt;()</code> 会首先将 <code>vll::Signal</code> 数组执行信号同步，随后同步 block 内线程。之所以用 <code>vll::Signal</code> 做信号同步，是因为代码中会出现两次 <code>multi_gpu_barrier</code>，为了防止节点间速度不一致导致的在不同 <code>multi_gpu_barrier</code> 函数上同步。比如若没有  <code>vll::Signal</code>，节点 1 在第二个 <code>multi_gpu_barrier</code> 同步，而节点 2 还未达到第一个 <code>multi_gpu_barrier</code>，然后他们同步后接着往下走，就会出现程序死锁或者 bug。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T, <span class="hljs-type">int</span> ngpus&gt;<br>__global__ <span class="hljs-type">void</span> __launch_bounds__(<span class="hljs-number">512</span>, <span class="hljs-number">1</span>)<br>    <span class="hljs-built_in">cross_device_reduce_1stage</span>(RankData* _dp, RankSignals sg, Signal* self_sg,<br>                               T* __restrict__ result, <span class="hljs-type">int</span> rank, <span class="hljs-type">int</span> size) &#123;<br>  <span class="hljs-keyword">using</span> P = <span class="hljs-keyword">typename</span> <span class="hljs-type">packed_t</span>&lt;T&gt;::P;<br>  <span class="hljs-keyword">using</span> A = <span class="hljs-keyword">typename</span> <span class="hljs-type">packed_t</span>&lt;T&gt;::A;<br>  <span class="hljs-comment">// note: we don&#x27;t reorder the address so the accumulation order is the same</span><br>  <span class="hljs-comment">// for all ranks, ensuring bitwise identical results</span><br>  <span class="hljs-keyword">auto</span> dp = *_dp;<br>  <span class="hljs-built_in">multi_gpu_barrier</span>&lt;ngpus, <span class="hljs-literal">true</span>&gt;(sg, self_sg, rank);<br>  <span class="hljs-comment">// do the actual reduction</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> idx = blockIdx.x * blockDim.x + threadIdx.x; idx &lt; size;<br>       idx += gridDim.x * blockDim.x) &#123;<br>    ((P*)result)[idx] = <span class="hljs-built_in">packed_reduce</span>&lt;P, ngpus, A&gt;((<span class="hljs-type">const</span> P**)&amp;dp.ptrs[<span class="hljs-number">0</span>], idx);<br>  &#125;<br>  <span class="hljs-built_in">multi_gpu_barrier</span>&lt;ngpus, <span class="hljs-literal">false</span>&gt;(sg, self_sg, rank);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>对于 two-shot allreduce，执行步骤会稍显复杂。首先，程序将每个节点的数据分成了 <code>ngpus</code> 份，然后按照节点 <code>rank</code> 号分配好指针位置，再将数据通过 reduce 的方式求和存入到 <code>tmp</code> 数组中。经过第二个 <code>multi_gpu_barrier</code> 后，执行 allgather，第 i part 部分的数据会从第 i 个节点过来，所以 i 号节点需要遍历 <code>ngpus</code> 遍，将其他节点的数据都 gather 起来。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T, <span class="hljs-type">int</span> ngpus&gt;<br>__global__ <span class="hljs-type">void</span> __launch_bounds__(<span class="hljs-number">512</span>, <span class="hljs-number">1</span>)<br>    <span class="hljs-built_in">cross_device_reduce_2stage</span>(RankData* _dp, RankSignals sg, Signal* self_sg,<br>                               T* __restrict__ result, <span class="hljs-type">int</span> rank, <span class="hljs-type">int</span> size) &#123;<br>  <span class="hljs-type">int</span> tid = blockIdx.x * blockDim.x + threadIdx.x;<br>  <span class="hljs-type">int</span> stride = gridDim.x * blockDim.x;<br>  <span class="hljs-keyword">using</span> P = <span class="hljs-keyword">typename</span> <span class="hljs-type">packed_t</span>&lt;T&gt;::P;<br>  <span class="hljs-keyword">using</span> A = <span class="hljs-keyword">typename</span> <span class="hljs-type">packed_t</span>&lt;T&gt;::A;<br>  <span class="hljs-type">int</span> part = size / ngpus;<br>  <span class="hljs-type">int</span> start = rank * part;<br>  <span class="hljs-type">int</span> end = rank == ngpus - <span class="hljs-number">1</span> ? size : start + part;<br>  <span class="hljs-type">int</span> largest_part = part + size % ngpus;<br>  <span class="hljs-type">const</span> P* ptrs[ngpus];<br>  P* tmps[ngpus];<br><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; ngpus; i++) &#123;<br>    <span class="hljs-type">int</span> target = (rank + i) % ngpus;<br>    ptrs[i] = (<span class="hljs-type">const</span> P*)_dp-&gt;ptrs[target];<br>    tmps[i] = <span class="hljs-built_in">get_tmp_buf</span>&lt;P&gt;(sg.signals[target]);<br>  &#125;<br>  <span class="hljs-keyword">auto</span> tmp_out = tmps[<span class="hljs-number">0</span>];<br>  <span class="hljs-built_in">multi_gpu_barrier</span>&lt;ngpus, <span class="hljs-literal">true</span>&gt;(sg, self_sg, rank);<br>  <span class="hljs-comment">// stage 1: reduce scatter</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> idx = start + tid; idx &lt; end; idx += stride) &#123;<br>    tmp_out[idx - start] = <span class="hljs-built_in">packed_reduce</span>&lt;P, ngpus, A&gt;(ptrs, idx);<br>  &#125;<br>  <span class="hljs-built_in">multi_gpu_barrier</span>&lt;ngpus, <span class="hljs-literal">false</span>, <span class="hljs-literal">true</span>&gt;(sg, self_sg, rank);<br><br>  <span class="hljs-comment">// stage 2: allgather</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> idx = tid; idx &lt; largest_part; idx += stride) &#123;<br><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; ngpus; i++) &#123;<br>      <span class="hljs-type">int</span> gather_from_rank = ((rank + i) % ngpus);<br>      <span class="hljs-keyword">if</span> (gather_from_rank == ngpus - <span class="hljs-number">1</span> || idx &lt; part) &#123;<br>        <span class="hljs-type">int</span> dst_idx = gather_from_rank * part + idx;<br>        ((P*)result)[dst_idx] = tmps[i][idx];<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>倘若你理解了前文所说 one-shot allreduce 和 two-shot allreduce 的实现原理，那么上面部分的 CUDA 代码实现其实非常简单，但难在如何写出高性能的代码。本着学习的态度，我仔细研究并总结了以下优化细节：</p>
+<ul>
+<li>
+<p><code>packed_t</code> 中对齐 128 bits 的实现。有利于线程更快 load 数据</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T, <span class="hljs-type">int</span> sz&gt;<br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">__align__</span>(<span class="hljs-built_in">alignof</span>(T) * sz) <span class="hljs-type">array_t</span> &#123;<br>  T data[sz];<br>  <span class="hljs-keyword">using</span> type = T;<br>  <span class="hljs-type">static</span> <span class="hljs-keyword">constexpr</span> <span class="hljs-type">int</span> size = sz;<br>&#125;;<br><br><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">packed_t</span> &#123;<br>  <span class="hljs-comment">// the (P)acked type for load/store</span><br>  <span class="hljs-keyword">using</span> P = <span class="hljs-type">array_t</span>&lt;T, <span class="hljs-number">16</span> / <span class="hljs-built_in">sizeof</span>(T)&gt;;<br>  <span class="hljs-comment">// the (A)ccumulator type for reduction</span><br>  <span class="hljs-keyword">using</span> A = <span class="hljs-type">array_t</span>&lt;<span class="hljs-type">float</span>, <span class="hljs-number">16</span> / <span class="hljs-built_in">sizeof</span>(T)&gt;;<br>&#125;;<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>嵌入 cuda ptx 代码，同样地，为了保证 128 bits 对齐，使用 u32 指令</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">static</span> DINLINE <span class="hljs-type">void</span> <span class="hljs-title">st_flag_volatile</span><span class="hljs-params">(FlagType* flag_addr, FlagType flag)</span> </span>&#123;<br>  <span class="hljs-function"><span class="hljs-keyword">asm</span> <span class="hljs-title">volatile</span><span class="hljs-params">(<span class="hljs-string">&quot;st.volatile.global.u32 [%1], %0;&quot;</span> ::<span class="hljs-string">&quot;r&quot;</span>(flag), <span class="hljs-string">&quot;l&quot;</span>(flag_addr))</span></span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">static</span> DINLINE FlagType <span class="hljs-title">ld_flag_volatile</span><span class="hljs-params">(FlagType* flag_addr)</span> </span>&#123;<br>  FlagType flag;<br>  <span class="hljs-function"><span class="hljs-keyword">asm</span> <span class="hljs-title">volatile</span><span class="hljs-params">(<span class="hljs-string">&quot;ld.volatile.global.u32 %0, [%1];&quot;</span></span></span><br><span class="hljs-params"><span class="hljs-function">              : <span class="hljs-string">&quot;=r&quot;</span>(flag)</span></span><br><span class="hljs-params"><span class="hljs-function">              : <span class="hljs-string">&quot;l&quot;</span>(flag_addr))</span></span>;<br>  <span class="hljs-keyword">return</span> flag;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>使用低精度做计算，后转到高精度 float</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> P, <span class="hljs-type">int</span> ngpus, <span class="hljs-keyword">typename</span> A&gt;<br><span class="hljs-function">DINLINE P <span class="hljs-title">packed_reduce</span><span class="hljs-params">(<span class="hljs-type">const</span> P* ptrs[], <span class="hljs-type">int</span> idx)</span> </span>&#123;<br>  A tmp = <span class="hljs-built_in">upcast</span>(ptrs[<span class="hljs-number">0</span>][idx]);<br><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt; ngpus; i++) &#123;<br>    <span class="hljs-built_in">packed_assign_add</span>(tmp, <span class="hljs-built_in">upcast</span>(ptrs[i][idx]));<br>  &#125;<br>  <span class="hljs-keyword">return</span> <span class="hljs-built_in">downcast</span>&lt;P&gt;(tmp);<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>循环充分展开，比如</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">pragma</span> unroll</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; ngpus; i++) &#123;<br>    <span class="hljs-type">int</span> gather_from_rank = ((rank + i) % ngpus);<br>    <span class="hljs-keyword">if</span> (gather_from_rank == ngpus - <span class="hljs-number">1</span> || idx &lt; part) &#123;<br>      <span class="hljs-type">int</span> dst_idx = gather_from_rank * part + idx;<br>      ((P*)result)[dst_idx] = tmps[i][idx];<br>    &#125;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>VLLM custom allreduce 实现</div>
+      <div>https://dingfen.github.io/2024/08/02/2024-10-30-vllm/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年8月2日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/08/18/2024-8-18-cute/" title="深入 CUTLASS 之 CuTe 详解">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入 CUTLASS 之 CuTe 详解</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/08/02/2024-5-9-vllm/" title="VLLM Paged Attention 实现">
+                        <span class="hidden-mobile">VLLM Paged Attention 实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

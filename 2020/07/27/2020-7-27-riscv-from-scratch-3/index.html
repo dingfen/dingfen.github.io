@@ -1,0 +1,851 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RISC-V from Scratch 3：写 UART 驱动（1 &#x2F; 3）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RISC-V from Scratch 3">
+<meta property="og:url" content="https://dingfen.github.io/2020/07/27/2020-7-27-riscv-from-scratch-3/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="RISC-V from Scratch 3：写 UART 驱动（1 &#x2F; 3）">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://twilco.github.io/img/riscv-from-scratch/pt-3/Parallel_and_Serial_Transmission.gif">
+<meta property="article:published_time" content="2020-07-27T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RISC-V">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://twilco.github.io/img/riscv-from-scratch/pt-3/Parallel_and_Serial_Transmission.gif">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>RISC-V from Scratch 3 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="RISC-V from Scratch 3"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-07-27 12:00" pubdate>
+          2020年7月27日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">RISC-V from Scratch 3</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>RISC-V from scratch 3: 写 UART 驱动</h1>
+<p>今天为大家继续翻译 <em>RISC-V from scratch</em> 系列博客，接着上一部分内容，我们本此的目标是实现 UART 协议的驱动程序，继续完善 RISC-V 的内核。本文译自 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/07/08/riscv-from-scratch-3.html">RISC-V from scratch 3: Writing a UART driver in nasm (1 / 3)</a> 。</p>
+<p>由于我发现该系列的原作者貌似没有把这一系列完成就咕咕了，<strong>因此从本文开始，我将加上一些自己实践的内容，以及一些自己的想法，同大家探讨，算是狗尾续貂，弥补遗憾</strong>。</p>
+<h2 id="简介">简介</h2>
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，我们之前已经探索了很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。具体来说，在上一篇文章中，我们使用 <code>dtc</code> 工具检查了 <code>virt</code>  <code>QEMU</code> 虚拟机中的硬件布局，确定了 <code>RAM</code> 在该计算机中的存放地址，如果你观察仔细的话，会发现 <code>virt</code> 还有很多有趣的地方，其中一个是 <code>UART</code>。</p>
+<p>为了进一步学习 RISC-V 汇编的知识，我们将在接下来的三篇文章中为该 UART 编写驱动程序，深入探索 ABI，函数以及其中的底层堆栈操作等重要概念。</p>
+<p>译注：由于原作者说的三篇文章中的最后一篇还未完成，而译者认为使用 RISC-V 汇编写 UART 驱动程序是吃力不讨好的行为，因此，译者使用 C 语言完成了驱动的编写，以后的内容也会介绍。</p>
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+<p>如果你还未看本系列博客的第一部分，没有安装 <code>riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+<p>之后，再将博主创建的 github 库下载下来，作为我们的工作点。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs shell">git clone git@github.com:twilco/riscv-from-scratch.git<br><span class="hljs-meta prompt_"># </span><span class="language-bash">or `git <span class="hljs-built_in">clone</span> https://github.com/twilco/riscv-from-scratch.git` to <span class="hljs-built_in">clone</span></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">via HTTPS rather than SSH</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">alternatively, <span class="hljs-keyword">if</span> you are a GitHub user, you can fork this repo.</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">https://help.github.com/en/articles/fork-a-repo</span><br>cd riscv-from-scratch/work<br></code></pre></td></tr></table></figure>
+<p>译注：亲测无需下载 github 库也可实现下面的实验。</p>
+<h2 id="什么是-UART">什么是 UART</h2>
+<p>UART 是 “<strong>U</strong>niversal <strong>A</strong>synchronous <strong>R</strong>eceiver-<strong>T</strong>ransmitter” 的缩写，它是用于传输、接收系列数据的硬件设备。串行数据传输是逐位顺序发送数据的过程。 相反，并行数据传输是一次发送多个位的过程。 关于串行并行通信，此图很好地说明了差异：</p>
+<p><img src="https://twilco.github.io/img/riscv-from-scratch/pt-3/Parallel_and_Serial_Transmission.gif" srcset="/img/loading.gif" lazyload alt="">{:.align-center}</p>
+<p>UART 从不指定数据接收或发送的速率（也称为时钟速率或时钟信号），这是它们异步而不是同步的原因。正因为异步的要求，UART 使用开始和停止位来将数据截断为帧，开始位和停止位会告诉 UART 何时开始和停止读取数据。</p>
+<p>你可能听说过 USARTs (<strong>U</strong>niversal <strong>S</strong>ynchronous/<strong>A</strong>synchronous <strong>R</strong>eceiver-<strong>T</strong>ransmitter) ，该设备既可以同步也可以异步工作，当同步工作时，USART 会放弃使用开始位和停止位，而是在单独的线路上发送时钟信号，实现发送与接受的同步。</p>
+<p>事实上，UART和USART随处可见。 它们内置于几乎所有现代微控制器（包括我们的虚拟机）中。 这些设备工作在交通信号灯、冰箱以及绕地球轨道运行了多年的卫星上。</p>
+<h2 id="硬件布局回顾">硬件布局回顾</h2>
+<p>在我们正式开始写驱动前，我们需要一些额外的信息来解决一些问题。我们如何配置虚拟机的 UART ？ 我们可以在哪个内存地址找到接收和发送缓冲区？</p>
+<p>接下来，我们使用 <code>dtc</code> 工具，回顾一下 <code>uart</code> 的 devicetree 节点的一些信息。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Install <span class="hljs-string">&#x27;dtc&#x27;</span> <span class="hljs-keyword">if</span> you don<span class="hljs-string">&#x27;t already have it.</span></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-string">I use &#x27;</span>brew<span class="hljs-string">&#x27; for MacOS - you may need to do something else.</span></span><br>brew install dtc<br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-string">Use qemu to dump info about the &#x27;</span>virt<span class="hljs-string">&#x27; machine in dtb (device tree blob)</span></span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-string">format.</span></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-string">The data in this file represents hardware components of a given</span></span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-string">machine / device / board.</span></span><br>qemu-system-riscv64 -machine virt -machine dumpdtb=riscv64-virt.dtb<br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-string">Convert our .dtb into a human-readable .dts (device tree source) file.</span></span><br>dtc -I dtb -O dts -o riscv64-virt.dts riscv64-virt.dtb<br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-string">Search for &#x27;</span>uart<span class="hljs-string">&#x27; and display 2 lines before and 6 lines after each match.</span></span><br>grep uart riscv64-virt.dts -B 2 -A 6<br>        chosen &#123;<br>                bootargs = [00];<br>                stdout-path = &quot;/uart@10000000&quot;;<br>        &#125;;<br>--<br>        &#125;;<br><br>        uart@10000000 &#123;<br>                interrupts = &lt;0x0a&gt;;<br>                interrupt-parent = &lt;0x02&gt;;<br>                clock-frequency = &lt;0x384000&gt;;<br>                reg = &lt;0x00 0x10000000 0x00 0x100&gt;;<br>                compatible = &quot;ns16550a&quot;;<br>        &#125;;<br></code></pre></td></tr></table></figure>
+<p>在 <code>grep</code> 输出的最上面，<code>chosen</code> 节点出现了，该节点内容表明，输出信息会通过 UART 设备打印出来。根据此篇<a target="_blank" rel="noopener" href="https://elinux.org/Device_Tree_Usage#chosen_Node">文档</a>，<code>chosen</code> 节点不代表任何物理硬件设备，通常用于在固件和运行在裸机上的程序（比如操作系统）之间的数据交换，我们接下来的操作不需要用到该节点，不必理会。</p>
+<p>接下来才是我们想要的东西—— <code>uart</code> 节点。根据前面的知识，我们很容易就发现 UART 的内存地址位于 <code>0x10000000</code> ，还有 <code>interrupts</code> 和 <code>interrupt-parent</code> 属性，表示 UART 是会产生中断的。</p>
+<p>可能有读者不太熟悉计算机系统，因此我这里简单介绍一下中断 <code>interrupt</code>，中断是硬件或软件向处理器发出的信号，指示事件需要立即处理执行。例如，在以下情况下，UART 可能会产生中断：</p>
+<ul>
+<li>新的数据进入了接收缓存</li>
+<li>数据传送机 (transmitter) 完成了缓存中数据的发送</li>
+<li>UART 遇到了发送错误的情况</li>
+</ul>
+<p>这些中断行为充当 hook ，程序员可编写代码适当地响应这些事件，不过接下来的内容我们不会用到中断，因此先忽略到这些内容吧。</p>
+<p>再来看一下 <code>clock-frequency = &lt;0x38400&gt;</code>  ，参考 <a target="_blank" rel="noopener" href="https://buildmedia.readthedocs.org/media/pdf/devicetree-specification/latest/devicetree-specification.pdf">devicetree specification</a> ，<code>clock-frequency</code> 代表了时钟的初始频率，其值为十六进制的 <code>0x38400</code> Hz ，即3.6864 MHz，每秒36.864百万个时钟滴答，这是标准的晶体振荡器频率。</p>
+<p>下一个属性就很熟悉了 <code>reg = &lt;0x00 0x10000000 0x00 0x100&gt;</code> ，决定了 UART 的内存位置，以及它的长度，<a href="https://dingfen.github.io/risc-v/2020/07/26/riscv-from-scratch-2.html">在上一篇文章中</a>，我们知道有两个 32-bit 的值在描述信息。通过给的信息来看，不难得出 UART 的内存位置起始于 <code>0x00 + 0x10000000 = 0x10000000</code> ，且长度为 <code>0x00 + 0x100 = 0x100</code> 字节。</p>
+<p><code>uart</code> 节点的最后一个属性，<code>compatible =“ ns16550a” ;</code>，它告知我们 UART 与哪种编程模型兼容。 操作系统使用此属性来确定其可用于外围设备的设备驱动程序。网上有很多的实现与 NS16550A 兼容的 UART 所需的资料，<a target="_blank" rel="noopener" href="https://www.lammertbies.nl/comm/info/serial-uart">这篇</a>是本文所引用的。</p>
+<h2 id="驱动程序的基本框架">驱动程序的基本框架</h2>
+<p>现在，我们创建新文件，取名 <code>ns16550a.s</code> ，在这里我们开始构建驱动程序的基本框架，首先，我们仅仅先实现一个读写字符的函数，不管那些复杂的中断。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.global uart_put_char<br>.global uart_get_char<br><br>uart_get_char:<br>    .cfi_startproc<br>    .cfi_endproc<br><br>uart_put_char:<br>    .cfi_startproc<br>    .cfi_endproc<br><br>.end<br></code></pre></td></tr></table></figure>
+<p>我们从 <code>.global</code> 汇编指令开始，将 <code>uart_put_char</code> 和 <code>uart_get_char</code> 声明为其他文件可访问的符号。以 <code>.</code> 开头的指令都是伪指令，它们只向汇编器提供信息，不是可执行代码。所有基本 GNU 汇编器指令的详细说明都可以在<a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gas-2.9.1/html_chapter/as_7.html">这里</a>找到。</p>
+<p>接下来，将会有每个符号的定义，当前仅包含 <code>.cfi</code> 汇编程序指令。这些 <code>.cfi</code> 指令将框架的结构及其展开方法通知工具（例如汇编器或异常展开器）。<code>.cfi_startproc</code> 和 <code>.cfi_endproc</code> 分别表示函数的开始和结束。</p>
+<p>尽管我们还没有完全开始写驱动（你肯定能察觉到我们只是搭建了个框架），我们先把他编译一下，看看这个框架是否可用。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">riscv64-unknown-elf-gcc -g -ffreestanding -O0 -Wl,--gc-sections \<br>    -nostartfiles -nostdlib -nodefaultlibs -Wl,-T,riscv64-virt.ld \<br>    crt0.s ns16550a.s<br></code></pre></td></tr></table></figure>
+<p>如果你很想知道这些编译选项是什么意思，建议参考<a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/04/27/riscv-from-scratch-2.html#debugging-but-for-real-this-time">这里</a>。</p>
+<p>然后，我们得到了一个错误：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">/Users/twilco/usys/riscv/riscv64-unknown-elf-gcc-8.2.0-2019.02.0-x86_64-apple-darwin/bin/../lib/gcc/riscv64-unknown-elf/8.2.0/../../../../riscv64-unknown-elf/bin/ld: /var/folders/rg/hbr8vy7d13z9k7pdn0l_n9z51y1g13/T//ccjYQiJc.o: in function `.L0 &#x27;:<br>/Users/twilco/projects/riscv-from-scratch/work/crt0.s:12: undefined reference to `main&#x27;<br>collect2: error: ld returned 1 exit status<br></code></pre></td></tr></table></figure>
+<p>不过，放轻松，只是缺少 <code>main</code> 函数而已。这是因为在 <code>crt0.s</code> 文件中，我们曾经用到过 <code>main</code> 函数的地址：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.section .init, &quot;ax&quot;<br>.global _start<br>_start:<br>    .cfi_startproc<br>    .cfi_undefined ra<br>    .option push<br>    .option norelax<br>    la gp, __global_pointer$<br>    .option pop<br>    la sp, __stack_top<br>    add s0, sp, zero<br>    jal zero, main # &lt;~~~~~~~~~~<br>    .cfi_endproc<br>    .end<br></code></pre></td></tr></table></figure>
+<p>那么，为了简单起见，先创建个文件 <code>main.c</code> ，然后把 <code>main</code> 函数的定义写出来：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    uart_put_char();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后，将这几个文件一起编译，就不会报错了：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">riscv64-unknown-elf-gcc -g -ffreestanding -O0 -Wl,--gc-sections \<br>    -nostartfiles -nostdlib -nodefaultlibs -Wl,-T,riscv64-virt.ld \<br>    crt0.s ns16550a.s main.c<br></code></pre></td></tr></table></figure>
+<p>除此之外，我们可以使用 <code>nm</code> 工具，查看一下 <code>a.out</code> 文件里面符号定义的情况：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs shell">riscv64-unknown-elf-nm a.out<br><br>00000000800010a0 R __BSS_END__<br>000000008000109c R __DATA_BEGIN__<br>000000008000109c R __SDATA_BEGIN__<br>000000008000109c R __bss_start<br>000000008000189c A __global_pointer$<br>0000000088000000 T __stack_top<br>000000008000109c R _edata<br>00000000800010a0 R _end<br>0000000080000000 T _start<br>0000000080000018 T main<br>0000000080000018 T uart_get_char<br>0000000080000018 T uart_put_char<br></code></pre></td></tr></table></figure>
+<h2 id="设置基础地址">设置基础地址</h2>
+<p>从这篇<a target="_blank" rel="noopener" href="https://www.lammertbies.nl/comm/info/serial-uart.html">资料</a>得知，NS16550A UART 有十二个寄存器，访问每个寄存器只需要在基址的基础上加上若干字节的偏移量即可。为了能方便地访问这些寄存器，我们首先需要定义一个代表该基址的符号。 正如我们从 <code>riscv64-virt.dts</code> 中发现的那样，基址位于 <code>0x00 + 0x10000000 = 0x10000000</code>，这就是 <code>reg</code> 属性中的内容：</p>
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs gherkin">uart<span class="hljs-meta">@10000000</span> &#123;<br>    interrupts = <span class="hljs-variable">&lt;0x0a&gt;</span>;<br>    interrupt-parent = <span class="hljs-variable">&lt;0x02&gt;</span>;<br>    clock-frequency = <span class="hljs-variable">&lt;0x384000&gt;</span>;<br>    reg = <span class="hljs-variable">&lt;0x00 0x10000000 0x00 0x100&gt;</span>;<br>    compatible = <span class="hljs-string">&quot;ns16550a&quot;</span>;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>在 <code>riscv64-virt.ld</code> 文件中，加入这个符号：</p>
+<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs lasso"><span class="hljs-params">...</span>more above<span class="hljs-params">...</span><br>SECTIONS<br>&#123;<br>  <span class="hljs-comment">/* Read-only sections, merged into text segment: */</span><br>  <span class="hljs-keyword">PROVIDE</span> (__executable_start = SEGMENT_START(<span class="hljs-string">&quot;text-segment&quot;</span>, <span class="hljs-number">0x10000</span>));<br>  . = SEGMENT_START(<span class="hljs-string">&quot;text-segment&quot;</span>, <span class="hljs-number">0x10000</span>) + SIZEOF_HEADERS;<br>  <span class="hljs-keyword">PROVIDE</span>(__stack_top = ORIGIN(RAM) + LENGTH(RAM));<br>  <span class="hljs-comment">/* &gt;&gt;&gt;&gt;&gt;&gt; Our newest addition. &lt;&lt;&lt;&lt;&lt;&lt; */</span><br>  <span class="hljs-keyword">PROVIDE</span>(__uart_base_addr = <span class="hljs-number">0x10000000</span>);<br>  <span class="hljs-comment">/* &gt;&gt;&gt;&gt;&gt;&gt; End of our addition. &lt;&lt;&lt;&lt;&lt;&lt; */</span><br>  .interp         : &#123; *(.interp) &#125;<br><span class="hljs-params">...</span>more below<span class="hljs-params">...</span><br></code></pre></td></tr></table></figure>
+<p>当 <code>__uart_base_addr</code> 定义完成后，我们就可以很轻松地访问 NS16550A 的寄存器了！</p>
+<h2 id="接下来">接下来</h2>
+<p>今天，我们了解了 UART 和 USART 、NS16550A 规范，中断以及一些其他 devicetree 属性。 我们还为UART 组装驱动程序创建了基础框架，并已将 <code>__uart_base_addr</code> 编码为链接器文件中的符号，以方便对 UART 寄存器访问。</p>
+<p>在下一篇文章中，我们将讨论和实现两个驱动程序函数 <code>uart_get_char</code> 和 <code>uart_put_char</code> 。 函数是在汇编世界中使函数调用成为可能的重要部分。 我们将逐步介绍函数的序幕，并提供详细说明堆栈更改和每条指令寄存器的图表。</p>
+<hr>
+<h2 id="我的尝试">我的尝试</h2>
+<p>OK！原博文翻译到此结束！现在介绍一下我的实验方案：</p>
+<p>事实上，在跟着写完 <code>crt0.s</code> 文件，并将他们编译、链接，运行在虚拟机上时，我的思想就与原博主最初的想法不太一样了，原博主只是想要探究一下 RISC-V 的底层技术，但我想要做的却是一个 RISC-V 内核。</p>
+<p>原博主的实验步骤中，创建 <code>crt0.s</code> 以及它的前因后果解释非常详细，让我受益良多。但同时我也马上明白，这些步骤只要再稍加调整，就完全可以当作操作系统的启动工作了！那么接下来，我将会继续我自己的实验，敬请期待。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RISC-V/" class="category-chain-item">RISC-V</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RISC-V/" class="print-no-link">#RISC-V</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>RISC-V from Scratch 3</div>
+      <div>https://dingfen.github.io/2020/07/27/2020-7-27-riscv-from-scratch-3/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年7月27日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/08/01/2020-8-1-riscv-from-scratch-4/" title="RISC-V from Scratch 4">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">RISC-V from Scratch 4</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/07/26/2020-7-26-riscv-from-scratch-2/" title="RISC-V from Scratch 2">
+                        <span class="hidden-mobile">RISC-V from Scratch 2</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

@@ -1,0 +1,916 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在消费级显卡上运行大模型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型推理优化技术之显存优化">
+<meta property="og:url" content="https://dingfen.github.io/2023/11/30/2023-11-30-LLM-KVCache/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="在消费级显卡上运行大模型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/kvcache.png">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/The-Transformers-architecture-Multi-Head-Attention-consists-of-several-attention-layers.ppm">
+<meta property="og:image" content="https://pic3.zhimg.com/v2-69c2cc88b213a65d61cee7a9f31d844e_r.jpg">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/grouped-query%20attention.png">
+<meta property="og:image" content="https://media.geeksforgeeks.org/wp-content/uploads/20231108170402/Longformer-attention-Mechanism-file.png">
+<meta property="og:image" content="https://www.kdnuggets.com/wp-content/uploads/wijaya_introduction_streamingllm_llms_infinitelength_inputs_1.png">
+<meta property="og:image" content="https://images.ctfassets.net/xjan103pcp94/1LJioEsEdQQpDCxYNWirU6/82b9fbfc5b78b10c1d4508b60e72fdcf/cb_02_diagram-static-batching.png">
+<meta property="og:image" content="https://blog.vllm.ai/figures/annimation0.gif">
+<meta property="og:image" content="https://blog.vllm.ai/figures/annimation2.gif">
+<meta property="og:image" content="https://blog.vllm.ai/figures/annimation3.gif">
+<meta property="article:published_time" content="2023-11-30T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Transformer">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/kvcache.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>大模型推理优化技术之显存优化 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="大模型推理优化技术之显存优化"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-11-30 12:00" pubdate>
+          2023年11月30日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">大模型推理优化技术之显存优化</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>大模型推理优化技术之 KV Cache</h1>
+<h2 id="前言">前言</h2>
+<p>推理大模型时充分榨干 GPU 的性能是每个程序员所追求的。不过，要做到这一点，我们首先需要知道大模型推理的具体步骤，并分析它的性能瓶颈是什么，是受到算力限制还是内存限制，从而方便我们下一步的优化。而目前业内认为 LLM 模型的推理性能主要受限于内存。</p>
+<p>KV Cache 是大模型推理性能优化的最常用技术。该技术可以在不影响计算精度的前提下，以空间换时间，提高推理性能。目前业界主流 LLM 推理框架均默认支持并开启了该功能。在咱们之前介绍 huggingface llama 实现的博客中有提到过，当 <code>use_cache = True</code> 时，KV cache 功能就默认打开。那么什么是 KV cache 呢？它又是如何加速大模型推理性能的呢？</p>
+<h2 id="原理">原理</h2>
+<p>要尝试理解 KV cache，就不得不提及当前大模型的一般推理过程。事实上，目前大多数热门的 LLM （例如 GPT-3）的推理部分本质上是一个译码器（decoder）。它们针对输入的序列文本，一个词一个词地输出文本。具体地说，这些 LLM 接受一系列 token 作为输入，并以自回归方式输出后续的 token，直到它们满足条件要求（例如，已达到生成的 token 数量或遇到停止词），或直到它生成特殊的<end>标记标志着生成过程的结束。此过程涉及两个阶段：预填充阶段（prefill phase）和译码阶段（decode phase）。</p>
+<p>所谓 token 实际上描述模型中未被转化成人类语言的序列文本，参见下面的解释：</p>
+<blockquote>
+<p>tokens are the atomic parts of language that a model processes. One token is approximately four English characters. All inputs in natural language are converted to tokens before inputting into the model.</p>
+</blockquote>
+<h3 id="预填充阶段">预填充阶段</h3>
+<p>在预填充阶段，LLM 处理输入 token 以计算 transformer 架构中 decoder 的 Key 和 Value 矩阵，此时 decoder 参与计算的 Query 矩阵为空（随机数）。根据 transformer 的计算过程（读者可参考网上海量介绍 transform 的文章），这些矩阵用于输出第一个 token。然后，每个新 token 都依赖于之前的所有的 token，但由于输入是完全已知的，因此从高层次看，这是一个可高度并行的矩阵运算，能充分发挥 GPU 的利用率。</p>
+<h3 id="译码阶段">译码阶段</h3>
+<p>在译码阶段，LLM 一次自回归生成一个输出 token，直到满足条件为止。每个连续输出 token 都需要知道先前迭代的所有输出 key 和 value。此时 Query 的序列长度是 1，而 key 和 value 的长度则是之前产生的所有输出长度，这就像是矩阵向量运算，与预填充阶段相比，它未充分利用 GPU 计算能力。GPU 的处理速度受限于数据（权重、键、值、激活）从内存传输到计算单元的速度。因此，这是个内存限制的运算阶段。</p>
+<p>注意，不同的 LLM 可能会使用不同的 tokenizer ，而不同的 tokenizer 产生的 token 数量和其代表的含义也有区别。若要比较它们之间的输出 token 也并不简单。而我们容易犯的一个谬误是：<u>在比较推理吞吐量时，直接观察单位时间内产生的 token 数量。然而，即使两个 LLM 的每秒输出 token 相似，但如果它们使用不同的 tokenizer，那么它们真实的推理性能可能不相同</u>。这是因为两者的 token 可能表示不同数量的字符。</p>
+<p><a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html#forward-%E5%AE%9E%E7%8E%B0">再回顾一下 transformer 中计算注意力权重的过程</a>：</p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>A</mi><mi>t</mi><mi>t</mi><mi>n</mi><mo>=</mo><mi>s</mi><mi>o</mi><mi>f</mi><mi>t</mi><mi>m</mi><mi>a</mi><mi>x</mi><mo stretchy="false">(</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><msqrt><mi>d</mi></msqrt></mfrac><mo stretchy="false">)</mo><mi>V</mi></mrow><annotation encoding="application/x-tex"> Attn = softmax(\frac{QK^T}{\sqrt{d}})V
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span><span class="mord mathnormal">tt</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4483em;vertical-align:-0.93em;"></span><span class="mord mathnormal">so</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">t</span><span class="mord mathnormal">ma</span><span class="mord mathnormal">x</span><span class="mopen">(</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5183em;"><span style="top:-2.1778em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9322em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">d</span></span></span><span style="top:-2.8922em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1078em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></span></p>
+<p>decoder 的输入在进入译码层后，就会分别经过 query key value 三个线性层，变为 Q K V 矩阵，然后进入 Masked multi head attention 做下图的运算。图中的 mask 是为了防止当前生成的 token 根据未来 token 的信息产生。</p>
+<center>
+<img src="/img/LLM/kvcache.png" srcset="/img/loading.gif" lazyload>
+</center>
+<p>注意到，Transformer 模型具有自回归推理的特点，即每次推理都会将上次推理输出的结果作为输入的一部分，而每次推理会输出下一个 token，反复执行多次后得到最终的输出。因此，推理时，Transformer 的前后两轮的输出只相差一个 token，存在重复计算！</p>
+<p>比如，图上例子中，若不使用 KV cache 技术，在推理生成“学”和“生”字时，前三行的 QK 矩阵和注意力矩阵的值都是<em>一样的</em>。以第一行为例，注意力矩阵的向量值取决于 Q 矩阵的第一行（K V 咱不关心）。每次计算得到的注意力矩阵向量，只有最后一行是<em>全新的</em>，用于产生新的 output。</p>
+<p>因此，KV Cache 的办法就是将之前已经计算过的张量保存下来，下次推理时直接计算一行 Q 矩阵就行了，前面的数据可以直接使用之前保存的张量，避免重复计算。</p>
+<h2 id="实现">实现</h2>
+<p>KV cache 技术已经应用在 huggingface transformer 库中：<a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py#L318C1-L331C97">代码</a>如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python">query = self._split_heads(query, self.num_heads, self.head_dim)<br>key = self._split_heads(key, self.num_heads, self.head_dim)<br>value = self._split_heads(value, self.num_heads, self.head_dim)<br><br><span class="hljs-keyword">if</span> layer_past <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>  past_key, past_value = layer_past<br>  key = torch.cat((past_key, key), dim=-<span class="hljs-number">2</span>)<br>  value = torch.cat((past_value, value), dim=-<span class="hljs-number">2</span>)<br><br><span class="hljs-keyword">if</span> use_cache <span class="hljs-keyword">is</span> <span class="hljs-literal">True</span>:<br>  present = (key, value)<br><span class="hljs-keyword">else</span>:<br>  present = <span class="hljs-literal">None</span><br><br><span class="hljs-keyword">if</span> self.reorder_and_upcast_attn:<br>  attn_output, attn_weights = self._upcast_and_reordered_attn(query, key, value, attention_mask, head_mask)<br><span class="hljs-keyword">else</span>:<br>  attn_output, attn_weights = self._attn(query, key, value, attention_mask, head_mask)<br></code></pre></td></tr></table></figure>
+<p>准备好 query key 和 value 矩阵后，当 <code>layer_past</code> 非空（事实上第一个词生成后就是非空的），那么直接将 <code>past_key</code> 和 <code>past_value</code> 取出，然后concat连接起来组成这次推理的 <code>key</code> 和 <code>value</code> 值。</p>
+<p>KV cache 可在内存空间充足的场景下使用，能有效地提升推理性能。但需要注意的是，如果生成的序列非常长（大于 2048 ）那么就很有可能出现 out of Memory。都说 LLM 训练和推理时内存开销巨大，那么到底有多大呢？程序员该如何快速评估一个 LLM 推理时大致需要消耗多少内存？</p>
+<h3 id="内存开销粗算">内存开销粗算</h3>
+<p>粗略地看，LLM 在 GPU 上推理时，有两样东西占用了最多的内存空间：</p>
+<ul>
+<li>模型权重：模型参数占用内存。以 Llama-2-7b 为例（70 亿参数），通常使用 FP16 加载时，那么显存大小约为 70 亿 × 2 字节（FP16）= 14 GB。</li>
+<li>KV cache：被缓存起来的自注意力张量。现在我们粗略计算一下 KV cache 占用的内存大小。首先，每一个 transformer 子层都含有一层注意力层，每层注意力都需要一个 KV cache，KV cache 中一个向量的维度是 <code>hidden_size</code>。再考虑 <code>batch_size</code> 和  <code>seq_len</code>，每个输出的 token 都需要这样的 KV cache，而 GPU 通常会同时并行处理 <code>batch_size</code> 个这样的输入/输出，于是有：</li>
+</ul>
+<p><strong>KV cache size per token = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type)</strong></p>
+<p>第一个系数为 2 表示了 Key 和 Value 矩阵。以<a href="https://dingfen.github.io/ai/2023/10/30/huggingface1.html">之前博客</a>中的 llama-2-7b 的配置文件为例：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;architecture&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;LlamaForCausalLM&quot;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;hidden_act&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;silu&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;hidden_size&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">4096</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;initializer_range&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.02</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;intermediate_size&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">11008</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;max_position_embeddings&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">4096</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;model_type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;llama&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;num_attention_heads&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;num_hidden_layers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;num_key_value_heads&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;pretraining_tp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;rms_norm_eps&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1e-05</span><span class="hljs-punctuation">,</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>当执行的输入 batch 大小是 2，输入序列的长度为 512 时，即输入 token 矩阵维度是 <code>(bsz, seq_len, hidden_size) = (2, 512, 4096)</code> ，权重数据类型为 FP16 时：</p>
+<p>KV Cache 大小 = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type) = 2 * 2 * 512 * 32 * 4096 * 2 = 512 MB</p>
+<p>额，遗憾的是，512 MB 大小已经不能称之为 Cache 了，这样大小的缓存显然无法放进当前任何一款显卡的 L2/3 Cache 中。现在英伟达最好的卡 H100 的 SRAM 缓存大概是 50MB，而 A100 则是 40MB，差的可不是一点半点。所以，我们对 KV Cache 的优化还未止步。</p>
+<h2 id="KV-Cache-的推理优化">KV Cache 的推理优化</h2>
+<p>回到之前我们给出的公式：</p>
+<p>KV Cache Size = 2 * batch_size * seq_len * num_layers * hidden_size * sizeof(data_type)</p>
+<p>上面的公式中，<code>batch_size</code> 取决于用户输入，而 <code>num_layers</code> 和 <code>hidden_size</code> 是架构的基本（擅自改动会影响模型表现），那么针对 KV cache 的进一步优化就只能从以下四方面入手：</p>
+<ul>
+<li>kv_heads：MQA/GQA 技术，减少 KV 的头数，进而减少显存占用</li>
+<li>seq_len： 通过减少序列长度, 以减少 KV Cache 大小，如使用循环队列管理窗口 KV</li>
+<li>KV-Cache：从操作系统的内存管理角度，减少碎片，如 Paged Attention</li>
+<li>data type: 从量化角度减少 KV cache 的宽度，如使用 LLM-QAT 进行量化</li>
+</ul>
+<p>接下来，我们简要地介绍一下这四项优化技术。</p>
+<h3 id="GQA-MQA-优化技术">GQA/MQA 优化技术</h3>
+<p>在 transformer 中，最原始的是 MHA(Multi-Head Attention)，Query Key Value 三部分有相同数量的头，并一一对应。每次做注意力计算，每个头的这三个矩阵按上文所述的公式计算完成后，将所有头的结果拼接起来就行（见下图右上部分）。</p>
+<center>
+<img src="/img/LLM/The-Transformers-architecture-Multi-Head-Attention-consists-of-several-attention-layers.ppm" srcset="/img/loading.gif" lazyload />
+</center>
+<p>MQA(Multi Query Attention) 对此提出的改进是：保持 Query 的头数，但 Key 和 Value 只能有一个头，相当于所有的 Query 矩阵共享一组 Key 和 Value 矩阵。直观来看，这的确大幅减少了 KV Cache 大小，而实验结果表明，这样改进能提高 30%-40% 的吞吐，却只会稍微影响模型效果，具体可参看 <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2307.09288">Llama2 论文</a>。</p>
+<center>
+<img src="https://pic3.zhimg.com/v2-69c2cc88b213a65d61cee7a9f31d844e_r.jpg" srcset="/img/loading.gif" lazyload>
+Table 18: Attention architecture ablations. We report 0-shot results for all tasks except MMLU(5-shot) and GSM8K(8-shot). For GSM8K and Human-Eval we report maj@1 and pass@1 results. For NQ and TriviaQA we report EM. For all other tasks we report accuracy.
+</center>
+<p>由于 MQA 改变了注意力机制的结构，因此模型通常需要从训练开始就支持 MQA 。也可以通过对已经训练好的模型进行微调来添加多查询注意力支持，仅需要约 5% 的原始训练数据量就可以达到不错的效果。包括 Falcon、SantaCoder、StarCoder 等在内很多模型都采用了 MQA 机制。</p>
+<p>GQA(Grouped Query Attention)是一种介于 MHA 和 MQA 的折中方案。它将 Query Heads 分组，并在每组中共享一个 Key 和 一个 Value，使得 GQA 既能缩小 KV Cache ，加快推理速度，又不会损失过多的模型效果。Llama2 采用了 GQA 机制。</p>
+<center>
+<img src="/img/LLM/grouped-query attention.png" srcset="/img/loading.gif" lazyload>
+</center>
+<h3 id="序列长度优化">序列长度优化</h3>
+<p>仔细观察 LLM 推理时计算注意力的方式：token 的输出是串行的，上一个 token 的 Key 和 Value 可以被下一个 token 复用。若推理的文本很长（远长于训练时最长序列），那么我们可以牺牲模型的效果，舍弃掉过于久远的 token 以减少 KV Cache 的大小。另外，这也可以降低计算量，自注意力的时间复杂度是 token 序列的 $ \mathcal{O}(N^2)$（因为是 $ QK^T $，其中 $ Q $ 和 $ K $ 的矩阵维度都是 seq_len）。至于舍弃的方式，又有几种不同的实现手段：</p>
+<ol>
+<li>
+<p>固定窗口长度及其变种。如 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2004.05150v2.pdf">Longformer</a>，该方法实现简单：在注意力机制下，仅计算每个单词的前 w 个单词的注意力，其余单词对应的 Key 矩阵为零。每个单词仅计算前 w 个单词，类似于一个长 w 的窗口在序列上滑动（左二图）。于是空间复杂度被限制到了窗口最长大小上。此外，它还有很多变种，Dilated 滑动窗口间隔地计算单词注意力；Global 滑动窗口会间隔地计算单词的全局注意力，以尽可能消除对实验精度的影响。虽然实验表明该方法不论在时间和空间上相对原先的自注意力都有明显提升，但该方法对精度的影响较大。更多精彩内容可参加它的<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2004.05150v2.pdf">论文</a>和<a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/longformer/">相关博客</a>。<br>
+<img src="https://media.geeksforgeeks.org/wp-content/uploads/20231108170402/Longformer-attention-Mechanism-file.png" srcset="/img/loading.gif" lazyload alt=""></p>
+</li>
+<li>
+<p>带有 KV 重计算的滑动窗口。该方法需要每次计算都重新计算从当前位置倒数 L 长度 token 序列的 KV 张量，但重计算的复杂度是 $ \mathcal{O}(NL^2) $ 。由于重计算的存在，其精度可以保证，也能节省空间，但是性能提升就不明显了。</p>
+</li>
+<li>
+<p>箭型注意力窗口。该方法在 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2308.16137.pdf">LM-Infinit</a> 和 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2309.17453.pdf">StreamingLLM</a> 中均有提及。起因是大家发现了有趣的<em>注意力下沉</em>现象，即保持初始 token 的 KV 将在很大程度上恢复固定窗口后的注意力效果。于是，在窗口注意力的基础上，初始 token 的 KV 将被保留，从而在图上形成了一个“箭型”的注意力窗口。更多精彩内容可参考相关论文和<a target="_blank" rel="noopener" href="https://medium.com/@zamalbabar/streaming-llm-when-your-language-model-becomes-a-memory-magician-afc603fd01cd">博客</a>。<br>
+<img src="https://www.kdnuggets.com/wp-content/uploads/wijaya_introduction_streamingllm_llms_infinitelength_inputs_1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+</li>
+</ol>
+<h3 id="PageAttention-优化">PageAttention 优化</h3>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm">vLLM</a> 提出的 <a target="_blank" rel="noopener" href="https://blog.vllm.ai/2023/06/20/vllm.html">Paged Attention</a> 技术从显存管理的角度出发，通过允许非连续的内存空间存储 KV cache 的方式高效地计算注意力。其灵感来自于操作系统中虚拟内存和分页的思想。</p>
+<p>通常，我们会采取批处理的方式完成深度学习模型的推理：同时处理 <code>batch_size</code> 个输入序列，从而更高效地利用了内存带宽，提高 GPU 利用率。然而，该传统的批处理方法不太适用于 LLM，因为它非常不灵活。前文提到，LLM 推理是迭代地输出一个个 token ，且每次输出产生多少 token 完全依赖于用户输入。于是批处理时会出现这样的情况：某些输入已经提前完成“回答”，产生了所有输出 token，但某些还在继续输出 token，见下右图。由于传统批处理方法非常不灵活，在最后一个序列未完成前，无法释放这些批处理的占用内存资源。于是，图中所示 GPU 在批次的处理中有很多内存空间和时间未被充分利用（序列1、3和4的序列末标记后的白色方块）。</p>
+<center>
+<img src="https://images.ctfassets.net/xjan103pcp94/1LJioEsEdQQpDCxYNWirU6/82b9fbfc5b78b10c1d4508b60e72fdcf/cb_02_diagram-static-batching.png" srcset="/img/loading.gif" lazyload>
+</center>
+<blockquote>
+<p>题外话，<a target="_blank" rel="noopener" href="https://www.usenix.org/system/files/osdi22-yu.pdf">ORCA 这篇论文</a><br>
+也注意到了这一点，并认为是不灵活的批处理调度机制导致了这一问题：只要通过细粒度的调度机制将这些“白块”补齐了就行。于是，他们提出了迭代层级的批处理调度方式(iteration-level scheduling)和选择性批处理(selective batching)，让基于 FasterTransformer 的 GPT-3 175B 延迟和吞吐量都提高了约 37 倍。</p>
+</blockquote>
+<p>Paged Attention 将 KV cache 分割到不同的固定大小的“页”上。<a target="_blank" rel="noopener" href="https://www.anyscale.com/blog/continuous-batching-llm-inference">然而，这也意味着，关于 KV cache 的分配是 just-in-time 的，而不是提前预分配好的</a>：当开始新一轮 token 生成时，框架不能分配固定大小的连续 cache 给 KV 张量。相反，在每次迭代开始前，调度器都可以决定是否需要为这一轮迭代动态地分配内存空间。</p>
+<p>一旦我们将 KV cache 的分配类比到操作系统中对内存的分配，我们就可以将 KV cache 内的每个固定长度的块当作虚拟内存中的页，token 可以看作字节，每个生成序列看作进程。通过一个映射表可将连续的逻辑块映射到非连续的物理块，而物理块可以根据新生成的 token 按需分配：</p>
+<p><img src="https://blog.vllm.ai/figures/annimation0.gif" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>上图的 gif 清晰地展示了生成 token 的过程，逻辑 KV cache 是连续的，当它被填满后会重新分配一个物理 KV 块来存放新的 token。在分块之后，只有最后一个块可能会浪费内存。这么做的好处很明显：系统可以在一个batch中同时输入更多的序列，提升GPU的利用率，显著地提升吞吐量。</p>
+<p>paged Attention 的另一个好处是高效内存共享。例如，在并行采样的时候，一个输入序列(prompt)需要生成多个输出序列。这种情况下，对于这个输入序列的计算和内存可以在输出序列之间共享。</p>
+<p><img src="https://blog.vllm.ai/figures/annimation2.gif" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>通过块表可以自然地实现内存共享。类似进程之间共享物理页，在 Paged Attention 中的不同序列通过映射便可实现共享。为了确保安全共享，Paged Attention 跟踪物理块的引用计数，并实现了 Copy-on-Write 机制。 内存共享减少了 55% 内存使用量，大大降低了采样算法的内存开销，同时提升了 2.2 倍的吞吐量。</p>
+<p><img src="https://blog.vllm.ai/figures/annimation3.gif" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>更多关于 Paged Attention 的相关细节和用法，可参考他们的<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2309.06180.pdf">论文</a>与<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm">开源工程</a></p>
+<h3 id="量化稀疏">量化稀疏</h3>
+<p>该类方法从数据类型入手，充分利用每一个 bit。通过量化与稀疏压缩 KV cache 的显存消耗。</p>
+<p>当前主流推理框架都在逐步支持 KV cache 量化，一个典型的案例是 <a href="https://link.zhihu.com/?target=https%3A//github.com/InternLM/lmdeploy">lmdeploy</a></p>
+<h2 id="小结">小结</h2>
+<p>本篇博客从大模型推理的过程出发，重点讲了 KV Cache 的原理与实现，粗略罗列了针对 KV Cache 的若干优化方法。大模型还在快速发展迭代，本博客也将实时更新。</p>
+<p>为完成本篇博客，本人学习参考了许多知乎文章、外文博客和相关论文（相关链接都在文中以超链接的方式给出）。我在此一并感谢这些文章的作者们，是他们的辛勤劳作、共享传播和源码开放推动了 AI 领域的蓬勃发展。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Transformer/" class="print-no-link">#Transformer</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>大模型推理优化技术之显存优化</div>
+      <div>https://dingfen.github.io/2023/11/30/2023-11-30-LLM-KVCache/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年11月30日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/01/27/2024-1-27-huggingface3/" title="THUDM/chatglm代码细读">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">THUDM/chatglm代码细读</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/11/30/2023-11-30-huggingface2/" title="huggingface下llama代码细读（下）">
+                        <span class="hidden-mobile">huggingface下llama代码细读（下）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

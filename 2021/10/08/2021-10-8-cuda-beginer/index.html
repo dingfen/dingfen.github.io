@@ -1,0 +1,920 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="代码驱动学习法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CUDA 快速入门">
+<meta property="og:url" content="https://dingfen.github.io/2021/10/08/2021-10-8-cuda-beginer/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="代码驱动学习法">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/gpudevotes.png">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/grid-of-thread-blocks.png">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/index.jpg">
+<meta property="article:published_time" content="2021-10-08T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="CUDA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/PP/gpudevotes.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>CUDA 快速入门 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="CUDA 快速入门"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-10-08 12:00" pubdate>
+          2021年10月8日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">CUDA 快速入门</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>CUDA 快速入门</h1>
+<p>欢迎来到 CUDA 的世界。本文集中讲述了最基本的 CUDA 知识，供自己以及各位速查。</p>
+<h2 id="CUDA-与-GPU-编程">CUDA 与 GPU 编程</h2>
+<p>近年来，AI、比特币的发展对计算能力提出了无尽的需求。而在这之前，人们就已经发现，用于渲染、加载图形的 GPU 有着不俗的计算能力，为了能更好地利用 GPU 的计算能力，使得 GPU 不仅仅局限于做图形渲染，NVIDIA 率先推出了可编程的 GPU 芯片以及相应的软件框架：CUDA。让显卡可以用于图像计算以外的目的。</p>
+<p>在使用 CUDA 进行编程时，往往需要区分哪些数据在 GPU 上计算，哪些数据在 CPU 上计算，还需要考虑数据之间的迁移、传输和存储等。一般地，用<strong>主机</strong>一词指代 CPU 及其系统内存，而用<strong>设备</strong>一词指代 GPU 及其片上、板上内存。很多情况下，CUDA 程序里既包含运行在主机上的程序，又包含运行在设备上的程序，且主机与设备之间存在数据传输，在编程时要格外注意这点。</p>
+<center>
+<img src="/img/PP/gpudevotes.png" srcset="/img/loading.gif" lazyload />
+<br>
+<div style="color:orange; border-bottom: 1px solid #d9d9d9;
+    display: inline-block;
+    color: #999;
+    padding: 2px;">GPU 的计算资源比 CPU 多得多</div>
+</center>
+<p>在开始前，先来简单了解 NVIDIA GPU 的并行计算的工作流程，从代码上看，分为两步：</p>
+<ol>
+<li>CPU 调用一种称为<strong>核函数</strong>的函数，该函数由 GPU 执行。</li>
+<li>GPU 根据给定的并行量，并行执行该函数。</li>
+</ol>
+<p>CUDA 中，执行核函数的一个基本单位被称为线程（thread）。若干个 thread 组合成线程块（block），而一次调用中所有的线程块组成了一个网格（grid）。</p>
+<center>
+<img src="/img/PP/grid-of-thread-blocks.png" srcset="/img/loading.gif" lazyload/>
+<br>
+<div style="color:orange; border-bottom: 1px solid #d9d9d9;
+    display: inline-block;
+    color: #999;
+    padding: 2px;">CUDA 线程层次</div>
+</center>
+<p>通常，CPU 调用核函数的同时，会指定执行该核函数的线程块数量和每个线程块中线程的数量。这也就意味着，核函数中的内容会被并行地执行线程块的数量 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>×</mo></mrow><annotation encoding="application/x-tex">\times</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord">×</span></span></span></span> 每个线程块内的线程数量次！</p>
+<h2 id="核函数">核函数</h2>
+<ul>
+<li><code>__global__</code> 是 CUDA C/C++ 的函数修饰符，表示该函数为核函数</li>
+<li>核函数会在 GPU 上执行，但由主机代码调用</li>
+<li>返回类型必须为 <code>void</code></li>
+<li>在调用kernel函数时，函数名后的<code>&lt;&lt;&lt;b, t&gt;&gt;&gt;</code>：b代表线程块的数目，t代表每个线程块的线程数目。</li>
+</ul>
+<p>CUDA 的核函数指的是需要运行在 GPU 上的函数。CUDA C 在标准 C 的基础上，增加了一些修饰符，是为了更好地区分和编译 GPU 程序。我们接触的第一个修饰符就是 <code>__global__</code>。该修饰符告诉编译器：被修饰的函数应当运行在 GPU 上，因此不能使用通用的 C 编译器对其编译，而是要使用 CUDA 提供的编译器（nvcc）。此外，核函数的输入和输出只能通过指针传递，因此返回类型都为 <code>void</code> ，且只能由主机调用。另一个修饰符 <code>__device__</code> 表示函数在 GPU 上运行，且不能被主机调用，只能由其他 <code>__global__</code> 修饰的函数调用。相对应地，<code>__host__</code> 修饰的函数应运行在 CPU 上，每次调用运行一次，且只能被主机调用。该描述符使用较少，因为所有未显式标明函数前置修饰符的函数均默认为主机函数。</p>
+<p>调用核函数时，除了传递函数参数外，还需要指定线程块的数量和每个线程块的线程数量，用 <code>&lt;&lt;&lt;&gt;&gt;&gt;</code> 修饰。例如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">myKernel</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Hello world\n&quot;</span>);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> <span class="hljs-type">const</span> *argv[])</span> </span>&#123;<br>    myKernel&lt;&lt;&lt;<span class="hljs-number">4</span>,<span class="hljs-number">2</span>&gt;&gt;&gt;();<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>上例表示有4个线程块，每个线程块有2个线程，参与执行了该核函数。因此会输出8个 <code>Hello world\n</code>。而通过 CUDA 中的内置变量 <code>threadIdx</code>、<code>blockIdx</code> 和 <code>blockDim</code> 等，不仅可以在核函数内区分不同的线程块、线程，也能获得线程块、线程的维度信息，使程序员能更精细地控制线程执行，关于内置变量我会在之后详细介绍。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">addWithCuda</span><span class="hljs-params">(<span class="hljs-type">int</span> *c, <span class="hljs-type">int</span> *a, <span class="hljs-type">int</span> *b)</span></span>; &#123;<br>  <span class="hljs-type">int</span> i = threadIdx.x + blockIdx.x * blockDim.x;<br>  c[i] = a[i] + b[i];<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-comment">// ...</span><br>  addWithCuda&lt;&lt;&lt;grids, blocks&gt;&gt;&gt;(dev_c, dev_a, dev_b);<br>  <span class="hljs-comment">// ...</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="内存管理">内存管理</h2>
+<h3 id="内存分配与回收">内存分配与回收</h3>
+<ul>
+<li><code>cudaMalloc</code> 分配设备上的内存</li>
+<li><code>cudaMemcpy</code> 将不同内存段的数据进行拷贝</li>
+<li><code>cudaFree</code> 释放先前在设备上申请的内存空间</li>
+</ul>
+<p>CUDA C 本身十分贴近 C 语言，这对我们学习 CUDA 非常友好。但也有一些需要我们注意的地方，CUDA 对内存资源做了简单的分类。将 CPU 以及系统的内存称为主机内存（host memory），而将 GPU 及其内存称为设备内存（device memory）。它们的空间分配、数据迁移、回收等都需要程序员通过调用 cuda API 函数显式地控制。</p>
+<p>在主机内存中分配、回收空间非常简单，使用 C 语言中的 <code>malloc()</code> 和 <code>free()</code> 函数就可以了，但要在设备内存分配空间，以便 GPU 进行计算，就需要用到 CUDA C 提供的函数了。以下两个函数用于分配、回收设备内存空间最为常用：</p>
+<ul>
+<li>
+<p><code>cudaMalloc</code> 该函数用来分配设备上的内存，需要被主机调用（即在 CPU 执行的代码中调用）。其返回值为 <code>cudaError_t</code> 的枚举类型，该类型枚举了所有可能出现错误的情况。而如果函数调用成功，则返回 <code>cudaSuccess</code>。第一个参数类型为 <code>void **</code>，指向分配后得到的内存首地址。第二个参数类型为 <code>size_t</code>，指定了需要分配的内存大小，单位是字节。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 在设备上分配内存</span><br><span class="hljs-function">cudaError_t <span class="hljs-title">cudaMalloc</span><span class="hljs-params">(<span class="hljs-type">void</span>** devPtr, <span class="hljs-type">size_t</span> size)</span></span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>cudaFree</code> 该函数用来释放先前在设备上申请的内存空间，但不能释放通过 <code>malloc</code> 申请的内存。返回类型仍为 <code>cudaError_t</code>。函数参数是指向需要释放的设备内存首地址。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 释放设备上的内存</span><br><span class="hljs-function">cudaError_t <span class="hljs-title">cudaFree</span><span class="hljs-params">(<span class="hljs-type">void</span>* devPtr)</span></span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>这两个函数与 C 语言中的内存分配、回收函数区别不是很大，由此不难猜到这两个函数的作用。</p>
+<p>但容易犯的错误就是，将指向设备内存的指针错误地在主机内存中解引用（dereference），这是不允许的，因为该指针内的值可是设备内存的地址，不是主机内存的地址。</p>
+<blockquote>
+<p>CUDA C 的简单性及其强大的功能在很大程度上都是来源于它淡化了主机代码和设备代码之间的差异。虽然<strong>主机代码可以将这个指针作为参数传递，对其执行算术运算，甚至可以将其转换为另一种不同的类型</strong>。但是，绝对不可以使用这个指针来读取或者写入内存。因此，程序员一定<strong>不能在主机代码中对 cudaMalloc() 返回的指针进行解引用</strong>。—— &lt;&lt;GPU高性能编程CUDA实战&gt;&gt;</p>
+</blockquote>
+<h3 id="内存数据传输">内存数据传输</h3>
+<p>完成主机内存与设备内存之间的数据传输，需要使用 <code>cudaMemcpy</code> 函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// src 中的数据拷贝到 dst 中，需要指定数据传输方向</span><br><span class="hljs-function">cudaError_t <span class="hljs-title">cudaMemcpy</span><span class="hljs-params">(<span class="hljs-type">void</span>* dst, <span class="hljs-type">const</span> <span class="hljs-type">void</span>* src, <span class="hljs-type">size_t</span> count, cudaMemcpyKind kind)</span></span><br></code></pre></td></tr></table></figure>
+<p>其用法与 C 语言中 <code>memcpy</code> 非常相似，想必对熟悉 C 语言的大家没有难度。唯一区别在于多了个参数来指示内存传递的方向。<a target="_blank" rel="noopener" href="https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g18fa99055ee694244a270e4d5101e95b"><code>cudaMemcpyKind</code></a> 指示了数据的传输方向，有以下几种选择：</p>
+<ul>
+<li><code>cudaMemcpyHostToHost</code></li>
+<li><code>cudaMemcpyHostToDevice</code></li>
+<li><code>cudaMemcpyDeviceToHost</code></li>
+<li><code>cudaMemcpyDeviceToDevice</code></li>
+</ul>
+<p>无须更多的解释，相信各位已经知道了上述常量的含义。</p>
+<h3 id="错误处理">错误处理</h3>
+<p>从前面的例子不难发现，几乎每个CUDA API函数都会返回 <code>cudaError_t</code> 类型的值，用来指示此次函数调用是否成功。当返回值为 <code>cudaSuccess</code> 时，函数调用成功。若失败，返回值会标记失败的具体代码，程序员可通过 <code>cudaGetErrorString</code> 函数获得具体的报错信息。为增强程序的鲁棒性，同时又不失代码美观，方便纠错，我推荐使用如下宏函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> GPUAssert(ans) &#123; gpuAssert((ans), __FILE__, __LINE__)</span><br><br><span class="hljs-function"><span class="hljs-keyword">inline</span> <span class="hljs-type">void</span> <span class="hljs-title">gpuAssert</span><span class="hljs-params">(cudaError_t code , <span class="hljs-type">const</span> <span class="hljs-type">char</span> *file, <span class="hljs-type">int</span> line, <span class="hljs-type">bool</span> abort = <span class="hljs-literal">true</span>)</span> </span>&#123;<br>    <span class="hljs-keyword">if</span> (code != cudaSuccess) &#123;<br>        <span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">&quot;GPU assert: %s %s %d\n&quot;</span>, <span class="hljs-built_in">cudaGetErrorString</span>(code), file, line);<br>        <span class="hljs-keyword">if</span> (abort)<br>          <span class="hljs-built_in">exit</span>(code);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>调用 CUDA API 时，就可以用该宏函数将其包裹起来：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>(&amp;dev_a, <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">int</span>)));<br></code></pre></td></tr></table></figure>
+<h2 id="内置变量与函数">内置变量与函数</h2>
+<ul>
+<li>
+<p>线程编号的变量为 <code>threadIdx</code>，类型为 <code>uint3</code>，由三个描述不同方向上编号的整数组成，使用 <code>x</code>、<code>y</code>、<code>z</code> 和 <code>w</code> 依次访问</p>
+<ul>
+<li>threadIdx.x：线程块内在 x 方向上的该线程的 ID</li>
+<li>threadIdx.y：线程块内在 y 方向上的该线程的 ID</li>
+</ul>
+</li>
+<li>
+<p>线程块编号的变量为 <code>blockIdx</code>，类型为 <code>uint3</code></p>
+<ul>
+<li>blockIdx.x：网格内在 x 方向上的该线程块的 ID</li>
+<li>blockIdx.y：网格内在 y 方向上的该线程块的 ID</li>
+</ul>
+</li>
+<li>
+<p>线程块的线程数量使用 <code>blockDim</code> 变量描述</p>
+<ul>
+<li>blockDim.x：该线程块 x 方向上的线程总数</li>
+<li>blockDim.y：该线程块 y 方向上的线程总数</li>
+</ul>
+</li>
+<li>
+<p>网格中线程块的数量使用 <code>gridDim</code> 变量描述</p>
+<ul>
+<li>gridDim.x：网格中 x 方向上的线程块总数</li>
+<li>gridDim.y：网格中 y 方向上的线程块总数</li>
+</ul>
+</li>
+<li>
+<p><code>__syncthreads()</code> 是 CUDA 的内置命令。通常用于线程块内部的线程同步。当线程执行至 <code>__syncthreads()</code> 处时，会等待全部的线程执行完毕后再继续执行。</p>
+</li>
+</ul>
+<p>结合前文的 CUDA 线程层次图，可以发现，使用三维向量（二维向量）来描述一个编号，可以极大方便图形变换、模型生成的编程和调试工作。因为在实际编程时，程序员可以将 GPU 的线程网格抽象成一个矩形或立方体，将它循环映射到要计算的资源上，而不再纠结于复杂的索引计算中。</p>
+<p>来看一个简单向量加法的例子：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">add</span><span class="hljs-params">(<span class="hljs-type">int</span> *c, <span class="hljs-type">int</span> *a, <span class="hljs-type">int</span> *b)</span></span>; &#123;<br>  <span class="hljs-comment">// use built-in variable</span><br>  <span class="hljs-type">int</span> x = threadIdx.x + blockIdx.x * blockDim.x;<br>  <span class="hljs-type">int</span> y = threadIdx.y + blockIdx.y * blockDim.y;<br>  <span class="hljs-type">int</span> index = x + y * blockDim.x * gridDim.x;<br><br>  <span class="hljs-keyword">while</span> (index &lt; N) &#123;<br>    c[index] = a[index] + b[index];<br>    index += blockDim.x * gridDim.x;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>如果线程块大小为 256，每个线程块有 256 个线程，GPU 中的线程层级结构如下图：</p>
+<p><img src="/img/PP/index.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>可见，计算一个线程的唯一全局编号，还是比较复杂的，但也很常用。在这几行代码中，每个线程都得到了它在线程块中的索引以及这个线程块在网格中的索引，并且这两个索引是二维的，要转为一维的，还需要将 y 方向乘以 x 方向的总数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">int</span> x = threadIdx.x + blockIdx.x * blockDim.x;<br><span class="hljs-type">int</span> y = threadIdx.y + blockIdx.y * blockDim.y;<br><span class="hljs-type">int</span> index = x + y * blockDim.x * gridDim.x;<br></code></pre></td></tr></table></figure>
+<p>作为对前面知识的巩固，再来看一下部分 <code>main()</code> 函数的书写。主机程序先分配三块用于存贮向量的设备内存，在完成初始化后，将数据移动到设备端。主机调用核函数，并等待 GPU 执行完成，再将数据从设备移动到主机上，最后从中读取计算结果，并回收设备内存。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// malloc for device memory</span><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span>**) &amp;dev_a, N*<span class="hljs-built_in">sizeof</span>(<span class="hljs-type">int</span>)));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span>**) &amp;dev_b, N*<span class="hljs-built_in">sizeof</span>(<span class="hljs-type">int</span>)));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span>**) &amp;dev_c, N*<span class="hljs-built_in">sizeof</span>(<span class="hljs-type">int</span>)));<br><br><span class="hljs-comment">// initilization</span><br><span class="hljs-keyword">for</span>(i=<span class="hljs-number">0</span>; i&lt;N; i++)&#123;<br>  a[i] = (-i) % <span class="hljs-number">10000</span>;<br>  b[i] = (i*i) % <span class="hljs-number">10000</span>;<br>&#125;<br><br><span class="hljs-function">dim3 <span class="hljs-title">blocks</span><span class="hljs-params">(<span class="hljs-number">4</span>, <span class="hljs-number">4</span>)</span></span>;<br><span class="hljs-function">dim3 <span class="hljs-title">threads</span><span class="hljs-params">(<span class="hljs-number">16</span>, <span class="hljs-number">16</span>)</span></span>;<br><span class="hljs-comment">// memcpy to device</span><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMemcpy</span>(dev_a, a, N*<span class="hljs-built_in">sizeof</span>(<span class="hljs-type">int</span>), cudaMemcpyHostToDevice));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMemcpy</span>(dev_b, b, N*<span class="hljs-built_in">sizeof</span>(<span class="hljs-type">int</span>), cudaMemcpyHostToDevice));<br><br><span class="hljs-comment">// call add kernel func</span><br>add&lt;&lt;&lt;blocks,threads&gt;&gt;&gt;(dev_a, dev_b, dev_c);<br><span class="hljs-comment">// wait untill all finished</span><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaDeviceSynchronize</span>());<br><br><span class="hljs-comment">// memcpy to host</span><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMemcpy</span>(c, dev_c, N*<span class="hljs-built_in">sizeof</span>(<span class="hljs-type">int</span>), cudaMemcpyDeviceToHost));<br><br><span class="hljs-comment">// print result</span><br><span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i&lt;N; i++)&#123;<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%5d + %5d = %5d\n&quot;</span>, a[i], b[i], c[i]);<br>&#125;<br><br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaFree</span>(dev_a));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaFree</span>(dev_b));<br><span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaFree</span>(dev_c));<br></code></pre></td></tr></table></figure>
+<p>这其中，<code>cudaDeviceSynchronize()</code> 函数会将程序一直阻塞，直到前面所有请求的 GPU 任务全部执行完毕。因为主机在调用了核函数后，往往不会等待设备端任务完成就往下执行了，所以如果不加这一函数，可能会出现结果还未计算完成就被移动到主机的情况。</p>
+<h2 id="实践">实践</h2>
+<p>学完了这些以后，就可以写一些简单的 CUDA 小程序了，动手体验一下 GPU 的计算能力吧！之前我们已经给出了向量加法的部分代码。现在考虑一下数组求和问题。</p>
+<p>随机生成一个数组，需要求出该数组所有元素的和。在[之前的文章中](<a href="https://dingfen.github.io/Parallel">https://dingfen.github.io/Parallel</a> Computing/2020/12/17/PP02.html#%E4%BA%8C%E5%8F%89%E6%A0%91%E6%B1%82%E5%92%8C%E5%AE%9E%E7%8E%B0)，介绍过二叉树求和的基本算法。这里可用 CUDA 再实现一次。</p>
+<p>略不同于之前文章的求和步骤，为了方便编程，不要求线程必须将相邻数组的元素相加，而是将步长一致的元素相加。在一开始时，规定步长为线程块大小的一半。<br>
+每次循环线程计算 <code>v[t] += v[t+n]</code> 的值，也就是将步长一致的累加起来。循环一次后，数组元素的部分和就出现在数组的前半部分。然后将步长缩小一半，那么下一次循环会将部分和集中到数组前半部分。如此往复，直到数组的和集中到了第0号元素上。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> N 256</span><br><br><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">psum</span><span class="hljs-params">(<span class="hljs-type">float</span>* v)</span></span><br><span class="hljs-function"></span>&#123; <br>    <span class="hljs-comment">// Thread index.</span><br>    <span class="hljs-type">int</span> t = threadIdx.x; <br>    <span class="hljs-comment">// Should be half the length of v.</span><br>    <span class="hljs-type">int</span> n = blockDim.x / <span class="hljs-number">2</span>; <br><br>    <span class="hljs-keyword">while</span> (n != <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-keyword">if</span>(t &lt; n)<br>            v[t] += v[t + n];  <br>        __syncthreads();    <br>        n /= <span class="hljs-number">2</span>; <br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>注意循环中的 <code>__syncthreads()</code>，该句保证了上一循环全部结束后，下一轮循环才会开始。否则，线程之间步调不统一会得出错误的结果。很明显看出，算法每经过一轮循环，可执行的线程就会少一半，这显然浪费了不少计算资源。</p>
+<p>随后就是主机部分的代码。同样的步骤，先分配设备内存，然后将数据喂给设备，随后调用核函数计算，最后将计算结果返回，并回收内存。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span> <span class="hljs-params">(<span class="hljs-type">void</span>)</span> </span>&#123; <br>  <span class="hljs-type">float</span> *v_h, *v_d;<br>  <span class="hljs-comment">// malloc for host and device</span><br>  v_h = (<span class="hljs-type">float</span>*) <span class="hljs-built_in">malloc</span>(N * <span class="hljs-built_in">sizeof</span>(*v_h)); <br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">float</span>**) &amp;v_d, N *<span class="hljs-built_in">sizeof</span>(*v_d)));<br>  <span class="hljs-comment">// initilization</span><br>  <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; n; i++) &#123;<br>    v[i] = (<span class="hljs-type">float</span>) <span class="hljs-built_in">rand</span>() / RAND_MAX;<br>  &#125;<br>  <span class="hljs-comment">// memcpy to device</span><br>  <span class="hljs-built_in">cudaMemcpy</span>(v_d, v_h, N * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>), cudaMemcpyHostToDevice);<br>  psum&lt;&lt;&lt; <span class="hljs-number">1</span>, N&gt;&gt;&gt;(v_d);<br>  <span class="hljs-built_in">cudaMemcpy</span>(v_h, v_d, <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>), cudaMemcpyDeviceToHost);<br>  <span class="hljs-comment">// memcpy for result</span><br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Pairwise sum = %7.3f\n&quot;</span>, v_h[<span class="hljs-number">0</span>]);<br>  <span class="hljs-comment">// free</span><br>  <span class="hljs-built_in">free</span>(v_h);<br>  <span class="hljs-built_in">cudaFree</span>(v_d);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/CUDA/" class="print-no-link">#CUDA</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>CUDA 快速入门</div>
+      <div>https://dingfen.github.io/2021/10/08/2021-10-8-cuda-beginer/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年10月8日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/10/20/2021-10-20-cuda-with-matmul/" title="长文介绍矩阵乘法——从自己手搓到CUTLASS实现">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">长文介绍矩阵乘法——从自己手搓到CUTLASS实现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/10/03/2021-10-3-cuda-with-dotproduct/" title="CUDA 中的向量内积">
+                        <span class="hidden-mobile">CUDA 中的向量内积</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

@@ -1,0 +1,920 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="触及到你知识盲区的东西">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C语言中容易忽视的小知识">
+<meta property="og:url" content="https://dingfen.github.io/2021/08/23/2021-8-23-non-trivial-thing-in-C/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="触及到你知识盲区的东西">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-08-23T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="C">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>C语言中容易忽视的小知识 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="C语言中容易忽视的小知识"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-08-23 12:00" pubdate>
+          2021年8月23日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">C语言中容易忽视的小知识</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="一、在C文件中引用C-函数">一、在C文件中引用C++函数</h2>
+<ol>
+<li>将要使用的函数声明放在一个头文件中</li>
+<li>把要被C语言调用的C++函数的声明放在<code>extern &quot;C&quot;&#123; ... &#125;</code>语句块里</li>
+<li>注意：标准C++的头文件包含不能放在<code>extern &quot;C&quot;&#123; ... &#125;</code>语句块里</li>
+</ol>
+<p>当然，要在C++文件调用C文件的函数也是可行的。</p>
+<p>而要在C文件中引用C++函数，下面给出一个示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// C function declaration in fun.h</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> __cplusplus</span><br><span class="hljs-keyword">extern</span> <span class="hljs-string">&quot;C&quot;</span> &#123;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><br><span class="hljs-comment">// 要调用的C++函数</span><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">add</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>;<br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">sum</span><span class="hljs-params">(<span class="hljs-type">int</span> a[], <span class="hljs-type">int</span> num)</span></span>;<br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> __cplusplus</span><br>&#125;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+<p>用 <code>extern &quot;C&quot; &#123; ... &#125;</code> 语句块将 C++ 函数的声明包裹起来。然后，完成C++函数的定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// Cpp function defined in fun.cpp</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;numeric&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;fun.h&quot;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">add</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span> </span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;a = &quot;</span> &lt;&lt; a &lt;&lt; std::endl;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;b = &quot;</span> &lt;&lt; b &lt;&lt; std::endl;<br>    <span class="hljs-keyword">return</span> a+b;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">sum</span><span class="hljs-params">(<span class="hljs-type">int</span> *a, <span class="hljs-type">int</span> num)</span> </span>&#123;<br>    std::vector&lt;<span class="hljs-type">int</span>&gt; c;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; num; i++)<br>        c.<span class="hljs-built_in">push_back</span>(a[i]);<br>    <span class="hljs-keyword">return</span> std::<span class="hljs-built_in">accumulate</span>(c.<span class="hljs-built_in">begin</span>(), c.<span class="hljs-built_in">end</span>(), <span class="hljs-number">0</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>注意到，<code>add()</code> 和 <code>sum()</code> 函数都是C++函数，使用了很多“C++才有的”技术，但这并不妨碍C函数使用它们：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// main.c call them in the end</span><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> <span class="hljs-type">const</span> *argv[])</span> </span>&#123;<br>    <span class="hljs-type">int</span> vec[] = &#123;<span class="hljs-number">3</span>,<span class="hljs-number">4</span>,<span class="hljs-number">5</span>,<span class="hljs-number">6</span>,<span class="hljs-number">7</span>&#125;;<br>    <span class="hljs-type">int</span> a = <span class="hljs-number">4</span>;  <span class="hljs-type">int</span> b = <span class="hljs-number">5</span>;<br>    <span class="hljs-comment">// 调用了Cpp里面的函数</span><br>    <span class="hljs-type">int</span> c = <span class="hljs-built_in">add</span>(a, b);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%d\n&quot;</span>, c);<br>    <span class="hljs-comment">// 复杂点的例子</span><br>    <span class="hljs-type">int</span> d = <span class="hljs-built_in">sum</span>(vec, <span class="hljs-number">5</span>);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%d\n&quot;</span>, d);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>为什么要这么做?</p>
+<blockquote>
+<p>extern &quot;C&quot;的主要作用就是为了能够正确实现C++代码调用其他C语言代码。<strong>加上extern &quot;C&quot;后，会指示编译器这部分代码按C语言的进行编译，而不是C++的</strong>。由于C++支持函数重载，因此编译器编译函数的过程中会将<strong>函数的参数类型</strong>也加到编译后的代码中，而不仅仅是函数名；而C语言并不支持函数重载，因此编译C语言代码的函数时不会带上函数的参数类型，一般之包括函数名。</p>
+</blockquote>
+<h2 id="二、宏操作——陷阱">二、宏操作——陷阱</h2>
+<p>宏是C语言中的历史产物，C++为了向前兼容C，完全继承了C语言中的预处理器和宏操作部分。目前主流的认知就是<strong>尽量不要用宏实现函数，而改用内联函数或者模板代替</strong>。因此这里也建议不要过于依赖宏定义。</p>
+<p>宏以及处理它的预处理器最大的缺陷就是，将用宏的地方进行简单的文本替换。这样一来，宏是根本不会进入编译器的symbol table，编译器在报错时就会出现魔数情况，也不会处理可能出现的宏命名重复，此外，宏也没有变量的作用域功能，只有简单的 <code>#ifndef</code> 和 <code>#undef</code> 来控制宏的作用范围。这些还只是最经常出现的小问题。更大的问题在于括号有无或者<code>++</code>、<code>--</code>等情况，例如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> MAX(a,b) ((a)&gt;(b)?(a):(b))</span><br><span class="hljs-type">int</span> i = <span class="hljs-number">0</span>;<br><span class="hljs-type">int</span> j = <span class="hljs-number">2</span>;<br><span class="hljs-built_in">MAX</span>(i++,j++)<br></code></pre></td></tr></table></figure>
+<p>那么i和j最终等于多少呢？得到的结果又是多少呢？非常烧脑的问题。而且就算我们理清了<code>i++</code>了几次，那么当宏的具体实现出现变化，结果可能会出现变化。</p>
+<p>又比如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> DOSOMETHING() cmd1; \</span><br><span class="hljs-meta">					  cmd2; </span><br><span class="hljs-comment">// when some_condition() return true, the DOSOMETHING()</span><br><span class="hljs-keyword">if</span> (<span class="hljs-built_in">some_condition</span>()) &#123;<br>    <span class="hljs-built_in">DOSOMETHING</span>()<br>&#125;<br><span class="hljs-comment">// ????</span><br><span class="hljs-keyword">if</span> (<span class="hljs-built_in">some_condition</span>())<br>    <span class="hljs-built_in">DOSOMETHING</span>()<br></code></pre></td></tr></table></figure>
+<p>当然，如果你一定要用宏实现，为避免用户使用不当（用户是真的不知道该用上面的哪一种），可以加一个小技巧：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> DOSOMETHING() do &#123;cmd1; cmd2; &#125; while(0)</span><br></code></pre></td></tr></table></figure>
+<p>此时无论选取那一种写法，都是正确的。</p>
+<p>此外该技巧也可以用在其他地方：它可以避免使用<code>goto</code> 语句。若使用<code>do &#123;...&#125; while(0)</code>包裹整个过程，在过程中出现错误或异常时，可以直接使用 <code>break</code> 跳出循环，直接来到循环外的错误处理，而不需要<code>goto</code>。这在程序结构、编译优化上有很多好处。</p>
+<p>总之，使用宏时一定要对宏有充分了解，不然会出现非常多奇怪的问题。</p>
+<h2 id="三、宏操作——技巧">三、宏操作——技巧</h2>
+<p>不过，即使宏的缺点很多，而且大多宏函数都可被内联函数、模板替代，但是宏仍有存在的意义。即使是在 C++ 中，编译器也赐予了一些预定义宏：</p>
+<ul>
+<li><code>__FILE__</code> ：编译的文件的绝对路径；</li>
+<li><code>__LINE__</code> ：当前行号；</li>
+<li><code>__TIME__</code> ：当前时间；</li>
+<li><code>__DATE__</code> ：当前日期。</li>
+<li><code>__cplusplus</code> ：当前编译器完全遵循的 C++ 版本。<code>C++98</code> 和 <code>C++03</code> 对应了 <code>199711L</code>，<code>C++11</code> 对应了 <code>201103L</code>，<code>C++14</code> 对应了 <code>201402L</code></li>
+</ul>
+<p>这些预定义的宏是 C++ 标准规定的，此外不同版本的 C++ 也有更多的预定义宏。</p>
+<p>其次是另一个老生常谈的作用。确保头文件不被二次 <code>include</code>，从而报出重定义的错误。不过也有<code>#pragma once</code>这种写法。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> XXXX_XXX_XX</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> XXXX_XXX_XX</span><br><br><span class="hljs-keyword">class</span> &#123;<br>    <span class="hljs-comment">// ...</span><br>&#125;<br><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span> XXXX_XXX_XX</span><br></code></pre></td></tr></table></figure>
+<p>此外，还有很多有趣的用法，比如字符串连接：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 字符串连接 将数字变为字符串</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> Con(x, y)  x##y</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> ToString(x) #x</span><br></code></pre></td></tr></table></figure>
+<p>又比如一些耍杂技的宏函数（仍建议使用内联函数）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 用宏来求两个数的最大值</span><br> <span class="hljs-comment">/* 通过比较x,y的指针类型，得到警告 若类型一致 通过void消除 */</span> <br><span class="hljs-meta">#<span class="hljs-keyword">define</span> max(x, y) (&#123;    \</span><br><span class="hljs-meta">    typeof(x) _max1 = (x);  \</span><br><span class="hljs-meta">    typeof(y) _max2= (y);   \</span><br><span class="hljs-meta">    (void) (&amp;_max1 == &amp;_max2);  \</span><br><span class="hljs-meta">    _max1 &gt; _max2 ? _max1: _max2;   \</span><br><span class="hljs-meta">    &#125;)</span><br></code></pre></td></tr></table></figure>
+<p>在特殊情况下，使用宏可以快速定义一批变量，或者写完一整片相同形式的代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 使用宏可以快速定义一批变量</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> LIST_OF_VARIABLIES \</span><br><span class="hljs-meta">        X(value1)  \</span><br><span class="hljs-meta">        X(value2)  \</span><br><span class="hljs-meta">        X(value3)</span><br><br><span class="hljs-comment">// 定义了 int value1 int value2 int value3</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> X(name) int name;</span><br>LIST_OF_VARIABLES<br><span class="hljs-meta">#<span class="hljs-keyword">undef</span> X</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> Y(x, z) double x = (z);</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> print(t) printf(<span class="hljs-string">&quot;t = %d\n&quot;</span>, t);</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> prints(x) printf(<span class="hljs-string">&quot;x = %s\n&quot;</span>, x);</span><br></code></pre></td></tr></table></figure>
+<h2 id="四、可变参数函数">四、可变参数函数</h2>
+<p>在编写程序时，我们经常会遇到函数在编译期间接收到的参数数量不确定的情况。比如，经常使用的<code>printf()</code>函数，我们可以传入任意数量的参数。那么，这一切究竟如何实现？</p>
+<p>事实上，C语言就已经提供了这样的一个解决方案，示例代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdarg.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">add</span><span class="hljs-params">(<span class="hljs-type">int</span> num, ...)</span> </span>&#123;<br>    va_list valist;<br>    <span class="hljs-type">int</span> sum = <span class="hljs-number">0</span>;<br>    <span class="hljs-type">int</span> i;<br>    <span class="hljs-comment">// 为 传入的参数初始化 valist</span><br>    <span class="hljs-built_in">va_start</span>(valist, num);<br>    <span class="hljs-comment">// 访问 所有的参数</span><br>    <span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; num; i++) &#123;<br>        sum += <span class="hljs-built_in">va_arg</span>(valist, <span class="hljs-type">int</span>);<br>    &#125;<br>    <span class="hljs-comment">// 结束调用valist 清理内存</span><br>    <span class="hljs-built_in">va_end</span>(valist);<br>    <span class="hljs-keyword">return</span> sum;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>add()</code> 最后一个参数写成省略号，即三个点号（<strong>…</strong>），省略号之前的那个参数是 <code>int</code>，代表了要传递的可变参数的总数。为了使用这个功能，需要 <code>#include &lt;stdarg.h&gt;</code>，该文件提供了实现可变参数功能的函数和宏。具体步骤如下：</p>
+<ol>
+<li>定义一个函数，最后一个参数为省略号，省略号前面可以设置自定义参数。</li>
+<li>在函数定义中创建一个 <code>va_list</code> 类型变量，该类型是在 <code>stdarg.h</code> 头文件中定义的。</li>
+<li>使用 <code>int</code> 参数和 <code>va_start</code> 宏来初始化 <code>va_list</code> 变量为一个参数列表。宏 <code>va_start</code> 是在 <code>stdarg.h</code> 头文件中定义的。</li>
+<li>使用 <code>va_arg</code> 宏和 <code>va_list</code> 变量来访问参数列表中的每个项。</li>
+<li>使用宏 <code>va_end</code> 来清理赋予 <code>va_list</code> 变量的内存。</li>
+</ol>
+<p>除此之外，还有一个不被用到的 <code>va_copy</code>，示例如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++">va_list valist1;<br>va_list valist2;<br><span class="hljs-built_in">va_start</span>(valist1, num);<br><span class="hljs-comment">// valist2 is dest  after that valist2 equals to valist1</span><br><span class="hljs-built_in">va_copy</span>(valist2, valist1);<br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; num; i++) &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%d, &quot;</span>, <span class="hljs-built_in">va_arg</span>(valist2, <span class="hljs-type">int</span>));<br>&#125;<br><span class="hljs-built_in">va_end</span>(valist1);<br><span class="hljs-built_in">va_end</span>(valist2);<br></code></pre></td></tr></table></figure>
+<h2 id="五、setjmp-和-longjmp">五、setjmp 和 longjmp</h2>
+<p>C语言中，即使是<code>goto</code> 语句也是不能跨函数的。为了从深层次的函数调用中立刻返回错误信息（尤其是函数递归调用时），C语言添加了两个用于跨函数跳转的函数： <code>setjmp</code> 和 <code>longjmp</code> 。再说一遍，这两个函数可以实现非本地跳转，将程序控制直接从一个函数转移到另一个函数，不需要经过正常的调用——返回，比如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-comment">/* ... */</span><br>    <span class="hljs-keyword">while</span>(<span class="hljs-built_in">fgets</span>(line, MAXLINE, stdin) != <span class="hljs-literal">NULL</span>)<br>        <span class="hljs-built_in">do_line</span>(line);<br>    <span class="hljs-comment">/* ... */</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">do_line</span><span class="hljs-params">(<span class="hljs-type">char</span> *ptr)</span> </span>&#123;<br>    <span class="hljs-comment">/* ... */</span><br>    <span class="hljs-keyword">while</span>((cmd = <span class="hljs-built_in">get_token</span>()) &gt; <span class="hljs-number">0</span>)<br>        <span class="hljs-built_in">cmd_add</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">cmd_add</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-comment">/* ... */</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>上述程序有非常多的函数调用，且嵌套多层，设想若在 <code>cmd_add</code> 函数发现一个错误，需要返回 <code>main</code> 函数并读下一个输入行，我们就不得不将函数返回值逐层返回，操作非常麻烦。</p>
+<p>使用 <code>setjmp</code> 和 <code>longjmp</code> 函数，可以使程序在栈上跳过若干调用帧，返回到当前函数调用路径上的某一个函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;setjmp.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">setjmp</span><span class="hljs-params">(jmp_buf env)</span></span>;<br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">sigsetjmp</span><span class="hljs-params">(sigjmp_buf env, <span class="hljs-type">int</span> savesigs)</span></span>;<br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">longjmp</span><span class="hljs-params">(jmp_buf env, <span class="hljs-type">int</span> val)</span></span>;<br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">siglongjmp</span><span class="hljs-params">(sigjmp_buf env, <span class="hljs-type">int</span> val)</span></span>;<br></code></pre></td></tr></table></figure>
+<p>其中，<code>sigsetjmp</code> 和 <code>siglongjmp</code> 函数都是 <code>setjmp</code> 和 <code>longjmp</code> 的可以被信号处理程序使用的版本。</p>
+<p>首先要在希望返回到的位置调用 <code>setjmp()</code>，<code>setjmp</code> 的参数 <code>env</code> 的类型是 <code>jmp_buf</code> 。这一数据类型是某种形式的数组，用于存放在调用 <code>longjmp()</code> 时，用来恢复栈状态的所有信息。通常 <code>env</code> 为全局变量，因为需要在另一个函数中使用。然后，<code>longjmp()</code> 函数在出现错误时被调用，程序跳转到调用 <code>setjmp()</code> 的地方。来看一个具体示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c++">jmp_buf env;<br><span class="hljs-comment">/* ... */</span><br><span class="hljs-keyword">switch</span>(<span class="hljs-built_in">setjmp</span>(buf)) &#123;<br>    <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>:<br>        <span class="hljs-built_in">foo</span>(); <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> <span class="hljs-number">1</span>:<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Error 1!\n&quot;</span>); <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> <span class="hljs-number">2</span>:<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Error 2!\n&quot;</span>); <span class="hljs-keyword">break</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-keyword">if</span> (error1)<br>        <span class="hljs-built_in">longjmp</span>(buf, <span class="hljs-number">1</span>);<br>    <span class="hljs-built_in">bar</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">bar</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-keyword">if</span> (error2)<br>        <span class="hljs-built_in">longjmp</span>(buf, <span class="hljs-number">2</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>当一个错误发生，<code>longjmp</code> 函数跳过了所有中间调用，直接返回到 <code>switch</code> 语句中，其中第二个函数参数 <code>val</code>将成为从 <code>setjmp</code> 处返回的值。显然，对于一个 <code>setjmp</code> 可以收到多个 <code>longjmp</code> 的返回值，并用 <code>switch</code> 语句处理。</p>
+<p>如果还是难以记住，可以将 <code>setjmp</code> 看作 Java 中 <code>try</code> 中的 <code>catch</code> 语句，将 <code>longjmp</code> 函数看作 <code>throw</code> 语句。</p>
+<h2 id="五、C中的类型">五、C中的类型</h2>
+<p>C语言中有哪些类型是被重新命名的？它们的用处是什么？本质又是什么呢？</p>
+<p>注意：在C++中用到 <code>size_t</code> 或其他在C中定义的类型时，推荐使用 <code>#include&lt;stddef.h&gt;</code>。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>实质</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ptrdiff_t</td>
+<td>signed int</td>
+<td>两个指针相减的结果的有符号整数类型</td>
+</tr>
+<tr>
+<td>size_t</td>
+<td>unsigned int</td>
+<td>通常用于数组的索引以及表示变量存储空间的大小</td>
+</tr>
+<tr>
+<td>wchar_t</td>
+<td>int</td>
+<td>宽字节字符类型，可以表示，在支持的语言环境中，指定的最大扩展字符集的所有成员</td>
+</tr>
+<tr>
+<td>nullptr_t<sup>C++11</sup></td>
+<td>关键字<code>nullptr</code>的类型</td>
+<td>该类型表示它不是指向某个东西的指针类型，当多个重载函数接收不同的指针类型时，重载一个接收<code>std::nullptr_t</code>用于处理传入null指针的情况</td>
+</tr>
+<tr>
+<td>max_align_t<sup>C++11</sup></td>
+<td>实现定义</td>
+<td>一种对齐要求，至少与每个标量类型一样严格（大）的类型</td>
+</tr>
+<tr>
+<td>NULL</td>
+<td>宏 （void*) 0 or 0</td>
+<td>C语言中表示空指针，但在C++中仅表示0，C++中的空指针推荐使用<code>nullptr</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="六、GNC-C中的Attributes">六、GNC C中的Attributes</h2>
+<p>在GNC C中，可以将你要调用的函数用“特殊的东西”声明，可以帮助编译器优化你的函数，并可以帮你挑出一些更加细微的错误。</p>
+<p>那么这些<strong>特殊的东西</strong>，就是这里介绍的关键字<code>__attribute__</code>了。在声明时，它可以帮你给函数设定一个特殊的属性。这个关键字通常会带有如下几个东西：</p>
+<ul>
+<li>
+<p>noreturn</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">err_sys</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> * fmt, ...)</span> __<span class="hljs-title">attribute__</span><span class="hljs-params">((noreturn))</span></span><br></code></pre></td></tr></table></figure>
+<p>通常用在一些标准库函数中，例如<code>abort</code>或者<code>exit</code>，意思是不能<code>return</code>，GCC会得知这一点，并且GCC就会对其进行优化：<strong>不会考虑如果<code>err_sys</code>出现返回值的情况</strong>。更重要的是，可以避免出现未初始化变量的警告。</p>
+</li>
+<li>
+<p>noinline</p>
+<p>阻止函数内联。</p>
+</li>
+</ul>
+<p>事实上，GCC的attribute有三大类：</p>
+<ul>
+<li>Function attributes described <a target="_blank" rel="noopener" href="http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html">here</a></li>
+<li>Variable attributes described <a target="_blank" rel="noopener" href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html">here</a></li>
+<li>Type attributes described <a target="_blank" rel="noopener" href="http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html">here</a></li>
+</ul>
+<p>这里就不一一介绍了。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Cpp/" class="category-chain-item">Cpp</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/" class="print-no-link">#C</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>C语言中容易忽视的小知识</div>
+      <div>https://dingfen.github.io/2021/08/23/2021-8-23-non-trivial-thing-in-C/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年8月23日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/08/25/2021-8-25-tricks-in-LinuxC/" title="在 Linux 中更好地使用C/C++语言">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">在 Linux 中更好地使用C/C++语言</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/22/2021-8-22-VimTech/" title="熟练使用 Vim">
+                        <span class="hidden-mobile">熟练使用 Vim</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

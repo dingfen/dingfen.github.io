@@ -1,0 +1,867 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="加速深度学习推理的高性能kernel">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入探索 deepspeed（二）">
+<meta property="og:url" content="https://dingfen.github.io/2024/05/15/2024-5-15-deepspeed/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="加速深度学习推理的高性能kernel">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
+<meta property="article:published_time" content="2024-05-15T15:26:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="deepspeed">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/deepspeed_logo.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入探索 deepspeed（二） - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/LLM/deepspeed-four.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入探索 deepspeed（二）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-15 23:26" pubdate>
+          2024年5月15日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入探索 deepspeed（二）</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>DeepSpeed 高性能算子实现</h1>
+<p><a href="https://dingfen.github.io/2024/04/20/2024-4-20-deepspeed/">上篇博客</a>我罗列了 deepspeed 针对推理的优化方法，并详细分析了 deepspeed 推理引擎中对网络层的替换，张量并行等实现。那么 deepspeed 自己内部实现的高性能网络层究竟有何蹊跷，能比一般的网络层更快？让我们从源码开始看起。</p>
+<p>注：本篇博文的源码分析基于 deepspeed-0.14.2。</p>
+<h2 id="接上篇博客">接上篇博客</h2>
+<p>上篇博客我们提到对于一些常见的主流大模型，deepspeed 其内部自己实现了一套高性能的代码。只要 deepspeed 检测到用户使用了这些模型，那么就会启动模型网络结构的替换功能，用高效的实现替代部分或全部网络结构。以 llama2 模型为例，<code>DeepSpeedLlama2Inference</code> 就是 deepspeed 内针对 llama2 开发的高性能推理模型。本篇博客我们来细致地研究一下 deepspeed 如何针对性地构建一个高效的大模型架构，从而提升模型的推理性能。</p>
+<h2 id="从初始化说起">从初始化说起</h2>
+<p>上一篇博客中其实已经谈及了很多关于 deepspeed 推理引擎的实现，因此这里我们简单地过一下：</p>
+<p>当我们写出如下代码，并运行后：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> deepspeed<br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoTokenizer, AutoModelForCausalLM<br><br>model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)<br>tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)<br><br><span class="hljs-comment"># Initialize the DeepSpeed-Inference engine</span><br>ds_engine = deepspeed.init_inference(model,<br>                                 tensor_parallel=&#123;<span class="hljs-string">&quot;tp_size&quot;</span>: <span class="hljs-number">8</span>&#125;,<br>                                 dtype=torch.half,<br>                                 checkpoint=<span class="hljs-literal">None</span> <span class="hljs-keyword">if</span> args.pre_load_checkpoint <span class="hljs-keyword">else</span> args.checkpoint_json,<br>                                 replace_with_kernel_inject=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
+<p>deepspeed 的 <code>init_inference</code> 会帮助我们记录模型推理 config，并启动推理引擎 InferenceEngine。若 <code>replace_with_kernel_inject=True</code>，那么推理引擎在构建时会扫描整个模型，将其中的某些层替换为 deepspeed 内部实现的高性能网络层，从而实现加速模型推理的效果。</p>
+<p>而对于 llama2 模型，deepspeed 甚至内部实现了整个模型，因此可以直接替换为 deepspeed 内部的 <code>DeepSpeedLlama2Inference</code> 类。具体过程见下图：</p>
+<p><img src="/img/LLM/deepspeed_llama2_inference.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>我们把实际运行过程中的替换模块部分的 log 信息打印出来：可以发现，每一个 <code>LlamaDecoderlayer</code> 都被替换了（博主这边是 llama-1，因此替换成了 <code>DeepSpeedGPTInference</code> 😢）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 原模型</span><br>LlamaDecoderlayer(<br>  (self_attn): LlamaAttention(<br>    (q_proj): Linear(in_features=4096, out_features=4096, bias=False)<br>    (k_proj): Linear(in_features=4096, out_features=4096, bias=False)<br>    (v_proj): Linear(in_features=4096, out_features=4096, bias=False)<br>    (o_proj): Linear(in_features=4096,out_features=4096,.bias=False)<br>    (rotary_emb): LlamaRotaryEmbedding()<br>  )<br>  (mlp):LlamaMLP(<br>    (gate_proj): Linear(in_features=4096, out_features=11008, bias=False)<br>    (up_proj): Linear(in_features=4096, out_features=11008, bias=False)<br>    (down_proj): Linear(in_features=11608, out_features=4096, bias=False)<br>    (act_Fn): SiLUActivation()<br>  )<br>  (input_layernorm): LlamaRMSNorm()<br>  (post_attention_layernorm): LlamaRMSNorm()<br>)<br><span class="hljs-comment"># 替换掉的类</span><br>&lt;class <span class="hljs-string">&#x27;deepspeed.module inject.containers.llama.LLAMALayerPolicy&#x27;</span>&gt;<br>DeepSpeedGPTInference(<br>  (attention): DeepSpeedSelfAttention(<br>    (gkv_func): QKVGemmOp()<br>    (score_context_func): SoftmaxContextop()<br>    (linear_func): Linearop()<br>    (vector_matmul_func): VectorMatMuLOp()<br>  )<br>  (mlp): DeepSpeedMLP(<br>    (mlp_gemm_func): MLPGemmOp()<br>    (vector_matmul_func): VectorMatMulOp()<br>    (fused_gemm_geTu): GELUGemmOp()<br>    (residual_add_func): ResiduaiAddOp()<br>  )<br>)<br></code></pre></td></tr></table></figure>
+<p>明显可以观察到两点：1）deepspeed 使用 <code>DeepSpeedSelfAttention</code> 和 <code>DeepSpeedMLP</code> 替换并融合了 llama 的 Attention 和 MLP，以及 layernorm。2）deepspeed 在底层使用了自己的高性能算子，例如：<code>QKVGemmOp</code> 和 <code>MLPGemmOp</code> 等。 接下来，我们先探究 <code>DeepSpeedSelfAttention</code> 和 <code>DeepSpeedMLP</code> 的实现，再来看看这些 Op 是如何实现的。</p>
+<h2 id="高性能网络层的实现">高性能网络层的实现</h2>
+<p>为避免被绕晕，先将一张大致描述 deepspeed 推理代码框架图呈上：</p>
+<p><img src="/img/LLM/deepspeed_layers.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="DeepSpeed-Inference">DeepSpeed-Inference</h3>
+<p>从上图中可以看到，DeepSpeed Inference 实现的大模型推理类，都是 <code>DeepSpeedTransformerInference</code> 的派生类。目前为止，一共有如下几种类：</p>
+<ul>
+<li>DeepSpeedBloomInference</li>
+<li>DeepSpeedBERTInference</li>
+<li>DeepSpeedLlama2Inference</li>
+<li>DeepSpeedGPTInference</li>
+<li>DeepSpeedMegatronGPTInference</li>
+<li>DeepSpeedOPTInference</li>
+</ul>
+<p>但大多数的推理类继承后的实现非常平凡，因此我们直接来看 <code>DeepSpeedTransformerInference</code> 实现。</p>
+<p>首先要明确的是，<code>DeepSpeedTransformerInference</code> 对应于一个大模型的一层 transformer 层，而非整个大模型。该类支持使用 <a target="_blank" rel="noopener" href="https://github.com/triton-inference-server/server">triton</a> 作后端优化推理。该类有两个关键的成员，<code>DeepSpeedMLP</code> 和 <code>DeepSpeedSelfAttention</code>。</p>
+<h4 id="allocate-workspace">allocate workspace</h4>
+<p>接下来我们一步步地看看它的 <code>forward</code> 实现：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, <span class="hljs-built_in">input</span>=<span class="hljs-literal">None</span>, input_mask=<span class="hljs-literal">None</span>, attention_mask=<span class="hljs-literal">None</span>, attn_mask=<span class="hljs-literal">None</span>, head_mask=<span class="hljs-literal">None</span>, layer_past=<span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        get_key_value=<span class="hljs-literal">False</span>, get_present=<span class="hljs-literal">False</span>, encoder_output=<span class="hljs-literal">None</span>, enc_dec_attn_mask=<span class="hljs-literal">None</span>, x=<span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        encoder_hidden_states=<span class="hljs-literal">None</span>, encoder_attention_mask=<span class="hljs-literal">None</span>, use_cache=<span class="hljs-literal">False</span>, alibi=<span class="hljs-literal">None</span>, output_attentions=<span class="hljs-literal">False</span>,</span><br><span class="hljs-params">        layer_head_mask=<span class="hljs-literal">None</span>, past_key_value=<span class="hljs-literal">None</span>, **kwargs</span>):<br>    <span class="hljs-comment"># ... #</span><br>    input_mask = (input_mask <span class="hljs-keyword">if</span> attn_mask <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> attn_mask) <span class="hljs-keyword">if</span> attention_mask <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> attention_mask<br><br>    <span class="hljs-comment"># Allocate memory only on first layer forward</span><br>    <span class="hljs-keyword">if</span> self.config.layer_id == <span class="hljs-number">0</span> <span class="hljs-keyword">and</span> self._alloc_workspace:<br>        self.allocate_workspace(self.config.hidden_size, self.config.heads,<br>                                <span class="hljs-built_in">input</span>.size()[<span class="hljs-number">1</span>],<br>                                <span class="hljs-built_in">input</span>.size()[<span class="hljs-number">0</span>], DeepSpeedTransformerInference.layer_id, self.config.mp_size,<br>                                self.config.bigscience_bloom,<br>                                dist.get_rank() <span class="hljs-keyword">if</span> dist.is_initialized() <span class="hljs-keyword">else</span> <span class="hljs-number">0</span>, self.config.max_out_tokens,<br>                                self.config.min_out_tokens)<br>        self._alloc_workspace = <span class="hljs-literal">False</span><br></code></pre></td></tr></table></figure>
+<p>这里的 <code>allocate_workspace</code> 对应了初始化时传入的分配内存空间的函数，实际上调用的是 <a target="_blank" rel="noopener" href="https://github.com/microsoft/DeepSpeed/blob/v0.14.2/csrc/transformer/inference/csrc/pt_binding.cpp#L106-L129">deepspeed 包装的 C++ CUDA 实现</a>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>  <span class="hljs-comment"># ...</span><br>  <span class="hljs-keyword">if</span> config.dtype == torch.float32:<br>      self.allocate_workspace = inference_module.allocate_workspace_fp32<br>  <span class="hljs-keyword">elif</span> config.dtype == torch.bfloat16:<br>      self.allocate_workspace = inference_module.allocate_workspace_bf16<br>  <span class="hljs-keyword">else</span>:<br>      self.allocate_workspace = inference_module.allocate_workspace_fp32<br>  self._alloc_workspace = <span class="hljs-literal">True</span><br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++">InferenceContext::<span class="hljs-built_in">Instance</span>().<span class="hljs-built_in">GenWorkSpace</span>(num_layers, num_heads, batch_size,<br>                                          prompt_length, hidden_dim, mp_size,<br>                                          external_cache, <span class="hljs-built_in">sizeof</span>(T), rank,<br>                                          max_out_tokens, min_out_tokens);<br></code></pre></td></tr></table></figure>
+<p>这里提一句大模型推理所需内存的计算方法。即刨除大模型本身的参数占用内存，还需要多少内存来完成推理：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">size_t</span> activation_size = <span class="hljs-number">10</span> * (num_heads * effective_head_size) * batch_size;<br><span class="hljs-comment">// Other sequence length dimension is added when the final workSpaceSize is calculated</span><br><span class="hljs-type">size_t</span> temp_size = batch_size * (num_heads / mp_size) * max_out_tokens;<br><span class="hljs-type">size_t</span> cache_size =<br>    num_layers * batch_size * ((num_heads * effective_head_size) / mp_size) * <span class="hljs-number">2</span><br><span class="hljs-type">size_t</span> workSpaceSize = ((external_cache ? (activation_size + temp_size)<br>                                                : (activation_size + temp_size + cache_size))) *<br>                               _max_seq_len * elem_size;<br></code></pre></td></tr></table></figure>
+<p>具体的推导步骤可以参考<strong>大模型训练时占用内存</strong>的<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/648924115">知乎文章</a>。这里做简要注解：</p>
+<ul>
+<li>transformer 模型的层数为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>l</mi></mrow><annotation encoding="application/x-tex">l</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span></span></span></span></li>
+<li>隐藏层维度为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">h</span></span></span></span></li>
+<li>注意力头数为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span></li>
+<li>词表大小为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi></mrow><annotation encoding="application/x-tex">v</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span></span></span></span></li>
+<li>批次大小为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span></li>
+<li>序列长度为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span></li>
+</ul>
+<p>在多头注意力中，我们有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>Q</mi></msub></mrow><annotation encoding="application/x-tex">Q=XW_Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">Q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>K</mi></msub></mrow><annotation encoding="application/x-tex">K=XW_K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>V</mi></msub></mrow><annotation encoding="application/x-tex">V=XW_V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.22222em;">V</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，这三个前向计算的矩阵乘法，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span></span>大小是 (b, s, h)；计算后得到的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span> 大小都是 (b, a, s, h/a) （不考虑 GQA 的情况），因此一共需要 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mi>b</mi><mi>s</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">3bsh</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">3</span><span class="mord mathnormal">b</span><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span></span></span></span> 的内存大小。随后做 layernorm、注意力计算等操作还需要大约 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mi>b</mi><mi>s</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">5bsh</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">5</span><span class="mord mathnormal">b</span><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span></span></span></span> 的内存大小，因此代码中 <code>activation_size</code> 直接分配了 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi>b</mi><mi>s</mi><mi>h</mi></mrow><annotation encoding="application/x-tex">10bsh</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord">10</span><span class="mord mathnormal">b</span><span class="mord mathnormal">s</span><span class="mord mathnormal">h</span></span></span></span> 的内存大小。</p>
+<p>代码中 <code>temp_size</code> 是用来存放注意力计算 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">QK^T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0358em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span> 的值。因此大小是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi><mi>a</mi><msup><mi>s</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">bas^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord mathnormal">ba</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span>。</p>
+<p>每个 batch 的每一层 transformer 都需要一个 KV cache， 因此总大小为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>b</mi><mi>s</mi><mi>l</mi><mi>h</mi><mo>×</mo></mrow><annotation encoding="application/x-tex">2bslh \times</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord">2</span><span class="mord mathnormal">b</span><span class="mord mathnormal">s</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">h</span><span class="mord">×</span></span></span></span> sizeof(T)，与 <code>cache_size</code> 的计算代码对应。</p>
+<h4 id="attention">attention</h4>
+<p>接下来我们看看 attention 的计算过程。准备好函数的各项参数后，直接调用 <code>DeepSpeedSelfAttention:forward</code> 就可以算出注意力值了</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># We set the prev key/value to None when there is a prompt</span><br><span class="hljs-keyword">if</span> <span class="hljs-built_in">input</span>.shape[<span class="hljs-number">1</span>] &gt; <span class="hljs-number">1</span>:<br>    self.layer_past = <span class="hljs-literal">None</span><br>layer_past = layer_past <span class="hljs-keyword">if</span> layer_past <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> self.layer_past<br><span class="hljs-comment"># ....</span><br><span class="hljs-keyword">with</span> torch.no_grad():<br>    attention_output, key, value, context_outputtn_ctx, inp_norm = \<br>            self.attention(<span class="hljs-built_in">input</span>,<br>                    input_mask,<br>                    head_mask,<br>                    layer_past,<br>                    get_present,<br>                    encoder_hidden_states,<br>                    encoder_attention_mask,<br>                    output_attentions,<br>                    self.norm_w,<br>                    self.norm_b,<br>                    alibi)<br><br>    presents = (key, value)<br></code></pre></td></tr></table></figure>
+<p><code>self.attention</code> 直接对应了 <code>DeepSpeedSelfAttention</code> 的实现，因此再把目光转向下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, <span class="hljs-built_in">input</span>, input_mask, head_mask=<span class="hljs-literal">None</span>, layer_past=<span class="hljs-literal">None</span>,</span><br><span class="hljs-params">            get_present=<span class="hljs-literal">False</span>, encoder_hidden_states=<span class="hljs-literal">None</span>,</span><br><span class="hljs-params">            encoder_attention_mask=<span class="hljs-literal">None</span>, output_attentions=<span class="hljs-literal">False</span>,</span><br><span class="hljs-params">            norm_w=<span class="hljs-literal">None</span>, norm_b=<span class="hljs-literal">None</span>, alibi=<span class="hljs-literal">None</span></span>):<br>        <span class="hljs-comment"># ...</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.config.pre_layer_norm:<br>            qkv_out = self.linear_func(<span class="hljs-built_in">input</span>=<span class="hljs-built_in">input</span>,<br>                                       weight=self._attn_qkvw,<br>                                       bias=self._attn_qkvb,<br>                                       add_bias=self.attn_qkvb <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>,<br>                                       do_flash_attn=<span class="hljs-literal">False</span>,<br>                                       num_heads=self.num_attention_heads_per_partition,<br>                                       num_layers=DeepSpeedSelfAttention.num_layers)<br>        <span class="hljs-keyword">else</span>:<br>            qkv_out = self.qkv_func(<span class="hljs-built_in">input</span>=<span class="hljs-built_in">input</span>,<br>                                    weight=self._attn_qkvw,<br>                                    bias=self._attn_qkvb,<br>                                    gamma=norm_w,<br>                                    beta=norm_b)<br><br>        context_layer, key_layer, value_layer = self.compute_attention(qkv_out=qkv_out,<br>                                                                       input_mask=input_mask,<br>                                                                       layer_past=layer_past,<br>                                                                       alibi=alibi)<br>        output = self.vector_matmul_func(<span class="hljs-built_in">input</span>=context_layer, weight=self.attn_ow)<br>        inp_norm = qkv_out[-<span class="hljs-number">1</span>]<br>        <span class="hljs-keyword">if</span> self.config.mlp_after_attn <span class="hljs-keyword">and</span> self.mp_group <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <br>          <span class="hljs-keyword">and</span> dist.get_world_size(group=self.mp_group) &gt; <span class="hljs-number">1</span>:<br>            dist.all_reduce(output, group=self.mp_group)<br>        <span class="hljs-keyword">return</span> (output, key_layer, value_layer, context_layer, inp_norm)<br></code></pre></td></tr></table></figure>
+<p>这里涉及到了四个 Op 算子，流程如下图。<code>QKVGemmOp</code> 计算了 pre layer norm 和 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><mi>X</mi><msub><mi>W</mi><mi>Q</mi></msub></mrow><annotation encoding="application/x-tex">Q=XW_Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">Q</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span>，<code>SoftmaxContextOp</code> 计算了 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mi>o</mi><mi>f</mi><mi>t</mi><mi>m</mi><mi>a</mi><mi>x</mi><mo stretchy="false">(</mo><mo stretchy="false">(</mo><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><msqrt><msub><mi>n</mi><mrow><mi>d</mi><mi>i</mi><mi>m</mi></mrow></msub></msqrt><mo stretchy="false">)</mo><mi>V</mi></mrow><annotation encoding="application/x-tex">softmax((QK^T)/\sqrt{n_{dim}})V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1561em;vertical-align:-0.3147em;"></span><span class="mord mathnormal">so</span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mord mathnormal">t</span><span class="mord mathnormal">ma</span><span class="mord mathnormal">x</span><span class="mopen">((</span><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7253em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord"><span class="mord mathnormal">n</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">im</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.6853em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3147em;"><span></span></span></span></span></span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span>，最后 <code>VectorMatMulOp</code> 计算了 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi>A</mi><mi>t</mi><mi>t</mi><mi>n</mi></mrow><msub><mi>W</mi><mi>O</mi></msub></mrow><annotation encoding="application/x-tex">{Attn}W_O</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="mord mathnormal">tt</span><span class="mord mathnormal">n</span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">O</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。</p>
+<p><img src="/img/LLM/deepspeed_attention.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://www.microsoft.com/en-us/research/uploads/prod/2021/05/Fig1_DeepSpeed5_Blog.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<h4 id="mlp">mlp</h4>
+<p>attention 计算过程结束后，紧接着就是 MLP 的计算过程。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python">    self.layer_past = presents <span class="hljs-keyword">if</span> layer_past <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br>    output = self.mlp(attention_output, <span class="hljs-built_in">input</span>, inp_norm, self.attention.attn_ob)<br><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> self.config.pre_layer_norm:<br>        output = inference_module.layer_norm(output, self.norm_w, self.norm_b, self.config.epsilon)<br><br>    output = output.to(input_type)<br><span class="hljs-keyword">if</span> get_present:<br>    output = (output, presents)<br><br><span class="hljs-keyword">if</span> self.config.return_single_tuple:<br>    <span class="hljs-keyword">return</span> (output, )<br><span class="hljs-keyword">elif</span> self.config.return_tuple:<br>    <span class="hljs-keyword">return</span> output <span class="hljs-keyword">if</span> <span class="hljs-built_in">type</span>(output) <span class="hljs-keyword">is</span> <span class="hljs-built_in">tuple</span> <span class="hljs-keyword">else</span> (output, attn_mask)<br><span class="hljs-keyword">else</span>:<br>    <span class="hljs-keyword">return</span> output<br></code></pre></td></tr></table></figure>
+<p>当然，<code>self.mlp</code> 也对应着 <code>DeepSpeedMLP</code> 的实现：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, <span class="hljs-built_in">input</span>, residual, residual_norm, bias</span>):<br>  <span class="hljs-comment"># ...</span><br>  <span class="hljs-keyword">if</span> self.attn_nw <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>    output = self.fused_gemm_gelu(<span class="hljs-built_in">input</span>=residual_norm,<br>                                  weight=self._inter_w,<br>                                  bias=self._inter_b,<br>                                  weight_out=self.output_w)<br>  <span class="hljs-keyword">else</span>:<br>    output, residual_add = self.mlp_gemm_func(<span class="hljs-built_in">input</span>=<span class="hljs-built_in">input</span>,<br>                                              residual=residual,<br>                                              weight_interm=self._inter_w,<br>                                              weight_out=self.output_w,<br>                                              input_bias=bias,<br>                                              bias=self._inter_b,<br>                                              gamma=self.attn_nw,<br>                                              beta=self.attn_nb)<br>  residual = self.residual_add_func(hidden_state=output,<br>                                    residual=residual,<br>                                    add_bias=bias <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>,<br>                                    attention_output=<span class="hljs-built_in">input</span>,<br>                                    attention_bias=bias <span class="hljs-keyword">if</span> bias <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> self.output_b,<br>                                    final_bias=self.output_b,<br>                                    residual_add=residual_add)<br>  <span class="hljs-keyword">if</span> self.mp_group <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> dist.get_world_size(group=self.mp_group) &gt; <span class="hljs-number">1</span>:<br>    dist.all_reduce(residual, group=self.mp_group)<br>  <span class="hljs-keyword">return</span> residual<br></code></pre></td></tr></table></figure>
+<p>这里涉及到了四个 Op 算子，流程如下图。<code>MLPGemmOp</code> 计算了 FFN，<code>ResidualAddOp</code> 计算了偏移加法。</p>
+<p><img src="/img/LLM/deepspeed_mlp.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://www.microsoft.com/en-us/research/uploads/prod/2021/05/Fig1_DeepSpeed5_Blog.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="高性能算子的实现">高性能算子的实现</h2>
+<p>deepspeed inference v1 版本的算子代码很多。我这里只挑重点，一起来看一下 Attention 部分。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs C++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">typename</span> T&gt;<br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">launch_bias_add_transform_0213</span><span class="hljs-params">(T* output, T* k_cache, T* v_cache,<span class="hljs-type">const</span> T* vals, <span class="hljs-type">const</span> T* bias,</span></span><br><span class="hljs-params"><span class="hljs-function">      <span class="hljs-type">int</span> batch_size, <span class="hljs-type">int</span> seq_length, <span class="hljs-type">unsigned</span> seq_offset, <span class="hljs-type">int</span> all_tokens, <span class="hljs-type">int</span> hidden_dim,</span></span><br><span class="hljs-params"><span class="hljs-function">      <span class="hljs-type">int</span> heads, <span class="hljs-type">int</span> num_kv, <span class="hljs-type">int</span> rotary_dim, <span class="hljs-type">bool</span> rotate_half, <span class="hljs-type">bool</span> rotate_every_two,</span></span><br><span class="hljs-params"><span class="hljs-function">      cudaStream_t stream, <span class="hljs-type">int</span> trans_count, <span class="hljs-type">int</span> max_out_tokens, <span class="hljs-type">float</span> rope_theta)</span> </span>&#123;<br>    hidden_dim &gt;&gt;= <span class="hljs-number">3</span>;<br>    <span class="hljs-type">int</span> head_ext = <span class="hljs-number">1</span>;  <span class="hljs-comment">// (hidden_dim - 1) / MAX_THREADS + 1;</span><br>    <span class="hljs-function">dim3 <span class="hljs-title">block_dim</span><span class="hljs-params">(hidden_dim / heads, (heads / head_ext))</span></span>;<br>    <span class="hljs-function">dim3 <span class="hljs-title">grid_dim</span><span class="hljs-params">(batch_size, seq_length, (trans_count * head_ext))</span></span>;<br>    bias_add_transform_0213&lt;&lt;&lt;grid_dim, block_dim, <span class="hljs-number">0</span>, stream&gt;&gt;&gt;(output,<br>                                                                k_cache,<br>                                                                v_cache,<br>                                                                vals,<br>                                                                bias,<br>                                                                hidden_dim,<br>                                                                seq_length,<br>                                                                seq_offset,<br>                                                                all_tokens,<br>                                                                heads,<br>                                                                num_kv &gt; <span class="hljs-number">0</span> ? (heads / num_kv) : <span class="hljs-number">1</span>,<br>                                                                num_kv &gt; <span class="hljs-number">0</span> ? num_kv : heads,<br>                                                                rotary_dim &gt;&gt; <span class="hljs-number">3</span>,<br>                                                                rotate_half,<br>                                                                rotate_every_two,<br>                                                                head_ext,<br>                                                                max_out_tokens,<br>                                                                rope_theta);<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/deepspeed/" class="print-no-link">#deepspeed</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入探索 deepspeed（二）</div>
+      <div>https://dingfen.github.io/2024/05/15/2024-5-15-deepspeed/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月15日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/05/29/2024-5-29-LLM-perf/" title="大模型性能优化的总结和分享">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">大模型性能优化的总结和分享</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/04/20/2024-4-20-deepspeed/" title="深入探索 deepspeed（一）">
+                        <span class="hidden-mobile">深入探索 deepspeed（一）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

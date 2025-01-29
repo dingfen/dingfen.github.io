@@ -1,0 +1,919 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RISC-V from Scratch 7：内存分页">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RISC-V from Scratch 7">
+<meta property="og:url" content="https://dingfen.github.io/2020/08/29/2020-8-29-riscv-from-scratch-7/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="RISC-V from Scratch 7：内存分页">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/Sv39.png">
+<meta property="og:image" content="https://dingfen.github.io/img/freelist.png">
+<meta property="og:image" content="https://dingfen.github.io/img/satp.png">
+<meta property="og:image" content="https://dingfen.github.io/img/satp_mode.png">
+<meta property="og:image" content="https://dingfen.github.io/img/pagingmem.png">
+<meta property="article:published_time" content="2020-08-29T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RISC-V">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/Sv39.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>RISC-V from Scratch 7 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="RISC-V from Scratch 7"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-29 12:00" pubdate>
+          2020年8月29日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          38 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">RISC-V from Scratch 7</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>RISC-V from scratch 7：内存分页</h1>
+<p>接上一篇<a href="https://dingfen.github.io/risc-v/2020/08/17/riscv-from-scratch-6.html">博客</a>，今天我们继续写 <em>RISC-V from scratch</em> 系列博客。原本我打算将该<a target="_blank" rel="noopener" href="https://github.com/twilco/riscv-from-scratch">英文系列</a>全部翻译成中文，但原作者貌似没有把这一系列完成就咕咕了。为了将工作继续下去，最终完成一个基于 RISC-V 的迷你小内核。我将这些实验继续做下去，并将自己的实践内容和想法写在这里，与大家分享探讨。</p>
+<h2 id="往期回顾">往期回顾</h2>
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，为实现时钟中断，我费了很大的力气学习了 RISC-V 机器模式，又简单了解了中断的概念，我们还在 UART 驱动程序的基础上实现了 <code>printf</code> 等工具函数，在机器模式、监管者模式下实现了时钟中断，最终我们得到的实验效果是，我们的小内核可以定时地跟我们说  hello 。</p>
+<p>当然，实现时钟中断的最终目的不是让它定时地和我们说你好，而是为了进程调度——时间片。这是我在第六章结尾挖下的坑，然而在后续实验中我发现这一想法太过激进，一下子难以实现。在实现进程之前，我们总得把内存进行分页，好让各个进程的内存相互独立，然后才能有多个进程，才会有进程调度吧😅。</p>
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+<p>如果你还未看本系列博客的第一部分，没有安装 <code>riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+<h2 id="内存管理的预备知识">内存管理的预备知识</h2>
+<p>不得不承认内存分页与管理是一门很大的学问。博主学习了 <a target="_blank" rel="noopener" href="https://riscv.org/specifications/privileged-isa/">RISC-V 下的分页机制</a>，也细读了 <a target="_blank" rel="noopener" href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a>，又参考了两篇优质的英文博客 <a target="_blank" rel="noopener" href="https://osblog.stephenmarz.com/ch3.html">RISC-V OS using Rust chapter 3.1</a> 和 <a target="_blank" rel="noopener" href="https://osblog.stephenmarz.com/ch3.2.html">RISC-V OS using Rust chapter 3.2</a> 。再加上自己总结梳理的 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>，对整体的理论知识做了个梳理，才算是懂个大概😅。</p>
+<p>当我们启动小内核时，代码和数据等所有东西都会被装载到 <code>virt</code> 机器的内存中，我们可以使用 <code>riscv64-unknown-elf-nm</code> 来查看我们程序中定义的符号、函数等位置。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ riscv64-unknown-elf-nm build/a.out<br>0000000080000d78 B __bss_end<br>0000000080000d68 R __bss_start<br>000000008000013c t flushTLB<br>00000000800002f2 T get_pagenum<br>0000000080000d40 R __global_pointer$<br>...<br></code></pre></td></tr></table></figure>
+<p>小内核严格遵循我们的要求（确切地说是链接器脚本地要求）将代码放在数据段前面。这样的安排在刚开始时确实没啥问题，但如果有多个进程开始执行任务，而数据全部存放在一起的话，那么稍有不慎就会影响其他进程的运行方式。为了让我们的小内核支持类 Unix 操作系统，也为了更好的内存保护，保证进程运行空间的独立性，我们需要良好的内存管理。</p>
+<h3 id="分页">分页</h3>
+<p>如果各位不太明白什么是内存分页，那么<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3558942fe14f">分页机制图文详解</a>会给你一个详细的入门介绍，只不过是 x86-64 架构的。而关于 RISC-V 的内存分页机制，以及 <code>satp</code> 寄存器在其中所起的重要作用，我在 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>介绍的非常多了，当然也有很多不足甚至错误的地方，也恳请指出。</p>
+<p>总的来说，内存分页就是将内存划分为固定大小的页，在低特权模式下，地址（包括 load 和 store 的有效地址和 PC 中的地址）都是虚拟地址，访问内存时必须被转换为真正的物理地址，具体转换方式是通过遍历页表实现的。因而内存分页制度的关键，在于设计并管理虚拟页和物理页的对应关系，即页表的设计。</p>
+<h3 id="Sv39">Sv39</h3>
+<p>RISC-V 的分页方案以 SvX 的模式命名，其中 X 是以位为单位的虚拟地址的长度，Sv39 指的就是虚拟地址长度为 39 位。我们的内核是基于 RV64 的，简单起见，我打算使用 <strong>Sv39</strong> 分页模式，因此我先重点介绍一下 Sv39 分页模式。事实上，Sv39 与 在 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>介绍的 Sv32 样式基本没变，因此我就简单说一下哈。</p>
+<p>为了方便解释，我画了如下示意图：</p>
+<span id="Sv39" />
+<center>
+<img src="/img/Sv39.png" srcset="/img/loading.gif" lazyload />
+</center>
+<ol>
+<li>
+<p>从 <code>satp</code> 寄存器中取出 44-bit 的根目录地址，乘以 PAGESIZE (4 KiB) 后，得到 3 级页表地址。</p>
+</li>
+<li>
+<p>取出相对应的 VPN[i]，根据 VPN[i] 的值决定 PPN[i] 的页表偏移位置。</p>
+</li>
+<li>
+<p>将得到的 56-bit 的 PPN[i] 取出，乘以 PAGESIZE (4 KiB) 后，得到 2 级页表地址，如此往复，直到遇到了叶 PTE。</p>
+</li>
+<li>
+<p>物理地址的偏移量应等于虚拟地址的偏移量。</p>
+<p>注意到：PPN[2] 的长度有 26 位，而整个物理地址的总长度不是 64 位，而是 56 位，使用零扩展了多余的位空间。</p>
+</li>
+</ol>
+<p>上面的这张示意图非常重要，代码实现时可不能没有它；我们提到的 4 点在代码实现时也需要注意。</p>
+<h3 id="到底要做什么">到底要做什么</h3>
+<p>在介绍完分页和 RISC-V 的 Sv39 分页机制后，内存分页的理论知识其实就差不多学完了。然而，就如同大学的课程一样，就算认真学完了，你还是不知道具体该怎么做🐶。其中很大的原因，其实是我们不知道该做什么。因此，我先梳理一下在内存分页中，我们的小内核应该：</p>
+<ul>
+<li>决定何时启动内存分页</li>
+<li>决定使用何种内存分页机制</li>
+<li>决定如何管理页块</li>
+<li>决定页表、进程（用户态、内核态）的内存分布</li>
+<li>决定某些特殊的物理地址的虚拟地址</li>
+<li>决定如何处理页错误</li>
+</ul>
+<p>我们的小内核不应该做：</p>
+<ul>
+<li>访问虚拟地址时转换为物理地址</li>
+<li>快表 (TLB) 的管理</li>
+</ul>
+<h2 id="数据结构设计">数据结构设计</h2>
+<p>好了，终于准备完成。万事俱备，只欠东风，我们只差代码实现了。</p>
+<h3 id="空闲页块的管理">空闲页块的管理</h3>
+<p>内存+基于页的分配，意味着分配内存就是以页为单位。俗话说万事开头难，有时候我们必须把自己当作机器才能取得突破。假设你是一个机器，你被受命去拿出一个页的内存给某个进程，你的第一反应是什么？Well，当然是找一个空的页块丢给那个进程。</p>
+<p>那么哪里有空的页块呢？哪些块已经被使用了，哪些块用完以后又被进程还回来了呢？我们需要一个空闲页块管理！许多操作系统都会使用链表来帮助它们管理空闲页块，这里也不例外。</p>
+<p>链表的头指针指向第一个空闲的页块，然后第一个空闲的页块拿出 8 字节来指向第二个页块，然后第二个页块指向第三个……</p>
+<span id="freelist" />
+<center>
+    <img src="/img/freelist.png" srcset="/img/loading.gif" lazyload />
+</center>
+<p>这是一个非常棒的做法，我们不需要额外空间（确切的说只要一个指针）就可以源源不断地从链表头部获得空闲块；而遇到回收的情况，也只需要将回收块放到链表头部，而它的代码表示也非常简洁：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">FreePages</span> &#123;</span><br>	<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">FreePages</span> *<span class="hljs-title">next</span>;</span><br>&#125; FreePage_t;<br></code></pre></td></tr></table></figure>
+<h3 id="页的分配与回收">页的分配与回收</h3>
+<p>定义了上面的数据结构后，接下来就要考虑一下页的分配与回收问题了。根据<a href="#freelist">链表图示</a>，我们只需要从链表头部取出一个空闲页块，然后将链表头指针后移动就可以了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span>* <span class="hljs-title function_">kalloc</span><span class="hljs-params">()</span> &#123;<br>    FreePage_t *pt = kmem;<br>    <span class="hljs-keyword">if</span> (kmem) &#123;<br>        kmem = kmem-&gt;next;<br>    &#125;<br>    <span class="hljs-keyword">return</span> (<span class="hljs-type">void</span> *)pt;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>回收的动作也相似，将要回收的块放到链表头部，再让链表头指针前移。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">kfree</span><span class="hljs-params">(<span class="hljs-type">void</span> *p)</span> &#123;<br>    FreePage_t *pt = (FreePage_t *)p;<br>    <span class="hljs-built_in">memset</span>(pt, <span class="hljs-number">0</span>, PAGESIZE);<br>    pt-&gt;next = kmem;<br>    kmem = pt;<br>&#125; <br></code></pre></td></tr></table></figure>
+<span id="VAPA" />
+<h3 id="虚拟地址与物理地址">虚拟地址与物理地址</h3>
+<p>我们还有一个问题没有解决，那就是页表！其实页表自身没有那么深奥，说到底就是一个数组而已。而且在 Sv39 下其长度不会超过 512 。既然是个数组，那么就定义一个指向 64 字节的指针吧🤣。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">typedef</span> uint64 *PageTable_t;<br><span class="hljs-comment">// 定义一个全局的页表</span><br>PageTable_t kernel_pagetable;<br></code></pre></td></tr></table></figure>
+<p>我们之前刚刚实现完页的分配，那么我们就给 <code>kernel_pagetable</code> 页表分配一个页块吧。哦，在这之前，我们必须把空闲块全部用链表串起来。之所以倒序循环，是为了让第一个被分配的页的地址排在前面，不然感觉怪怪的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c">FreePage_t *pt;<br><span class="hljs-keyword">for</span>(<span class="hljs-type">char</span> *p = (<span class="hljs-type">char</span>*)KERNEND; p &gt;= (<span class="hljs-type">char</span>*)KERNBASE; p -= PAGESIZE) &#123;<br>    pt = (FreePage_t *)p;<br>    pt-&gt;next = kmem;<br>    kmem = pt;<br>&#125;<br>kernel_pagatable = (PageTable_t)kalloc();<br></code></pre></td></tr></table></figure>
+<p>现在，就要对照着 <a href="#Sv39">Sv39 示意图</a>，开始慢慢实现虚拟地址映射到物理地址的代码了。<u>在给定虚拟地址 VA 和物理地址 PA ，要把它们映射起来，使得访问虚拟地址 VA 就是访问物理地址 PA 。</u></p>
+<p>第 1 步，要将 <code>satp</code> 寄存器中的 PPN 转换为页表首地址，这需要我们将特定的值写入到 <code>satp</code> 寄存器中。参考下图，</p>
+<center>
+    <img src="/img/satp.png" srcset="/img/loading.gif" lazyload />
+    <img src="/img/satp_mode.png" srcset="/img/loading.gif" lazyload />
+</center>
+RV64 中的 `satp` 寄存器末 44 位都是 PPN，而首 4 位确定 MODE 位。如之前所说，我使用 Sv39 分页机制，因此 MODE = 8，ASID 位我先暂时不处理，全部用 0 填充。那么问题来了，PPN 位应该是什么呢？我也不清楚，要不就先给个定值糊弄过去🤪？就让页表起始地址是 `KERNBASE = 0x80101000` 吧。
+<p>在清楚地知道 <code>satp</code> 寄存器和 <code>SFENCE.VMA</code> 的用法后，写出以下汇编代码。<u>特别注意到，当程序运行完下段汇编代码后，分页就会开启，之后的地址全都是虚拟地址了。因此，这些汇编代码必须在所有准备工作完成后才能执行。</u></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">csrw satp, (8L &lt;&lt; 60) | (KERNBASE &gt;&gt; 12)<br>sfence.vma zero, zero<br></code></pre></td></tr></table></figure>
+<p>第 2 步，从虚拟地址中提取出 VPN[i] ，当虚拟地址为 VA 时，对其进行相应的移位操作，就可以得到偏移量了。具体的函数实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">get_pagenum</span><span class="hljs-params">(<span class="hljs-type">int</span> level, uint64 va)</span> &#123;<br>    <span class="hljs-type">int</span> shift = PAGEOFF + level * <span class="hljs-number">9</span>;<br>    <span class="hljs-type">int</span> mask = <span class="hljs-number">0x1ff</span>;<br>    <span class="hljs-keyword">return</span> ((va &gt;&gt; shift) &amp; mask);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>第 3 步，在访问页表并得到对应的 PTE 后，首先要判断：1）是否有效。2）是否为叶 PTE。3）是否有权限访问。然后根据  <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a>和 <a target="_blank" rel="noopener" href="https://github.com/riscv/riscv-isa-manual/releases/download/draft-20200825-bb55379/riscv-privileged.pdf">RISC-V privileged ISA manual</a> 的具体要求，<a href="%5Bhttps://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html#%E9%99%84%E5%BD%95%5D(https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html#%E9%99%84%E5%BD%95)">要么产生页错误，要么进行下一级别的页表访问，要么继续得到物理地址等</a>。哦，天哪这可太复杂了，我必须进行简化：</p>
+<ul>
+<li>忽略页错误</li>
+<li>不要超级页，默认最后一级的 PTE 就是叶 PTE，其他的都是非叶 PTE</li>
+</ul>
+<p>这样的话，我们的代码复杂度会降低很多（当然我们以后会加上），我们先解决一下 PTE 转为页表起始地址的问题：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c">uint64 <span class="hljs-title function_">PTE2PA</span><span class="hljs-params">(uint64 pte)</span> &#123;<br>    <span class="hljs-keyword">return</span> (pte &gt;&gt; <span class="hljs-number">10</span>) &lt;&lt; PAGEOFF;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后再来解决一下遇到的 PTE 无效的问题，可能你会觉得遇到无效的 PTE 直接产生页错误不就好了的错觉。emmm……我们以后确实会这么干，但如果在建立内存分页的过程中也这么干的话，就有点灰色幽默了：你要建立一片内存的分页，首先要创建一个页表（PTE），还未创建的 PTE 当然是无效的（内存全 0 ），如果此时产生页错误，会让我们永远都无法建立这个新页表！我们应当：分配一个空闲页块，置相关的位域，记录其起始地址并将地址回填到相关的 PTE 中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">if</span> ((table = (PageTable_t)kalloc()) == <span class="hljs-number">0</span>)<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br><span class="hljs-built_in">memset</span>(table, <span class="hljs-number">0</span>, PAGESIZE);<br>*pte = PA2PTE((uint64)table) | PTE_V;<br><br>uint64 <span class="hljs-title function_">PA2PTE</span><span class="hljs-params">(uint64 pa)</span> &#123;<br>    <span class="hljs-keyword">return</span> (pa &gt;&gt; PAGEOFF) &lt;&lt; <span class="hljs-number">10</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>第 4 步，得到了叶 PTE 后就非常轻松了，只要把 PA 存到 PTE 就行了，页偏移量我们不需要手动赋值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c">PTE_t *p = get_virtaddr4physaddr(VA, PA);				<span class="hljs-comment">// 获得到虚拟地址 VA 相应的 PTE</span><br>*p = ((pa &gt;&gt; PAGEOFF) &lt;&lt; <span class="hljs-number">10</span>) | PTE_V | PTE_X | PTE_R | PTE_W;	<span class="hljs-comment">// 把物理地址 PA 的地址经偏移后放入 PTE，然后写入一些位</span><br></code></pre></td></tr></table></figure>
+<h3 id="等值映射">等值映射</h3>
+<p>为什么我们要实现对给定虚拟地址 VA 和物理地址 PA 建立映射关系，因为对某些特殊的物理地址，我们要求其虚拟地址的值与物理地址相同。这被称为等值映射。</p>
+<p>等值映射就是虚拟地址的值与物理地址的值相同的情况。为什么要强调等值映射？如果大家还记得 UART 驱动程序的内容，那么应该不会忘记 <code>0x10000000</code> 开始就是 UART 的内存映射寄存器的位置了。在未分页时，我们访问的地址都是物理地址，然而分页后，监管者模式和用户模式下访问的地址就是虚拟地址了，如果没有等值映射，会导致最终访问的物理地址不再是 <code>0x10000000</code> ，程序也就无法运行下去了。那么，哪些地址需要等值映射呢？先不管那么多，要不就让所有用到的内存地址都等值映射吧。</p>
+<h2 id="最后的实现">最后的实现</h2>
+<p>好了说了这么多零零散散的内容，我们把所有的东西整合起来看一下吧。</p>
+<p>首先是空闲页块链表，在使用前，必须先初始化，把空闲页块全部串起来：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">initmm</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">char</span> *p = (<span class="hljs-type">char</span>*)KERNEND;<br>    FreePage_t *pt;<br>    <span class="hljs-keyword">for</span>(; p &gt;= (<span class="hljs-type">char</span>*)KERNBASE; p -= PAGESIZE) &#123;<br>        pt = (FreePage_t *)p;<br>        pt-&gt;next = kmem;<br>        kmem = pt;<br>    &#125;<br>    <span class="hljs-comment">// ...</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后，就是页表的等值映射问题，先分配出一个页表，然后再使用 <code>map</code> 函数，它可以将给定的物理地址和虚拟地址联系在一起，在一开始，我们不分三七二十一，直接把用到的所有地址都进行等值映射。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">initmm</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-comment">// ...</span><br>    kernel_pagatable = (PageTable_t)kalloc();<br>    <span class="hljs-built_in">memset</span>(kernel_pagatable, <span class="hljs-number">0</span>, PAGESIZE);<br>    <span class="hljs-built_in">map</span>(kernel_pagatable, <span class="hljs-number">0x2000000</span>, <span class="hljs-number">0x2000000</span>, <span class="hljs-number">0x10000</span>, PTE_R | PTE_W);<br>    <span class="hljs-built_in">map</span>(kernel_pagatable, <span class="hljs-number">0x10000000</span>, <span class="hljs-number">0x10000000</span>, <span class="hljs-number">0x100</span>, PTE_R | PTE_W);<br>    <span class="hljs-built_in">map</span>(kernel_pagatable, <span class="hljs-number">0x80000000</span>, <span class="hljs-number">0x80000000</span>, <span class="hljs-number">0x100000</span>, PTE_X | PTE_R | PTE_W);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>map</code> 函数的实现要难很多，大家要细看<a href="#VAPA">虚拟地址与物理地址</a>，函数从第三级页表开始，一步一步地找到虚拟地址对应的叶 PTE。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs c">PTE_t *<span class="hljs-title function_">virt2phys</span><span class="hljs-params">(PageTable_t table, uint64 va)</span> &#123;<br>    <span class="hljs-type">int</span> level;<br>    PTE_t *pte;<br>    <span class="hljs-keyword">for</span>(level = <span class="hljs-number">2</span>; level &gt; <span class="hljs-number">0</span>; level--) &#123;<br>        pte = &amp;table[get_pagenum(level, va)];<br>        <span class="hljs-keyword">if</span> (*pte &amp; PTE_V) &#123;<br>            <span class="hljs-keyword">if</span> (*pte &amp; PTE_R || *pte &amp; PTE_X) &#123;		<span class="hljs-comment">// valid</span><br>                <span class="hljs-keyword">break</span>;  <span class="hljs-comment">// leaf</span><br>            &#125; <span class="hljs-keyword">else</span> &#123;  <span class="hljs-comment">// non-leaf</span><br>                table = (PageTable_t)PTE2PA(*pte);<br>            &#125;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-keyword">if</span> ((table = (PageTable_t)kalloc()) == <span class="hljs-number">0</span>)<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>            <span class="hljs-built_in">memset</span>(table, <span class="hljs-number">0</span>, PAGESIZE);<br>            *pte = PA2PTE((uint64)table) | PTE_V;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> &amp;table[get_pagenum(level, va)];<br>&#125;<br><br><span class="hljs-type">void</span> <span class="hljs-title function_">map</span><span class="hljs-params">(PageTable_t table, uint64 va, uint64 pa, uint64 size, uint64 mode)</span> &#123;<br>    uint64 pgstart = page_aligndown(va);<br>    uint64 pglast = page_aligndown(va + size<span class="hljs-number">-1</span>);<br>    <span class="hljs-keyword">for</span>(; pgstart &lt;= pglast; pgstart += PAGESIZE, pa += PAGESIZE) &#123;<br>        PTE_t *p = virt2phys(table, pgstart);<br>        *p = ((pa &gt;&gt; PAGEOFF) &lt;&lt; <span class="hljs-number">10</span>) | PTE_V | mode;<br>    &#125;<br>    <span class="hljs-keyword">return</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>virt2phys</code> 函数中：</p>
+<ol>
+<li><code>pte = &amp;table[get_pagenum(level, va)]</code> 利用偏移量找到对应的 PTE 。</li>
+<li><code>if (*pte &amp; PTE_V)</code> 判断是否有效。</li>
+<li><code>if (*pte &amp; PTE_R || *pte &amp; PTE_X)</code> 判断是否为叶 PTE 。</li>
+<li>如果无效，需要重新分配出一个页，并且将页的地址放入到 PTE 中。</li>
+<li>最终，返回叶 PTE 。</li>
+</ol>
+<p>最后，不要忘记打开内存分页“开关”：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">csrw satp, (8L &lt;&lt; 60) | (KERNBASE &gt;&gt; 12)<br>sfence.vma zero, zero<br></code></pre></td></tr></table></figure>
+<p>最终，为了方便大家理解虚拟内存和物理内存的分布，我特意画了一幅图。在我的设计中，UART CLINT 等设备的内存映射寄存器的所在地都是等值映射，在未启动分页前的函数也应当在等值映射的范围内，这是方便启动分页后这些函数无需进行重新映射也可以被找到。</p>
+<center>
+<img src="/img/pagingmem.png" srcset="/img/loading.gif" lazyload />
+</center>
+<h2 id="一些疑问">一些疑问</h2>
+<p>博主在实现内存分页时遇到过很多问题，经过思考后将某些问题的回答记录在此，方便自己和大家更好地理解内存分页机制。</p>
+<p>当我注意到 RISC-V 64 支持的分页模式有 Sv39 Sv48 后，我发现 RV64 的分页模式至少有三级分页，而 QEMU 提供的 <code>virt</code> 机器内存大小只有 128 MB ，这难道不会在页表上浪费很大的空间么？经计算我发现，空间占用确实比二级页表、一级页表要大，但不需要很担心空间的问题。事实上在虚拟内存有 128 MB 时，三级页表只有一个 PTE ，因此只存在一个二级页表，而二级页表的 PTE 也只有 64 个，意味着有 64 个一级页表，总共 66 个页表，每个页表占 4 KiB，因此只需要 264 KiB 。相比 128 MB 的物理内存空间，无需担心。我们真正需要担心的是页内空间的浪费，因为我们现在只实现了基于页的内存分配，如在处理 C 语言中 <code>malloc(8)</code>  时也只能分配给 4 KiB 的内存，太不合理了，我们需要实现基于字节的内存分配。这里留个坑，我们可以在进程实现之后再来处理这个问题。</p>
+<p>虚拟地址可以比物理地址大么？确实可以，不同的虚拟地址可以映射到同一个物理地址，实现代码/数据的共享。</p>
+<p>到底哪些地址必须使用等值映射？博主经过多次实验，发现目前我们所写的代码/数据几乎都需要等值映射。在 RISC-V 64 中，机器模式使用物理地址，而监管者模式、用户模式使用虚拟地址，我认为只要在机器模式下确定的地址，且需要在监管者模式下使用的，基本都需要等值映射，包括程序代码、全局 section 、UART 等等。</p>
+<h2 id="接下来">接下来</h2>
+<p>之前我打算攻克下一个难题——进程。但在做初步调研后，发现做进程之前，先完成内核分页可能更加合适。然后我就一头栽进了内核分页这个大坑。弄懂内核分页并实现确实不容易，有很多地方仍需要自己慢慢学习。那么，接下来，我们需要好好消化一下学到的东西，整理一下日益凌乱的文件夹，然后一鼓作气，向进程进军！</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RISC-V/" class="category-chain-item">RISC-V</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RISC-V/" class="print-no-link">#RISC-V</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>RISC-V from Scratch 7</div>
+      <div>https://dingfen.github.io/2020/08/29/2020-8-29-riscv-from-scratch-7/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月29日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/09/15/2020-9-15-WHY%20RISC-V/" title="Why RISC-V ?">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Why RISC-V ?</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/08/17/2020-8-17-riscv-from-scratch-6/" title="RISC-V from Scratch 6">
+                        <span class="hidden-mobile">RISC-V from Scratch 6</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

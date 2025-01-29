@@ -1,0 +1,928 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RISC-V from Scratch 2：硬件布局，链接器脚本与 C 运行时">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RISC-V from Scratch 2">
+<meta property="og:url" content="https://dingfen.github.io/2020/07/26/2020-7-26-riscv-from-scratch-2/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="RISC-V from Scratch 2：硬件布局，链接器脚本与 C 运行时">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://twilco.github.io/img/naive_gdb.png">
+<meta property="og:image" content="https://twilco.github.io/img/working_gdb.png">
+<meta property="article:published_time" content="2020-07-26T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RISC-V">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://twilco.github.io/img/naive_gdb.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>RISC-V from Scratch 2 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="RISC-V from Scratch 2"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-07-26 12:00" pubdate>
+          2020年7月26日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          43 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">RISC-V from Scratch 2</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>RISC-V from scratch 2</h1>
+<p>今天，我们继续翻译 <em>RISC-V from scratch</em> 系列的第二部分，原文<a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/04/27/riscv-from-scratch-2.html">链接</a>。<a target="_blank" rel="noopener" href="https://github.com/twilco/riscv-from-scratch">这是</a>该系列的 github 库。</p>
+<h2 id="简介">简介</h2>
+<p>快速回顾，通过 <em>RISC-V from scratch</em> 系列课程，我们将会探索很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。在<a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html">第一篇博文</a>中，我们简短的讨论一下 RISC-V 以及为什么它很重要，并搭建起 RISC-V 的工具链，最后在 RISC-V 模拟器和 <a target="_blank" rel="noopener" href="https://github.com/sifive/freedom-e-sdk">SiFive’s freedom-e-sdk</a> 的帮助下构建并运行一个简单的 C 程序。</p>
+<p><code>Freedom-e-sdk</code> 使我们在仿真或真正的 RISC-V 处理器上编译，调试和运行任何 C 程序变得很简单。不必担心什么链接脚本、编写运行时来设置堆栈，调用main等的运行时。如果你希望快速提高工作效率，那就太好了，但是这些细节正是我们想要学习的东西！</p>
+<p>在这篇文章中，我们将摆脱 <code>freedom-e-sdk</code> 。我们将编写并尝试调试自己的 C 程序，揭示隐藏在 main 后面的秘密，并检查 <code>qemu</code> 虚拟机的硬件布局。然后，我们将检查和修改链接器脚本，编写自己的 C 运行时以设置并运行我们的程序，最后调用 GDB 并逐步执行程序。</p>
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+<p>如果你还未看本系列博客的第一部分，没有安装 <code>riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+<p>之后，再将博主创建的 github 库下载下来，作为我们的工作点。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs shell">git clone git@github.com:twilco/riscv-from-scratch.git<br><span class="hljs-meta prompt_"># </span><span class="language-bash">or `git <span class="hljs-built_in">clone</span> https://github.com/twilco/riscv-from-scratch.git` to <span class="hljs-built_in">clone</span></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">via HTTPS rather than SSH</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">alternatively, <span class="hljs-keyword">if</span> you are a GitHub user, you can fork this repo.</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">https://help.github.com/en/articles/fork-a-repo</span><br>cd riscv-from-scratch/work<br></code></pre></td></tr></table></figure>
+<p>译注：亲测无需下载 github 库也可实现下面的实验。</p>
+<h2 id="天真的方法">天真的方法</h2>
+<p>好，让我们写一个简单的 C 程序，开始我们的旅途！</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// file: riscv-from-scratch/work/add.c</span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> a = <span class="hljs-number">4</span>;<br>    <span class="hljs-type">int</span> b = <span class="hljs-number">12</span>;<br>    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-type">int</span> c = a + b;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>我们想要跑该程序，第一步就是编译它，生成相应的可执行文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">-O0 to <span class="hljs-built_in">disable</span> all optimizations. Without this, GCC might optimize</span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash">away our infinite addition since the result <span class="hljs-string">&#x27;c&#x27;</span> is never used.</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">-g to tell GCC to preserve debug info <span class="hljs-keyword">in</span> our executable.</span><br>riscv64-unknown-elf-gcc add.c -O0 -g<br></code></pre></td></tr></table></figure>
+<p>编译器生成了 <code>a.out</code> 文件，这是 <code>gcc</code> 在没有给定生成文件名字的情况下的默认名。现在，我们可以在 <code>qemu</code> 里面运行它了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># -machine tells QEMU which among our list of available machines we want to</span><br><span class="hljs-comment"># run our executable against.  Run qemu-system-riscv64 -machine help to list</span><br><span class="hljs-comment"># all available machines.</span><br><span class="hljs-comment"># -m is the amount of memory to allocate to our virtual machine.</span><br><span class="hljs-comment"># -gdb tcp::1234 tells QEMU to also start a GDB server on localhost:1234 where</span><br><span class="hljs-comment"># TCP is the means of communication.</span><br><span class="hljs-comment"># -kernel tells QEMU what we&#x27;re looking to run, even if our executable isn&#x27;t </span><br><span class="hljs-comment"># exactly a &quot;kernel&quot;.</span><br>qemu-system-riscv64 -machine virt -m 128M -gdb tcp::1234 -kernel a.out<br></code></pre></td></tr></table></figure>
+<p>我们选择了 <code>virt</code> RISC-V 虚拟机，它是 <code>riscv-qemu</code> <a target="_blank" rel="noopener" href="https://github.com/riscv/riscv-qemu/wiki#machines">自带的</a>。</p>
+<p>既然我们的程序已经在 QEMU 中运行，并且在主机端口 1234 打开了 TCP 连接，用于连接 GDB ，那么我们在另一个终端，打开 GDB 与之相连吧：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">--tui gives us a (t)extual (ui) <span class="hljs-keyword">for</span> our GDB session.</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">While we can start GDB without any arguments, specifying <span class="hljs-string">&#x27;a.out&#x27;</span> tells GDB</span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash">to load debug symbols from that file <span class="hljs-keyword">for</span> the newly created session.</span><br>riscv64-unknown-elf-gdb --tui a.out<br></code></pre></td></tr></table></figure>
+<p>进入了 GDB 的界面：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs shell">This GDB was configured as &quot;--host=x86_64-apple-darwin17.7.0 --target=riscv64-unknown-elf&quot;.           │<br>Type &quot;show configuration&quot; for configuration details.                                                  │<br>For bug reporting instructions, please see:                                                           │<br>&lt;http://www.gnu.org/software/gdb/bugs/&gt;.                                                              │<br>Find the GDB manual and other documentation resources online at:                                      │<br>    &lt;http://www.gnu.org/software/gdb/documentation/&gt;.                                                 │<br>                                                                                                      │<br>For help, type &quot;help&quot;.                                                                                │<br>Type &quot;apropos word&quot; to search for commands related to &quot;word&quot;...                                       │<br>Reading symbols from a.out...                                                                         │<br>(gdb) <br></code></pre></td></tr></table></figure>
+<p>当然，我们还需要告诉 GDB 有一个已经在运行的程序在等着它调试，这和平时使用 GDB 调试程序不同，因为现在我们要调试的程序运行在另一个”机器“上。我们需要打开 TCP 连接，并选择相应的端口，使 GDB 与 程序相连：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">(gdb) target remote :1234                                                                             │<br>Remote debugging using :1234<br></code></pre></td></tr></table></figure>
+<p>现在，我们设置断点了</p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver">(gdb) b main<br>Breakpoint <span class="hljs-number">1</span> <span class="hljs-keyword">at</span> <span class="hljs-number">0x1018e</span>: <span class="hljs-built_in">file</span> <span class="hljs-built_in">add</span>.c, <span class="hljs-built_in">line</span> <span class="hljs-number">2.</span><br>(gdb) b <span class="hljs-number">5</span> <span class="hljs-comment"># this is the line within the forever-while loop. int c = a + b;</span><br>Breakpoint <span class="hljs-number">2</span> <span class="hljs-keyword">at</span> <span class="hljs-number">0x1019a</span>: <span class="hljs-built_in">file</span> <span class="hljs-built_in">add</span>.c, <span class="hljs-built_in">line</span> <span class="hljs-number">5.</span><br></code></pre></td></tr></table></figure>
+<p>最后，让程序继续运行，直到遇见断点。</p>
+<figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs erlang">(gdb) c<br>        Continuing.<br></code></pre></td></tr></table></figure>
+<p>很快，你就会发现程序一直卡死在这里，不会遇到我们之前设置的断点。这到底是怎么一回事呢？我们可以先看一下 GDB 给我们提供的信息：</p>
+<p><img src="https://twilco.github.io/img/naive_gdb.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>看一下图中的几个红框：</p>
+<ol>
+<li>GDB 无法找到源代码，这原本是展示源代码和断点位置的地方</li>
+<li>GDB 不知道现在运行到第几行，并且 PC 值是 0x0。</li>
+<li>圈出来的值全是 0x0000，很明显 GDB 不知道具体断点位置</li>
+</ol>
+<h2 id="揭开-v-的面纱">揭开 -v 的面纱</h2>
+<p>为了探明之前究竟发生了什么，我们必须先了解一下 C 程序到底是（尤其是在我们看不见的地方）怎么工作的。我们的程序都有一个 <code>main</code> 函数，但是究竟什么是 <code>main</code> 函数？为什么我们把它叫做 <code>main</code> 而不是 <code>origin</code>、<code>begin</code> 或者 <code>entry</code>？很多人都知道我们的程序从 <code>main</code> 开始运行，但究竟是什么魔力使它如此运作？</p>
+<p>为了回答这些问题，我们要重新使用 GCC <code>-v</code> 编译一下之前的程序，<code>-v</code> 可以帮助我们获取实际操作的详细输出。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">In the `riscv-from-scratch/work` directory...</span><br>riscv64-unknown-elf-gcc add.c -O0 -g -v<br></code></pre></td></tr></table></figure>
+<p>第一件我们需要明白的事情就是，虽然 GCC 是 “GNU C Compiler” 的缩写，<code>gcc</code> 还是会默认链接我们的代码，并且汇编它（加<code>-c</code> 才会告诉 GCC 只进行编译）。那么这和我们之前要探讨的问题有何关系呢？</p>
+<p>接下来，我们再细看一下刚刚 GCC 给我们打印出来的信息。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">The actual `gcc -v` <span class="hljs-built_in">command</span> outputs full paths, but those are quite</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">long, so pretend these variables exist.</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-variable">$RV_GCC_BIN_PATH</span> = /Users/twilcock/usys/riscv/riscv64-unknown-elf-gcc-&lt;<span class="hljs-built_in">date</span>&gt;-&lt;version&gt;/bin/</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash"><span class="hljs-variable">$RV_GCC_LIB_PATH</span> = <span class="hljs-variable">$RV_GCC_BIN_PATH</span>/../lib/gcc/riscv64-unknown-elf/8.2.0</span><br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">$</span><span class="language-bash">RV_GCC_BIN_PATH/../libexec/gcc/riscv64-unknown-elf/8.2.0/collect2 \</span><br><span class="language-bash">  ...truncated...</span> <br><span class="hljs-meta prompt_">  $</span><span class="language-bash">RV_GCC_LIB_PATH/../../../../riscv64-unknown-elf/lib/rv64imafdc/lp64d/crt0.o \ </span><br><span class="hljs-meta prompt_">  $</span><span class="language-bash">RV_GCC_LIB_PATH/riscv64-unknown-elf/8.2.0/rv64imafdc/lp64d/crtbegin.o \</span><br><span class="language-bash">  -lgcc --start-group -lc -lgloss --end-group -lgcc \ </span><br><span class="hljs-meta prompt_">  $</span><span class="language-bash">RV_GCC_LIB_PATH/rv64imafdc/lp64d/crtend.o</span><br>  ...truncated...<br>COLLECT_GCC_OPTIONS=&#x27;-O0&#x27; &#x27;-g&#x27; &#x27;-v&#x27; &#x27;-march=rv64imafdc&#x27; &#x27;-mabi=lp64d&#x27;<br></code></pre></td></tr></table></figure>
+<p>不得不承认，即使我裁剪了很多信息，这些信息依然太过于复杂。我必须再详细解释一下。在第一行，<code>gcc</code> 在运行一个名叫 <code>collect2</code> 的程序，并且把参数比如 <code>crt0</code>，<code>crtbegin.o</code> 和 <code>crtend.o</code>，并设置了 <code>-lgcc --start-group</code>等一些 flag 。从 <a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gccint/Collect2.html">collect2</a> 来看，简而言之，<code>collect2</code> 在开始阶段将很多初始化函数一个一个地链接起来。</p>
+<p>知道了这些后，就可以明白事实上 GCC 是把多个不同的 <code>crt</code> 文件和我们自己写的代码链接起来，<code>crt</code>是 “C runtime” 的缩写，你可以<a target="_blank" rel="noopener" href="https://stackoverflow.com/a/27786892/2421349">仔细阅读了解一下每个 crt 是用来干嘛的</a>，不过不用担心，我们目前只关注 <code>crt0</code>这个文件，它有个很重要的作用：</p>
+<blockquote>
+<p><em>This object [crt0] is expected to contain the</em> <code>_start</code> <em>symbol, which takes care of bootstrapping the initial execution of the program.</em></p>
+<p>目标对象 crt0 应该包含 <code>_start</code> 符号，该符号用于引导程序的初始执行。</p>
+</blockquote>
+<p>执​​行的这种初始引导还是要取决于所使用的平台，但是通常它包括重要的任务，例如<strong>设置堆栈框架，传递命令行参数以及调用 <code>main</code></strong>。是的，我们终于回答了本节开头的问题——<code>_start</code> 调用了我们的 <code>main</code> 函数！</p>
+<h2 id="找到我们的堆栈">找到我们的堆栈</h2>
+<p>终于解决了一个问题，但你可能更想知道这和我们最初的目标有什么关系，即能够逐步使用 GDB 来完成简单的 C 程序。在那之前，我们还需要解决另一些问题，首先要解决的问题是 <code>crt0</code> 设置堆栈的方式。</p>
+<p>我们之前看到，<code>gcc</code> 链接了 <code>crt0</code> 文件，这个 <code>crt0</code>被选中，是根据如下几点做出的决策：</p>
+<ul>
+<li>目标平台，包括机器、供应商、操作系统，在本文中，指的是 <code>riscv64-unknown-elf</code></li>
+<li>目标 ISA <code>rv64imafdc</code></li>
+<li>目标 ABI <code>lp64d</code></li>
+</ul>
+<p>之前提到过，<code>crt0</code> 的一个工作是建立堆栈，但如果我们不知道 CPU 会把哪里当作堆栈，我们还能怎么办呢？确实，神仙来了也办不了，因此，我们需要更多的信息。</p>
+<p>回到我们最初开始运行 <code>qemu</code> 的地方，<code>qemu-system-riscv64 -machine virt -m 128M -gdb tcp::1234 -kernel a.out</code> 可以看到我们使用了 virt 机器，可喜的是，<code>qemu</code> 把这个机器的 dump 信息全都给了我们，它放在了 <code>dtb</code>格式的文件中。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">In the `riscv-from-scratch/work` directory...</span><br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">Use qemu to dump info about the <span class="hljs-string">&#x27;virt&#x27;</span> machine <span class="hljs-keyword">in</span> dtb (devicetree blob)</span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash">format.</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">The data <span class="hljs-keyword">in</span> this file represents hardware components of a given</span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash">machine / device / board.</span><br>qemu-system-riscv64 -machine virt -machine dumpdtb=riscv64-virt.dtb<br></code></pre></td></tr></table></figure>
+<p>然而 <code>dtb</code> 格式人类是无法轻易看懂的，但有一个工具 <code>dtc</code> (devicetree compiler) 可以转换成我们可读的内容。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">I<span class="hljs-string">&#x27;m running MacOS, so I use Homebrew to install this. If you&#x27;</span>re</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">running another OS you may need to <span class="hljs-keyword">do</span> something <span class="hljs-keyword">else</span>.</span><br>brew install dtc<br><span class="hljs-meta prompt_"># </span><span class="language-bash">Convert our .dtb into a human-readable .dts (devicetree <span class="hljs-built_in">source</span>) file.</span><br>dtc -I dtb -O dts -o riscv64-virt.dts riscv64-virt.dtb<br></code></pre></td></tr></table></figure>
+<p>它生成了 <code>riscv64-virt.dts</code> 文件，里面包含了很多关于 virt 的信息，例如 CPU 核数量，外围设备（例如：UART 挖个小坑）的内存映射地址，以及 RAM 。我们想让我们的堆栈放在合适的位置，那么我们就找到它：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">grep memory riscv64-virt.dts -A 3<br>        memory@80000000 &#123;<br>                device_type = &quot;memory&quot;;<br>                reg = &lt;0x00 0x80000000 0x00 0x8000000&gt;;<br>        &#125;;<br></code></pre></td></tr></table></figure>
+<p>可以看到 <code>device_type</code> 是 “memory” ，而其值，<code>reg = &lt;...&gt;</code>可以告诉我们想要的，比如内存从哪里开始，有多长。</p>
+<p>参考<a target="_blank" rel="noopener" href="https://buildmedia.readthedocs.org/media/pdf/devicetree-specification/latest/devicetree-specification.pdf">the devicetree specification</a>，我们看到 reg 的语法是任意数量的 <code>(base_address，length)</code> 对。但是，reg 内部有四个值——定义一个 memory 不应该只需要两个值吗？</p>
+<p>再看一下<a target="_blank" rel="noopener" href="https://buildmedia.readthedocs.org/media/pdf/devicetree-specification/latest/devicetree-specification.pdf">the devicetree specification</a>，我了解到，指定地址和长度所需的 &lt;u32&gt; 单元数由节点的父节点（或节点本身）中的 <code>#address-cells</code> 和 <code>#size-cells</code> 属性确定。这些值未在我们的内存节点中指定，并且内存节点的父节点只在文件的根部分，让我们在其中查找以下值：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">head -n8 riscv64-virt.dts<br>/dts-v1/;<br><br>/ &#123;<br>        #address-cells = &lt;0x02&gt;;<br>        #size-cells = &lt;0x02&gt;;<br>        compatible = &quot;riscv-virtio&quot;;<br>        model = &quot;riscv-virtio,qemu&quot;;<br></code></pre></td></tr></table></figure>
+<p>它用了两个 32-bit 的值来确定一个地址，两个 32-bit 的值确定长度，这意思着， <code>reg = &lt;0x00 0x80000000 0x00 0x8000000&gt;</code> ，那么我们的内存起始于 <code>0x00 + 0x80000000</code>，并且长度为 <code>0x00+0x8000000</code> 字节，意味着它结束于 <code>0x88000000</code>，更简洁的说法是，始于 <code>0x80000000</code>的长度为128M 的内存。</p>
+<h2 id="链接起来">链接起来</h2>
+<p>好，使用 <code>qemu</code> 和 <code>dtc</code> ，我们可以成功地找到 RAM 的位置、长度，我们也知道 GCC 会链接默认的 <code>crt0</code> ，并建起一个不是我们想要的堆栈，那么基于这些信息，我们到底该怎么做，才能得到一个可以运行、调试的程序呢？</p>
+<p>好吧，看来默认的 <code>crt0</code> 并没有完成我们想要的工作，因此我们必须编写自己的 <code>crt0</code>，然后将其编译，并与我们写的 C 程序链接。我们的 <code>crt0</code> 需要知道栈顶的起始位置，以进行初始化。虽然不是很推荐，但简便起见，我们在 <code>crt0</code> 中将此值硬编码为 <code>0x80000000</code>。这可能会引起不便，例如，当我们想使用具有不同内存属性的其他经过 <code>qemu</code> 化的 CPU（例如 <code>sifive_e</code> ）时会发生什么？</p>
+<p>好在这个问题还很遥远，且存在一个很好的解决方案。 GNU 的链接程序 <code>ld</code> 为我们提供了<a target="_blank" rel="noopener" href="https://web.archive.org/web/20190525173911/https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/4/html/Using_ld_the_GNU_Linker/assignments.html">一种定义可以从 <code>crt0</code> 访问的符号的方法</a>。除了 <code>ld</code> 提供的外，我们还可以使用它来创建 <code>__stack_top</code> 符号，它在多个不同的 CPU 之间具有相当的灵活性。</p>
+<p>与其从头开始编写我们自己的链接器，不如将 <code>ld</code> 使用的默认链接器脚本稍加修改，增加我们想要的符号。你可能想知道什么是链接描述文件？<a target="_blank" rel="noopener" href="http://www.scoberlin.de/content/media/http/informatik/gcc_docs/ld_3.html">此文</a>总结甚好：</p>
+<blockquote>
+<p><em>The main purpose of the linker script is to describe how the sections in the input files should be mapped into the output file, and to control the memory layout of the output file.</em></p>
+</blockquote>
+<p>清楚了不？现在我们开始将默认的链接器脚本拷贝下来：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">In the `riscv-from-scratch/work` directory...</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">Copy the default linker script into riscv64-virt.ld</span><br>riscv64-unknown-elf-ld --verbose &gt; riscv64-virt.ld<br></code></pre></td></tr></table></figure>
+<p>文件里有很多有意思的信息，包括 <code>ld</code> 的版本号，可支持的架构等，当然这些东西的存在与否，完全不影响脚本的正常工作，可以将等于号之前的东西全部删掉的。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs shell">vim riscv64-virt.ld<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">Remove everything above and including the ============ line</span><br>GNU ld (GNU Binutils) 2.32<br>  Supported emulations:<br>   elf64lriscv<br>   elf32lriscv<br>using internal linker script:<br>==================================================<br>/* Script for -z combreloc: combine and sort reloc sections */<br>/* Copyright (C) 2014-2019 Free Software Foundation, Inc.<br>   Copying and distribution of this script, with or without modification,<br>   are permitted in any medium without royalty provided the copyright<br>   notice and this notice are preserved.  */<br>OUTPUT_FORMAT(&quot;elf64-littleriscv&quot;, &quot;elf64-littleriscv&quot;,<br>	      &quot;elf64-littleriscv&quot;)<br>...rest of the linker script...<br></code></pre></td></tr></table></figure>
+<p>之后，我们要做的第一件事，就是用 MEMORY 命令告诉 <code>ld</code> 我们要手动控制内存布局。这为我们能够正确定义 <code>__stack_top</code> 的位置铺平了道路。然后，找到以 <code>OUTPUT_ARCH (riscv) </code>开头的行，该行应位于文件顶部，并在其下面添加我们的 MEMORY 命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs shell">OUTPUT_ARCH(riscv)<br>/* &gt;&gt;&gt; Our addition. &lt;&lt;&lt; */<br>MEMORY<br>&#123;<br>   /* qemu-system-risc64 virt machine */<br>   RAM (rwx)  : ORIGIN = 0x80000000, LENGTH = 128M <br>&#125;<br>/* &gt;&gt;&gt; End of our addition. &lt;&lt;&lt; */<br>ENTRY(_start)<br></code></pre></td></tr></table></figure>
+<p>这样，我们就创建了一个叫 RAM 的 memory，权限是 rwx，可读可写可执行。</p>
+<p>好的，这样一来，我们定义的内存布局就和 <code>virt</code>机器完全一致了。但除非我们接着做什么，否则空空一个 RAM 也完全没有用。我们要把自己的堆栈建在 RAM 里面，这就需要定义 <code>__stack_top</code> 。</p>
+<p>这也很简单，打开 <code>riscv64-virt.ld</code> ，按照以下做即可：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs shell">SECTIONS<br>&#123;<br>  /* Read-only sections, merged into text segment: */<br>  PROVIDE (__executable_start = SEGMENT_START(&quot;text-segment&quot;, 0x10000));<br>  . = SEGMENT_START(&quot;text-segment&quot;, 0x10000) + SIZEOF_HEADERS;<br>  /* &gt;&gt;&gt; Our addition. &lt;&lt;&lt; */<br>  PROVIDE(__stack_top = ORIGIN(RAM) + LENGTH(RAM));<br>  /* &gt;&gt;&gt; End of our addition. &lt;&lt;&lt; */<br>  .interp         : &#123; *(.interp) &#125;<br>  .note.gnu.build-id  : &#123; *(.note.gnu.build-id) &#125;<br></code></pre></td></tr></table></figure>
+<p>可以看到，我们使用 <a target="_blank" rel="noopener" href="https://web.archive.org/web/20190525173911/https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/4/html/Using_ld_the_GNU_Linker/assignments.html#PROVIDE">PROVIDE 命令</a>，定义了符号 <code>__stack_top</code>，它可被任何链接了该脚本的程序访问到，<code>__stack_top</code>的值是 <code>ORIGIN(RAM)</code> ，即 <code>0x80000000</code> 加上 <code>0x8000000</code>，其位置是 <code>0x88000000</code></p>
+<h2 id="前方高能-运行时">前方高能 运行时</h2>
+<p>终于，我们快要完成了。创建一个文件 <code>crt0.s</code> ，然后加入以下内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.section .init, &quot;ax&quot;<br>.global _start<br>_start:<br>    .cfi_startproc<br>    .cfi_undefined ra<br>    .option push<br>    .option norelax<br>    la gp, __global_pointer$<br>    .option pop<br>    la sp, __stack_top<br>    add s0, sp, zero<br>    jal zero, main<br>    .cfi_endproc<br>.end<br></code></pre></td></tr></table></figure>
+<p>值得注意的是，有很多以 . 开头的行。这是一个汇编文件，这是因为，阅读文件的程序是汇编器，在GNU 中它是 <code>as</code> 文件。以 <code>.s</code> 开头的行是伪指令，伪指令向汇编程序提供信息，而不是像 RISC-V 汇编指令（例如 <code>jal</code> 和 <code>add</code>）那样成为可执行代码。</p>
+<p>鉴于汇编语言不是很好读懂，我接下来会给大家一一讲解这程序在干嘛。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.section .init, &quot;ax&quot;<br></code></pre></td></tr></table></figure>
+<p>参考 <a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gas-2.9.1/html_chapter/as_7.html">GNU as manual</a> 该行旨在告诉编译器接下来的代码会要进入名为 <code>.init</code> 的 section ，且权限是 <code>a</code>llocatable and e<code>x</code>ecutable 。<code>.init</code> section 也是<a target="_blank" rel="noopener" href="https://web.archive.org/web/20190104080351/http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html">通常遵循的惯例</a> ，用于在操作系统内运行代码。可笑的是我们现在还没操作系统（那是因为我们正在写），关于 <code>.init</code> section ，这个解释更佳：</p>
+<blockquote>
+<p>This section holds executable instructions that contribute to the process initialization code. That is, when a program starts to run the system arranges to execute the code in this section before the main program entry point (called <em>main</em> in C programs).</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.global _start<br>_start:<br></code></pre></td></tr></table></figure>
+<p><code>.global</code> 是必须的，这是要让 <code>ld</code> 能看见这个定义的符号，在链接时，<code>ld</code> 会根据链接器脚本<code>ENTRY(_start)</code> 寻找 <code>_start</code> ，找到程序开始执行的地方。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs nasm">_start:<br>  .cfi_startproc<br>  .cfi_undefined ra<br>  ...other stuff...<br>  .cfi_endproc<br></code></pre></td></tr></table></figure>
+<p>这些 <code>.cfi</code> 指令会把 frame 结构以及如何展开等信息通知给汇编器、异常展开器等工具。<code>.cfi_startproc</code> 和 <code>.cfi_endproc</code> 指示了该函数的开始与结束。<code>.cfi_undefined ra</code> 告诉<a target="_blank" rel="noopener" href="https://sourceware.org/binutils/docs/as/CFI-directives.html">编译器寄存器 <code>ra</code> 不应当被恢复为以前的值</a> 。因为 <code>ra</code> 内含的通常是返回地址，其值在第一个开始执行的函数 <code>_start</code> 前是不确定的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.option push<br>.option norelax<br>la gp, __global_pointer$<br>.option pop<br></code></pre></td></tr></table></figure>
+<p>这些 <code>.option</code> 指令可内联汇编代码来修改汇编程序，这在必须使用一组特定的选项汇编指令序列时非常有用。该<a target="_blank" rel="noopener" href="https://embarc.org/man-pages/as/RISC_002dV_002dDirectives.html">链接</a>详细说明了为什么这对上面的代码段很重要，因此我将直接引用它（事实上原博主直接抄的那个手册<code>:)</code>）：</p>
+<blockquote>
+<p><em>…since we relax addressing sequences to shorter GP-relative sequences when possible, the initial load of GP must not be relaxed and should be emitted as something like:</em></p>
+</blockquote>
+<blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.option push<br>.option norelax<br>la gp, __global_pointer$<br>.option pop<br></code></pre></td></tr></table></figure>
+<p><em>in order to produce, after linker relaxation, the expected:</em></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">auipc gp, %pcrel_hi(__global_pointer$)<br>addi gp, gp, %pcrel_lo(__global_pointer$)<br></code></pre></td></tr></table></figure>
+<p><em>instead of just:</em></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nasm">addi gp, gp, 0<br></code></pre></td></tr></table></figure>
+</blockquote>
+<p>最后，看一下这部分代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs nasm">_start:<br>  ...other stuff...<br>  la sp, __stack_top<br>  add s0, sp, zero<br>  jal zero, main<br>  .cfi_endproc<br>  .end<br></code></pre></td></tr></table></figure>
+<p>这里我们终于用到了 <code>__stack_top</code> 符号，<code>la</code> 是 RISC-V 的伪汇编指令，意为 “load address” ，它获取 <code>__stack_top</code> 定义的地址数据，传递给 <code>sp</code> (stack pointer) 寄存器，这样一来后面的程序就可以使用这个栈了。</p>
+<p>接下来，<code>add s0, sp, zero</code> 就是将 <code>sp</code> 的值加 0 后存入 <code>s0</code> ，<code>s0</code> 在某些方面是一个特殊的寄存器。首先，它是所谓的“保存寄存器”，这意味着它的值可以在函数调用之间保留。其次，<code>s0</code> 有时用作帧指针(frame pointer)，这使每个函数调用都可以在堆栈上有自己的空间，用于存储传递该函数的参数。函数调用、堆栈指针和帧指针等是一个非常有趣的话题，但是目前，仅知道初始化帧指针 <code>s0</code> 是我们运行时的重要任务就可以了。</p>
+<p>下一句 <code>jal zero main</code> ，<code>jal </code>是 “jump and link” 的缩写，其意思是无条件跳转到 <code>main</code> 符号点。由于 zero 的寄存器 <code>x0</code> 恒为0，因此该语句除了无条件跳转外无副作用。初次接触 RISC-V 的读者可能会觉得奇怪，为何使用 zero 寄存器作为目标寄存器，来实现一个无条件且无副作用的跳转。为什么要这样做呢……就不能额外加一个明确的无条件跳转指令？</p>
+<p>实际上，这是一种巧妙的优化。每多支持一个的指令就意味着更大、更昂贵的处理器，因此 ISA 越简单越好。因而 RISC-V ISA 并不同时支持 <code>jal</code> 和无条件跳转指令，而是仅要求 <code>jal</code>，但通过 <code>jal zero main</code> 来支持无条件跳转。</p>
+<p>RISC-V 中有许多类似的优化，其中大多数采用的是伪指令的形式。伪指令是汇编器知道如何转换为其他实际的硬件实现的指令的指令。例如，有一个无条件跳转伪指令 <code>j offset_address</code>，RISC-V 汇编程序将其转换为 <code>jal zero，offset_address</code>。有关正式支持的伪指令的完整列表，请在 <a target="_blank" rel="noopener" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V规范的v2.2</a>查看。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs nasm">_start:<br>  ...other stuff...<br>  jal zero, main<br>  .cfi_endproc<br>  .end<br></code></pre></td></tr></table></figure>
+<p>最后一行，仍是一个汇编器指令，<code>.end</code> 指示了程序文件的结束。</p>
+<h2 id="真正开始调试">真正开始调试</h2>
+<p>在开始前，回顾一下迄今我们做了什么，我们首先使用 <code>qemu</code> 和 <code>dtc</code> 找到了在 <code>virt</code> 虚拟机中的内存信息，然后使用这些信息，我们开始通过修改 <code>riscv64-unknown-elf-ld</code> 的链接器脚本，来”手动“控制内存的布局，最后，我们通过使用自定义的符号创建了一个自己的 <code>crt0.S</code> 文件，创建了栈和全局指针，并最后调用了 <code>main</code> 函数，好接下来，我们一鼓作气，开始真正的调试工作。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">riscv64-unknown-elf-gcc -g -ffreestanding -O0 -Wl,--gc-sections \<br>    -nostartfiles -nostdlib -nodefaultlibs -Wl,-T,riscv64-virt.ld \<br>    crt0.s add.c<br></code></pre></td></tr></table></figure>
+<p>使用 gcc 编译、链接。不过这边突然多了一大堆的选项，令人头秃。</p>
+<p><code>-ffreestanding</code> <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/17692428/what-is-ffreestanding-option-in-gcc#17692510">告诉编译器标准库可能不存在</a>，因此不能做任何假设。在主机环境中运行应用程序时，此选项不是必需的，但是我们没有这样做，因为重要的是告诉编译器该信息。</p>
+<p><code>-Wl</code> 是逗号分隔的标志列表，以传递给链接器 <code>ld</code>。 <code>--gc-sections</code> 代表“垃圾收集 section”，告诉<code>ld</code> 在链接后删除未使用的节。 <code>-nostartfiles</code>，<code>-nostdlib</code> 和 <code>-nodefaultlibs</code> 分别告诉链接器不要链接任何标准系统启动文件（例如默认 <code>crt0</code>），任何标准系统 stdlib 实现或任何标准系统默认可链接库。我们提供了自己的 <code>crt0</code> 和链接描述文件，因此传递这些标志以告知编译器，我们不希望使用这些默认设置中的任何一个。</p>
+<p><code>-T</code> 允许你将你的链接器脚本路径传给链接器，在我们这次实验中就是 <code>riscv64-virt.ld</code> 。最后，加上我们想要编译的文件 <code>crt0.s</code>和 <code>add.c</code> 。然后，我们得到了 <code>a.out</code> ，再使用 <code>qemu</code> 开启虚拟机：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">-S freezes execution of our executable (-kernel) <span class="hljs-keyword">until</span> we explicitly tell</span> <br><span class="hljs-meta prompt_"># </span><span class="language-bash">it to start with a <span class="hljs-string">&#x27;continue&#x27;</span> or <span class="hljs-string">&#x27;c&#x27;</span> from our gdb client</span><br>qemu-system-riscv64 -machine virt -m 128M -gdb tcp::1234 -S -kernel a.out<br></code></pre></td></tr></table></figure>
+<p>再另开一个终端，打开 <code>gdb</code> ，装载入 <code>a.out</code> 的符号表，并链接目标机器：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs shell">riscv64-unknown-elf-gdb --tui a.out<br><br>GNU gdb (GDB) 8.2.90.20190228-git<br>Copyright (C) 2019 Free Software Foundation, Inc.<br>License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;<br>This is free software: you are free to change and redistribute it.<br>There is NO WARRANTY, to the extent permitted by law.<br>Type &quot;show copying&quot; and &quot;show warranty&quot; for details.<br>This GDB was configured as &quot;--host=x86_64-apple-darwin17.7.0 --target=riscv64-unknown-elf&quot;.<br>Type &quot;show configuration&quot; for configuration details.<br>For bug reporting instructions, please see:<br>&lt;http://www.gnu.org/software/gdb/bugs/&gt;.<br>Find the GDB manual and other documentation resources online at:<br>    &lt;http://www.gnu.org/software/gdb/documentation/&gt;.<br><br>For help, type &quot;help&quot;.<br>Type &quot;apropos word&quot; to search for commands related to &quot;word&quot;...<br>Reading symbols from a.out...<br>(gdb)<br></code></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">(gdb) target remote :1234                                                                             │<br>Remote debugging using :1234<br></code></pre></td></tr></table></figure>
+<p>设置断点并运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">(gdb) b main<br>Breakpoint 1 at 0x8000001e: file add.c, line 2.<br><br>(gdb) c<br>Continuing.<br><br>Breakpoint 1, main () at add.c:2<br></code></pre></td></tr></table></figure>
+<p>啊哈，你会注意到程序真的在你的断点处停下来了，并且 GDB 内部还有很多相关的地址、数据信息，要是想查看寄存器值，使用命令 <code>info all-registers</code> 就可以了：</p>
+<p><img src="https://twilco.github.io/img/working_gdb.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="接下来">接下来</h2>
+<p>在我们的下一篇文章中，我们将通过在<code>virt</code> QEMU 机器上开始实现 <code>UART</code> 的驱动程序，继续在 RISC-V组装上积累知识。期望了解 UART 是什么以及它如何工作，其他设备树(device tree)属性，实现与NS16550A 兼容的 UART 驱动程序所需的基本构造块等。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RISC-V/" class="category-chain-item">RISC-V</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RISC-V/" class="print-no-link">#RISC-V</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>RISC-V from Scratch 2</div>
+      <div>https://dingfen.github.io/2020/07/26/2020-7-26-riscv-from-scratch-2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年7月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/07/27/2020-7-27-riscv-from-scratch-3/" title="RISC-V from Scratch 3">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">RISC-V from Scratch 3</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/07/24/2020-7-24-riscv-from-scratch-1/" title="RISC-V from Scratch 1">
+                        <span class="hidden-mobile">RISC-V from Scratch 1</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

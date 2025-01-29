@@ -1,0 +1,822 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="动手书写 CUDA 核函数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CUDA 中的向量内积">
+<meta property="og:url" content="https://dingfen.github.io/2021/10/03/2021-10-3-cuda-with-dotproduct/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="动手书写 CUDA 核函数">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/PP/dotproduct.png">
+<meta property="article:published_time" content="2021-10-03T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="CUDA">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/PP/dotproduct.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>CUDA 中的向量内积 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="CUDA 中的向量内积"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-10-03 12:00" pubdate>
+          2021年10月3日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">CUDA 中的向量内积</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>CUDA 中的向量内积</h1>
+<p>博主本科时略学过 CUDA 编程的相关知识，但远算不上熟练，更谈不上精通。恰好本人对并行计算很感兴趣，这几天实现了一下最基础的向量内积，对以前的知识做了一点总结，算是温故而知新，可以为师矣。</p>
+<h2 id="向量内积">向量内积</h2>
+<p>两个长为 N 的向量做内积。从并行计算的角度看，可并行部分就是 <code>a[i] * b[i]</code> 部分，然后再对得到的乘积做累加求和。可以让 GPU 中的每个线程执行一个 <code>a[i] * b[i]</code>，然后再进行累加。如下图，考虑到 N 可能非常大，GPU 网格中的线程数量不足以覆盖整个向量，因此需要使用 <code>while</code> 循环，让线程运算多个乘法。</p>
+<p><img src="/img/PP/dotproduct.png" srcset="/img/loading.gif" lazyload alt="cuda 向量内积示意图"></p>
+<p>具体而言，在下面的这个循环中，每个线程都会运行一个 grid 中的一次乘法，然后跳转到下一个 grid 继续完成乘法。因此，程序的 <code>while</code> 循环，让每个线程计算相应的乘法后，跨越一个 grid 的长度再完成乘法，最后累加到 <code>cache</code> 数组中（橙色箭头），为了不让自增的 <code>tid</code> 变量超过数组边界，每次累加后还需要在 <code>while</code> 语句中判断一下。相应的代码如下，配合上图相应能更好地理解计算过程。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">dot</span><span class="hljs-params">(<span class="hljs-type">float</span> *c, <span class="hljs-type">float</span> *a, <span class="hljs-type">float</span> *b)</span> </span>&#123;<br>  <span class="hljs-type">int</span> tid = threadIdx.x + blockIdx.x * blockDim.x;<br>  <span class="hljs-type">float</span> cache[blockDim.x * gridDim.x];<br>  <span class="hljs-type">float</span> ans = <span class="hljs-number">0.0f</span>;<br>  <span class="hljs-comment">// 线程并行地执行内积 乘法</span><br>  <span class="hljs-keyword">while</span>(tid &lt; N) &#123;<br>    ans += a[tid] * b[tid];<br>    tid += blockDim.x * gridDim.x;<br>  &#125;<br>  cache[threadIdx.x + blockIdx.x * blockDim.x] = ans;<br></code></pre></td></tr></table></figure>
+<p>上述计算完成后，还需要将 <code>cache</code> 中的数组进一步累加。但这里必须注意，进一步累加前，必须确保所有线程已经完成了上面的循环。因此，这里需添加一个 barrier：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 线程同步，确保所有线程都完成了上面的循环</span><br>__syncthreads();<br></code></pre></td></tr></table></figure>
+<p>随后，使用一个线程对 <code>cache</code> 中的数组累加，输出结果。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 归约累加</span><br><span class="hljs-type">float</span> sum = <span class="hljs-number">0.0f</span>;<br><span class="hljs-keyword">if</span> (tid == <span class="hljs-number">0</span>) &#123;<br>  <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; gridDim.x * blockDim.x; i++) &#123;<br>    sum += cache[i];<br>  &#125;<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;dot product is : %f\n&quot;</span>, sum);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="程序优化">程序优化</h2>
+<p>上述代码虽然可以完成任务，但没有达到更高的性能。下面我对上面的程序做进一步优化。</p>
+<p>首先介绍一下 CUDA C 中的共享内存。<strong>共享内存</strong>中的变量被线程块中的每个线程共享，而其他线程不能对其访问和修改。要使用共享内存，在编写 CUDA 代码时，只需要注意将共享内存和线程块“捆绑”考虑就行。共享内存可以让一个线程块中的线程更快地完成通信协作，执行更加复杂的任务。最后，共享内存在物理上更贴近线程，因此访问共享内存时的延迟要远低于访问普通缓冲区的延迟。</p>
+<p>但在使用线程之间的通信时，还需要注意线程之间的同步，防止出现竞争条件（Race Condition），避免错误。</p>
+<p>回到该问题，可以明显看到，<code>while</code> 循环中计算出的结果完全可以暂存到共享内存中。而由于共享内存是被一个线程块内的线程共享的，因此 <code>cache</code> 的大小也要改为线程块的大小，而不是整个网格的大小：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">dot</span><span class="hljs-params">(<span class="hljs-type">float</span> *c, <span class="hljs-type">float</span> *a, <span class="hljs-type">float</span> *b)</span> </span>&#123;<br>  <span class="hljs-type">int</span> tid = threadIdx.x + blockIdx.x * blockDim.x;<br>  __shared__ <span class="hljs-type">float</span> cache[blockDim.x];<br>  <span class="hljs-type">float</span> ans = <span class="hljs-number">0.0f</span>;<br>  <span class="hljs-comment">// 线程块内的线程并行地执行内积 乘法</span><br>  <span class="hljs-keyword">while</span>(tid &lt; N) &#123;<br>    ans += a[tid] * b[tid];<br>    tid += blockDim.x * gridDim.x;<br>  &#125;<br>  cache[threadIdx.x] = ans;<br></code></pre></td></tr></table></figure>
+<p>改为共享内存后，后面的归约累加部分也必须更改。因为 0 号线程不可能访问其他线程块的共享内存。因此，需要在线程块中完成累加。具体做法类似于[二叉树求和](<a href="https://dingfen.github.io/Parallel">https://dingfen.github.io/Parallel</a> Computing/2020/12/17/PP02.html#%E4%BA%8C%E5%8F%89%E6%A0%91%E6%B1%82%E5%92%8C%E5%AE%9E%E7%8E%B0)。每个线程将数组的两个值加起来，再将结果写到低索引位的数上。这样一次循环结束后，数组中的有效数据便只剩下一半。下一个循环再对这一半数组做同样操作，依次往复，直到累加值存在于 <code>cache[0]</code> 中。但注意：<strong>这种算法要求线程块内线程数量必须为 2 的幂次</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">int</span> i = blockDim.x / <span class="hljs-number">2</span>;<br><span class="hljs-keyword">while</span>(i != <span class="hljs-number">0</span>) &#123;<br>  <span class="hljs-keyword">if</span> (threadIdx.x &lt; i)<br>    cache[threadIdx.x] += cache[threadIdx.x + i];<br>  __syncthreads();  <span class="hljs-comment">// 为何一定要加上？</span><br>  i /= <span class="hljs-number">2</span>;<br>&#125;<br><br><span class="hljs-keyword">if</span> (threadIdx.x == <span class="hljs-number">0</span>)<br>  c[blockIdx.x] = cache[<span class="hljs-number">0</span>];<br></code></pre></td></tr></table></figure>
+<p>很遗憾核函数只能做到这一步了，因为 <code>cache[0]</code> 都存在于共享内存中，GPU 中没有一个线程可以访问到所有的结果，所以进一步的累加只能靠 CPU。但别灰心，提前放弃在 GPU 中的计算事实上是一件好事：因为累加求和的归约运算一般只能由一个线程完成，交给 GPU 做只能说是杀鸡用牛刀，太浪费计算资源。而且，此时数据量已经非常小，CPU 也能很出色地完成任务。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// last reduction for cpu</span><br><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; blocksPerGrid; i++) &#123;<br>  *ans += c[i];<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后，放上核函数及其调用代码，供大家参考。若想亲自实验，可从<a target="_blank" rel="noopener" href="https://github.com/dingfen/cuda10/blob/master/cudaDotProduct/dotproduct.cu">github 链接</a>获取。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">dot</span><span class="hljs-params">(<span class="hljs-type">float</span>* c, <span class="hljs-type">float</span>* a, <span class="hljs-type">float</span>* b)</span> </span>&#123;<br>  __shared__ <span class="hljs-type">float</span> cache[threadsPerBlock];<br>  <span class="hljs-type">int</span> tid = threadIdx.x + blockIdx.x * blockDim.x;<br>  <span class="hljs-type">int</span> cacheIndex = threadIdx.x;<br>  <span class="hljs-comment">// gird loops addition, reduce sum in cache for every thread.</span><br>  <span class="hljs-type">float</span> temp = <span class="hljs-number">0.0</span>;<br>  <span class="hljs-keyword">while</span> (tid &lt; N) &#123;<br>    temp += a[tid] * b[tid];<br>    tid += blockDim.x * gridDim.x;<br>  &#125;<br>  cache[cacheIndex] = temp;<br>  <span class="hljs-comment">// thread synchronize</span><br>  __syncthreads();<br><br>  <span class="hljs-comment">// Reductions parallel as Binary tree in each block</span><br>  <span class="hljs-type">int</span> i = blockDim.x / <span class="hljs-number">2</span>;<br>  <span class="hljs-keyword">while</span> (i != <span class="hljs-number">0</span>) &#123;<br>    <span class="hljs-keyword">if</span> (cacheIndex &lt; i)<br>      cache[cacheIndex] += cache[cacheIndex + i];<br>    __syncthreads();<br>    i /= <span class="hljs-number">2</span>;<br>  &#125;<br><br>  <span class="hljs-keyword">if</span> (cacheIndex == <span class="hljs-number">0</span>)<br>    c[blockIdx.x] = cache[<span class="hljs-number">0</span>];<br>  <span class="hljs-comment">// for not waste computing resource, exit now.</span><br>&#125;<br><br><span class="hljs-keyword">extern</span> <span class="hljs-string">&quot;C&quot;</span> <span class="hljs-function">cudaError_t <span class="hljs-title">dotproduct</span><span class="hljs-params">(<span class="hljs-type">float</span>* ans, <span class="hljs-type">float</span>* a, <span class="hljs-type">float</span>* b)</span> </span>&#123;<br>  <span class="hljs-type">float</span>* dev_a = <span class="hljs-literal">NULL</span>;<br>  <span class="hljs-type">float</span>* dev_b = <span class="hljs-literal">NULL</span>;<br>  <span class="hljs-type">float</span>* dev_c = <span class="hljs-literal">NULL</span>;<br>  <span class="hljs-type">float</span>* c = <span class="hljs-literal">NULL</span>;<br>  <span class="hljs-type">float</span> time;<br>  <br>  c = (<span class="hljs-type">float</span>*)<span class="hljs-built_in">malloc</span>(blocksPerGrid * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>));<br>  cudaEvent_t start, stop;<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventCreate</span>(&amp;start));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventCreate</span>(&amp;stop));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventRecord</span>(start, <span class="hljs-number">0</span>));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>(&amp;dev_a, N * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>)));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>(&amp;dev_b, N * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>)));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMalloc</span>(&amp;dev_c, blocksPerGrid * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>)));<br><br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaSetDevice</span>(<span class="hljs-number">0</span>));<br><br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMemcpy</span>(dev_a, a, N * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>), cudaMemcpyHostToDevice));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMemcpy</span>(dev_b, b, N * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>), cudaMemcpyHostToDevice));<br><br>  dot&lt;&lt;&lt;blocksPerGrid, threadsPerBlock&gt;&gt;&gt;(dev_c, dev_a, dev_b);<br><br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaGetLastError</span>());<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaDeviceSynchronize</span>());<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaMemcpy</span>(c, dev_c, blocksPerGrid * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>), cudaMemcpyDeviceToHost));<br><br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventRecord</span>(stop, <span class="hljs-number">0</span>));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventSynchronize</span>(stop));<br>  <span class="hljs-built_in">GPUAssert</span>(<span class="hljs-built_in">cudaEventElapsedTime</span>(&amp;time, start, stop));<br>  <span class="hljs-comment">// last reduction for cpu</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; blocksPerGrid; i++) &#123;<br>    *ans += c[i];<br>  &#125;<br><br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;GPU time: %8.4f\n&quot;</span>, time);<br>  <span class="hljs-built_in">cudaFree</span>(dev_a);<br>  <span class="hljs-built_in">cudaFree</span>(dev_b);<br>  <span class="hljs-built_in">cudaFree</span>(dev_c);<br>  <span class="hljs-built_in">cudaEventDestroy</span>(start);<br>  <span class="hljs-built_in">cudaEventDestroy</span>(stop);<br>  <span class="hljs-built_in">free</span>(c);<br>  <span class="hljs-keyword">return</span> cudaSuccess;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="kahan-算法">kahan 算法</h2>
+<p>更新于 2023.9.4</p>
+<p>闲来无事，重新温故一下几年前写的代码。突然发现，这好像没算对啊，CPU 计算出来的数据跟 GPU 的数据怎么都对不上。只要数据量一大（上千），二者得出的结果就会差几十，数据量越大差得越多，为啥呢？</p>
+<p>首先，我反复琢磨了这几行几年前写的代码，反反复复地推导后得出结论：根本没问题。那么问题出在哪里？</p>
+<p>问题出在：<strong>浮点数的加法不满足结合律</strong>。用数学的话说，即 $$ (a+b)+c \neq a+(b+c) $$。为什么会这样？这得从浮点数在计算机中的表示说起，在计算机程序中，我们需要用有限位数对实数做近似表示，如今的大多数计算机都使用 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/IEEE_754">IEEE-754</a> 规定的浮点数来作为这个近似表示。然而一旦扯到这个，其篇幅和知识点不是本博客可以接受的了的，因此这里就放个<a target="_blank" rel="noopener" href="https://blog.csdn.net/K346K346/article/details/50487127">链接</a>供各位感兴趣的读者自行研究。</p>
+<p>跳过这些复杂繁琐的细节，这里直接给出了结论：因计算机内资源有限，浮点数在其中无法被精确表示，导致<em>绝对值越大的浮点数拥有越不精确（越少）的小数点位数</em>，而绝对值越接近于0的数有更多的精确的小数点位数。为方便理解，各位读者可以简单地用 C++ 运行如下算式，看它们的结果是否相等。然后再把 <code>float</code> 变为 <code>double</code>，或者减小数字的绝对值等，看结果是否有变化。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">float</span> s1 = (<span class="hljs-number">100000000.00001f</span> - <span class="hljs-number">100000000.f</span>) + <span class="hljs-number">0.00001f</span>;<br><span class="hljs-type">float</span> s2 = (<span class="hljs-number">100000000.00001f</span> + <span class="hljs-number">0.00001f</span>) - <span class="hljs-number">100000000.f</span>;<br></code></pre></td></tr></table></figure>
+<p>那么这跟咱们的程序无法得到准确结果有什么关系呢？首先，因为我们在计算两个甚长向量的内积值，这意味着在算数的最后，我们需要将很多浮点乘积值逐一累加起来，具体做法就是一个一个地将乘积值加入到前缀和中。而若这些乘积值都是正浮点数（或者负浮点数），那么不断累加后，其前缀和的绝对值必然会变得越来越大。而前面提到过，由于计算机内表示一个浮点数所用的资源有限，为表示该前缀和，计算机不得不丢掉越来越多的小数点后的位数，导致该值也就越来越不精确。甚至到最后，前缀和再继续累加乘积值后，可能由于乘积值过小而直接被抛弃了！</p>
+<p>计算机运算浮点数存在了这种精度缺陷，应当如何解决？想必大家能从上面的例子中获得一些启发：适当地交换运算顺序，或许就能够避免因“大数加小数”产生的精度损失。kahan 求和法便是利用了这一特点，尽可能挽救了因不断累加而丢失的精确度。</p>
+<p>在介绍 kahan 求和法前，先明确一下我们要解决的问题：有一个内含大量正浮点数的数组 <code>nums</code>，需求得其总和。在不断累加的过程中，我们用 <code>sum</code> 表示中间过程的前缀和。显然，程序执行到一定程度后，必然会出现 <code>sum</code> 很大，而 <code>nums</code> 内值很小的情况。因此若直接计算 <code>sum += nums</code>，则 <code>nums</code> 的小数点低位数会丢失。而 kahan 求和法通过记住这其中的误差，将其加到后续的结果中，即可挽回损失的精度。</p>
+<p>具体是这样做的，已知 <code>sum += num</code> 是不准确的，产生了 <code>eff</code> 的误差。此时考虑：<code>c = (sum + num) - sum - num</code>。注意，关于 <code>c</code> 的计算中，只有 <code>sum + num</code> 是不准确的（因为只有这个运算涉及到了大数加小数），因此，<code>c</code> 可以将加法产生的误差保留下来，近似等于 <code>eff</code>。此外，针对 <code>c</code> 的运算顺序不能变化！否则就有不止一个运算是不准确的了。我们保留 <code>c</code>，在计算下一个加法的时候，再将这个误差补上，更新到 <code>sum</code> 中去。</p>
+<p>Kahan 求和算法主要通过一个单独变量 <code>c</code> 用来累积误差。如下方参考代码所示：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">float</span> <span class="hljs-title">kahanSum</span><span class="hljs-params">(vector&lt;<span class="hljs-type">float</span>&gt; nums)</span> </span>&#123;<br>  <span class="hljs-type">float</span> sum = <span class="hljs-number">0.0f</span>;<br>  <span class="hljs-type">float</span> c = <span class="hljs-number">0.0f</span>;<br>  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> num : nums) &#123;<br>    <span class="hljs-type">float</span> y = num - c;<br>    <span class="hljs-type">float</span> t = sum + y;<br>    c = (t - sum) - y;<br>    sum = t;<br>  &#125;<br>  <span class="hljs-keyword">return</span> sum;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>注：Kahan 求和法，又名补偿求和或进位求和法，是一个用来降低有限精度浮点数序列累加值误差的算法。它主要通过保持一个单独变量用来累积误差（常用变量名为 <code>c</code>）来完成的。该算法主要由 William Kahan 于 1960s 发现。因为 Ivo Babuška 也曾独立提出了一个类似的算法，Kahan 求和算法又名为 Kahan–Babuška 求和算法。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/CUDA/" class="print-no-link">#CUDA</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>CUDA 中的向量内积</div>
+      <div>https://dingfen.github.io/2021/10/03/2021-10-3-cuda-with-dotproduct/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年10月3日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/10/08/2021-10-8-cuda-beginer/" title="CUDA 快速入门">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">CUDA 快速入门</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/09/24/2021-9-24-Qt-Chess/" title="初学 Qt（一）">
+                        <span class="hidden-mobile">初学 Qt（一）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

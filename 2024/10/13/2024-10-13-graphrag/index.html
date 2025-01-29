@@ -1,0 +1,854 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="引言 对于大模型的应用而言，也许最大的挑战就是让它回答一些在预训练和后训练时从未知晓的领域的问题（比如你昨天的日记、商业公司内部的机密文档等私有数据）。目前，业界解决该问题的方案之一就是使用检索增强生成（RAG），RAG 是一种利用大模型（LLMs）对私有数据文献的检索、理解和生成的 AI 回答技术。虽然传统的 RAG 技术可以很好地帮助大模型回答基于私人数据的问题，但它无法进一步地理解私有数据中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GraphRAG 框架">
+<meta property="og:url" content="https://dingfen.github.io/2024/10/13/2024-10-13-graphrag/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="引言 对于大模型的应用而言，也许最大的挑战就是让它回答一些在预训练和后训练时从未知晓的领域的问题（比如你昨天的日记、商业公司内部的机密文档等私有数据）。目前，业界解决该问题的方案之一就是使用检索增强生成（RAG），RAG 是一种利用大模型（LLMs）对私有数据文献的检索、理解和生成的 AI 回答技术。虽然传统的 RAG 技术可以很好地帮助大模型回答基于私人数据的问题，但它无法进一步地理解私有数据中">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
+<meta property="article:published_time" content="2024-10-13T08:13:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/LLM/GraphRag.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>GraphRAG 框架 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/LLM/GraphRag.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="GraphRAG 框架"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-10-13 16:13" pubdate>
+          2024年10月13日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          27 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">GraphRAG 框架</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>引言</h1>
+<p>对于大模型的应用而言，也许最大的挑战就是让它回答一些在预训练和后训练时从未知晓的领域的问题（比如你昨天的日记、商业公司内部的机密文档等私有数据）。目前，业界解决该问题的方案之一就是使用检索增强生成（RAG），RAG 是一种利用大模型（LLMs）对私有数据文献的检索、理解和生成的 AI 回答技术。虽然传统的 RAG 技术可以很好地帮助大模型回答基于私人数据的问题，但它无法进一步地理解私有数据中各个有效信息的关系，从而构成自己的知识网络，因此难以提供综合性的见解，也无法全面理解多个私有文献甚至单个文档的全部内容，因此往往无法回答抽象或总结性问题。</p>
+<p>几个月前，微软开源了一个新的基于知识图谱构建的 RAG 系统——GraphRAG。graphrag 框架旨在利用大型语言模型从非结构化文本中提取结构化数据，进而构建具有标签的知识图谱，以支持数据集问题生成、摘要问答等多种应用场景。 GraphRAG 的一大特色是<strong>利用图机器学习算法针对数据集进行语义聚合和层次化分析</strong>。但与其他知识图谱不同的是， GraphRag 不单单关注于提取结构化数据和对其的结构化检索，还优先关注于这两方面：模块化（inherent modularity） 和社区检测算法。GraphRag 使用社区检测算法将整个知识图谱划分模块化的社区（包含相关性较高的节点）, 然后大模型自下而上对社区进行摘要, 最终再采取 map-reduce 方式实现基于 query 的总结回答（Query-Focus Summarization），即每个社区先并行执行 query, 然后汇总成全局性的完整答案，因此 GraphRag 可以回答一些相对高层级的抽象或总结性问题。</p>
+<h1>框架概述</h1>
+<h2 id="工作流程">工作流程</h2>
+<p>让我们先总览地看一下 graphrag 的具体流程。下图是 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2404.16130">graphrag 论文</a>中给出了工作过程的总体情况。与其他 RAG 系统类似，GraphRAG 整个 Pipeline 也可划分为索引（Indexing 左半部分）与查询（Query 右半部分）两个阶段。索引过程利用 LLM 提取出节点（如实体）、边（如关系）和协变量（如 claim），然后利用社区检测技术对整个知识图谱进行划分，再利用 LLM 进一步总结。最终针对特定的查询，可以汇总所有与之相关的社区摘要生成一个全局性的答案。</p>
+<p><img src="/img/LLM/graphrag-pipeline.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>接下来我们一步步地具体解释其流程。</p>
+<h3 id="文件切割为文件块">文件切割为文件块</h3>
+<p>首先是将输入的原文档变成一个结构化的知识图谱，但显然，用户输入的大量文件太多太长无法直接处理。因此需要将输入的文档分割为若干个大小相同的文件块（text chunk）。这些文件块后续会被喂给 LLM 来提取其中的信息。</p>
+<p>因此，文件块的大小设计很有讲究。更大的文件块会更少地调用 LLM，加快索引过程，但也更容易因过长的文件块而产生信息召回率下降。</p>
+<p><img src="/img/LLM/graphrag-gleaning.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>论文指出，在样本数据集 (HotPotQA, Yang et al., 2018) 上，使用 600 个 token 的块大小提取的实体连接引用几乎是使用 2400 个 token 的块大小的两倍。虽然引用越多越好，但任何提取过程都需要平衡目标召回率和准确率。</p>
+<p>图中的 gleanings 指 graphrag 对文本的多轮信息采集，这是为了让 LLM 尽可能不遗漏任何实体（entities）。graphrag 会首先要求 LLM 自查是否提取了所有实体，如果 LLM 回应说遗漏了，那么 graphrag 会继续鼓励 LLM 收集这些缺失的实体。这种方法允许我们使用更大的块大小，而不会降低质量（图 2）或强制引入噪音。（ps：好狠的 PUA）</p>
+<h3 id="文件块到图元素">文件块到图元素</h3>
+<p>然后，graphrag 需要从文件块中识别和提取 graph node 和 edge。它会首先识别文本块中的所有实体，包括其名称、类型和描述，这些实体会被当作 graph node。然后明确相关的实体之间的所有关系，包括源实体和目标实体以及它们的关系描述，用来表示 graph edge。两种元素实例都输出在一个分隔元组列表中。</p>
+<p>看到这你可能会怀疑，LLM 是否真的具备实体辨识能力（Named Entity Recognition）。事实上，LLM 一直具备此能力，这个 youtube 上的<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=OagbDJvywJI&amp;t=122s">视频</a>可以帮助你打消这个顾虑。</p>
+<p><img src="/img/LLM/graphrag-NER.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>然而，对于一些专业知识领域（例如科学、医学、法律专用词），LLM 就需要一些 few-shot 例子才能更好地完成这个任务，此外 graphrag 还支持针对 graph node 关联的其他协变量的二次提取 prompt。默认的协变量 prompt 旨在提取与实体相关的信息，包括主题、对象、类型、描述、源文本跨度以及开始和结束日期等。</p>
+<h3 id="图的构建与元素总结">图的构建与元素总结</h3>
+<p>从文本块中提取到 entities，以及他们的属性、相互关系后，就可以建立出 graph 了。可以将这些 entities 作为图的 node，相互关系是图的 edge。整张图就是同构无向权重图，</p>
+<p>当然 graphrag 不会主动将这些图展示给用户看，用户若用兴趣，需要去指定的目录下读取对应的文件后，使用neo4j 图数据库来看。这些内容我们可以下次细聊。</p>
+<p>从另一个角度理解，可以认为 graph 内的 node 和 edge 中的内容本身就是对文本的一次总结。然而，要生成所有这些元素的总结摘要，即每个图元素（实体节点、关系边和声明协变量）的描述性文本块，还需要对匹配的图例组做进一步的 LLM 总结。</p>
+<h3 id="图社区">图社区</h3>
+<p>到此为止，我们的图已经构建起来了，现在需要使用分层社区检测算法来识别图中的社区。</p>
+<blockquote>
+<p>社区是指图中彼此紧密连接的但与其他节点连接稀疏的节点集合。</p>
+</blockquote>
+<p>在 graphrag pipeline 中，使用的是 Leiden 算法，因为它能够有效地构建大规模图的分层社区结构。图中存在多个层次结构，每个层次都提供了一个级别的社区划分，且这些社区是互斥、完全地覆盖图的所有节点，从而为下一步实现社区总结提供支持。</p>
+<p>更多关于社区算法的介绍，读者有兴趣可以看这篇<a target="_blank" rel="noopener" href="https://medium.com/data-science-in-your-pocket/graph-analytics-detecting-communities-in-the-graph-using-neo4j-1cbceed9b4b9">博客</a>。</p>
+<h3 id="社区总结">社区总结</h3>
+<p>要对一个社区内部的信息做总结，首先要找出图的中心节点（即那些有很多边连接的对该社区十分重要的节点）。</p>
+<p>然后，需要将这些中心节点的所有相关信息和关系都结合到一起，最后总结提取的信息，使用 LLM 生成社区总结。</p>
+<p>具体来说，算法会自下而上地对社区做总结，首先是最低层级的 leaf-node 社区做总结，找到中心节点，搜集他们相关的信息，提取后使用 LLM 生成社区总结。对于高层级的社区，则递归地利用低层级社区生成的总结来做总结，一环套一环，最终产生整张图的总结内容。</p>
+<h3 id="检索与回答问题">检索与回答问题</h3>
+<p>到现在为止，graphrag 还在处理内部的图数据，还没有回答用户的 query 呢！所以之前的步骤其实可以离线完成的。但从这步开始，用户的 query 会被 graphrag 处理，这就必须在线完成了。graphrag 会用 LLM 来处理用户 query，并寻出与该 query 相关的关键 node 和 edge（LLM 真的好忙）。</p>
+<p>随后，需要从相关的node和edge中提取信息，可以使用子图提取的方式：将 query 涉及到的 node 和 edge 的整个子图（社区）内容都提取出来；也可以做适度的上下文扩展，将内容做适度延伸；还可以按照相关度评分，从高到低地搜集信息作总结回答等。</p>
+<p>这其中仍有不少细节问题值得探讨。虽然我们可以不断地使用社区总结来最终产生一个总结性的回答，但很多时候这并不是用户想要的。在用户查询全局回答时，我们可以从非常多的角度（社区层级）来寻找答案，并最终找到一个细节与范围的最好平衡点。</p>
+<p>最后，对于一个给定的社区级别，任何用户查询的全局答案生成过程有如下几步：</p>
+<ul>
+<li>准备社区总结。离线产生的社区总结会被随机打乱并分成若干文本块，以确保相关信息能均匀分布在块中，而不是集中（集中意味着可能丢失）在一个上下文窗口中。</li>
+<li>映射社区答案。并行地给每个块生成中间答案，此外 LLM 还需要给生成的答案对回答是否有帮助进行打分，分数为 0 的答案将被过滤掉。</li>
+<li>简化为全局答案。中间答案会按照 LLM 的打分做降序排列，并迭代添加到新的上下文窗口中，直到达到 token 数量限制。最终的上下文用于生成返回给用户的全局答案。</li>
+</ul>
+<h2 id="实例演示">实例演示</h2>
+<p>说了这么多，可能会让各位读者觉得有些抽象，接下来我们用具体例子给大家做个说明，来自<a target="_blank" rel="noopener" href="https://medium.com/data-science-in-your-pocket/how-graphrag-works-8d89503b480d">这篇博客的精彩示例</a>：</p>
+<ol>
+<li>知识图谱创建</li>
+</ol>
+<p>假设我们要处理一大堆科学文献要处理，并从中挑选出感兴趣的词汇，比如说“蛋白质” 、“基因”、“疾病”，并且用“导致”，“与之影响”等关系相连。</p>
+<p>那么，graphrag 需要首先将这堆科学文献做切分，分为一个个文本块，然后读入并构造知识图谱的节点，即代表某种蛋白质或者基因或者疾病的节点，然后再用边来表示他们的关系。</p>
+<p>当然，这些图中的节点或边关系等是需要 LLM 反复从文本块中提取出来的，这也同样解释了为什么 graphrag 的离线操作会非常耗时耗算力。</p>
+<ol start="2">
+<li>社区总结生成</li>
+</ol>
+<p>使用分层的社区检测算法来分析这张图，最后获得一个个层次分明，且能清晰指出与蛋白质、基因和病毒相关的社区群。</p>
+<p>对于每个社区，它的中心节点（例如是某个关键蛋白质）可以被识别出来，并由 LLM 给出它的属性、效果、相互影响的社区总结。</p>
+<ol start="3">
+<li>graphrag 检索</li>
+</ol>
+<p>然后，就到了在线处理用户 query 的环节。假设我们要处理用户的 query 是关于一个特定蛋白质与某种疾病的关系的问题。</p>
+<p>那么，我们可以提取出包含该特定蛋白，以及该疾病，和他们相关的实体的子图。</p>
+<p>当然，该子图也包括了需要的上下文：比如某些与之紧密关联的实体和关系。</p>
+<p>结合子图给的这些信息，我们可以让 LLM 产生一个综合性的答案，来解释该蛋白质和疾病的关系。</p>
+<h2 id="源码解析">源码解析</h2>
+<p><a target="_blank" rel="noopener" href="https://microsoft.github.io/graphrag/">官方文档</a>写得已经很清楚了, 不过想要理解一些实现上的细节, 还得深入到源码当中. 接下来, 一块看下代码的具体实现. 项目源码结构树如下：（未完待续）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs shell">.<br>├── cache<br>├── config<br>├── emit<br>├── graph<br>│   ├── embedding<br>│   ├── extractors<br>│   │   ├── claims<br>│   │   ├── community_reports<br>│   │   ├── graph<br>│   │   └── summarize<br>│   ├── utils<br>│   └── visualization<br>├── input<br>├── llm<br>├── progress<br>├── reporting<br>├── storage<br>├── text_splitting<br>├── utils<br>├── verbs<br>│   ├── covariates<br>│   │   └── extract_covariates<br>│   │       └── strategies<br>│   │           └── graph_intelligence<br>│   ├── entities<br>│   │   ├── extraction<br>│   │   │   └── strategies<br>│   │   │       └── graph_intelligence<br>│   │   └── summarize<br>│   │       └── strategies<br>│   │           └── graph_intelligence<br>│   ├── graph<br>│   │   ├── clustering<br>│   │   │   └── strategies<br>│   │   ├── embed<br>│   │   │   └── strategies<br>│   │   ├── layout<br>│   │   │   └── methods<br>│   │   ├── merge<br>│   │   └── report<br>│   │       └── strategies<br>│   │           └── graph_intelligence<br>│   ├── overrides<br>│   └── text<br>│       ├── chunk<br>│       │   └── strategies<br>│       ├── embed<br>│       │   └── strategies<br>│       ├── replace<br>│       └── translate<br>│           └── strategies<br>└── workflows<br>    └── v1<br></code></pre></td></tr></table></figure>
+<h1>总结</h1>
+<p>GraphRAG 使用 LLM 创建全面的知识图谱，重点使用了社区算法描述了文档内的实体及其关系。GraphRAG 能够利用知识图谱内的数据和图结构，对需要广泛理解整个文本的复杂查询做出准确的响应。在本篇博客文章中，我先介绍了 GraphRAG 的基本运行流程，然后介绍了 graphrag 框架的源码设计，希望能为大家深入理解 graphrag 有所帮助。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>GraphRAG 框架</div>
+      <div>https://dingfen.github.io/2024/10/13/2024-10-13-graphrag/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年10月13日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/01/26/2024-10-28-LLMs/" title="">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile"></span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/10/13/2024-10-20-graphrag/" title="GraphRAG 个人部署">
+                        <span class="hidden-mobile">GraphRAG 个人部署</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

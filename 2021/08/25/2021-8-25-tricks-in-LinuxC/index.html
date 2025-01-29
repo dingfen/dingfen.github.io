@@ -1,0 +1,867 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="边写边熟练">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在 Linux 中更好地使用C&#x2F;C++语言">
+<meta property="og:url" content="https://dingfen.github.io/2021/08/25/2021-8-25-tricks-in-LinuxC/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="边写边熟练">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/getopt_long.png">
+<meta property="og:image" content="https://dingfen.github.io/img/strftime.png">
+<meta property="og:image" content="https://dingfen.github.io/img/time.png">
+<meta property="article:published_time" content="2021-08-25T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="C">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/getopt_long.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>在 Linux 中更好地使用C/C++语言 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="在 Linux 中更好地使用C/C++语言"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-08-25 12:00" pubdate>
+          2021年8月25日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">在 Linux 中更好地使用C/C++语言</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="一、Linux下的命令行处理">一、Linux下的命令行处理</h2>
+<h3 id="C-语言中命令行参数">C 语言中命令行参数</h3>
+<p>执行程序时，可以从命令行传入参数给 C 的 main 函数。这些参数被称为<strong>命令行参数</strong>，它们对程序很重要，可以从外部控制程序的执行。</p>
+<p>使用 <code>main()</code> 的函数参数可以处理命令行参数：</p>
+<ul>
+<li><strong>argc</strong> 是指传入参数的个数，包括最开头的执行程序名</li>
+<li><strong>argv[]</strong> 是一个指针数组，指向传递给程序的每个参数。</li>
+</ul>
+<p>举例来说：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> *argv[])</span> </span>&#123;<br>   <span class="hljs-keyword">if</span> (argc == <span class="hljs-number">2</span>)<br>      <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;The argument supplied is %s\n&quot;</span>, argv[<span class="hljs-number">1</span>]);<br>   <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (argc &gt; <span class="hljs-number">2</span>)<br>      <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Too many arguments supplied.\n&quot;</span>);<br>   <span class="hljs-keyword">else</span><br>      <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;One argument expected.\n&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>现在编译上面的程序，并执行 <code>&gt; ./a.out testing</code>，它会产生下列结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">$./a.out testing<br>The argument supplied is testing<br></code></pre></td></tr></table></figure>
+<h3 id="getopt">getopt</h3>
+<p>但上面的机制还是过于简陋了。通常，命令行参数还带有很多选项（option），提供用户选择执行程序不同功能的机会，如查询版本一般用 <code>-V</code> 或者 <code>--version</code> 等，查看帮助文档一般使用 <code>--helo</code> 或 <code>-h</code> 等。为了方便处理，Linux 提供了更强大的函数，帮助开发者更好更快地解析命令行传来的参数。</p>
+<p>先介绍 <code>getopt()</code> 函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">getopt</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> *<span class="hljs-type">const</span> argv[], <span class="hljs-type">const</span> <span class="hljs-type">char</span> *optstring)</span></span>;<br><br><span class="hljs-keyword">extern</span> <span class="hljs-type">char</span> *optarg;<br><span class="hljs-keyword">extern</span> <span class="hljs-type">int</span> optind, opterr, optopt;<br></code></pre></td></tr></table></figure>
+<p><code>getopt()</code> 函数的前两个参数之前已经介绍过了，第三个参数 <code>optstring</code> 是一个字符列表，其中的每个字母代表一个选项。</p>
+<p>举例说明，<code>optstring</code> 的具体用法：当我们将 <code>optstring = &quot;ab:c::&quot;</code> 时，它表示：</p>
+<ul>
+<li>单个字符 <code>a:</code> 表示选项a 没有参数，即在命令行输入 <code>-a</code> 即算打开该功能，类似于其他执行程序中查看帮助的 <code>-h</code>。</li>
+<li>单个字符加冒号 <code>b:</code> 表示选项b 在命令行输入时必须有参数，如 <code>-b 10</code>。</li>
+<li>单个字符加两个冒号 <code>c::</code> 表示选项c 在命令行输入时 <code>-c</code> 后跟的参数是可有可无的</li>
+</ul>
+<p><code>getopt()</code> 函数的返回值很有意思：</p>
+<ul>
+<li>如果处理的 option 成功，那么返回选项的字母，如果有值跟随，<strong>那么字符串会被放在 <code>optarg</code> 中。</strong></li>
+<li>如果处理的 option 需要一个值，但命令行中没有给定值，返回 <code>:</code></li>
+<li>如果处理了一个未知的 option ，返回 <code>?</code>，并将值存入到 <code>optopt</code></li>
+<li>如果没有更多的 option 等待处理，返回 -1</li>
+<li>如果多余出一些跟随值，那么会将多余的存放在<code>argv</code>数组中，<code>optind</code>和<code>argc</code>分别充当索引和总数。</li>
+</ul>
+<p>再注意一下全局变量 <code>optind</code> <code>opterr</code> <code>optopt</code>，它们在解析命令行参数时非常重要。</p>
+<ul>
+<li>extern char *optarg; 存放了正在被处理的 option 后跟的参数</li>
+<li>extern int optind; 表下一个将被处理到的参数在 argv 中的下标值</li>
+<li>extern int opterr; 正常运行状态下为 0。非零时表示存在无效选项或者缺少选项参数，并输出其错误信息</li>
+<li>extern int optopt; 包含的发现未知 option 的无效选项字符</li>
+</ul>
+<p>下面，放上一个简单的程序示例，例如要实现一个程序，要求有选项功能如下：<code>&gt; ./a.out -i -f file.txt -lr -x 'hero'</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> *argv[])</span> </span>&#123;<br>  <span class="hljs-type">int</span> opt;      <br>  <span class="hljs-comment">// put &#x27;:&#x27; in the starting of the </span><br>  <span class="hljs-comment">// string so that program can  </span><br>  <span class="hljs-comment">// distinguish between &#x27;?&#x27; and &#x27;:&#x27;  </span><br>  <span class="hljs-keyword">while</span>((opt = <span class="hljs-built_in">getopt</span>(argc, argv, <span class="hljs-string">&quot;:if:lrx:&quot;</span>)) != <span class="hljs-number">-1</span>) &#123;  <br>    <span class="hljs-keyword">switch</span>(opt) &#123;  <br>      <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;i&#x27;</span>:<br>      <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;l&#x27;</span>:<br>      <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;r&#x27;</span>:<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;option: %c\n&quot;</span>, opt);<br>        <span class="hljs-keyword">break</span>;<br>      <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;f&#x27;</span>:<br>      <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;x&#x27;</span>:<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;option: %c argname: %s\n&quot;</span>, opt, optarg);<br>        <span class="hljs-keyword">break</span>;  <br>      <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;:&#x27;</span>:  <br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;option needs a value\n&quot;</span>);<br>        <span class="hljs-keyword">break</span>;<br>      <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;?&#x27;</span>:<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;unknown option: %c\n&quot;</span>, optopt);<br>        <span class="hljs-keyword">break</span>;<br>      &#125;<br>  &#125;<br>  <span class="hljs-comment">// optind is for the extra arguments </span><br>  <span class="hljs-comment">// which are not parsed </span><br>  <span class="hljs-keyword">for</span>(; optind &lt; argc; optind++) &#123;      <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;extra arguments: %s\n&quot;</span>, argv[optind]);  <br>  &#125;     <br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>; <br>&#125;<br></code></pre></td></tr></table></figure>
+<p>编译后运行，在命令行中输入 <code>&gt; ./a.out -i -f file.txt -lr -x hero</code>，则会输出：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs cmake"><span class="hljs-keyword">option</span>: i<br><span class="hljs-keyword">option</span>: f argname: <span class="hljs-keyword">file</span>.txt<br><span class="hljs-keyword">option</span>: l<br><span class="hljs-keyword">option</span>: r<br><span class="hljs-keyword">option</span>: x argname: hero<br></code></pre></td></tr></table></figure>
+<p>而如果输入 <code>&gt; ./a.out -q -x</code>，则会：</p>
+<figure class="highlight nestedtext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs nestedtext"><span class="hljs-attribute">unknown option</span><span class="hljs-punctuation">:</span> <span class="hljs-string">q</span><br><span class="hljs-attribute">option</span><span class="hljs-punctuation">:</span> <span class="hljs-string">x argname: -w</span><br><span class="hljs-attribute">extra arguments</span><span class="hljs-punctuation">:</span> <span class="hljs-string">2</span><br></code></pre></td></tr></table></figure>
+<h3 id="getopt-long">getopt_long</h3>
+<p><code>getopt_long()</code> 函数与 <code>getopt_long_only()</code> 函数，它们的工作方式与 <code>getopt()</code> 函数很像，除了这些函数还可以接收（<code>getopt_long_only()</code>除外）长选项<code>--</code>，形式可以为<code>--arg=param</code>或者<code>--arg param</code>。<code>getopt_long()</code> 函数用法如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">getopt_long</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> *<span class="hljs-type">const</span> *argv, <span class="hljs-type">const</span> <span class="hljs-type">char</span>* shortopts, </span></span><br><span class="hljs-params"><span class="hljs-function">                <span class="hljs-type">const</span> <span class="hljs-keyword">struct</span> option *longopts, <span class="hljs-type">int</span> longind)</span></span>;<br><span class="hljs-comment">// 其中结构体option</span><br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">option</span> &#123;<br>    <span class="hljs-type">const</span> <span class="hljs-type">char</span> *name; <span class="hljs-comment">// name of ong option</span><br>    <span class="hljs-type">int</span> has_arg;  <span class="hljs-comment">// 0 no 1 required 2 optional</span><br>    <span class="hljs-type">int</span> *flag;    <span class="hljs-comment">// how results returned</span><br>    <span class="hljs-type">int</span> val;      <span class="hljs-comment">// value to return</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>前两个参数相信早已不陌生，重点介绍后三个参数，<code>optstring</code> 是格式控制符，<code>longopts</code> 是 <code>struct option</code> 结构体组成的数组，该结构体表示的是“长参数”（即形如<code>-–name</code> 的参数）名称和性质：</p>
+<ul>
+<li>name 长选项名称</li>
+<li>has_arg 参数可选项，<code>no_argument</code> 表示该选项后不带参，<code>required_argument</code> 表示该选项后面带参数</li>
+<li>*flag 匹配到选项后，如果flag是 <code>NULL</code> ，则返回val；如果不是 <code>NULL</code> ，则返回0，并且将 <code>val</code> 的值赋给flag指向的内存</li>
+<li>val 匹配到选项后的返回值</li>
+</ul>
+<p><code>longindex</code>，表示是当前处理 <code>longopts</code> 数组的下标值。</p>
+<p>下面也给出个简单的例子，方便大家理解：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;getopt.h&gt;</span></span><br><br><span class="hljs-type">static</span> <span class="hljs-type">int</span> verbose_flag;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span> <span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> **argv)</span> </span>&#123;<br>    <span class="hljs-type">int</span> c;<br>    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-type">static</span> <span class="hljs-keyword">struct</span> <span class="hljs-title class_">option</span> long_options[] = &#123;<br>        <span class="hljs-comment">/* 下面的选项会将返回值写入 verbose_flag */</span><br>        &#123;<span class="hljs-string">&quot;verbose&quot;</span>, no_argument, &amp;verbose_flag, <span class="hljs-number">1</span>&#125;,<br>        &#123;<span class="hljs-string">&quot;brief&quot;</span>, no_argument, &amp;verbose_flag, <span class="hljs-number">0</span>&#125;,<br>        <span class="hljs-comment">/* 下面的选项返回值是val值 no_argument required_argument是宏常量 */</span><br>        &#123;<span class="hljs-string">&quot;add&quot;</span>,     no_argument,       <span class="hljs-number">0</span>, <span class="hljs-string">&#x27;a&#x27;</span>&#125;,<br>        &#123;<span class="hljs-string">&quot;beyond&quot;</span>,  no_argument,       <span class="hljs-number">0</span>, <span class="hljs-string">&#x27;b&#x27;</span>&#125;,<br>        &#123;<span class="hljs-string">&quot;delete&quot;</span>,  required_argument, <span class="hljs-number">0</span>, <span class="hljs-string">&#x27;d&#x27;</span>&#125;,<br>        &#123;<span class="hljs-string">&quot;create&quot;</span>,  required_argument, <span class="hljs-number">0</span>, <span class="hljs-string">&#x27;c&#x27;</span>&#125;,<br>        &#123;<span class="hljs-string">&quot;file&quot;</span>,    required_argument, <span class="hljs-number">0</span>, <span class="hljs-string">&#x27;f&#x27;</span>&#125;<br>        &#125;;<br><br>    <span class="hljs-comment">/* getopt_long 数组索引 */</span><br>    <span class="hljs-type">int</span> option_index = <span class="hljs-number">0</span>;<br>    c = <span class="hljs-built_in">getopt_long</span> (argc, argv, <span class="hljs-string">&quot;abc:d:f:&quot;</span>,<br>                long_options, &amp;option_index);<br>    <span class="hljs-comment">/* 返回-1 循环结束 */</span><br>    <span class="hljs-keyword">if</span> (c == <span class="hljs-number">-1</span>)<br>        <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">switch</span> (c) &#123;<br>        <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>:<br>            <span class="hljs-comment">/* If this option set a flag, do nothing else now. */</span><br>            <span class="hljs-keyword">if</span> (long_options[option_index].flag != <span class="hljs-number">0</span>)<br>                <span class="hljs-keyword">break</span>;<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;option %s&quot;</span>, long_options[option_index].name);<br>            <span class="hljs-keyword">if</span> (optarg)<br>                <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot; with arg %s&quot;</span>, optarg);<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;\n&quot;</span>);<br>            <span class="hljs-keyword">break</span>;<br>        <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;a&#x27;</span>:<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;option -a\n&quot;</span>);<br>            <span class="hljs-keyword">break</span>;<br>        <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;b&#x27;</span>:<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;option -b\n&quot;</span>);<br>            <span class="hljs-keyword">break</span>;<br>        <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;c&#x27;</span>:<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;option -c with value `%s&#x27;\n&quot;</span>, optarg);<br>            <span class="hljs-keyword">break</span>;<br>        <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;d&#x27;</span>:<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;option -d with value `%s&#x27;\n&quot;</span>, optarg);<br>            <span class="hljs-keyword">break</span>;<br>        <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;f&#x27;</span>:<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;option -f with value `%s&#x27;\n&quot;</span>, optarg);<br>            <span class="hljs-keyword">break</span>;<br>        <span class="hljs-keyword">case</span> <span class="hljs-string">&#x27;?&#x27;</span>:<br>            <span class="hljs-comment">/* getopt_long already printed an error message. */</span><br>            <span class="hljs-keyword">break</span>;<br>        <span class="hljs-keyword">default</span>:<br>            <span class="hljs-built_in">abort</span>();<br>        &#125;<br>    &#125;<br>    <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;verbose flag is %d\n&quot;</span>, verbose_flag);<br><br>    <span class="hljs-comment">/* 输出多余的命令行参数 */</span><br>    <span class="hljs-keyword">if</span> (optind &lt; argc) &#123;<br>        <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;non-option ARGV-elements: &quot;</span>);<br>        <span class="hljs-keyword">while</span> (optind &lt; argc)<br>            <span class="hljs-built_in">printf</span> (<span class="hljs-string">&quot;%s &quot;</span>, argv[optind++]);<br>        <span class="hljs-built_in">putchar</span> (<span class="hljs-string">&#x27;\n&#x27;</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>编译后执行，可以看下图结果：</p>
+<p><img src="/img/getopt_long.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="二、Linux下的时间处理">二、Linux下的时间处理</h2>
+<p>Linux内核提供的基本时间服务是计算自协调世界时（UTC）公元1970年1月1日 00:00:00 这一特定时间以来经过的秒数。这种秒数用<code>time_t</code>数据结构表示。</p>
+<p><code>time()</code>函数返回当前的秒数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;time.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">time_t</span> <span class="hljs-title">time</span><span class="hljs-params">(<span class="hljs-type">time_t</span> *calptr)</span></span>;<br></code></pre></td></tr></table></figure>
+<p>时间值作为函数值返回。若参数非空，时间值也会放在<code>calptr</code>指向的值中。</p>
+<p><code>clock_gettime()</code>函数可以用于获取指定时钟的时间，返回的时间在<code>timespec</code>数据结构中，它将时间分为秒和纳秒。<code>clock_id</code>用于指示选项，常用的有<code>CLOCK_REALTIME</code>、<code>CLOCK_MONOTONIC</code>、<code>CLOCK_PROCESS_CPUTIME_ID</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/time.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">clock_gettime</span><span class="hljs-params">(<span class="hljs-type">clockid_t</span> clock_id, <span class="hljs-keyword">struct</span> timespec *tsp)</span></span>;<br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">clock_getres</span><span class="hljs-params">(<span class="hljs-type">clockid_t</span> clock_id, <span class="hljs-keyword">struct</span> timespec *tsp)</span></span>;<br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">clock_settime</span><span class="hljs-params">(<span class="hljs-type">clockid_t</span> clock_id, <span class="hljs-keyword">struct</span> timespec *tsp)</span></span>;<br></code></pre></td></tr></table></figure>
+<p><code>clock_getres</code>函数把<code>tsp</code>指向的<code>timespec</code>结构初始化为<code>clock_id</code>参数对于的<strong>时钟精度</strong>。我们还可以使用<code>clock_settime</code>函数设置时间，但有些时钟不能修改。</p>
+<p>以上这些函数得到的数字都是自UTC时间的秒数，这对人类非常不友好。需要用<code>localtime</code>、<code>gmtime</code>、<code>strftime</code>等函数将秒数转为可读时间。<code>localtime</code>和<code>gmtime</code>将时间转换存入到结构体<code>tm</code>中。而<code>mktime</code>函数将tm时间转换为秒数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;time.h&gt;</span></span><br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">tm</span> &#123;<br>    <span class="hljs-type">int</span> tm_sec;		<span class="hljs-comment">// [0-60] 允许润秒</span><br>    <span class="hljs-type">int</span> tm_min;		<span class="hljs-comment">// [0-59]</span><br>    <span class="hljs-type">int</span> tm_hour;	<span class="hljs-comment">// [0-23] </span><br>    <span class="hljs-type">int</span> tm_mday;	<span class="hljs-comment">// [1-31]</span><br>    <span class="hljs-type">int</span> tm_mon;		<span class="hljs-comment">// [0-11]</span><br>    <span class="hljs-type">int</span> tm_year;	<span class="hljs-comment">// years since 1900</span><br>    <span class="hljs-type">int</span> tm_wday;	<span class="hljs-comment">// [0-6]</span><br>    <span class="hljs-type">int</span> tm_yday;	<span class="hljs-comment">// [0-365]</span><br>    <span class="hljs-type">int</span> tm_isdst;	<span class="hljs-comment">// daylight saving time flag</span><br>&#125;<br><br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">tm</span> *<span class="hljs-built_in">gmtime</span>(<span class="hljs-type">const</span> <span class="hljs-type">time_t</span> *calptr);<br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">tm</span> *<span class="hljs-built_in">localtime</span>(<span class="hljs-type">const</span> <span class="hljs-type">time_t</span> *calptr);<br><br><span class="hljs-function"><span class="hljs-type">time_t</span> <span class="hljs-title">mktime</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> tm *tmptr)</span></span>;<br></code></pre></td></tr></table></figure>
+<p>当然，<code>gmtime</code>和<code>localtime</code>函数仍然不能满足人们的需要。函数<code>strftime</code>是类似于<code>printf</code>的时间值函数，可以通过多个参数定制产生的字符串。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;time.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">size_t</span> <span class="hljs-title">strftime</span><span class="hljs-params">(<span class="hljs-type">char</span> *buf, <span class="hljs-type">size_t</span> maxsize, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *format, </span></span><br><span class="hljs-params"><span class="hljs-function">                <span class="hljs-type">const</span> <span class="hljs-keyword">struct</span> tm *tmptr)</span></span>;<br><span class="hljs-function"><span class="hljs-type">size_t</span> <span class="hljs-title">strftime_l</span><span class="hljs-params">(<span class="hljs-type">char</span> *buf, <span class="hljs-type">size_t</span> maxsize, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *format, </span></span><br><span class="hljs-params"><span class="hljs-function">                  <span class="hljs-type">const</span> <span class="hljs-keyword">struct</span> tm *tmptr, <span class="hljs-type">locale_t</span> locale)</span></span>;<br><span class="hljs-function"><span class="hljs-type">char</span> *<span class="hljs-title">strptime</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *buf, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *format, <span class="hljs-keyword">struct</span> tm *tmptr)</span></span>;<br></code></pre></td></tr></table></figure>
+<p><code>tmptr</code>是要格式化的时间值，格式化的结果存放在长度为<code>maxsize</code>的<code>buf</code>数组中，如果长度不足，函数返回0，否则返回在 <code>buf</code> 中存放的字符数。<code>format</code>是控制时间值的格式，与<code>printf</code>相同。</p>
+<p>这是使用说明：</p>
+<p><img src="/img/strftime.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><code>strptime</code>是<code>strftime</code>的反过来的版本，把字符串时间转换为分解时间。</p>
+<p>这些函数的转换关系，可以用这一张图概括：</p>
+<p><img src="/img/time.png" srcset="/img/loading.gif" lazyload alt=""></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Cpp/" class="category-chain-item">Cpp</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/" class="print-no-link">#C</a>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>在 Linux 中更好地使用C/C++语言</div>
+      <div>https://dingfen.github.io/2021/08/25/2021-8-25-tricks-in-LinuxC/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年8月25日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/09/24/2021-9-24-Qt-Chess/" title="初学 Qt（一）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">初学 Qt（一）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/23/2021-8-23-non-trivial-thing-in-C/" title="C语言中容易忽视的小知识">
+                        <span class="hidden-mobile">C语言中容易忽视的小知识</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

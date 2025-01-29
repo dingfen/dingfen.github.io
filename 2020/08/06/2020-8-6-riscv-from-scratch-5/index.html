@@ -1,0 +1,907 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RISC-V from Scratch 5：机器模式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RISC-V from Scratch 5">
+<meta property="og:url" content="https://dingfen.github.io/2020/08/06/2020-8-6-riscv-from-scratch-5/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="RISC-V from Scratch 5：机器模式">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/uarthi.png">
+<meta property="og:image" content="https://dingfen.github.io/img/mie.png">
+<meta property="og:image" content="https://dingfen.github.io/img/run_5.png">
+<meta property="article:published_time" content="2020-08-06T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RISC-V">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/uarthi.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>RISC-V from Scratch 5 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="RISC-V from Scratch 5"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-06 12:00" pubdate>
+          2020年8月6日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">RISC-V from Scratch 5</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>RISC-V from scratch 5</h1>
+<p>接上一篇<a href="https://dingfen.github.io/risc-v/2020/08/01/riscv-from-scratch-4.html">博客</a>，我今天继续写 <em>RISC-V from scratch</em> 系列博客。原本我打算将该<a target="_blank" rel="noopener" href="https://github.com/twilco/riscv-from-scratch">英文系列</a>全部翻译成中文，但原作者貌似没有把这一系列完成就咕咕了，<strong>因此本文的内容是我自己实践的内容，以及一些自己的想法，放在这里同大家探讨，算是狗尾续貂，弥补遗憾</strong>。</p>
+<h2 id="简介">简介</h2>
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，我们之前已经探索了很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。具体来说，在上一篇文章中，我们完成了一个简陋的 <strong>UART</strong> 驱动程序，并利用该驱动程序完成了打印字符的任务，今天，我们紧接着上一篇的实验内容，继续深入探讨 RISC-V，完善咱们的小内核。</p>
+<p>本篇博客中，我们将会：</p>
+<ul>
+<li>写一个自己的链接器脚本</li>
+<li>使用 RISC-V 提供的机器模式特权寄存器</li>
+<li>初始化 bss 数据段</li>
+</ul>
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+<p>如果你还未看本系列博客的第一部分，没有安装 <code>riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+<h2 id="往期回顾">往期回顾</h2>
+<p>在 <em>RISC-V from scratch 4</em> 中，我们实现了一个简单的 UART 驱动程序和一个简单的 C 运行时 <code>crt0.s</code>，并达到了预期效果，见下图：</p>
+<p><img src="/img/uarthi.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>考虑到 <code>crt0.s</code> 的实现已经是第二章的事情了，比较久远，因此在这里贴出代码，也是为了方便下一步的讨论。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs nasm">.section .init, &quot;ax&quot;<br>.global _start<br>_start:<br>    .cfi_startproc<br>    .cfi_undefined ra<br>    .option push<br>    .option norelax<br>    la gp, __global_pointer$<br>    .option pop<br>    la sp, __stack_top<br>    add s0, sp, zero<br>    jal zero, main<br>    .cfi_endproc<br>    .end<br></code></pre></td></tr></table></figure>
+<p>然而，我们为了打出字符串 “hi” ，将主程序写成了这样：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">char</span> p = <span class="hljs-string">&#x27;h&#x27;</span>;<br>    uartinit();<br>    uartputc(p);<br>    p++;<br>    uartputc(p);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>难道不能把它放入一个字符串，循环打印出来么？</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">char</span> p[] = <span class="hljs-string">&quot;hello&quot;</span>;<br>    uartinit();<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i =<span class="hljs-number">0</span>; i &lt; <span class="hljs-number">5</span>; i++)<br>        uartputc(p[i]);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>你会发现，这样的尝试失败了，你会得到一个很奇怪的链接错误：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">relocation truncated to fit: R_RISCV_HI20 against `p&#x27;<br></code></pre></td></tr></table></figure>
+<p>这是为什么呢？在本系列的第二篇<a href="https://dingfen.github.io/risc-v/2020/07/26/riscv-from-scratch-2.html#%E9%93%BE%E6%8E%A5%E8%B5%B7%E6%9D%A5">博客中</a>，我们使用如下方法得到了一个链接器脚本：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">In the `riscv-from-scratch/work` directory...</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">Copy the default linker script into riscv64-virt.ld</span><br>riscv64-unknown-elf-ld --verbose &gt; riscv64-virt.ld<br></code></pre></td></tr></table></figure>
+<p>该脚本中的内容非常复杂，说实话，大部分内容我至今都没有看懂，但这并不妨碍我们以后的实验，我们只需要知道，这个舶来品现在水土不服了。</p>
+<h2 id="再回链接器脚本">再回链接器脚本</h2>
+<p>什么是链接器脚本，具体来说，链接器控制了各个程序中 section 的合并以及摆放位置，在一般情况下，我们写程序时完全不需要关心程序放在内存的哪个位置，因为我们平时写的代码都是 PIC (Position-Independent Code)，它们可以运行在内存中的任意位置。但现在，我们要完成一个 RISC-V 内核，程序摆放的位置就值得考究了，要是你随意摆放的话，那机器怎么知道你要把代码放在哪里，从哪里开始运行呢？</p>
+<p>为了编写一个自定义的链接器脚本，我们必然要先学它的基本语法。这里我推荐一个博主的教程 <a target="_blank" rel="noopener" href="http://bravegnu.org/gnu-eprog/lds.html">Linker Script File</a>，里面介绍了非常基础的语法知识，非常适合初学者。在这里我就不详细解释链接器脚本的语法了。</p>
+<p>学好链接器脚本的语法后，就可以动手写了！</p>
+<p>首先，创建文件 <code>my-virt.ld</code> ，加入入口 <code>_start</code> 以及第二章中我们已经加的 MEMORY 指令。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs shell">ENTRY(_start)<br>MEMORY<br>&#123;<br>   /* qemu-system-riscv64 virt machine */<br>   RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 128M<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>然后就是 SECTION 语句：</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs armasm"><span class="hljs-symbol">SECTION</span> <br>&#123;<br>    PROVIDE(__stack_top = <span class="hljs-number">0x88000000</span>)<span class="hljs-comment">;</span><br>    PROVIDE(__uart_base_addr = <span class="hljs-number">0x10000000</span>)<span class="hljs-comment">;</span><br>    <br>    . = <span class="hljs-number">0x80000000</span><span class="hljs-comment">;</span><br>    <span class="hljs-meta">.text</span> : &#123;<br>    	* (<span class="hljs-meta">.text</span>)<span class="hljs-comment">;</span><br>    &#125;<br>    <br>    <span class="hljs-meta">.data</span> : &#123;<br>        __global_pointer$ = .<span class="hljs-comment">;</span><br>    	* (<span class="hljs-meta">.data</span>)<span class="hljs-comment">;</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>将代码 text 放到了内存起始点，数据段紧跟其后。那么问题来了，<code>__global_pointer$</code> 这个值，该指向哪里呢？指向数据段的中部？尾部？顶部？常量静态数据在前在后？全局数据与局部静态数据又如何？那么大家问问自己的直觉，<code>__global_pointer$</code> 最有可能在哪里？顶部？没错，博主本人在做实验时就放在了顶部，还就真的对了（当然博主讲话是负责任的，证据在后面）。</p>
+<p>那么现在问题解决了么？还没有！因为我们还没有确定 <code>.init</code> section 的位置，往前翻翻，注意到 <code>crt0.s</code> 里面的代码，可是放在 <code>.init</code> section 里面的（没错，就是因为这个，我才把它贴在这里）。在本系列的第二篇<a href="https://dingfen.github.io/risc-v/2020/07/26/riscv-from-scratch-2.html">博客中</a>，我们已经详细说明了 C Runtime 的重要性，不把它放在 <code>0x80000000</code> ，程序一定跑不了。</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">SECTION <br>&#123;<br>    PROVIDE<span class="hljs-params">(<span class="hljs-attr">__stack_top</span> = 0x88000000)</span>;<br>    PROVIDE<span class="hljs-params">(<span class="hljs-attr">__uart_base_addr</span> = 0x10000000)</span>;<br>    <br>    . = 0x80000000;<br>    <span class="hljs-string">.init</span> : &#123;<br>    	* <span class="hljs-params">(.init)</span>;<br>    &#125;<br>    <span class="hljs-string">.text</span> : &#123;<br>    	* <span class="hljs-params">(.text)</span>;<br>    &#125;<br>    <br>    <span class="hljs-string">.data</span> : &#123;<br>        __global_pointer$ = .;<br>    	* <span class="hljs-params">(.data)</span>;<br>    &#125;<br>    <span class="hljs-string">.rodata</span> : &#123;<br>    	* <span class="hljs-params">(.rodata)</span>;<br>    &#125;<br>    <br>    __bss_start = .;<br>    <span class="hljs-string">.bss</span> : &#123;<br>    	* <span class="hljs-params">(.bss)</span>;<br>    &#125;<br>    __bss_end = .;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>为了节省篇幅，把后面的东西都加了进来，事实上也没啥，就是 <code>.rodata</code> 和 <code>.bss</code> 段，分别存放只读数据（常量数据）和未初始化数据，如果不太清楚这些段名的作用，可以参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/jxm_csdn/article/details/39829535">C 语言内存分布</a>。</p>
+<p>那么到此为止，能不能实现我们预期的结果呢？按一下方式编译运行程序，若不出意外，就可以看到字符串 “hello” 了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">&gt; </span><span class="language-bash">riscv64-unknown-elf-gcc -c kernel/main.c -o build/main.o</span><br><span class="hljs-meta prompt_">&gt; </span><span class="language-bash">riscv64-unknown-elf-gcc -c kernel/ns16550a.c -o build/ns16550a.o</span><br><span class="hljs-meta prompt_">&gt; </span><span class="language-bash">riscv64-unknown-elf-as kernel/crt0.s -o build/crt0.o</span><br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">&gt; </span><span class="language-bash">riscv64-unknown-elf-ld build/crt0.o build/main.o build/ns16550a.o -T kernel/my-virt.ld</span><br><span class="hljs-meta prompt_">&gt; </span><span class="language-bash">qemu-system-riscv64 -machine virt -m 128M -kernel a.out -bios none -nographic</span><br></code></pre></td></tr></table></figure>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs makefile">CC=riscv64-unknown-elf-gcc<br>AS=riscv64-unknown-elf-as<br>LD=riscv64-unknown-elf-ld<br><br>TARGET=build/a.out<br>CFLAG= -c<br>VIRTLD=-T [your-src-directory]/my-virt.ld<br><br><span class="hljs-section">all: build/crt0.o build/main.o build/ns16550a.o</span><br>	<span class="hljs-variable">$(LD)</span> <span class="hljs-variable">$(VIRTLD)</span> <span class="hljs-variable">$^</span> -o <span class="hljs-variable">$(TARGET)</span><br><br><span class="hljs-section">build/%.o: [your-src-directory]/%.s</span><br>	<span class="hljs-variable">$(AS)</span> -g <span class="hljs-variable">$^</span> -o <span class="hljs-variable">$@</span><br><br><span class="hljs-section">build/%.o: [your-src-directory]/%.c</span><br>	<span class="hljs-variable">$(CC)</span> <span class="hljs-variable">$(CFLAG)</span> <span class="hljs-variable">$^</span> -o <span class="hljs-variable">$@</span><br></code></pre></td></tr></table></figure>
+<p>如果大家看过<a href="https://dingfen.github.io/risc-v/2020/08/01/riscv-from-scratch-4.html">第四章博客</a>，一定对 <code>Makefile</code> 的简洁方便印象深刻，所以我也提供了 <code>Makefile</code> 的编写，也会发现我们这次编译程序的方式不太相同（两次编译都能过）。如果你不喜欢这种方式，可以尝试一下这个 <code>riscv64-unknown-elf-gcc -g -ffreestanding -O0 -Wl,--gc-sections -nostartfiles -nostdlib -nodefaultlibs -Wl,-T,my-virt.ld crt0.s ns16550a.c main.c</code> 冗长繁杂的命令😅。</p>
+<h2 id="机器模式">机器模式</h2>
+<p>我们要想实现一个可以工作的内核，<code>crt0.s</code> 中那几行简短的代码肯定是不够的，因为 <code>crt0.s</code> 中只是建立的栈，找到了数据段位置，然后就跳转到 <code>main</code> 函数了。然而一个可以工作的内核需要处理中断控制、中断处理、状态指示、权限设置甚至多 CPU 处理等多方面问题。考虑到 <code>crt0.s</code> 是机器启动后，最先开始执行的代码，一定处在机器模式——权限最高的模式，那我们必然要给它塞一些更加繁重的任务。</p>
+<p>可能有些读者对 RISC-V 的特权架构不是很熟，建议看一下 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a target="_blank" rel="noopener" href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a> 和 <a target="_blank" rel="noopener" href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged manual</a> 。由于篇幅关系，我就不在这里展开介绍了。</p>
+<p>首先，我们要给 <code>crt0.s</code> 文件正式升级，将它改名为 <code>boot.s</code> ，或者随便什么你喜欢的名字（<code>start.s</code> 、<code>entry.s</code> 、<code>head.S</code> 之类的）。</p>
+<h3 id="mhartid-寄存器">mhartid 寄存器</h3>
+<p>考虑到 <code>QEMU</code> <code>virt</code> 机器可以使用多个处理器，那么我们就需要防止多个 hart 执行 <code>boot.s</code> ，在机器刚开始运行（以及我们刚开始编写代码时），一哄而上可不是什么好的选择。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs nasm">_start:<br>    # read our hart identifier into t0<br>    # see if it is 0, if not to busy loop<br>    csrr t0, mhartid<br>    bnez t0, 4f<br>    ...<br>4:<br>    wfi<br>    j 4b<br></code></pre></td></tr></table></figure>
+<p>因此这里我们首先使用 mhartid 寄存器获取 hart 的 ID ，<code>csrr</code> 是一个伪指令，它读取一个 CSR 寄存器。让非 0 的 hart 全部跳转到死循环里，并将它们 stall 住，死循环中 <code>wfi</code> 指令在这方面是专家：</p>
+<blockquote>
+<p>The Wait for Interrupt instruction (WFI) provides a hint to the implementation that the current hart can be stalled until an interrupt might need servicing.</p>
+</blockquote>
+<h3 id="satp-寄存器">satp 寄存器</h3>
+<p>现在，我们就要开始设置一些寄存器了以及一些初始化任务。</p>
+<p>我们需要取消内存分页机制，这样我们就可以完全控制 MMU (Memory Management Unit) ，只不过控制的方式就是让 virtual memory = physical memory 。参考 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a target="_blank" rel="noopener" href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a>，使用 csrw 语句，向 satp 寄存器写 0 即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs nasm"># SATP should be 0 <br># Supervisor Address Translation and Protection<br>csrw satp, zero<br></code></pre></td></tr></table></figure>
+<h3 id="mstatus-寄存器">mstatus 寄存器</h3>
+<p>刚开始执行代码一定是机器模式，但是我们总不能一直让 hart 在机器模式下运行；此外，全局中断使能位也需要我们控制。这些都可以在 <code>mstatus</code> 寄存器上找到，关于 <code>mstatus</code> 寄存器，<a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a target="_blank" rel="noopener" href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a>上都有详细介绍。在此就略写几句。</p>
+<p>当进入 <code>main</code> 函数时，hart 最好要进入监管者模式。因为 <code>main</code> 函数事实上是我们操作系统内核最主要的函数之一，此外，我们也希望中断能被打开。对照 <a href="#mstatus"><code>mstatus</code> 寄存器</a>的位图，我们可以在对应位域置 1 ，来打开中断或者记录信息等。</p>
+<span id="mstatus">
+![](/img/mstatus.png)
+<p>比如，我们想先打开机器模式的中断使能，那么我们需要：</p>
+<ul>
+<li>将 <code>mstatus.MIE</code> 位置为 1 ，因为它代表机器模式全局下的中断使能</li>
+<li>将 <code>mstatus.MPIE</code> 位置为 1 ，它代表了在中断/异常发生前，机器模式全局下的中断使能（我们肯定不想在中断/异常发生一次后，使能就失效了吧）</li>
+</ul>
+<p>我们还要将 <code>mstatus.MPP</code> 位置为 01，它代表了中断/异常发生前，代码运行的模式。之所以置为 01（监管者模式），是为了在执行 <code>mret</code> 的时候进入监管者模式。结合之前所说的，写下如下代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">li   t0, (0b01 &lt;&lt; 11) | (1 &lt;&lt; 7) | (1 &lt;&lt; 3)<br>csrw mstatus, t0<br></code></pre></td></tr></table></figure>
+<h3 id="初始化-BSS-数据段">初始化 BSS 数据段</h3>
+<p>如果你了解了 <a target="_blank" rel="noopener" href="https://blog.csdn.net/jxm_csdn/article/details/39829535">C 语言内存分布</a>，你就会知道全局未初始化变量都会放在 BSS 段中，即我们在链接器文件里描述的 <code>.bss</code> section 。这里不得不说一句，写 C/C++ 未在定义时初始化是非常危险的😅，因为这会导致不确定行为。那么，作为操作系统的开发人员，初始化 BSS 数据段的责任就担在我们身上了。</p>
+<p>还记得我们之前定义的 <code>__bss_start</code> 和 <code>__bss_end</code> 吧，它们一个在 <code>.bss</code> 数据段前面，一个在后面，这两个符号是为方便数据初始化而设定的，那么目前，我们先把 <code>.bss</code> 段全部初始化为 0 。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs nasm">    la  a0, __bss_start<br>    la  a1, __bss_end<br>    bgeu a0, a1, 2f<br>l1:<br>    sd   zero, (a0)<br>    addi a0, a0, 8<br>    bltu a0, a1, l1<br></code></pre></td></tr></table></figure>
+<p>只要你熟悉了 RISC-V 汇编语言，你肯定不难看懂上面的代码。它的作用就是从 <code>__bss_start</code> 开始循环，每次将 0 存放到目标地址，直到 <code>__bss_end</code> 为止。</p>
+<h3 id="mie-寄存器">mie 寄存器</h3>
+<p><code>mie</code> 寄存器包含了中断使能位，用于控制中断是否有效。其位域如下图：</p>
+<span id="mie">
+<p><img src="/img/mie.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>我们除了要打开机器模式下的全局中断使能，还需要打开软件、时钟、外部这三部分子中断使能，参照 <a href="#mie"><code>mie</code> 寄存器的位域图</a>，我们可以写出下面的代码，打开所有机器模式下的中断使能。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">li   t3, (1 &lt;&lt; 3) | (1 &lt;&lt; 7) | (1 &lt;&lt; 11)<br>csrw mie, t3<br></code></pre></td></tr></table></figure>
+<h3 id="mtvec-寄存器">mtvec 寄存器</h3>
+<p><code>mtvec</code> 寄存器又是什么？该寄存器全名 Machine Trap-Vector Base-Address Register，它存放了 trap vector 信息，包括了基地址和模式位。换句话说，当中断/异常发生时，PC 值肯定需要跳转到中断/异常处理程序，该寄存器就保存了这些处理程序的地址。对 <code>mtvec</code> 寄存器的详细介绍，还是要参考 <a href="https://dingfen.github.io/risc-v/2020/08/05/riscv-privileged.html">RISC-V 特权架构</a> 和 <a target="_blank" rel="noopener" href="http://crva.ict.ac.cn/documents/RISC-V-Reader-Chinese-v2p1.pdf">RISC-V 中文手册</a> 和 <a target="_blank" rel="noopener" href="https://riscv.org/specifications/privileged-isa/">RISC-V privileged manual</a> 资料。</p>
+<p>我们先不考虑中断/异常处理程序，先定义一个符号 <code>mtrap_vector</code> ，把它当作处理程序的开始点，然后，把它放入到 <code>mtvec</code> 寄存器中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs nasm">la   t2, mtrap_vector<br>csrw mtvec, t2<br></code></pre></td></tr></table></figure>
+<h3 id="转到-main">转到 main</h3>
+<p>看起来我们快要写完了。到这时候，大家可能会变得不耐烦且急躁。于是，写出了最后一句指令 <code>mret</code> 。</p>
+<p>哦不，等等，<code>mret</code>  指令会把我们带到哪里？回顾一下 <code>crt0.s</code> ，在快结束的时候，我们使用指令 <code>jal zero, main</code> 跳转到了 <code>main</code> 函数里，我们的 <code>boot.s</code> 当然也需要跳转到 <code>main</code> 函数。但是，我们还可以用 <code>jal zero, main</code> 指令跳转吗？不行。这样跳转的话，我们仍在机器模式下。为了使 hart 跑在监管者模式下，我们必须使用 <code>mret</code> 。</p>
+<p>所以，<code>mret</code>  指令会把我们带到哪里？参考 RISC-V 的相关资料，在处理 <code>mret</code> 指令时，PC 值会从 <code>mepc</code> 寄存器取得。因此，我们必须将 <code>main</code> 函数的地址存入 <code>mepc</code> 寄存器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs nasm">la   t1, main<br>csrw mepc, t1<br>...<br>mret<br></code></pre></td></tr></table></figure>
+<p>我们把 <code>main</code> 函数的地址写入到了 <code>mepc</code> 寄存器中，回想一下 <code>mepc</code> 寄存器，它是用来存放中断处理完后的恢复执行的地址。那么在执行了 <code>mret</code> 之后， PC 值会被置为 <code>mepc</code> 寄存器中的数值，程序就会自己跳转到 <code>main</code> 函数里面了。</p>
+<h2 id="接下来">接下来</h2>
+<p>今天，我们一口气介绍了好多寄存器以及中断相关的内容！这可能相当令人烦躁，但也请静下心来，多多尝试，仔细理解每一步。由于这次我将代码进行了拆分介绍，虽然每个地方更加清楚，但缺乏整体观念，因此，在这里将完整代码列出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs nasm"># boot.s<br><br>.section .init,&quot;ax&quot;<br>.global _start<br>_start:<br>    # read our hart identifier into t0<br>    # see if it is 0 if not to busy loop<br>    csrr t0, mhartid<br>    bnez t0, 4f<br><br>    # SATP should be 0 Supervisor Address Translation and Protection<br>    csrw satp, zero<br>    .option push<br>    .option norelax<br>    la   gp, __global_pointer$<br>    .option pop<br><br>    # BSS section expected to be 0<br>    la  a0, __bss_start<br>    la  a1, __bss_end<br>    bgeu a0, a1, 2f<br>1:<br>    sd   zero, (a0)<br>    addi a0, a0, 8<br>    bltu a0, a1, 1b<br>2:<br>    la   sp, __stack_top<br>    li   t0, (0b01 &lt;&lt; 11) | (1 &lt;&lt; 7) | (1 &lt;&lt; 3)<br>    csrw mstatus, t0<br>    la   t1, main<br>    csrw mepc, t1<br>    la   t2, mtrap_vector<br>    csrw mtvec, t2<br>    li   t3, (1 &lt;&lt; 3) | (1 &lt;&lt; 7) | (1 &lt;&lt; 11)<br>    csrw mie, t3<br>    la   ra, 4f<br>    mret<br>4:<br>    wfi<br>    j 4b<br></code></pre></td></tr></table></figure>
+<p>在本篇博客，我们重点讲述了 <code>boot.s</code> 的代码的功能，并详尽地介绍了 RISC-V 特权模式以及一部分寄存器的功能。这全是在为之后的工作铺路，接下来我们就要实现时钟中断了，时钟中断十分重要，没有它，我们就无法切换进程，实现进程间的调度。</p>
+<h2 id="附：数据的分布">附：数据的分布</h2>
+<p>为了理清 RISC-V 中数据到底如何分布，特做以下实验，一方面是为了验证自己的理论知识，另一方面，也是为了检查程序是否有 bug 。话不多说，直接开始实验。</p>
+<p>该实验只需要 <code>crt0.s</code> 和 <code>main.c</code> 文件即可，本章中的内容可以不用增加到 <code>crt0.s</code> 文件中。而 <code>main.c</code> 文件，我增加了不少内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">char</span> sg[] = <span class="hljs-string">&quot;hello world!&quot;</span>;<br><span class="hljs-type">char</span> g[] = <span class="hljs-string">&quot;hi RISC-V&quot;</span>;<br><span class="hljs-type">int</span> ga;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> l = <span class="hljs-number">102</span>;<br>    <span class="hljs-type">static</span> <span class="hljs-type">int</span> sl = <span class="hljs-number">105</span>;<br>    uartinit();<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">12</span>; i++)<br>        uartputc(sg[i]);<br>    uartputc(l);<br>    uartputc(sl);<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">9</span>; i++)<br>        uartputc(g[i]);<br>    <span class="hljs-keyword">if</span> (ga == <span class="hljs-number">0</span>)<br>        uartputc(<span class="hljs-string">&#x27;g&#x27;</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>先来看看各种类型的数据：</p>
+<ul>
+<li>
+<p><code>sg</code> 静态全局已初始化</p>
+</li>
+<li>
+<p><code>g</code> 全局已初始化</p>
+</li>
+<li>
+<p><code>ga</code> 全局未初始化</p>
+</li>
+<li>
+<p><code>l</code>局部已初始化</p>
+</li>
+<li>
+<p><code>sl</code> 静态局部已初始化</p>
+</li>
+</ul>
+<p>然后，我们可以按照之前给过的 <code>Makefile</code> 文件编译生成 <code>a.out</code>，我们首先看看运行结果：</p>
+<p><img src="/img/run_5.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>令人欣慰的是，我们的程序没啥错误（至少到目前为止是这样），为了更好地明确各个数据的位置，我们需要用到 <code>objdump</code> 工具，反编译生成的文件 <code>a.out</code>。在 shell 中输入：<code>riscv64-unknown-elf-objdump -d a.out</code>，就可以得到反编译生成的 RISC-V 汇编语言。为了方便大家看得更加清楚，我单独将 <code>main</code> 的部分取出，并省略了一些对我们不重要的代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs nasm">0000000080000018 &lt;main&gt;:<br>     # allocate stack space<br>     # ...<br>    80000020:	06600793          	li	a5,102							# 局部变量 102 直接当作立即数<br>    80000024:	fef42223          	sw	a5,-28(s0)						# 存入到 -28(s0)<br>    80000028:	180000ef          	jal	ra,800001a8 &lt;uartinit&gt;<br>    8000002c:	fe042623          	sw	zero,-20(s0)<br>    80000030:	a00d                	j	80000052 &lt;main+0x3a&gt;<br>    80000032:	00018713          	mv	a4,gp							# 会发现 a4 就在 gp 上<br>    80000036:	fec42783          	lw	a5,-20(s0)						# 即 gp 就是数据段的开头<br>    8000003a:	97ba                	add	a5,a5,a4					# 从 gp 中取出数据 sg<br>    8000003c:	0007c783          	lbu	a5,0(a5)<br>    80000040:	2781                	sext.w	a5,a5<br>    80000042:	853e                	mv	a0,a5						# 全局静态变量 sg<br>    80000044:	1b8000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    # loop var increasement<br>    # ...<br>    80000060:	fe442783          	lw	a5,-28(s0)<br>    80000064:	853e                	mv	a0,a5					# 从 -28(s0) 中取出 是局部变量 102<br>    80000066:	196000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    8000006a:	01c1a783          	lw	a5,28(gp) # 8000101c &lt;sl.1504&gt;  # 静态变量 sl  从 gp 中取出<br>    8000006e:	853e                	mv	a0,a5<br>    80000070:	18c000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    80000074:	fe042423          	sw	zero,-24(s0)<br>    80000078:	a00d                	j	8000009a &lt;main+0x82&gt;<br>    8000007a:	01018713          	addi	a4,gp,16 # 80001010 &lt;g&gt;<br>    8000007e:	fe842783          	lw	a5,-24(s0)<br>    80000082:	97ba                	add	a5,a5,a4					# 从 gp 中取出 全局变量 g<br>    80000084:	0007c783          	lbu	a5,0(a5)<br>    80000088:	2781                	sext.w	a5,a5<br>    8000008a:	853e                	mv	a0,a5<br>    8000008c:	170000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>    #  loop var increasement<br>    #  ...<br>    800000a8:	05c1a783          	lw	a5,92(gp) # 8000105c &lt;ga&gt;     # 从 gp 中取出 未初始化的全局变量 ga <br>    800000ac:	e789                	bnez	a5,800000b6 &lt;main+0x9e&gt;<br>    800000ae:	06700513          	li	a0,103<br>    800000b2:	14a000ef          	jal	ra,800001fc &lt;uartputc&gt;<br>	# deallocate stack space and return <br>	# ...<br>    800000c0:	8082                	ret<br><br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RISC-V/" class="category-chain-item">RISC-V</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RISC-V/" class="print-no-link">#RISC-V</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>RISC-V from Scratch 5</div>
+      <div>https://dingfen.github.io/2020/08/06/2020-8-6-riscv-from-scratch-5/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月6日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/08/17/2020-8-17-riscv-from-scratch-6/" title="RISC-V from Scratch 6">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">RISC-V from Scratch 6</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/08/05/2020-8-5-riscv-privileged/" title="RISC-V 特权架构">
+                        <span class="hidden-mobile">RISC-V 特权架构</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

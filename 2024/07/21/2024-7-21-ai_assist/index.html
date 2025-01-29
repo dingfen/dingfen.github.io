@@ -1,0 +1,916 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="10 分钟为您的网站添加一个 AI 助手！">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在基于 hexo 框架的博客上部署定制化 AI 聊天应用">
+<meta property="og:url" content="https://dingfen.github.io/2024/07/21/2024-7-21-ai_assist/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="10 分钟为您的网站添加一个 AI 助手！">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://coruzant.com/wp-content/uploads/2022/10/chatbot-robot-696x464.jpg">
+<meta property="article:published_time" content="2024-07-21T14:34:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://coruzant.com/wp-content/uploads/2022/10/chatbot-robot-696x464.jpg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>在基于 hexo 框架的博客上部署定制化 AI 聊天应用 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://www.ceipal.com/wp-content/uploads/2020/03/AI-Chatbot.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="在基于 hexo 框架的博客上部署定制化 AI 聊天应用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-07-21 22:34" pubdate>
+          2024年7月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">在基于 hexo 框架的博客上部署定制化 AI 聊天应用</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>需要</h1>
+<ul>
+<li>注册并登录<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/model-studio/">大模型服务百炼平台</a>。注意，目前（2024年7月），在阿里云上部署 AI 助手需要根据 AI 应用的实际 token 输入/输出数量付费！</li>
+</ul>
+<p>友情链接：通义系列模型收费<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/model-studio/product-overview/tongyi-qianwen-series-models-price-adjustment">价格一览</a></p>
+<h1>部署方法</h1>
+<p>如何给自己的博客加入 AI 助手，方便全天候（7x24）地回答读者疑问，总结文章内容？本篇博客教你用 10 分钟为您的网站添加一个 AI 助手。以下内容基本参考了<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/model-studio/use-cases/add-an-ai-assistant-to-your-website-in-10-minutes?spm=a2c4g.11186623.0.0.5b796373rqgtsU">10分钟在网站上增加一个 AI 助手</a>。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816074.gif" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>在网站中引入一个 AI 助手，只需 4 步：</p>
+<ol>
+<li><strong>创建大模型问答应用</strong>：我们将先通过百炼创建一个大模型应用，并获取调用大模型应用 API 的相关凭证。</li>
+<li><strong>搭建示例网站</strong>：然后我们将通过函数计算，来快速搭建一个网站，模拟您的企业官网或者其他站点。</li>
+<li><strong>引入 AI 助手</strong>：接着我们将通过修改几行代码，实现在网站中引入一个 AI 助手。</li>
+<li><strong>增加私有知识</strong>：最后可以通过准备一些私有知识，让 AI 助理能回答原本无法准确回答的问题，帮助您更好的应对客户咨询。</li>
+</ol>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816044.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="1-创建大模型问答应用">1. 创建大模型问答应用</h2>
+<p>首先我们可以通过创建一个百炼应用，来获取大模型的推理 API 服务，用于实现 AI 助手。</p>
+<blockquote>
+<p>百炼提供的新用户免费额度可以完全覆盖本教程所需资源消耗。额度消耗完后按 token 计费，相比自行部署大模型可以显著降低初期投入成本。</p>
+</blockquote>
+<h3 id="1-1-创建应用">1.1 创建应用</h3>
+<p>进入百炼控制台，在我的应用中点击创建应用。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816048.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>在应用设置页面，模型选择通义千问-Plus，其他参数保持默认。</p>
+<blockquote>
+<p>您也可以选择输入一些 Prompt，比如设置一些人设以引导大模型更好的应对客户咨询。</p>
+<p>比如，</p>
+<p>“你是峰子乐园的管家，名字叫小峰。你是我（主人峰子）的个人博客助手。你负责对博客的文章内容做出总结概括，解答读者们提出的问题。”</p>
+</blockquote>
+<p>点击右上角发布，在页面右侧可以提问验证模型效果。不过您会发现，目前它还无法准确回答你的私有数据信息，毕竟模型还未获得咱们博客内的文章数据，我们将在后面的步骤中去解决这一问题。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816047.png" srcset="/img/loading.gif" lazyload alt=""><br>
+<img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816045.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="1-2-获取调用-API-所需的凭证">1.2 获取调用 API 所需的凭证</h3>
+<p>为了在后续通过 API 调用大模型应用的能力，我们需要获取一个百炼应用的 API-KEY 和应用 ID：</p>
+<ol>
+<li>在我的应用页面，点击查看我的API-KEY，在弹出窗口中创建一个新 API-KEY。</li>
+</ol>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816049.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<ol start="2">
+<li>在应用列表中可以查看所有百炼应用 ID</li>
+</ol>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816050.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="2-搭建示例网站">2. 搭建示例网站</h2>
+<p>在让 AI 助手能准确回答问题之前，我们可以先尝试快速将 AI 助手集成到网站中。</p>
+<p>您可以通过我们提前准备好的应用模板，快速搭建一个空白的示例网站，用于模拟您的企业官网或者其他站点。详细步骤如下：</p>
+<blockquote>
+<p>函数计算提供的<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/functioncompute/product-overview/trial-quota">免费试用额度</a>可以完全覆盖本教程所需资源消耗。额度消耗完后按量计费，对于本教程所涉及的 web 服务，只在有访问的情况下会产生费用。</p>
+</blockquote>
+<h3 id="2-1-创建应用">2.1 创建应用</h3>
+<p>通过我们准备好的<a target="_blank" rel="noopener" href="https://fcnext.console.aliyun.com/applications/create?template=web-chatbot">应用模板</a>，参考下图选择<strong>直接部署</strong>、并填写前面获取到的百炼应用 ID 以及 API-KEY。</p>
+<p>然后其他表单项保持默认，点击页面左下角的<strong>创建并部署默认环境</strong>，等待项目部署完成即可（预计耗时 1 分钟）。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816052.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>红框部分需要分别填写之前我们申请的百炼应用 ID 和 API-KEY，是因为我们预置的应用模板中包含了通过百炼应用调用大模型的代码，以便您在后续快速完成体验。</p>
+<h3 id="2-2-访问网站">2.2 访问网站</h3>
+<p>应用部署完成后，您可以在应用详情的<strong>环境信息</strong>中找到示例网站的访问域名，点击即可查看，确认示例网站已经部署成功。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816053.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816051.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="3-为网站增加-AI-助手">3. 为网站增加 AI 助手</h2>
+<p>在网站中增加 AI 助手非常简单，您只需要在网站的 html 文件中插入几行代码。</p>
+<h3 id="3-1-增加-AI-助手相关代码">3.1 增加 AI 助手相关代码</h3>
+<p>示例工程中包含了被注释的引入 AI 助手代码，您需要找到并解除注释。详细操作步骤如下：</p>
+<ol>
+<li>回到应用详情页，在环境详情的最底部找到函数资源，点击函数名称，进入函数详情页。</li>
+</ol>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816055.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<ol start="2">
+<li>在函数详情页，参考下图打开代码视图，并找到public/index.html文件，然后取消③所在位置的代码注释即可。</li>
+</ol>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816054.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<ol start="3">
+<li>最后点击<strong>部署代码</strong>，等待部署完成即可。</li>
+</ol>
+<h3 id="3-2-验证网站上的-AI-助手">3.2 验证网站上的 AI 助手</h3>
+<p>现在，您可以刷新示例网站页面以查看最新效果。此时您会发现网站的右下角出现了 AI 助手图标image.png，点击即可唤起 AI 助手。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816057.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="4-为-AI-助手增加私有知识">4. 为 AI 助手增加私有知识</h2>
+<p>通过前面的步骤，您已经拥有了一个可以和客户对话的 AI 助手。但是，如果想让 AI 助手像你的博客助手一样，更加精准且专业地回答与博客文章相关的问题，我们还需要为大模型应用配置知识库。</p>
+<p>假设您的博客文章包括了许多智能手机相关的知识。您的博客网站上会有很多与智能手机相关的信息，如支持双卡双待、屏幕、电池容量、内存等信息。不同机型的详细配置清单参考：<a target="_blank" rel="noopener" href="https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20240701/geijms/%E7%99%BE%E7%82%BC%E7%B3%BB%E5%88%97%E6%89%8B%E6%9C%BA%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D.docx">百炼系列手机产品介绍.docx</a>。</p>
+<h3 id="4-1-配置知识库">4.1 配置知识库</h3>
+<p>接下来，我们可以尝试让大模型在面对客户问题时参考这份文档，以产出一个更准确的回答和建议。</p>
+<p><strong>上传文件</strong>：在百炼控制台的<a target="_blank" rel="noopener" href="https://bailian.console.aliyun.com/data-center#/data-center">数据管理</a>中点击<strong>导入数据</strong>，根据引导上传我们虚构的百炼系列手机产品介绍：</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816058.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><strong>建立索引</strong>：在左侧菜单中找到<a target="_blank" rel="noopener" href="https://bailian.console.aliyun.com//knowledge-base#/knowledge-base">知识索引</a>，根据引导创建一个新的知识库，选择向量存储类型，并选择刚才上传的文件，其他参数保持默认即可。知识库将为上一步骤中准备的文档建立索引，以便后续大模型回答时检索参考。</p>
+<blockquote>
+<p>选择向量存储类型时，如果您希望集中存储、灵活管理多个应用的向量数据，可选择ADB-PG。</p>
+</blockquote>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816059.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8243531271/p822476.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816061.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><strong>引用知识</strong>：完成知识库的创建后，返回应用设置，打开知识检索增强开关、选择知识库，最后点击发布。Prompt 中会被自动添加一段信息，以便大模型在后续回答时参考检索出来的信息。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816060.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="4-2-检验效果">4.2 检验效果</h3>
+<p>有了参考知识，AI 助手就能准确回答关于您公司的商品的问题了。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816109.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="总结">总结</h2>
+<p>通过前面的学习，您已经能搭建一个大模型 RAG 应用，并且将其以 AI 助手的形式添加到网站中来应对客户咨询，过程仅需 0 元（免费试用额度内） 10 分钟。</p>
+<h3 id="应用于生产环境">应用于生产环境</h3>
+<p>在正式的将 AI 助手引入到您的生产环境之前，建议您了解如下信息：</p>
+<h4 id="前端代码">前端代码</h4>
+<p>前面创建的网站 AI 助手，是基于NLUX（一个用于开发大模型对话机器人的前端库）开发的示例，功能还比较简单。</p>
+<p>如果您对于 AI 助理有更多定制化的需求，如希望调整样式、支持历史会话管理等，可以参考 <a target="_blank" rel="noopener" href="https://docs.nlkit.com/nlux/learn/overview">NLUX 的文档</a>进行定制开发。</p>
+<p>参考：定制前端组件的样式和内容</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">link</span> <span class="hljs-attr">rel</span>=<span class="hljs-string">&quot;stylesheet&quot;</span> <span class="hljs-attr">crossorigin</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css&quot;</span> /&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">type</span>=<span class="hljs-string">&quot;module&quot;</span> <span class="hljs-attr">crossorigin</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript"></span><br><span class="language-javascript">  <span class="hljs-variable language_">window</span>.<span class="hljs-property">CHATBOT_CONFIG</span> = &#123;</span><br><span class="language-javascript">    <span class="hljs-attr">endpoint</span>: <span class="hljs-string">&quot;/chat&quot;</span>, <span class="hljs-comment">// 可以替换为 https://&#123;your-fc-http-trigger-domain&#125;/chat</span></span><br><span class="language-javascript">    <span class="hljs-attr">displayByDefault</span>: <span class="hljs-literal">false</span>, <span class="hljs-comment">// 默认不展示 AI 助手聊天框</span></span><br><span class="language-javascript">    <span class="hljs-attr">aiChatOptions</span>: &#123; <span class="hljs-comment">// aiChatOptions 中 options 会传递 aiChat 组件，自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat</span></span><br><span class="language-javascript">      <span class="hljs-attr">conversationOptions</span>: &#123; <span class="hljs-comment">// 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options</span></span><br><span class="language-javascript">        <span class="hljs-attr">conversationStarters</span>: [</span><br><span class="language-javascript">          &#123;<span class="hljs-attr">prompt</span>: <span class="hljs-string">&#x27;哪款手机续航最长？&#x27;</span>&#125;,</span><br><span class="language-javascript">          &#123;<span class="hljs-attr">prompt</span>: <span class="hljs-string">&#x27;你们有哪些手机型号？&#x27;</span>&#125;,</span><br><span class="language-javascript">          &#123;<span class="hljs-attr">prompt</span>: <span class="hljs-string">&#x27;有折叠屏手机吗?&#x27;</span>&#125;,</span><br><span class="language-javascript">        ]</span><br><span class="language-javascript">      &#125;,</span><br><span class="language-javascript">      <span class="hljs-attr">displayOptions</span>: &#123; <span class="hljs-comment">// 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options</span></span><br><span class="language-javascript">        <span class="hljs-attr">height</span>: <span class="hljs-number">600</span>,</span><br><span class="language-javascript">      &#125;,</span><br><span class="language-javascript">      <span class="hljs-attr">personaOptions</span>: &#123; <span class="hljs-comment">// 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas</span></span><br><span class="language-javascript">        <span class="hljs-attr">assistant</span>: &#123;</span><br><span class="language-javascript">          <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;你好，我是你的 AI 助手&#x27;</span>,</span><br><span class="language-javascript">          <span class="hljs-comment">// AI 助手的图标</span></span><br><span class="language-javascript">          <span class="hljs-attr">avatar</span>: <span class="hljs-string">&#x27;https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng&#x27;</span>,</span><br><span class="language-javascript">          <span class="hljs-attr">tagline</span>: <span class="hljs-string">&#x27;您可以尝试点击下方的快捷入口开启体验！&#x27;</span>,</span><br><span class="language-javascript">        &#125;</span><br><span class="language-javascript">      &#125;</span><br><span class="language-javascript">    &#125;</span><br><span class="language-javascript">  &#125;;</span><br><span class="language-javascript"></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span><span class="language-css"></span><br><span class="language-css">  <span class="hljs-selector-pseudo">:root</span> &#123;</span><br><span class="language-css">    <span class="hljs-comment">/* webchat 工具栏的颜色 */</span></span><br><span class="language-css">    <span class="hljs-attr">--webchat-toolbar-background-color</span>: <span class="hljs-number">#1464E4</span>;</span><br><span class="language-css">    <span class="hljs-comment">/* webchat 工具栏文字和按钮的颜色 */</span></span><br><span class="language-css">    <span class="hljs-attr">--webchat-toolbar-text-color</span>: <span class="hljs-number">#FFF</span>;</span><br><span class="language-css">  &#125;</span><br><span class="language-css">  <span class="hljs-comment">/* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置来调整位置 */</span></span><br><span class="language-css">  <span class="hljs-selector-class">.webchat-container</span> &#123;</span><br><span class="language-css">    <span class="hljs-attribute">z-index</span>: <span class="hljs-number">100</span>;</span><br><span class="language-css">    <span class="hljs-attribute">bottom</span>: <span class="hljs-number">10px</span>;</span><br><span class="language-css">    <span class="hljs-attribute">right</span>: <span class="hljs-number">10px</span>;</span><br><span class="language-css">  &#125;</span><br><span class="language-css">  <span class="hljs-comment">/* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置来调整位置 */</span></span><br><span class="language-css">  <span class="hljs-selector-class">.webchat-bubble-tip</span> &#123;</span><br><span class="language-css">    <span class="hljs-attribute">z-index</span>: <span class="hljs-number">99</span>;</span><br><span class="language-css">    <span class="hljs-attribute">bottom</span>: <span class="hljs-number">20px</span>;</span><br><span class="language-css">    <span class="hljs-attribute">right</span>: <span class="hljs-number">20px</span>;</span><br><span class="language-css">  &#125;</span><br><span class="language-css"></span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span><br></code></pre></td></tr></table></figure>
+<h4 id="服务端代码">服务端代码</h4>
+<p>前面创建的示例网站代码中，包含了一个调用大模型获取答案的接口 <code>POST /chat</code> ，具体实现代码在文件 <code>index.js</code> 中。</p>
+<blockquote>
+<p>函数计算应用在没有访问时不产生任何费用，您完全可以保留此函数应用，在后续用作调用大模型的转发服务。</p>
+</blockquote>
+<p>函数计算应用部署时附带的 **.devsapp.net 域名会在下发后 30 天内回收，且不支持 https 访问，只适合于测试验证。如果您希望在您的网站上直接调用函数计算中部署的 <code>POST /chat</code> 接口，建议使用函数计算 http 触发器中提供的域名，如：<code>https://web-chat****.fcapp.run/chat</code>。与此同时，建议您修改index.js中的 cors 配置，禁止其他站点对此接口的访问。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/2542880271/p820673.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/2542880271/p820675.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h4 id="应用评测">应用评测</h4>
+<p>建议在正式上线 AI 助手前，组织业务人员一起参与<a target="_blank" rel="noopener" href="https://help.aliyun.com/zh/model-studio/user-guide/evaluate-application/">应用评测</a>，确保大模型应用的回答效果符合预期。如果不符合预期，可以通过<a target="_blank" rel="noopener" href="https://edu.aliyun.com/course/3126500/lesson/342551535">优化提示词</a>、完善补充私有知识、调整文档切分策略等方法来改进回答效果。</p>
+<h1>如何部署到基于 hexo 框架的博客上</h1>
+<h2 id="hexo-注入器">hexo 注入器</h2>
+<p>沿着上面的部署方法，如果顺利的话，可以将 AI 助手部署在示例的网站上。</p>
+<p><img src="https://help-static-aliyun-doc.aliyuncs.com/assets/img/zh-CN/8936289171/p816057.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>但这不是我们需要的，我们最终是要把它放在我们的博客上供读者使用的！</p>
+<p>因此，我们需要用到 hexo 框架内的<a target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/advance/#hexo-%E6%B3%A8%E5%85%A5%E4%BB%A3%E7%A0%81">注入器</a>来帮助我们将阿里云提供的前端代码注入到我们的博客网页上。</p>
+<p>Hexo 注入器是 Hexo 5 版本自身加入的一项新功能，所以在所有 Hexo 主题都是支持这个功能的。</p>
+<p>注入器可以将 HTML 片段注入生成页面的 &lt;head&gt; 和 &lt;body&gt; 节点中。我们可以利用注入器将 AI 助手的前端代码注入到博客的所有 html 中。</p>
+<h2 id="编写-js-文件">编写 js 文件</h2>
+<p>在实际使用中，建议将 js 代码独立成为 js 文件，存放在博客的 scripts 目录下，hexo 框架会自动识别该文件夹内部的 js 文件，然后编译执行</p>
+<p>例如创建一个 /scripts/injector.js ，并写入：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs js">hexo.<span class="hljs-property">extend</span>.<span class="hljs-property">injector</span>.<span class="hljs-title function_">register</span>(<span class="hljs-string">&#x27;body_end&#x27;</span>,<span class="hljs-string">`</span><br><span class="hljs-string">`</span><br>);<br></code></pre></td></tr></table></figure>
+<p>显然，我们希望 AI 助手能在我们博客的任何文章中出现，因此，我们在每个博客的 body 结尾部分插入 AI 助手的前端代码。</p>
+<p>但不是简单地将前面的 html 示例代码复制下来就完事了！</p>
+<p>注意⚠️ <code>window.CHATBOT_CONFIG</code> 内的 <code>endpoint</code> 需要替换为 <code>https://&#123;your-fc-http-trigger-domain&#125;/chat</code>，否则我们的 AI 助手前端无法完成与阿里云上的后端 API 连接。</p>
+<p>当然，前端代码还需要改很多地方来美化界面，完善用户人机交流体验，但上面这点是最重要的，一定要改。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs js">hexo.<span class="hljs-property">extend</span>.<span class="hljs-property">injector</span>.<span class="hljs-title function_">register</span>(<span class="hljs-string">&#x27;body_end&#x27;</span>,<span class="hljs-string">`</span><br><span class="hljs-string">&lt;link rel=&quot;stylesheet&quot; crossorigin href=&quot;https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css&quot; /&gt;</span><br><span class="hljs-string">&lt;script type=&quot;module&quot; crossorigin src=&quot;https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js&quot;&gt;&lt;/script&gt;</span><br><span class="hljs-string">&lt;script&gt;</span><br><span class="hljs-string">  window.CHATBOT_CONFIG = &#123;</span><br><span class="hljs-string">    endpoint: &quot;/chat&quot;, // 可以替换为 https://&#123;your-fc-http-trigger-domain&#125;/chat</span><br><span class="hljs-string">    displayByDefault: false, // 默认不展示 AI 助手聊天框</span><br><span class="hljs-string">    aiChatOptions: &#123; // aiChatOptions 中 options 会传递 aiChat 组件，自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat</span><br><span class="hljs-string">      conversationOptions: &#123; // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options</span><br><span class="hljs-string">        conversationStarters: [</span><br><span class="hljs-string">          &#123;prompt: &#x27;哪款手机续航最长？&#x27;&#125;,</span><br><span class="hljs-string">          &#123;prompt: &#x27;你们有哪些手机型号？&#x27;&#125;,</span><br><span class="hljs-string">          &#123;prompt: &#x27;有折叠屏手机吗?&#x27;&#125;,</span><br><span class="hljs-string">        ]</span><br><span class="hljs-string">      &#125;,</span><br><span class="hljs-string">      displayOptions: &#123; // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options</span><br><span class="hljs-string">        height: 600,</span><br><span class="hljs-string">      &#125;,</span><br><span class="hljs-string">      personaOptions: &#123; // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas</span><br><span class="hljs-string">        assistant: &#123;</span><br><span class="hljs-string">          name: &#x27;你好，我是你的 AI 助手&#x27;,</span><br><span class="hljs-string">          // AI 助手的图标</span><br><span class="hljs-string">          avatar: &#x27;https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng&#x27;,</span><br><span class="hljs-string">          tagline: &#x27;您可以尝试点击下方的快捷入口开启体验！&#x27;,</span><br><span class="hljs-string">        &#125;</span><br><span class="hljs-string">      &#125;</span><br><span class="hljs-string">    &#125;</span><br><span class="hljs-string">  &#125;;</span><br><span class="hljs-string">&lt;/script&gt;</span><br><span class="hljs-string">&lt;style&gt;</span><br><span class="hljs-string">  :root &#123;</span><br><span class="hljs-string">    /* webchat 工具栏的颜色 */</span><br><span class="hljs-string">    --webchat-toolbar-background-color: #1464E4;</span><br><span class="hljs-string">    /* webchat 工具栏文字和按钮的颜色 */</span><br><span class="hljs-string">    --webchat-toolbar-text-color: #FFF;</span><br><span class="hljs-string">  &#125;</span><br><span class="hljs-string">  /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置来调整位置 */</span><br><span class="hljs-string">  .webchat-container &#123;</span><br><span class="hljs-string">    z-index: 100;</span><br><span class="hljs-string">    bottom: 10px;</span><br><span class="hljs-string">    right: 10px;</span><br><span class="hljs-string">  &#125;</span><br><span class="hljs-string">  /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置来调整位置 */</span><br><span class="hljs-string">  .webchat-bubble-tip &#123;</span><br><span class="hljs-string">    z-index: 99;</span><br><span class="hljs-string">    bottom: 20px;</span><br><span class="hljs-string">    right: 20px;</span><br><span class="hljs-string">  &#125;</span><br><span class="hljs-string">&lt;/style&gt;`</span><br>);<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>在基于 hexo 框架的博客上部署定制化 AI 聊天应用</div>
+      <div>https://dingfen.github.io/2024/07/21/2024-7-21-ai_assist/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年7月21日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/08/02/2024-5-9-vllm/" title="VLLM Paged Attention 实现">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">VLLM Paged Attention 实现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/06/12/2024-6-12-deepspeed/" title="深入探索 DeepSpeed（三）">
+                        <span class="hidden-mobile">深入探索 DeepSpeed（三）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

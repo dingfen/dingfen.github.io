@@ -1,0 +1,988 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="关于gem5事件的实现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解 Gem5 之一">
+<meta property="og:url" content="https://dingfen.github.io/2022/02/24/2022-2-24-gem5-1/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="关于gem5事件的实现">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/gem5/gem5-1.png">
+<meta property="article:published_time" content="2022-02-24T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Cpp">
+<meta property="article:tag" content="gem5">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/gem5/gem5-1.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入理解 Gem5 之一 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入理解 Gem5 之一"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-02-24 12:00" pubdate>
+          2022年2月24日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入理解 Gem5 之一</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>深入理解 Gem5 之一</h1>
+<h2 id="前言">前言</h2>
+<p>近期研究需要，我开始研究 <a target="_blank" rel="noopener" href="https://www.gem5.org/">gem5</a> 模拟器的底层实现 。gem5 模拟器是一款模块化的计算机系统架构研究平台，可用于研究系统级架构、处理器微架构。gem5 是一个具有开放治理模型的社区主导项目，最初是为学术界的计算机体系结构研究而构想的，目前已发展为学术界、工业研究和教学中的计算机系统设计。</p>
+<p>根据 gem5 的 <a target="_blank" rel="noopener" href="https://dl.acm.org/doi/10.1145/2024716.2024718">paper</a>，gem5 框架融合了 <a target="_blank" rel="noopener" href="https://ieeexplore.ieee.org/abstract/document/1677503">M5</a> 和 <a target="_blank" rel="noopener" href="https://dl.acm.org/doi/abs/10.1145/1105734.1105747">GEMS</a> 两者的实现。其中 M5 提供高度可配置的仿真框架，包含了多个 ISA 和多种 CPU 模型；而 GEMS 的详细而灵活的内存系统提供了对多个缓存一致性协议和互连模型的支持。目前，gem5 支持大多数商业 ISA（ARM、ALPHA、MIPS、Power、SPARC 和 x86），包括在其中三个（ARM、ALPHA 和 x86）上 booting Linux。</p>
+<p>该项目是许多学术和工业机构共同努力的结果，包括 AMD、ARM、HP、MIPS、普林斯顿大学、麻省理工学院以及密歇根大学、德克萨斯大学和威斯康星大学。在过去的十年中，M5 和 GEMS 已在数百种出版物中使用，并已被下载数万次。 gem5 项目上的高水平协作，再加上组件部分的先前成功和类似 BSD 的自由许可证，使 gem5 成为一个有价值的全系统仿真工具。</p>
+<p>在本博客中，我将探讨如何创建、调度事件，并深入理解背后的原理。</p>
+<h2 id="创建一个简单的事件"><a target="_blank" rel="noopener" href="https://www.gem5.org/documentation/learning_gem5/part2/events/">创建一个简单的事件</a></h2>
+<p>gem5 是一个事件驱动（Event-driven）的模拟器。在事件驱动模型中，每个事件（Event）都有一个回调函数用于处理事件。</p>
+<p>下面以 HelloObject 类代码为例，在代码中添加一个事件触发时执行的新函数 <code>processEvent()</code>。此函数必须不带参数并且不返回任何内容。然后，添加一个 EventFunctionWrapper 类对象 event，并在构造函数中包装 <code>processEvent()</code>。最后，添加了一个 <code>startup()</code> 函数，其中使用 <code>schedule()</code> 函数开始调度事件，即让该事件安排在未来的某个时刻被触发（事件驱动的模拟不允许事件在过去执行）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">HelloObject</span> : <span class="hljs-keyword">public</span> SimObject &#123;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">processEvent</span><span class="hljs-params">()</span></span>;<br>    EventFunctionWrapper event;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">HelloObject</span>(HelloObjectParams *p);<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">startup</span><span class="hljs-params">()</span></span>;<br>&#125;;<br><br>HelloObject::<span class="hljs-built_in">HelloObject</span>(HelloObjectParams *params)<br>  : <span class="hljs-built_in">SimObject</span>(params), <span class="hljs-built_in">event</span>([<span class="hljs-keyword">this</span>]&#123;<span class="hljs-built_in">processEvent</span>();&#125;, <span class="hljs-built_in">name</span>()) &#123;<br>    <span class="hljs-built_in">DPRINTF</span>(Hello, <span class="hljs-string">&quot;Created the hello object\n&quot;</span>);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">HelloObject::startup</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-built_in">schedule</span>(event, <span class="hljs-number">100</span>);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">HelloObject::processEvent</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-built_in">DPRINTF</span>(Hello, <span class="hljs-string">&quot;Hello world! Processing the event!\n&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>上面的代码中，事件会在第 100 个 tick 时被触发。通常，需使用 <code>curTick()</code> 加<strong>时间偏移</strong>来确定事件触发的时间。但在这一简单示例中，开始模拟的函数（即 Python 配置文件中调用 <code>simulate()</code> 函数） 是以 tick = 0 的原点开始执行的，因此这里的 <code>startup()</code> 可以显式地标明要调度的时间点。</p>
+<p>当运行 gem5 模拟器后，会得到如下输出，具体如何运行不是本博客的重点，感兴趣的读者可参考<a target="_blank" rel="noopener" href="https://www.gem5.org/documentation/learning_gem5/part2/helloobject/">官方文档</a>运行。从下面的输出信息可知，我们实现了在 100 tick 时执行 <code>processEvent()</code> 函数。</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">gem5</span> Simulator System.  http://gem5.org<br><span class="hljs-attribute">gem5</span> is copyrighted software; use the --copyright option for details.<br><br><span class="hljs-attribute">gem5</span> compiled Jan  <span class="hljs-number">4</span> <span class="hljs-number">2017</span> <span class="hljs-number">11</span>:<span class="hljs-number">01</span>:<span class="hljs-number">46</span><br><span class="hljs-attribute">gem5</span> started Jan  <span class="hljs-number">4</span> <span class="hljs-number">2017</span> <span class="hljs-number">13</span>:<span class="hljs-number">41</span>:<span class="hljs-number">38</span><br><span class="hljs-attribute">gem5</span> executing <span class="hljs-literal">on</span> chinook, pid <span class="hljs-number">1834</span><br><span class="hljs-attribute">command</span> line: build/X86/gem5.opt --debug-flags=Hello configs/learning_gem5/part2/run_hello.py<br><br><span class="hljs-attribute">Global</span> frequency set at <span class="hljs-number">1000000000000</span> ticks per second<br>      <span class="hljs-attribute">0</span>: hello: Created the hello object<br><span class="hljs-attribute">Beginning</span> simulation!<br><span class="hljs-attribute">info</span>: Entering event queue @ <span class="hljs-number">0</span>.  Starting simulation...<br>    <span class="hljs-attribute">100</span>: hello: Hello world! Processing the event!<br><span class="hljs-attribute">Exiting</span> @ tick <span class="hljs-number">18446744073709551615</span> because simulate() limit reached<br></code></pre></td></tr></table></figure>
+<p>当然，<code>processEvent()</code> 也可以很复杂，甚至在执行 <code>processEvent()</code> 时再加入一个新的事件等待被触发：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">HelloObject::processEvent</span><span class="hljs-params">()</span> </span>&#123;<br>    timesLeft--;<br>    <span class="hljs-built_in">DPRINTF</span>(HelloExample, <span class="hljs-string">&quot;Hello world! Processing the event! %d left\n&quot;</span>, timesLeft);<br>    <span class="hljs-keyword">if</span> (timesLeft &lt;= <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-built_in">DPRINTF</span>(HelloExample, <span class="hljs-string">&quot;Done firing!\n&quot;</span>);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-built_in">schedule</span>(event, <span class="hljs-built_in">curTick</span>() + latency);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>上面代码中，在 timesleft 还未小于 0 时，<code>processEvent()</code> 函数每次打印出信息后，都会再次调用 <code>schedule()</code> 函数增加一个事件。注意，此处使用的 <code>schedule()</code> 函数 就利用了 <code>curTick()</code> 生成时间偏移量，进而指定了事件被调度的时间。</p>
+<hr>
+<p>接下来，我会带领大家深入分析一下 gem5 的事件驱动原理，以及其代码实现细节。</p>
+<h2 id="EventBase-类">EventBase 类</h2>
+<p>Gem5 是一个事件驱动的模拟器。因此，事件（Event）是模拟器的基本调度、执行单位，是一个非常重要的核心概念。事件可以理解为一系列改变系统状态的行为，包括但不限于对内存的读写、数据包的发送和到达等。模拟器整个的模拟过程就是对所有事件创建、调度、执行和终止的过程。从技术上讲，事件是由特殊的回调函数和一组状态信息位域实现的。对该事件的执行本质就是执行事件内的回调函数。本小节重点介绍<strong>事件的公共父类——EventBase 类，其内部定义了很多类的静态常量，方便事件之间共享标志位和优先级等定义。</strong></p>
+<h3 id="优先级">优先级</h3>
+<p>EventBase 类定义的静态常量中，很大一部分是事件优先级（Priority）。这是用于区分在同一 cycle 中事件被处理的先后顺序的重要方式，事件包括 CPU 切换上下文、延迟写、DVFS 更新等。值得注意的是，优先级数值越小，事件的优先级越高。大多数事件在调度时都使用默认的优先级。</p>
+<table>
+<thead>
+<tr>
+<th>事件优先级</th>
+<th>描述</th>
+<th>优先级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Debug_Enable_Pri</td>
+<td>调试启动的优先级，用于追踪可能 cycle 动作</td>
+<td>-101</td>
+</tr>
+<tr>
+<td>Debug_Break_Pri</td>
+<td>断点的优先级，应该非常高否则会丢失信息</td>
+<td>-100</td>
+</tr>
+<tr>
+<td>CPU_Switch_Pri</td>
+<td>CPU 上下文切换优先级，切换需要先完成再处理其他事件</td>
+<td>-31</td>
+</tr>
+<tr>
+<td>Delayed_Writeback_Pri</td>
+<td>延迟写回，在常规写回之前</td>
+<td>-1</td>
+</tr>
+<tr>
+<td>Default_Pri</td>
+<td>默认的优先级</td>
+<td>0</td>
+</tr>
+<tr>
+<td>DVFS_Update_Pri</td>
+<td>DVFS 更新事件，会将所有相关的状态dump 出来</td>
+<td>31</td>
+</tr>
+<tr>
+<td>Serialize_Pri</td>
+<td>序列化操作优先级</td>
+<td>32</td>
+</tr>
+<tr>
+<td>CPU_Tick_Pri</td>
+<td>CPU 下一拍优先级，必须在所有CPU事件后触发</td>
+<td>50</td>
+</tr>
+<tr>
+<td>CPU_Exit_Pri</td>
+<td>CPU 退出线程优先级</td>
+<td>64</td>
+</tr>
+<tr>
+<td>Stat_Event_Pri</td>
+<td>输出统计信息的优先级，肯定在所有实质事件之后</td>
+<td>90</td>
+</tr>
+<tr>
+<td>Progress_Event_Pri</td>
+<td>模拟的进程事件</td>
+<td>95</td>
+</tr>
+<tr>
+<td>Sim_Exit_Pri</td>
+<td>标记模拟结束的事件</td>
+<td>100</td>
+</tr>
+</tbody>
+</table>
+<h3 id="标志位">标志位</h3>
+<p>此外，EventBase 类还定义了一部分标志位，这些标志位要么是规定了用户的权限（可读或可写），要么是记录了事件处于的某种状态（squashed或Scheduled），也记录在此：</p>
+<table>
+<thead>
+<tr>
+<th>标志位</th>
+<th>描述</th>
+<th>常值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PublicRead</td>
+<td>表示最低的6位是可被公开读的标志位</td>
+<td>0x003f</td>
+</tr>
+<tr>
+<td>PublicWrite</td>
+<td>表示可被公开写的标志位</td>
+<td>0x001d</td>
+</tr>
+<tr>
+<td>Squashed</td>
+<td>表示该事件已经 squashed</td>
+<td>0x0001</td>
+</tr>
+<tr>
+<td>Scheduled</td>
+<td>表示事件已经被调度，该位不可公开写</td>
+<td>0x0002</td>
+</tr>
+<tr>
+<td>Managed</td>
+<td>Use life cycle manager</td>
+<td>0x0004</td>
+</tr>
+<tr>
+<td>AutoDelete</td>
+<td>标志该事件 process() 后自动删除</td>
+<td>0x0004</td>
+</tr>
+<tr>
+<td>Reserved</td>
+<td>该位被保留，预备后续使用</td>
+<td>0x0008</td>
+</tr>
+<tr>
+<td>IsExitEvent</td>
+<td>标识该事件是否为 exit_event</td>
+<td>0x0010</td>
+</tr>
+<tr>
+<td>IsMainQueue</td>
+<td>标识该事件是否位于main_queue</td>
+<td>0x0020</td>
+</tr>
+<tr>
+<td>Initialized</td>
+<td>somewhat random bits</td>
+<td>0x7a40</td>
+</tr>
+<tr>
+<td>InitMask</td>
+<td>初始化位的掩码</td>
+<td>0xffc0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Event-类">Event 类</h2>
+<h3 id="核心实现">核心实现</h3>
+<p>事件类 Event 是 Gem5 中的核心类，是所有事件的父类。该类继承自 Serializable 类（这今后再详聊）和 EventBase 类。此外，Event 类为抽象类，内含有一个纯虚函数 <code>process()</code>，通常程序员需要通过 Event 的派生类来创建事件对象。但在此之前，我们必须深入了解该类的运行机制。下面列出 Event 类中一些重要的成员。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Event</span> : <span class="hljs-keyword">public</span> EventBase, <span class="hljs-keyword">public</span> Serializable &#123;<br>  Event *nextBin;  <span class="hljs-comment">// Bin defined as when+priority</span><br>  Event *nextInBin;<br>  Tick _when;    <span class="hljs-comment">// timestamp when event should be processed</span><br>  Priority _priority; <span class="hljs-comment">//!&lt; event priority</span><br>  Flags flags;<br>  Counter instance;  <span class="hljs-comment">// event unique ID</span><br>  EventQueue *queue;<br><br>  <span class="hljs-function"><span class="hljs-type">static</span> Event *<span class="hljs-title">insertBefore</span><span class="hljs-params">(Event *event, Event *curr)</span></span>;<br>  <span class="hljs-function"><span class="hljs-type">static</span> Event *<span class="hljs-title">removeItem</span><span class="hljs-params">(Event *event, Event *last)</span></span>;<br><br>  <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">process</span><span class="hljs-params">()</span> </span>= <span class="hljs-number">0</span>;<br>  <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">scheduled</span><span class="hljs-params">()</span> <span class="hljs-type">const</span> </span>&#123; <span class="hljs-keyword">return</span> flags.<span class="hljs-built_in">isSet</span>(Scheduled); &#125;<br>  <br>  <span class="hljs-comment">// Managed event scheduled and being held in the event queue.</span><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">acquire</span><span class="hljs-params">()</span> </span>&#123; <span class="hljs-keyword">if</span> (flags.<span class="hljs-built_in">isSet</span>(Event::Managed))  <span class="hljs-built_in">acquireImpl</span>(); &#125;<br><br>  <span class="hljs-comment">// Managed event removed from the event queue.</span><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">release</span><span class="hljs-params">()</span> </span>&#123; <span class="hljs-keyword">if</span> (flags.<span class="hljs-built_in">isSet</span>(Event::Managed))  <span class="hljs-built_in">releaseImpl</span>(); &#125;<br>  <br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">setWhen</span><span class="hljs-params">(Tick when, EventQueue *q)</span></span><br><span class="hljs-function">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>抽象类 Event 描述了事件这一核心概念，因而它也是整个底层机制的核心实现类。上节提到事件本质是由特殊的回调函数和一组状态标志位组成的，这体现在实现中便是类 Event 内部预留的虚函数 <code>process()</code>，以及存有运行时刻 <code>_when</code>，优先级 <code>_priority</code>，标记位 <code>flags</code> 和用于维护二维链表的两个指针变量 <code>nextBin</code> 和 <code>nextInBin</code> 等，其中 <code>nextBin</code> 指向链表中下一项，而 <code>nextInBin</code> 指向 Bin （Bin = when + priority）相同的下一项事件。</p>
+<p><img src="/img/gem5/gem5-1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>在 Gem5 中，每个事件在被处理时都有一个纯虚函数 <code>process()</code>。每个继承了 Event 类的子类都必须实现。在处理事件时，还需要注意其中的标志位，并随时注意调整 cycle 周期。此外，事件获取 <code>acquire()</code> 和释放 <code>release()</code> 时的动作也可以被子类重载实现。使用 <code>setwhen()</code> 可以设置事件被触发的时间，并被指定的队列。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">setWhen</span><span class="hljs-params">(Tick when, EventQueue *q)</span> </span>&#123;<br>  _when = when;<br><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> NDEBUG</span><br>  queue = q;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> EVENTQ_DEBUG</span><br>  whenScheduled = <span class="hljs-built_in">curTick</span>();<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="派生类">派生类</h3>
+<p>Event 类的使用场景多见于 EventQueue 类内的实现。前文提到，由于类 Event 为抽象类，程序员需要通过类 Event 的派生类来创建事件对象，其中有两个派生类最为常用。一个是类 EventFunctionWrapper，其内部封装了一个执行函数。而另一个派生类是模板类 EventWrapper，它可以封装一个模板类，从而提供更加灵活的执行机制。<strong>若用户要直接使用 Event 类包装另一个类的对象，可能 EventWrapper 类或者 EventFunctionWrapper 更加合适：</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span> &lt;<span class="hljs-keyword">class</span> <span class="hljs-title class_">T</span>, <span class="hljs-built_in">void</span> (T::* F)()&gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">EventWrapper</span> : <span class="hljs-keyword">public</span> Event &#123;<br>  <span class="hljs-keyword">private</span>:<br>    T *object;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">EventWrapper</span>(T *obj, <span class="hljs-type">bool</span> del = <span class="hljs-literal">false</span>, Priority p = Default_Pri)<br>      : <span class="hljs-built_in">Event</span>(p), <span class="hljs-built_in">object</span>(obj) &#123;<br>      <span class="hljs-keyword">if</span> (del)<br>        <span class="hljs-built_in">setFlags</span>(AutoDelete);<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">process</span><span class="hljs-params">()</span> </span>&#123; (object-&gt;*F)(); &#125;<br>    <span class="hljs-comment">// ...</span><br>&#125;;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">EventFunctionWrapper</span> : <span class="hljs-keyword">public</span> Event &#123;<br>  <span class="hljs-keyword">private</span>:<br>    std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">void</span>)&gt; callback;<br>    std::string _name;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">EventFunctionWrapper</span>(<span class="hljs-type">const</span> std::function&lt;<span class="hljs-built_in">void</span>(<span class="hljs-type">void</span>)&gt; &amp;callback, <span class="hljs-type">const</span> std::string &amp;name, <span class="hljs-type">bool</span> del = <span class="hljs-literal">false</span>, Priority p = Default_Pri)<br>      : <span class="hljs-built_in">Event</span>(p), <span class="hljs-built_in">callback</span>(callback), _name(name) &#123;<br>        <span class="hljs-keyword">if</span> (del)<br>          <span class="hljs-built_in">setFlags</span>(AutoDelete);<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">process</span><span class="hljs-params">()</span> </span>&#123; <span class="hljs-built_in">callback</span>(); &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<h2 id="EventQueue-类">EventQueue 类</h2>
+<p>事件队列（EventQueue）是管理系统事件的重要载体，类 EventQueue 用于描述该事件队列，它将被调度的事件按执行时间排列，其中队列头是执行时间最早的事件，执行时间一致的按照优先级高低在另一个维度上排列，形成了一个二维链表。每个线程都会维护一个局部的事件队列，事件会在队列中被调度（即插入到队列中）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">EventQueue</span> &#123;<br>  Event *head;<br>  Tick _curTick;<br>  <span class="hljs-comment">//! Mutex to protect async queue.</span><br>  UncontendedMutex async_queue_mutex;<br>  <span class="hljs-comment">//! List of events added by other threads to this event queue.</span><br>  std::list&lt;Event*&gt; async_queue;<br>  <span class="hljs-comment">// taken when servicing events</span><br>  UncontendedMutex service_mutex;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>async_queue 和 async_queue_mutex 用于管理多线程下异步事件队列，而真正的链表头是 head。</p>
+<h3 id="Schedule">Schedule</h3>
+<p>EventQueue 类重点还是在于 <code>schedule()</code> 函数，该函数负责事件调度，将创建好的事件插入到事件队列中，以备事件引擎执行。其参数是将要被执行的事件 <code>event</code> 和具体执行时间 <code>when</code>，global 参数用于判断队列是否被另一个线程运行。在 <code>schedule()</code> 中，设置完 event 的执行时间后，分成两个执行方式：同步插入和异步插入。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">//! 当前的执行模式: parallel / serial</span><br><span class="hljs-keyword">extern</span> <span class="hljs-type">bool</span> inParallelMode;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">schedule</span><span class="hljs-params">(Event *event, Tick when, <span class="hljs-type">bool</span> global=<span class="hljs-literal">false</span>)</span> </span>&#123;<br>  event-&gt;<span class="hljs-built_in">setWhen</span>(when, <span class="hljs-keyword">this</span>);<br>  <span class="hljs-comment">// 两种模式:</span><br>  <span class="hljs-comment">// a. 异步插入：硬件线程将局部事件调度到一个不属于自己的其他队列 需要 `asyncq`.</span><br>  <span class="hljs-comment">// b. 全局调度：硬件线程将全局事件调度到 `asyncq` 需要维护全局事件的整体顺序</span><br>  <span class="hljs-comment">//    See global_event.&#123;cc,hh&#125; for more explanation.</span><br>  <span class="hljs-keyword">if</span> (inParallelMode &amp;&amp; (<span class="hljs-keyword">this</span> != <span class="hljs-built_in">curEventQueue</span>() || global)) &#123;<br>    <span class="hljs-comment">// 异步插入</span><br>    <span class="hljs-built_in">asyncInsert</span>(event);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-comment">// 同步插入</span><br>    <span class="hljs-built_in">insert</span>(event);<br>  &#125;<br>  event-&gt;flags.<span class="hljs-built_in">set</span>(Event::Scheduled);<br>  event-&gt;<span class="hljs-built_in">acquire</span>();<br><br>  <span class="hljs-keyword">if</span> (debug::Event)<br>    event-&gt;<span class="hljs-built_in">trace</span>(<span class="hljs-string">&quot;scheduled&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="同步插入">同步插入</h4>
+<p>同步事件的调度需要调用 <code>insert()</code> 函数，且此时 global 参数为 false。这是很简单的链表插入动作，插入在插入点之前，符合编程惯例。之前提到，EventQueue 队列是一个二级链表，是由一串串单链表的头节点组成的链表。从以下代码可知，在 in Bin 链表中，使用头插法插入了新节点，因此二级链表是 LIFO 的。</p>
+   <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">Event *<span class="hljs-title">Event::insertBefore</span><span class="hljs-params">(Event *event, Event *curr)</span> </span>&#123;<br>  <span class="hljs-comment">// 当前没有事件，或者插入的事件比头部还早 event进入 top 链表 &#x27;in bin&#x27;</span><br>  <span class="hljs-keyword">if</span> (!curr || *event &lt; *curr) &#123;<br>    event-&gt;nextBin = curr;<br>    event-&gt;nextInBin = <span class="hljs-literal">NULL</span>;<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    <span class="hljs-comment">// 头插法 因此 in Bin 链表是LIFO的</span><br>    event-&gt;nextBin = curr-&gt;nextBin;<br>    event-&gt;nextInBin = curr;<br>  &#125;<br>  <span class="hljs-keyword">return</span> event;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">EventQueue::insert</span><span class="hljs-params">(Event *event)</span> </span>&#123;<br>  <span class="hljs-keyword">if</span> (!head || *event &lt;= *head) &#123;<br>    <span class="hljs-comment">// call insertBefore()</span><br>    head = Event::<span class="hljs-built_in">insertBefore</span>(event, head);<br>    <span class="hljs-keyword">return</span>;<br>  &#125;<br>  <span class="hljs-comment">// 首先找打事件应位于哪个 &#x27;in bin&#x27;</span><br>  Event *prev = head;<br>  Event *curr = head-&gt;nextBin;<br>  <span class="hljs-keyword">while</span> (curr &amp;&amp; *curr &lt; *event) &#123;<br>    prev = curr;<br>    curr = curr-&gt;nextBin;<br>  &#125;<br>  <span class="hljs-comment">// Note: this operation may render all nextBin pointers on the</span><br>  <span class="hljs-comment">// prev &#x27;in bin&#x27; list stale (except for the top one)</span><br>  prev-&gt;nextBin = Event::<span class="hljs-built_in">insertBefore</span>(event, curr);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="跨线程的事件调度">跨线程的事件调度</h4>
+<p>跨线程的事件调度可采用异步事件的调度方案（即将事件调度到另一个线程的事件队列中），此时 global 参数设置为 true。采取该做法时，因为事件队列被另一个线程运行，为防止冲突，<code>asyncInsert()</code> 会将事件暂时插入到异步队列 <code>async_queue</code> 中。</p>
+   <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">EventQueue::asyncInsert</span><span class="hljs-params">(Event *event)</span> </span>&#123;<br>  async_queue_mutex.<span class="hljs-built_in">lock</span>();<br>  async_queue.<span class="hljs-built_in">push_back</span>(event);<br>  async_queue_mutex.<span class="hljs-built_in">unlock</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">EventQueue::handleAsyncInsertions</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-built_in">assert</span>(<span class="hljs-keyword">this</span> == <span class="hljs-built_in">curEventQueue</span>());<br>    async_queue_mutex.<span class="hljs-built_in">lock</span>();<br>    <span class="hljs-keyword">while</span> (!async_queue.<span class="hljs-built_in">empty</span>()) &#123;<br>        <span class="hljs-built_in">insert</span>(async_queue.<span class="hljs-built_in">front</span>());<br>        async_queue.<span class="hljs-built_in">pop_front</span>();<br>    &#125;<br>    async_queue_mutex.<span class="hljs-built_in">unlock</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后在每个模拟循环（或barrier）的最后时刻，<code>async_queue</code> 中的事件会被全部取出，然后捯饬到真正的事件队列中（见上述 <code>handleAsyncInsertions()</code> 函数）。</p>
+<p>若要直接跨线程和事件队列地调度事件，或者获取目标事件队列的锁，在 <code>schedule()</code> 之外，还需要有特殊的机制避免死锁。原理也很简单：线程必须先自动放弃当前手中的事件队列锁，才能获得新事件队列锁，确保每个线程至多获取一个事件队列锁。该功能由 ScopedMigration 类负责，它将事件从一个事件队列暂时移植到另一个队列中。</p>
+   <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">/* Releasing the current queue, locking the new queue</span><br><span class="hljs-comment"> * and updating curEventQueue(). This can, for example</span><br><span class="hljs-comment"> * be useful when performing IO across thread event</span><br><span class="hljs-comment"> * queues when timing is not crucial (e.g., during fast</span><br><span class="hljs-comment"> * forwarding).</span><br><span class="hljs-comment"> */</span><br><span class="hljs-built_in">ScopedMigration</span>(EventQueue *_new_eq, <span class="hljs-type">bool</span> _doMigrate = <span class="hljs-literal">true</span>)<br>  :<span class="hljs-built_in">new_eq</span>(*_new_eq), <span class="hljs-built_in">old_eq</span>(*<span class="hljs-built_in">curEventQueue</span>()),<br>  <span class="hljs-built_in">doMigrate</span>((&amp;new_eq != &amp;old_eq)&amp;&amp;_doMigrate) &#123;<br>    <span class="hljs-keyword">if</span> (doMigrate) &#123;<br>      old_eq.<span class="hljs-built_in">unlock</span>();<br>      new_eq.<span class="hljs-built_in">lock</span>();<br>      <span class="hljs-built_in">curEventQueue</span>(&amp;new_eq);<br>    &#125;<br>&#125;<br><span class="hljs-comment">// Temporarily migrate execution to a different event queue.</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">EventQueue</span>::ScopedMigration &#123;<br>  <span class="hljs-keyword">private</span>:<br>   EventQueue &amp;new_eq;<br>   EventQueue &amp;old_eq;<br>   <span class="hljs-type">bool</span> doMigrate;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="Deschedule">Deschedule</h3>
+<p>在 <code>schedule()</code> 函数的基础之上，还添加了 <code>reschedule()</code> 和 <code>deschedule()</code> 等函数，方便事件队列的调度管理。其中 <code>deschedule()</code> 函数牵扯到链表的删除，也是比较平凡的实现。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">EventQueue::remove</span><span class="hljs-params">(Event *event)</span> </span>&#123;<br>    <span class="hljs-keyword">if</span> (head == <span class="hljs-literal">NULL</span>)<br>        <span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;event not found!&quot;</span>);<br>    <span class="hljs-comment">// deal with an event on the head&#x27;s &#x27;in bin&#x27; list (event has the same</span><br>    <span class="hljs-comment">// time as the head)</span><br>    <span class="hljs-keyword">if</span> (*head == *event) &#123;<br>        head = Event::<span class="hljs-built_in">removeItem</span>(event, head);<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br>    <span class="hljs-comment">// Find the &#x27;in bin&#x27; list that this event belongs on</span><br>    Event *prev = head;<br>    Event *curr = head-&gt;nextBin;<br>    <span class="hljs-keyword">while</span> (curr &amp;&amp; *curr &lt; *event) &#123;<br>        prev = curr;<br>        curr = curr-&gt;nextBin;<br>    &#125;<br>    <span class="hljs-keyword">if</span> (!curr || *curr != *event)<br>        <span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;event not found!&quot;</span>);<br>    prev-&gt;nextBin = Event::<span class="hljs-built_in">removeItem</span>(event, curr);<br>&#125;<br><br><span class="hljs-function">Event *<span class="hljs-title">Event::removeItem</span><span class="hljs-params">(Event *event, Event *top)</span> </span>&#123;<br>    Event *curr = top;<br>    Event *next = top-&gt;nextInBin;<br>    <span class="hljs-comment">// if we removed the top item, we need to handle things specially</span><br>    <span class="hljs-comment">// and just remove the top item, fixing up the next bin pointer of</span><br>    <span class="hljs-comment">// the new top item</span><br>    <span class="hljs-keyword">if</span> (event == top) &#123;<br>        <span class="hljs-keyword">if</span> (!next)<br>            <span class="hljs-keyword">return</span> top-&gt;nextBin;<br>        next-&gt;nextBin = top-&gt;nextBin;<br>        <span class="hljs-keyword">return</span> next;<br>    &#125;<br>    <span class="hljs-comment">// Since we already checked the current element, we&#x27;re going to</span><br>    <span class="hljs-comment">// keep checking event against the next element.</span><br>    <span class="hljs-keyword">while</span> (event != next) &#123;<br>        <span class="hljs-keyword">if</span> (!next)<br>            <span class="hljs-built_in">panic</span>(<span class="hljs-string">&quot;event not found!&quot;</span>);<br><br>        curr = next;<br>        next = next-&gt;nextInBin;<br>    &#125;<br>    <span class="hljs-comment">// remove next from the &#x27;in bin&#x27; list since it&#x27;s what we&#x27;re looking for</span><br>    curr-&gt;nextInBin = next-&gt;nextInBin;<br>    <span class="hljs-keyword">return</span> top;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="Service">Service</h3>
+<p>现在我们来看一下 EventQueue 中，Event 是如何被执行的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">Event *<span class="hljs-title">EventQueue::serviceOne</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-function">std::lock_guard&lt;EventQueue&gt; <span class="hljs-title">lock</span><span class="hljs-params">(*<span class="hljs-keyword">this</span>)</span></span>;<br>  Event *event = head;<br>  Event *next = head-&gt;nextInBin;<br>  event-&gt;flags.<span class="hljs-built_in">clear</span>(Event::Scheduled);<br><br>  <span class="hljs-keyword">if</span> (next) &#123;<br>    next-&gt;nextBin = head-&gt;nextBin;<br>    head = next;<br>  &#125; <span class="hljs-keyword">else</span> head = head-&gt;nextBin;<br>  <span class="hljs-keyword">if</span> (!event-&gt;<span class="hljs-built_in">squashed</span>()) &#123;<br>    <span class="hljs-comment">// forward current cycle to the time when this event occurs.</span><br>    <span class="hljs-built_in">setCurTick</span>(event-&gt;<span class="hljs-built_in">when</span>());<br>    <span class="hljs-keyword">if</span> (debug::Event)<br>      event-&gt;<span class="hljs-built_in">trace</span>(<span class="hljs-string">&quot;executed&quot;</span>);<br>    event-&gt;<span class="hljs-built_in">process</span>();<br>    <span class="hljs-keyword">if</span> (event-&gt;<span class="hljs-built_in">isExitEvent</span>()) &#123;<br>      <span class="hljs-built_in">assert</span>(!event-&gt;flags.<span class="hljs-built_in">isSet</span>(Event::Managed) ||<br>          !event-&gt;flags.<span class="hljs-built_in">isSet</span>(Event::IsMainQueue)); <span class="hljs-comment">// would be silly</span><br>      <span class="hljs-keyword">return</span> event;<br>    &#125;<br>  &#125; <span class="hljs-keyword">else</span><br>      event-&gt;flags.<span class="hljs-built_in">clear</span>(Event::Squashed);<br>  event-&gt;<span class="hljs-built_in">release</span>();<br>  <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>当调用 <code>ServiceOne()</code> 函数时，默认是处理 EventQueue 中的第一个事件，取出第一个事件 event 后，在判断其是否 squashed（被压缩、合并），若不是被压缩的，那么直接将时间调整至事件处理时刻（事件驱动），随后调用 <code>event-&gt;process()</code> ，若是，那么仅需要清除标志位即可。</p>
+<p><strong>为降低用户使用难度，使用 EventManager 类来包装 EventQueue 类，包括常用的许多事件调度函数，而这些包装函数是 SimObject 类内经常调用的：</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">EventManager</span> &#123;<br>  <span class="hljs-keyword">private</span>:<br>    EventQueue *eventq;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">schedule</span><span class="hljs-params">(Event &amp;event, Tick when)</span> </span>&#123;<br>      eventq-&gt;<span class="hljs-built_in">schedule</span>(&amp;event, when);<br>    &#125;<br>  <br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">deschedule</span><span class="hljs-params">(Event &amp;event)</span> </span>&#123;<br>      eventq-&gt;<span class="hljs-built_in">deschedule</span>(&amp;event);<br>    &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<h2 id="对于创建事件的解释">对于创建事件的解释</h2>
+<p>现在，再回到 HelloObject 类上来，HelloObject 类继承了 SimObject 类。值得注意的是，SimObject 类是 gem5 中最重要的类之一，几乎所有的系统组件，如 CPU 、总线、Cache 等都需要继承 SimObject 类。根据代码，SimObject 类继承了 EventManager 类，EventManager 类中包装了一个 EventQueue 对象。因此，在 <code>startup()</code> 函数中使用的 <code>schedule()</code> 函数本质就是调用了 <code>EventQueue::schedule()</code> 函数：将事件 event 放入事件队列中，等待被调度。</p>
+<p>另外，EventFunctionWrapper 类是 Event 类的子类，该类建立起了回调函数与事件对象的联系，当事件被触发后，回调函数会被执行。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">HelloObject</span> : <span class="hljs-keyword">public</span> SimObject &#123;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">processEvent</span><span class="hljs-params">()</span></span>;<br>    EventFunctionWrapper event;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">HelloObject</span>(HelloObjectParams *p);<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">startup</span><span class="hljs-params">()</span></span>;<br>&#125;;<br><br>HelloObject::<span class="hljs-built_in">HelloObject</span>(HelloObjectParams *params)<br>  : <span class="hljs-built_in">SimObject</span>(params), <span class="hljs-built_in">event</span>([<span class="hljs-keyword">this</span>]&#123;<span class="hljs-built_in">processEvent</span>();&#125;, <span class="hljs-built_in">name</span>()) &#123;<br>    <span class="hljs-built_in">DPRINTF</span>(Hello, <span class="hljs-string">&quot;Created the hello object\n&quot;</span>);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">HelloObject::startup</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-built_in">schedule</span>(event, <span class="hljs-number">100</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Cpp/" class="category-chain-item">Cpp</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Cpp/" class="print-no-link">#Cpp</a>
+      
+        <a href="/tags/gem5/" class="print-no-link">#gem5</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入理解 Gem5 之一</div>
+      <div>https://dingfen.github.io/2022/02/24/2022-2-24-gem5-1/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年2月24日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/08/2022-3-8-gem5-2/" title="深入理解 Gem5 之二">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入理解 Gem5 之二</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/11/15/2021-11-15-Qt-signal-slot/" title="信号槽机制的简陋实现">
+                        <span class="hidden-mobile">信号槽机制的简陋实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

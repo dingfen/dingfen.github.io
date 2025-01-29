@@ -1,0 +1,839 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Qt 信号槽机制的简陋实现 最近科研中碰到了一个需要实现信号触发机制的场景。我第一时间想到了 Qt 的信号槽机制。但可惜服务器上没有 Qt 的相关环境，因此需要自己实现一个简陋的信号触发机制。 问题需求 假设 A 类的对象 a 与 B 类的对象 b 需要信号连接。即 a 发出某个信号 S 给 b ，b 接收到该信号后，根据自己所处的状态，决定是否响应该信号，响应即调用成员函数 slot()，不响应">
+<meta property="og:type" content="article">
+<meta property="og:title" content="信号槽机制的简陋实现">
+<meta property="og:url" content="https://dingfen.github.io/2021/11/15/2021-11-15-Qt-signal-slot/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="Qt 信号槽机制的简陋实现 最近科研中碰到了一个需要实现信号触发机制的场景。我第一时间想到了 Qt 的信号槽机制。但可惜服务器上没有 Qt 的相关环境，因此需要自己实现一个简陋的信号触发机制。 问题需求 假设 A 类的对象 a 与 B 类的对象 b 需要信号连接。即 a 发出某个信号 S 给 b ，b 接收到该信号后，根据自己所处的状态，决定是否响应该信号，响应即调用成员函数 slot()，不响应">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/connect.png">
+<meta property="og:image" content="https://dingfen.github.io/img/connect2.png">
+<meta property="article:published_time" content="2021-11-15T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Qt">
+<meta property="article:tag" content="Cpp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/connect.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>信号槽机制的简陋实现 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="信号槽机制的简陋实现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-11-15 12:00" pubdate>
+          2021年11月15日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">信号槽机制的简陋实现</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Qt 信号槽机制的简陋实现</h1>
+<p>最近科研中碰到了一个需要实现信号触发机制的场景。我第一时间想到了 Qt 的信号槽机制。但可惜服务器上没有 Qt 的相关环境，因此需要自己实现一个简陋的信号触发机制。</p>
+<h2 id="问题需求">问题需求</h2>
+<p>假设 A 类的对象 a 与 B 类的对象 b 需要信号连接。即 a 发出某个信号 S 给 b ，b 接收到该信号后，根据自己所处的状态，决定是否响应该信号，响应即调用成员函数 <code>slot()</code>，不响应即让信号进入等待队列。</p>
+<p>具体来说，在构造了对象 a 和 b 后，先使用 <code>connect()</code> 函数连接这两个对象。此后，在程序中任何位置中调用了 <code>a-&gt;signal()</code> 函数后，就视为对象 a 发出了信号 signal 给 b。此时，若 b 繁忙，那么该信号会暂时等待，直至空闲后 b 再调用成员函数 <code>slot()</code>，若 b 空闲，直接调用成员函数 <code>slot()</code>。与 Qt 机制相同，一个槽函数可以被多个信号相连接，一个信号也可以连接多个槽。</p>
+<h2 id="naive-版本">naive 版本</h2>
+<p>看到上述需求，我的第一反应是需要建立一个 Connection 类来帮助管理所有的连接。具体来说，在 <code>connect()</code> 函数中需要构造 Connection 类对象 c ，它一方面手握 b 的成员函数，另一方面与 a 的信号挂钩，从而实现信号触发机制。</p>
+<p><img src="/img/connect.png" srcset="/img/loading.gif" lazyload alt="Conection类中关于成员的探讨"></p>
+<p>因此，Connection 类的定义有：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Connection</span> &#123;<br>    <span class="hljs-comment">// callback func and itself</span><br>    function&lt;<span class="hljs-type">void</span>()&gt; m;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">callback</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">if</span> (m)<br>            <span class="hljs-built_in">m</span>();<br>    &#125;<br>&#125;;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">A::signal</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-keyword">if</span> (c)<br>        c-&gt;<span class="hljs-built_in">callback</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>对于 <code>connect()</code> 函数，过程就比较简单。构建Connection 类对象后，b 的成员函数传给Connection类中的“函数指针”，另一方面，需要将 a 发出的信号与该函数指针关联起来。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">connect</span><span class="hljs-params">(A* a, B* b, string signal, string slot)</span> </span>&#123;<br>    Connection *c = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Connection</span>();<br>    function&lt;<span class="hljs-type">void</span>()&gt; f = <span class="hljs-built_in">bind</span>(&amp;B::slot, b);<br>    c-&gt;f = f;<br>    a-&gt;c = &amp;c;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>关联的方案和 Qt 一样，选择使用字符串匹配的方式。即传入的参数使用宏定义包装，转为字符串。但这里的实现显然还<strong>没有用上函数后面的两个参数</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> SIGNAL(x) <span class="hljs-string">&quot;1&quot;</span>#x</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> SLOT(x) <span class="hljs-string">&quot;2&quot;</span>#x</span><br><br>A *a = <span class="hljs-keyword">new</span> <span class="hljs-built_in">A</span>();<br>B *b = <span class="hljs-keyword">new</span> <span class="hljs-built_in">B</span>();<br><span class="hljs-built_in">connect</span>(a, b, <span class="hljs-built_in">SIGNAL</span>(<span class="hljs-built_in">signal1</span>()), <span class="hljs-built_in">SLOT</span>(<span class="hljs-built_in">slot</span>()))<br></code></pre></td></tr></table></figure>
+<h2 id="逐步改进">逐步改进</h2>
+<h3 id="响应函数队列">响应函数队列</h3>
+<p>上述做法很简单，但缺点很多，先是没有使用 <code>connect()</code> 传入的信号和槽，然后是无法支持一个信号对应多个槽函数和多个信号，最后，槽函数的类型被限制为 <code>function&lt;void()&gt;</code> ，这也让人很难受。但总的来说，naive 版本起码说明了，这条路可行。</p>
+<p>要想做的更好，需要加上很多东西。首先，对于每个信号，都应该有一个信号槽函数的队列。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">A</span> &#123;<br>    map&lt;string, vector&lt;Connection *&gt;&gt; connect_map;<br><br>    <span class="hljs-comment">// for all slots connected with signal</span><br>    <span class="hljs-comment">// must callback at once</span><br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">A::signal</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> conn : connect_map[<span class="hljs-built_in">SIGNAL</span>(<span class="hljs-built_in">signal</span>())])<br>            conn-&gt;<span class="hljs-built_in">callback</span>();<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">A::setUp</span><span class="hljs-params">(string signal, Connection *c)</span> </span>&#123;<br>        connect_map[signal].<span class="hljs-built_in">push_back</span>(c);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>如此，当信号被调用后（发出后），所有与信号相连的槽函数都会被调用。</p>
+<h3 id="信号槽函数的抽象">信号槽函数的抽象</h3>
+<p>接下来解决下一个问题：如何使用 <code>connect()</code> 传来的槽函数，而不是硬编码到函数内部。有两个思路：一种是直接将 <code>connect()</code> 的参数类型改为函数指针，因为指针可以直接传入 Connection 类，可方便后续处理，但这会限制槽函数的类型。另一种是仍沿用字符串，但要求内部需要有一个对应表，存放字符串与槽函数的对应关系。参考 Qt 的信号槽机制，我选择使用第二种。</p>
+<p>为了让所有类型的函数都可以充当槽函数，又不更改 Connection 类中的变量类型，可以选择<strong>抽象包装法</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Slot</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-keyword">switch</span> (func_id) &#123;<br>    <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>:<br>        <span class="hljs-built_in">slot1</span>();<br>        <span class="hljs-keyword">break</span>;<br>    <span class="hljs-comment">// case 1:</span><br>        <span class="hljs-comment">// another slot()</span><br>        <span class="hljs-comment">// break;</span><br>    <span class="hljs-keyword">default</span>:<br>        <span class="hljs-keyword">break</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>直接将上面的 <code>Slot()</code> 函数传给 Connection 类，然后，让对象内的变量通过字符串来确定到底该调用哪一个成员函数。相当于在所有槽函数之上都加了一层抽象。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">B</span> &#123;<br>    map&lt;string, <span class="hljs-type">int</span>&gt; funcMap;<br>    <span class="hljs-built_in">B</span>() &#123;<br>        funcMap.<span class="hljs-built_in">insert</span>(<span class="hljs-built_in">pair</span>&lt;string, <span class="hljs-type">int</span>&gt;(<span class="hljs-built_in">SLOT</span>(<span class="hljs-built_in">slot1</span>()), <span class="hljs-number">0</span>));<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">findFuncId</span><span class="hljs-params">(string slot)</span> </span>&#123;<br>        <span class="hljs-keyword">if</span> (funcMap.<span class="hljs-built_in">find</span>(slot) != funcMap.<span class="hljs-built_in">end</span>())<br>            func_id = funcMap[slot];<br>        <span class="hljs-keyword">else</span> <br>            func_id = <span class="hljs-number">-1</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>findFuncId()</code> 将字符串转为内部的函数编号，进而改变了 <code>Slot()</code> 函数要调用的槽函数，但需要我们提取把槽函数和编码都放到表中。为了统一，在信号发送端，我们也希望用整数取代字符串，来唯一编号信号函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">A</span> &#123;<br>    map&lt;string, <span class="hljs-type">int</span>&gt; sgMap;<br>    <span class="hljs-built_in">A</span>() &#123;<br>        sgMap.<span class="hljs-built_in">insert</span>(<span class="hljs-built_in">pair</span>&lt;string, <span class="hljs-type">int</span>&gt;(<span class="hljs-built_in">SIGNAL</span>(<span class="hljs-built_in">signal1</span>()), <span class="hljs-number">0</span>));<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">findSetId</span><span class="hljs-params">(string slot)</span> </span>&#123;<br>        <span class="hljs-keyword">if</span> (sgMap.<span class="hljs-built_in">find</span>(slot) != sgMap.<span class="hljs-built_in">end</span>())<br>            signal_id = sgMap[slot];<br>        <span class="hljs-keyword">else</span> <br>            signal_id = <span class="hljs-number">-1</span>;<br>        <span class="hljs-keyword">return</span> signal_id;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>从上面的改进中，可以看出不论槽函数是什么样，在 Connection 类中的函数指针永远指向 <code>Slot()</code>。对于 Connection 类而言，只需要记住哪个信号发生后（即信号的编码），需要触发哪些对象的哪些槽函数（即对应对象的槽函数编号）就行了。</p>
+<p><img src="/img/connect2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h3 id="Object-类">Object 类</h3>
+<p>不难看到，A 类和 B 类在有些地方有相似性，可将其抽象出来成为一个基类 Object。另一方面，Object 类也可以替代 Connection 类的功能。所以，需要在这个地方做一个非常大的改动。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// Old Connection</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Connection</span> &#123;<br>    <span class="hljs-comment">// callback func and itself</span><br>    function&lt;<span class="hljs-type">void</span>()&gt; m;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">callback</span><span class="hljs-params">()</span> </span>&#123;<br>        <span class="hljs-keyword">if</span> (m)<br>            <span class="hljs-built_in">m</span>();<br>    &#125;<br>&#125;;<br><br><span class="hljs-comment">// Now Connection</span><br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">Connection</span> &#123;<br>    <span class="hljs-type">int</span> id;<br>    Object* receiver;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>首先，将 Connection 类做了改变，因为只需要槽函数的编号和类的抽象包装函数即可。</p>
+<p>A 类和 B 类中，都有对信号/槽函数的编码表，那么编码表可以放在 Object 类中，取名为 <code>funcMap</code>，提供函数名字符串返回其编码。</p>
+<p>此外，将之前 A 类中的 <code>map&lt;string, vector&lt;Connection *&gt;&gt; connect_map</code> 信号与对应槽函数的对应表关系也放入 Object 类中。把 B 类的抽象槽函数 <code>Slot()</code> 也放进 Object 类。如此，只要继承了 Object 类，再稍加修改（后续介绍），就可以使用我们自己实现的信号槽机制，与 Qt 的非常类似。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Object</span> &#123;<br><span class="hljs-keyword">public</span>:<br>    map&lt;<span class="hljs-type">int</span>, vector&lt;Connection&gt;&gt; connect_map;<br>    map&lt;string, <span class="hljs-type">int</span>&gt; funcMap;<br>    function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">int</span>)&gt; Slot_;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后，在 Object 类中添加之前的函数实现，包括 <code>connect()</code> 函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Object</span> &#123;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">activate</span><span class="hljs-params">(<span class="hljs-type">int</span> id)</span> </span>&#123;<br>        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span> c : connect_map[id])<br>            c.receiver-&gt;<span class="hljs-built_in">Slot_</span>(c.id);<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">findId</span><span class="hljs-params">(<span class="hljs-type">const</span> string&amp; s)</span> </span>&#123;<br>        <span class="hljs-type">int</span> func_id = <span class="hljs-number">-1</span>;<br>        <span class="hljs-keyword">if</span> (funcMap.<span class="hljs-built_in">find</span>(s) != funcMap.<span class="hljs-built_in">end</span>())<br>            func_id = funcMap[s];<br>        <span class="hljs-keyword">return</span> func_id;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title">connect</span><span class="hljs-params">(Object *sender, Object *receiver,</span></span><br><span class="hljs-params"><span class="hljs-function">            <span class="hljs-type">const</span> <span class="hljs-type">char</span>* signal, <span class="hljs-type">const</span> <span class="hljs-type">char</span>* slot)</span> </span>&#123;<br>        <span class="hljs-type">int</span> sid = sender-&gt;<span class="hljs-built_in">findId</span>(signal);<br>        <span class="hljs-type">int</span> rid = receiver-&gt;<span class="hljs-built_in">findId</span>(slot);<br>        <span class="hljs-function">Connection <span class="hljs-title">c</span><span class="hljs-params">(rid, recevier)</span></span>;<br>        sender-&gt;connect_map[sid].<span class="hljs-built_in">push_back</span>(c);<br>    &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>A 类和 B 类都直接继承 Object 类。但这样做还不够，需要在各自的构造函数中把自己的信号/槽函数加入 <code>funcMap</code> 中，槽函数也需要被动态绑定：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">A</span> : <span class="hljs-keyword">public</span> Object &#123;<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">A</span>() &#123;<br>        funcMap.<span class="hljs-built_in">insert</span>(<span class="hljs-built_in">pair</span>&lt;string, <span class="hljs-type">int</span>&gt;(<span class="hljs-built_in">SIGNAL</span>(<span class="hljs-built_in">signal1</span>()), <span class="hljs-number">0</span>));<br>    &#125;<br>&#125;;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">B</span> : <span class="hljs-keyword">public</span> Object &#123;<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">B</span>() &#123;<br>        Slot_ = <span class="hljs-built_in">bind</span>(&amp;B::Slot, <span class="hljs-keyword">this</span>, placeholders::_1);<br>        funcMap.<span class="hljs-built_in">insert</span>(<span class="hljs-built_in">pair</span>&lt;string, <span class="hljs-type">int</span>&gt;(<span class="hljs-built_in">SLOT</span>(<span class="hljs-built_in">slot1</span>()), <span class="hljs-number">0</span>));<br>    &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>这样改动的好处是，要添加一个槽函数，我们无需更改 Object 类的部分，只需要更改 B 类的构造函数和 <code>Slot()</code>。新添加一个信号也是如此。</p>
+<h3 id="带参数的信号槽">带参数的信号槽</h3>
+<p>最后的改动，以支持某一些简单的参数可以在信号中传递。首先，在 Object 类中的槽函数，添加一个 <code>void**</code> 的变量，用于传参。随之改动的，就是 <code>activate()</code> 。<code>void **</code> 相当于一个指向所有参数的指针数组。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Object</span> &#123;<br>    function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">int</span>, <span class="hljs-type">void</span>**)&gt; Slot_;<br><br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">activate</span><span class="hljs-params">(<span class="hljs-type">int</span> id, <span class="hljs-type">void</span> **arg)</span> </span>&#123;<br>        <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span> c : connect_map[id]) &#123;<br>            c.receiver-&gt;<span class="hljs-built_in">Slot_</span>(c.id, arg);<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在 A 类和 B 类中，为了与 Object 类一致，做如下修改：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">B</span> &#123;<br>    <span class="hljs-built_in">B</span>() &#123;<br>        Slot_ = <span class="hljs-built_in">bind</span>(&amp;B::Slot, <span class="hljs-keyword">this</span>, placeholders::_1, placeholders::_2);<br>        <span class="hljs-comment">// ....</span><br>    &#125;<br>    <br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Slot</span><span class="hljs-params">(<span class="hljs-type">int</span> id, <span class="hljs-type">void</span> **args)</span> </span>&#123;<br>        <span class="hljs-keyword">switch</span> (id) &#123;<br>        <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>:<br>            <span class="hljs-built_in">slot1</span>(*<span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">int</span>*&gt;(args[<span class="hljs-number">0</span>]));<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>    &#125;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">slot1</span><span class="hljs-params">(<span class="hljs-type">int</span> a)</span> </span>&#123;<br>        cout &lt;&lt; <span class="hljs-string">&quot;Slot : &quot;</span> &lt;&lt; a &lt;&lt; endl;<br>    &#125;<br>&#125;<br><br><span class="hljs-comment">// In Class A</span><br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">signal1</span><span class="hljs-params">(<span class="hljs-type">int</span> a)</span> </span>&#123;<br>        <span class="hljs-type">void</span> *arg[] = &#123;<span class="hljs-built_in">reinterpret_cast</span>&lt;<span class="hljs-type">void</span>*&gt;(&amp;a)&#125;;<br>        <span class="hljs-built_in">activate</span>(<span class="hljs-number">0</span>, arg);<br>    &#125;<br></code></pre></td></tr></table></figure>
+<p>信号函数中的多个参数，需要为它们一一构建好 <code>void*</code> 指针。在 <code>Slot()</code> 中，再将它们一一拆解开。</p>
+<h2 id="小结">小结</h2>
+<p>通过自己不断思考尝试，实现了 Qt 信号槽机制的简陋版。在失去了 MOC 机制后，编写自己的槽机制会有点丑陋，并且有很多地方需要改进，先勉强用上吧。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Cpp/" class="category-chain-item">Cpp</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Qt/" class="print-no-link">#Qt</a>
+      
+        <a href="/tags/Cpp/" class="print-no-link">#Cpp</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>信号槽机制的简陋实现</div>
+      <div>https://dingfen.github.io/2021/11/15/2021-11-15-Qt-signal-slot/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年11月15日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/02/24/2022-2-24-gem5-1/" title="深入理解 Gem5 之一">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入理解 Gem5 之一</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/10/20/2021-10-20-cuda-with-matmul/" title="长文介绍矩阵乘法——从自己手搓到CUTLASS实现">
+                        <span class="hidden-mobile">长文介绍矩阵乘法——从自己手搓到CUTLASS实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

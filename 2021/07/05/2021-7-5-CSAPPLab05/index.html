@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="动手写一个 malloc 函数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解计算机系统之动态存储分配器实现">
+<meta property="og:url" content="https://dingfen.github.io/2021/07/05/2021-7-5-CSAPPLab05/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="动手写一个 malloc 函数">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab5/heap.jpg">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab5/block.jpg">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab5/freeblocks.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab5/result1.png">
+<meta property="og:image" content="https://dingfen.github.io/img/CSAPP/lab5/result2.png">
+<meta property="article:published_time" content="2021-07-05T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="CSAPP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/CSAPP/lab5/heap.jpg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入理解计算机系统之动态存储分配器实现 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入理解计算机系统之动态存储分配器实现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-07-05 12:00" pubdate>
+          2021年7月5日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入理解计算机系统之动态存储分配器实现</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>深入理解计算机系统之实现动态存储分配器</h1>
+<h2 id="简介">简介</h2>
+<p>本实验需要用 C 语言实现一个动态的存储分配器，也就是你自己版本的 <code>malloc</code>，<code>free</code>，<code>realloc</code> 函数。我们需要修改的唯一文件是 <code>mm.c</code>，包含如下几个需要实现的函数：</p>
+<ul>
+<li><code>int mm_init(void);</code> 在调用 <code>mm_malloc</code>，<code>mm_realloc</code> 或 <code>mm_free</code> 之前，调用 <code>mm_init</code> 进行初始化，正确返回 0</li>
+<li><code>void *mm_malloc(size_t size);</code> 在堆区域分配指定大小的块，分配的空间，返回的指针应该是 8 字节对齐的</li>
+<li><code>void mm_free(void *ptr);</code> 释放指针指向的 block</li>
+<li><code>void *mm_realloc(void *ptr, size_t size)</code> 返回指向一个大小为size的区域指针，满足一下条件</li>
+</ul>
+<h3 id="动态内存申请">动态内存申请</h3>
+<p>使用<strong>动态内存分配器</strong>，可为在程序运行时确定并申请虚拟内存空间。动态内存分配器管理的区域被称作<strong>堆</strong>。每个进程的内存分布如下：</p>
+<p><img src="/img/CSAPP/lab5/heap.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>动态内存申请器将堆这块区域当作一系列大小不同的块来管理，块或者已分配的，或者是空闲的。</p>
+<h3 id="malloc-free">malloc &amp; free</h3>
+<p>通常，有关内存管理， Linux 提供的系统调用主要有两种：<br>
+第一个是 <code>sbrk()</code> 函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-comment">// brk的作用是将堆顶指针设置为addr，失败返回0，成功返回1</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">brk</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">void</span> *addr)</span>;<br><span class="hljs-comment">// sbrk的作用是将堆顶指针增加incr个字节，成功返回新的堆顶地址</span><br><span class="hljs-type">void</span> *<span class="hljs-title function_">sbrk</span><span class="hljs-params">(<span class="hljs-type">intptr_t</span> incr)</span>;<br></code></pre></td></tr></table></figure>
+<p>第二种方法使用的是 <code>mmap()</code> 函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/mman.h&gt;</span></span><br><span class="hljs-comment">// start 指针表示想要映射的内存区域的起始地址，length为映射的大小，prot是保护标志，flags是映射的类型(匿名映射使用MAP_ANONYMOUS参数)，offset是偏移量</span><br><span class="hljs-type">void</span> *<span class="hljs-title function_">mmap</span><span class="hljs-params">(<span class="hljs-type">void</span> *start, <span class="hljs-type">size_t</span> length, <span class="hljs-type">int</span> prot, <span class="hljs-type">int</span> flags, <span class="hljs-type">int</span> fd, <span class="hljs-type">off_t</span> offset)</span>;<br><span class="hljs-comment">// munmap则是将映射的空间还给操作系统</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">munmap</span><span class="hljs-params">(<span class="hljs-type">void</span> *start, <span class="hljs-type">size_t</span> length)</span>;<br></code></pre></td></tr></table></figure>
+<p>值得注意的是，<code>mmap()</code> 还有另一个重要的作用就是实现快速的 I/O，它通过直接将文件映射到虚拟内存，可以直接对其进行读写操作，而不需要使用系统调用 read/write，大幅度提高了速度。</p>
+<p>但在实际的使用中，我们不可能每次需要内存的时候，都用 <code>sbrk</code> 或 <code>mmap</code> 函数(系统调用速度很慢)，这会大幅度降低我们程序的效率。通常我们采用的是一种类似于缓存的思想：先使用 <code>sbrk</code> 函数向内核索取一大片的内存空间，然后再使用一定的手段对这段空间进行管理。只有当这段空间不够用时，再向内核拿，这样就提高了效率。这也正是 <code>malloc</code> 函数库所起到的作用。</p>
+<p>简单来说，<code>malloc</code> 函数主要是通过维护一个空闲列表来实现内存的管理的，具体涉及到的数据结构就是链表。对每一个内存块，我们使用链表将它们串在一起，当需要使用的时候，我们从链表中寻找大小适合的内存块，并且从空闲链表中删除，拿给用户。当用户用完某个内存块的时候，我们就将其重新插入回空闲链表，这样就实现了简单的内存分配和释放。</p>
+<h2 id="数据结构">数据结构</h2>
+<p>首先介绍实验中的内存分配块的数据结构，我使用边界标记的堆块的格式区分块的边界。其中，头部 (header) 和脚部 (footer) 分别占 4 字节大小，块地址双字对齐，大小为8的整数倍。这样做的好处是，如果用 32 位来存储块大小，低 3 位肯定都为0，相当于低 3 位可以预留出来，用作指示该块是否是一个空闲块。</p>
+<p><img src="/img/CSAPP/lab5/block.jpg" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>块的数据结构确定后，需要一个空闲链表来管理空闲块，参考书本上关于空闲链表的表述，也采用下图方式管理。</p>
+<p><img src="/img/CSAPP/lab5/freeblocks.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<h2 id="具体实现">具体实现</h2>
+<h3 id="宏定义">宏定义</h3>
+<p>对于这个实验来说，良好的宏定义可提高编程效率，方便阅读书写代码。下面列出部分关键宏，并加以解释。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">define</span> WSIZE 4             <span class="hljs-comment">/* Word and header/footer size (bytes) */</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> DSIZE 8             <span class="hljs-comment">/* Double word size (bytes) */</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> CHUNKSIZE (1&lt;&lt;12)   <span class="hljs-comment">/* Extend heap by this amount (bytes) */</span></span><br><br><span class="hljs-comment">/* Pack a size and allocated bit into a word */</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PACK(size,alloc)    ((size) | (alloc))</span><br><br><span class="hljs-comment">/* Read and Write a word at address p */</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> GET(p)  (*(unsigned int *)(p))</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PUT(p,val)  (*(unsigned int *)(p) = (val))</span><br><br><span class="hljs-comment">/* Read the size and allocated fields from address p */</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> GET_SIZE(p)  (GET(p) &amp; ~0x7)</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> GET_ALLOC(p)    (GET(p) &amp; 0x1)</span><br><br><span class="hljs-comment">/* Given block ptr bp, compute address of its header and footer */</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> HDRP(bp)    ((char *)(bp)-WSIZE)</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> FTRP(bp)    ((char *)(bp)+GET_SIZE(HDRP(bp))-DSIZE)</span><br><br><span class="hljs-comment">/* Given block ptr bp, compute address of next and prev blocks */</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> NEXT_BLKP(bp)   ((char *)(bp)+GET_SIZE(((char *)(bp)-WSIZE)))</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PREV_BLKP(bp)   ((char *)(bp)-GET_SIZE(((char *)(bp)-DSIZE)))</span><br></code></pre></td></tr></table></figure>
+<p>GET 宏读取和返回指针 p 的引用，这里强制转换是非常重要的，类似地，PUT 宏将 val 存放到 p 指向的字中。GET_SIZE 宏和 GET_ALLOC 宏从 p 处的获得块的大小和分配标识位，注意到，这里的指针 p 应该指向整个块。</p>
+<p>之后的指针 bp 指向的就是块的有效负载。HDRP 宏和 FTRP 宏分别指向这个块的头部和脚部，因为有效载荷紧挨着头部，头部大小为 4 字节，所以 <code>(char *)bp-WSIZE</code> 就是指向头部，脚部大小也是 4 字节，且 GET_SIZE 宏指的是整个块大小，因此要减去 8 个字节才是指到了脚部。而对于 NEXT_BLKP 宏和 PREV_BLKP 宏，情况更加复杂，程序需要读到上个块（下个块）的脚部（头部），才能通过加上块大小偏移量来获得下一个块的指针。</p>
+<h3 id="创建空闲块链表">创建空闲块链表</h3>
+<p>在调用 <code>mm_malloc</code> 和 <code>mm_free</code> 函数之前，必须要调用 <code>mm_init</code> 进行初始化。<code>mm_init</code> 函数创建了一个空的空闲块链表，然后调用 <code>extend_heap</code> 函数，做最初的堆空间扩展。</p>
+<p>参见上图空闲链表，<code>mm_init</code> 首先创建了一个不使用的填充字，然后创建 8 个字节的序言块，它只有头部和脚部，但它永不释放，类似于实现单链表时的链表头。最后创建一个结尾块，用于标识空闲链表的结束。加上了填充块后，开头的这几个块一共占用 16 个字节，正好是空闲链表所要求的的最小字节。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">mm_init</span><span class="hljs-params">(<span class="hljs-type">void</span>)</span><br>&#123;<br>    <span class="hljs-keyword">if</span> ((heap_listp = mem_sbrk(<span class="hljs-number">4</span> * WSIZE)) == (<span class="hljs-type">void</span> *)<span class="hljs-number">-1</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    PUT(heap_listp, <span class="hljs-number">0</span>);                            <span class="hljs-comment">/* Alignment padding */</span><br>    PUT(heap_listp + (<span class="hljs-number">1</span> * WSIZE), PACK(DSIZE, <span class="hljs-number">1</span>)); <span class="hljs-comment">/* Prologue header */</span><br>    PUT(heap_listp + (<span class="hljs-number">2</span> * WSIZE), PACK(DSIZE, <span class="hljs-number">1</span>)); <span class="hljs-comment">/* Prologue header */</span><br>    PUT(heap_listp + (<span class="hljs-number">3</span> * WSIZE), PACK(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>));     <span class="hljs-comment">/* Epilogue header */</span><br>    heap_listp += (<span class="hljs-number">2</span> * WSIZE);<br>    <span class="hljs-keyword">if</span> (extend_heap(CHUNKSIZE / WSIZE) == <span class="hljs-literal">NULL</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> *<span class="hljs-title function_">extend_heap</span><span class="hljs-params">(<span class="hljs-type">size_t</span> words)</span> &#123;<br>    <span class="hljs-type">char</span> *bp;<br>    <span class="hljs-type">size_t</span> size;<br><br>    size = (words % <span class="hljs-number">2</span>) ? (words + <span class="hljs-number">1</span>) * WSIZE : words * WSIZE;<br>    <span class="hljs-keyword">if</span> ((<span class="hljs-type">long</span>)(bp = mem_sbrk(size)) == (<span class="hljs-type">void</span> *)<span class="hljs-number">-1</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br><br>    PUT(HDRP(bp), PACK(size, <span class="hljs-number">0</span>));           <span class="hljs-comment">/* header */</span><br>    PUT(FTRP(bp), PACK(size, <span class="hljs-number">0</span>));           <span class="hljs-comment">/* footer */</span><br>    PUT(HDRP(NEXT_BLKP(bp)), PACK(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>));   <span class="hljs-comment">/* New epilogue header */</span><br><br>    <span class="hljs-keyword">return</span> coalesce(bp);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>其中 <code>extend_heap()</code> 函数用于堆拓展，每次拓展的大小都应该为 8 的倍数。在拓展完成后，需要注意到，<strong>如果堆顶端是一个空闲块</strong>，那么就需要调用 <code>coalesce()</code> 函数将空闲块合并。</p>
+<h3 id="合并块">合并块</h3>
+<p><code>coalesce()</code> 函数是对书上所述的合并块方式的简单实现。注意到，引入序言块和结尾块的好处就是，我们可以少考虑一些复杂的边界情况，因为所有要处理的块都位于链表的“中间”。这样做可以减少编码复杂度，更不容易出错。然后，宏定义也帮助我们很多。比如获取上一个块（下一个块）的分配位和大小时，只需要使用 <code>GET_ALLOC(FTRP(PREV_BLKP(bp)))</code> 即可，代码更具可读性（虽然好像还是很麻烦）:sweat_smile: 。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> *<span class="hljs-title function_">coalesce</span><span class="hljs-params">(<span class="hljs-type">void</span> *bp)</span>&#123;<br>    <span class="hljs-type">size_t</span>  prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));<br>    <span class="hljs-type">size_t</span>  next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));<br>    <span class="hljs-type">size_t</span> size = GET_SIZE(HDRP(bp));<br><br>    <span class="hljs-comment">// 如果上下块都是分配的 那就算了</span><br>    <span class="hljs-keyword">if</span>(prev_alloc &amp;&amp; next_alloc)<br>        <span class="hljs-keyword">return</span> bp;<br>    <br>    <span class="hljs-comment">// 合并下块</span><br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(prev_alloc &amp;&amp; !next_alloc)&#123;<br>        	size += GET_SIZE(HDRP(NEXT_BLKP(bp)));<br>            PUT(HDRP(bp), PACK(size,<span class="hljs-number">0</span>));<br>            PUT(FTRP(bp), PACK(size,<span class="hljs-number">0</span>));<br>    &#125;<br>    <span class="hljs-comment">// 合并上块</span><br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(!prev_alloc &amp;&amp; next_alloc)&#123;<br>        size += GET_SIZE(HDRP(PREV_BLKP(bp)));<br>        PUT(FTRP(bp),PACK(size,<span class="hljs-number">0</span>));<br>        PUT(HDRP(PREV_BLKP(bp)),PACK(size,<span class="hljs-number">0</span>));<br>        bp = PREV_BLKP(bp);<br>    &#125;<br>    <span class="hljs-comment">// 合并上下块</span><br>    <span class="hljs-keyword">else</span> &#123;<br>        size +=GET_SIZE(FTRP(NEXT_BLKP(bp)))+ GET_SIZE(HDRP(PREV_BLKP(bp)));<br>        PUT(FTRP(NEXT_BLKP(bp)),PACK(size,<span class="hljs-number">0</span>));<br>        PUT(HDRP(PREV_BLKP(bp)),PACK(size,<span class="hljs-number">0</span>));<br>        bp = PREV_BLKP(bp);<br>    &#125;<br>    <span class="hljs-keyword">return</span> bp;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>除了之前提到的，在 <code>extend_heap</code> 函数中需要调用 <code>coalesce</code> 函数来合并空闲块，在 <code>mm_free</code> 中也需要调用。事实上，只要有操作可以多出一个空闲块，都需要调用 <code>coalesce</code> 函数来合并。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">mm_free</span><span class="hljs-params">(<span class="hljs-type">void</span> *bp)</span> &#123;<br>    <span class="hljs-keyword">if</span>(bp == <span class="hljs-number">0</span>)<br>		<span class="hljs-keyword">return</span>;<br>    <br>    <span class="hljs-type">size_t</span> size = GET_SIZE(HDRP(bp));<br>    PUT(HDRP(bp), PACK(size, <span class="hljs-number">0</span>));<br>    PUT(FTRP(bp), PACK(size, <span class="hljs-number">0</span>));<br>    coalesce(bp);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="分配块">分配块</h3>
+<p>使用 <code>mm_malloc</code> 函数来分配块，首先必须要调整分配大小，因为用户传入的数据是有效负荷需要的大小，不包括头部和脚部，而且没有实现 8 字节对齐。因此，必须先加上 8 字节后再对齐，才能进行分配。</p>
+<p>调整完后，需要使用 <code>find_fit</code> 函数找到适合的链表空闲块，如果找到了，就放置在空闲块中，如果没有足够大的空闲块，那就需要调用 <code>extend_heap</code> 函数从堆中取出更多的内存了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> *<span class="hljs-title function_">mm_malloc</span><span class="hljs-params">(<span class="hljs-type">size_t</span> size)</span> &#123;<br>    <span class="hljs-type">size_t</span> asize;<br>    <span class="hljs-type">size_t</span> extendsize;<br>    <span class="hljs-type">char</span> *bp;<br>    <span class="hljs-keyword">if</span> (size == <span class="hljs-number">0</span>)<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br><br>    <span class="hljs-keyword">if</span> (size &lt;= DSIZE) &#123;<br>        asize = <span class="hljs-number">2</span> * (DSIZE);<br>    &#125;<br>    <span class="hljs-keyword">else</span> &#123;<br>        asize = (DSIZE) * ((size + (DSIZE) + (DSIZE - <span class="hljs-number">1</span>)) / (DSIZE));<br>    &#125;<br>    <span class="hljs-keyword">if</span> ((bp = find_fit(asize)) != <span class="hljs-literal">NULL</span>) &#123;<br>        place(bp, asize);<br>        <span class="hljs-keyword">return</span> bp;<br>    &#125;<br>    extendsize = MAX(asize, CHUNKSIZE);<br>    <span class="hljs-keyword">if</span> ((bp = extend_heap(extendsize / WSIZE)) == <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>    &#125;<br>    place(bp, asize);<br>    <span class="hljs-keyword">return</span> bp;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>对于 <code>find_fit</code> 函数，这里实现的是 <code>first-fit</code> 函数，从链表头开始搜索，只要找到了足够大的空闲块，就返回。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> *<span class="hljs-title function_">find_fit</span><span class="hljs-params">(<span class="hljs-type">size_t</span> size)</span> &#123;<br>    <span class="hljs-type">void</span> *bp;<br>    <span class="hljs-keyword">for</span> (bp = heap_listp; GET_SIZE(HDRP(bp)) &gt; <span class="hljs-number">0</span>; bp = NEXT_BLKP(bp)) &#123;<br>        <span class="hljs-keyword">if</span> (!GET_ALLOC(HDRP(bp)) &amp;&amp; (size &lt;= GET_SIZE(HDRP(bp)))) &#123;<br>            <span class="hljs-keyword">return</span> bp;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>放置函数 <code>place</code> 实现如下，特别注意，只有剩下的空间多于 16 字节时，才能组成一个空闲块。这意味着较小的碎片已经被我抛弃了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">place</span><span class="hljs-params">(<span class="hljs-type">void</span> *bp, <span class="hljs-type">size_t</span> asize)</span> &#123;<br>    <span class="hljs-type">size_t</span> csize = GET_SIZE(HDRP(bp));<br>    <span class="hljs-keyword">if</span> ((csize - asize) &gt;= (<span class="hljs-number">2</span> * DSIZE)) &#123;<br>        PUT(HDRP(bp), PACK(asize, <span class="hljs-number">1</span>));<br>        PUT(FTRP(bp), PACK(asize, <span class="hljs-number">1</span>));<br>        bp = NEXT_BLKP(bp);<br>        PUT(HDRP(bp), PACK(csize - asize, <span class="hljs-number">0</span>));<br>        PUT(FTRP(bp), PACK(csize - asize, <span class="hljs-number">0</span>));<br>    &#125;<br>    <span class="hljs-keyword">else</span> &#123;<br>        PUT(HDRP(bp), PACK(csize, <span class="hljs-number">1</span>));<br>        PUT(FTRP(bp), PACK(csize, <span class="hljs-number">1</span>));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="realloc">realloc</h3>
+<p>最后来关注一下 <code>realloc</code> 函数。这里由于时间关系，先实现了一个初步版本。排除了一些可能的极端情况后，先调用 <code>mm_malloc</code> 函数分配一个新的块。然后，就将旧数据从旧的地址移动到新的地方，并释放旧地址空间。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> *<span class="hljs-title function_">mm_realloc</span><span class="hljs-params">(<span class="hljs-type">void</span> *ptr, <span class="hljs-type">size_t</span> size)</span> &#123;<br>    <span class="hljs-type">size_t</span> oldsize;<br>    <span class="hljs-type">void</span> *newptr;<br><br>    <span class="hljs-comment">/* If size == 0 then this is just free, and we return NULL. */</span><br>    <span class="hljs-keyword">if</span> (size == <span class="hljs-number">0</span>) &#123;<br>        mm_free(ptr);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-comment">/* If oldptr is NULL, then this is just malloc. */</span><br>    <span class="hljs-keyword">if</span> (ptr == <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-keyword">return</span> mm_malloc(size);<br>    &#125;<br>    newptr = mm_malloc(size);<br>    <span class="hljs-comment">/* If realloc() fails the original block is left untouched  */</span><br>    <span class="hljs-keyword">if</span> (!newptr) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>    &#125;<br>    <span class="hljs-comment">/* Copy the old data. */</span><br>    oldsize = GET_SIZE(HDRP(ptr));<br>    <span class="hljs-keyword">if</span> (size &lt; oldsize)<br>        oldsize = size;<br>    <span class="hljs-built_in">memcpy</span>(newptr, ptr, oldsize);<br><br>    <span class="hljs-comment">/* Free the old block. */</span><br>    mm_free(ptr);<br>    <span class="hljs-keyword">return</span> newptr;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>事实上，<code>realloc</code> 函数有很多可以优化的点。首先，如果 <code>realloc</code> 传入的 <code>size</code> 比之前还小，显然我们不需要进行拷贝，直接可以考虑对当前块进行分割。其次，如果下一块是一个空闲块的话，我们可以直接将其占用。这样的话可以很大程度上减少外部碎片，充分地利用了空闲的块。接着，如果下一个块恰好是堆顶，我们也可以考虑直接拓展堆，这样的话就可以避免再去搜索空闲链表，提高效率。</p>
+<h2 id="实验结果">实验结果</h2>
+<p>由于时间关系，本次实验仅仅实现了一个非常简陋的 <code>malloc</code> 版本，因此得分较低。</p>
+<p><img src="/img/CSAPP/lab5/result1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p><img src="/img/CSAPP/lab5/result2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/CSAPP/" class="category-chain-item">CSAPP</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/CSAPP/" class="print-no-link">#CSAPP</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入理解计算机系统之动态存储分配器实现</div>
+      <div>https://dingfen.github.io/2021/07/05/2021-7-5-CSAPPLab05/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年7月5日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/08/22/2021-8-22-VimTech/" title="熟练使用 Vim">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">熟练使用 Vim</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/06/29/2021-6-29-CSAPPLab04/" title="深入理解计算机系统之代码优化实验">
+                        <span class="hidden-mobile">深入理解计算机系统之代码优化实验</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

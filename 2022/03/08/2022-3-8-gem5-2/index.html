@@ -1,0 +1,847 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="关于gem5中序列化等实现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解 Gem5 之二">
+<meta property="og:url" content="https://dingfen.github.io/2022/03/08/2022-3-8-gem5-2/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="关于gem5中序列化等实现">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-03-08T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.209Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="Cpp">
+<meta property="article:tag" content="gem5">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>深入理解 Gem5 之二 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深入理解 Gem5 之二"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-03-08 12:00" pubdate>
+          2022年3月8日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深入理解 Gem5 之二</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>深入理解 Gem5 之二</h1>
+<p>紧接着对 <a href="https://dingfen.github.io/cpp/2022/02/24/gem5-1.html">gem5 事件机制</a>的研究，本篇博文我重点研究了 gem5 中对象序列化的操作。总的来说，gem5 在对模拟器中的对象序列化前，需要先将其排水（Drain，由于中文翻译的限制，下文统称为 Drain），将不确定的状态先清除，等到一切安排妥当后，再将对象序列化到磁盘中。</p>
+<h2 id="Drain">Drain</h2>
+<h3 id="DrainState">DrainState</h3>
+<p>之前的博文详细解释了事件在 gem5 的作用以及其实现机制。本文开始介绍 gem5 中其他比较重要的机制。</p>
+<p>当 gem5 正常运行时，模拟器中的对象在一开始时都处于 <code>DrainState::Running</code> 状态，并用事件驱动模拟器的运行，这会导致很多对象在运行时处于似是而非的状态——部分信号正在传递，部分程序正在运行，缓冲区还待处理等。然而，模拟器总要在某些时刻有所停顿——准备快照（snapshot）、准备移交 CPU 等。这时候就需要引入 drain 的概念，将这些中间态清除。<strong>drain 指系统清空 SimObject 对象中内部状态的过程</strong>。通常，drain 会在序列化、创建检查点、切换 CPU 模型或 timing 模型前使用。对象会调用 <code>drain()</code> 函数将对象转移到 draining 或 drained 状态。然后进入 drained 状态。下面的代码介绍了四种 drain 状态。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">enum class</span> <span class="hljs-title class_">DrainState</span> &#123;<br>    Running,  <span class="hljs-comment">/**&lt; Running normally */</span><br>    Draining, <span class="hljs-comment">/**&lt; Draining buffers pending serialization/handover */</span><br>    Drained,  <span class="hljs-comment">/**&lt; Buffers drained, ready for serialization/handover */</span><br>    Resuming, <span class="hljs-comment">/**&lt; Transient state while the simulator is resuming */</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>当某一个对象进入 drained 状态（<code>drain::drain()</code> 返回 <code>DrainState::drained</code> 时表示该对象已经 drain 干净了）后，模拟仍会继续，直到所有对象都进入 drained 状态。如果该对象需要更多的时间来处理，那么它返回 <code>DrainState::draining</code> 状态。注意：一个对象的 drain 状态可能会被其他状态干扰，因此模拟器需要不停地重复 drain 来保证所有对象已经进入 <code>DrainState::drained</code> 状态。当系统不再需要所有对象维持在 drained 状态时，会调用 <code>resume()</code> 函数，它将让所有对象调用 <code>drainResume()</code> 返回到正常 <code>DrainState::Running</code> 的状态。注意，在恢复过程中可能会创建新的 Drainable 对象。在这种情况下，新对象将在 Resuming 状态下创建，然后再恢复到正常。</p>
+<h3 id="drain-的工作流程">drain 的工作流程</h3>
+<p>根据 gem5 的文档以及源文件中的注释，总结一下 drain 工作的主要流程：</p>
+<ol>
+<li>调用 <code>DrainManager::tryDrain()</code> 函数，该函数会让每个对象调用 <code>Drainable::drain()</code> 函数。如果它们全部返回 true，则 drain 已经完成。否则，DrainManager 将跟踪仍在 draining 的对象。</li>
+<li>模拟器会继续仿真。当一个对象完成 drain 时，它会调用 <code>DrainManager::signalDrainDone()</code> 函数，向 DrainManager 报告 drain 已完成。</li>
+<li>检查是否有对象仍然需要 drain（<code>DrainManager::tryDrain()</code>），如果是，重复上面的过程。</li>
+<li>一旦模拟器中的所有对象的内部状态被清空，这些对象就被序列化到磁盘上，或者发生配置更改：切换CPU模型或更改 timing 模型，总之做一些只能在 drained 后做的事情。</li>
+<li>完成后，调用 <code>DrainManager::resume()</code> 函数，该函数会让所有对象调用 <code>Drainable::drainResume()</code>，返回到正常运行的状态。</li>
+</ol>
+<p>接下来，我们随着代码逐步分析上面的工作流程：</p>
+<h3 id="DrainManager">DrainManager</h3>
+<p>DrainManager 类负责管理全局对象的 drain 工作，显然它必须是个单例。它内部维护了一个包含全局的可 Drainable 的对象数组 _allDrainable，以方便管理所有对象的 drain 工作，并用一个状态变量 _state 指示模拟器的状态。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">DrainManager</span> &#123;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-comment">/** singleton DrainManager instance */</span><br>    <span class="hljs-function"><span class="hljs-type">static</span> DrainManager &amp;<span class="hljs-title">instance</span><span class="hljs-params">()</span> </span>&#123; <span class="hljs-keyword">return</span> _instance; &#125;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-comment">/** Global simulator drain state */</span><br>    DrainState _state;<br>    <span class="hljs-comment">/** Lock protecting the set of drainable objects */</span><br>    <span class="hljs-keyword">mutable</span> std::mutex globalLock;<br>    <span class="hljs-comment">/** Set of all drainable objects */</span><br>    std::vector&lt;Drainable *&gt; _allDrainable;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>从代码上看，第一步中的 <code>tryDrain()</code> 函数实现其实很简单，就是通过 for 循环让每个对象调用 <code>Drainable::drain()</code> 函数，记录并输出 drain 失败的对象（若存在的话），统计其个数，必要时需请求下一轮 drain。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// in DrainManager:  </span><br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">tryDrain</span><span class="hljs-params">()</span> </span>&#123;<br>      <span class="hljs-comment">// 1. change simulator state to Draining</span><br>      _state = DrainState::Draining;<br>      <span class="hljs-comment">// 2. let all Drainable objects to drain, call dmDrain()</span><br>      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> *obj : _allDrainable) &#123;<br>        DrainState status = obj-&gt;<span class="hljs-built_in">dmDrain</span>();<br>        <span class="hljs-keyword">if</span> (debug::Drain &amp;&amp; status != DrainState::Drained) &#123;<br>            Named *temp = <span class="hljs-built_in">dynamic_cast</span>&lt;Named*&gt;(obj);<br>            <span class="hljs-keyword">if</span> (temp)<br>                <span class="hljs-built_in">DPRINTF</span>(Drain, <span class="hljs-string">&quot;Failed to drain %s\n&quot;</span>, temp-&gt;<span class="hljs-built_in">name</span>());<br>        &#125;<br>        _count += status == DrainState::Drained ? <span class="hljs-number">0</span> : <span class="hljs-number">1</span>;<br>      &#125;<br>      <span class="hljs-keyword">if</span> (_count == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// Drain done.</span><br>        _state = DrainState::Drained;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>      &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-built_in">DPRINTF</span>(Drain, <span class="hljs-string">&quot;Need another drain cycle. %u/%u objects not ready.\n&quot;</span>,<br>                _count, <span class="hljs-built_in">drainableCount</span>());<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>      &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+<p>题外话，Named 类为 SimObject 对象提供了名字，所有 SimObject 对象都继承了该类。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">/** Interface for things with names. */</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Named</span> &#123;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-type">const</span> std::string _name;<br>  <span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">Named</span>(<span class="hljs-type">const</span> std::string &amp;name_) : _name(name_) &#123; &#125;<br>    <span class="hljs-keyword">virtual</span> ~<span class="hljs-built_in">Named</span>() = <span class="hljs-keyword">default</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">virtual</span> std::string <span class="hljs-title">name</span><span class="hljs-params">()</span> <span class="hljs-type">const</span> </span>&#123; <span class="hljs-keyword">return</span> _name; &#125;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>此外，在创建一个可 Drainable 的类对象时，DrainManager 类通过注册机制来管理这些对象：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">DrainManager::registerDrainable</span><span class="hljs-params">(Drainable *obj)</span> </span>&#123;<br>  <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(globalLock)</span></span>;<br>  _allDrainable.<span class="hljs-built_in">push_back</span>(obj);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">DrainManager::unregisterDrainable</span><span class="hljs-params">(Drainable *obj)</span> </span>&#123;<br>  <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lock</span><span class="hljs-params">(globalLock)</span></span>;<br>  <span class="hljs-keyword">auto</span> o = std::<span class="hljs-built_in">find</span>(_allDrainable.<span class="hljs-built_in">begin</span>(), _allDrainable.<span class="hljs-built_in">end</span>(), obj);<br>  _allDrainable.<span class="hljs-built_in">erase</span>(o);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="Drainable">Drainable</h3>
+<p>至于 Drainable 类，它是 SimObject 类中的一个基类。Drainable 的所有派生类都是可 Drain 的，<code>drain()</code> 函数要求所有派生类都必须实现，<code>dmDrain()</code> 函数是为 DrainManager 类方便调用 <code>drain()</code> 而实现的。Drainable 类包括了一个指示状态的变量以及指向全局 DrainManager 类的指针（引用）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Drainable</span> &#123;<br>  <span class="hljs-keyword">friend</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">DrainManager</span>;<br>  <span class="hljs-keyword">protected</span>:<br>    <span class="hljs-function"><span class="hljs-keyword">virtual</span> DrainState <span class="hljs-title">drain</span><span class="hljs-params">()</span> </span>= <span class="hljs-number">0</span>;<br>    <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">drainResume</span><span class="hljs-params">()</span> </span>&#123;&#125;;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-comment">/** interface for DrainManager */</span><br>    <span class="hljs-function">DrainState <span class="hljs-title">dmDrain</span><span class="hljs-params">()</span></span>;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">dmDrainResume</span><span class="hljs-params">()</span></span>;<br>    <span class="hljs-comment">/** Convenience reference to the global DrainManager */</span><br>    DrainManager &amp;_drainManager;<br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Current drain state of the object. Needs to be mutable since</span><br><span class="hljs-comment">     * objects need to be able to signal that they have transitioned</span><br><span class="hljs-comment">     * into a Drained state even if the calling method is const.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">mutable</span> DrainState _drainState;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>当一个对象完成 drain 后，调用 <code>signalDrainDone()</code> 函数，该函数会通知 DrainManager 其 drain 工作已完成。若 <code>tryDrain()</code> 函数返回值为 false，那么就需要不停地调用 <code>tryDrain()</code> ，此时模拟仍将继续。直到所有对象完成 drain。此时，DrainManager 会退出模拟循环（<code>exitSimLoop()</code>），开始进行第四步中所说的其他操作。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">signalDrainDone</span><span class="hljs-params">()</span> <span class="hljs-type">const</span> </span>&#123;<br>  <span class="hljs-keyword">switch</span> (_drainState) &#123;<br>    <span class="hljs-keyword">case</span> DrainState::Running:<br>    <span class="hljs-keyword">case</span> DrainState::Drained:<br>    <span class="hljs-keyword">case</span> DrainState::Resuming:<br>      <span class="hljs-keyword">return</span>;<br>    <span class="hljs-keyword">case</span> DrainState::Draining:<br>      _drainState = DrainState::Drained;<br>      _drainManager.<span class="hljs-built_in">signalDrainDone</span>();<br>   <span class="hljs-keyword">return</span>;<br>  &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">DrainManager::signalDrainDone</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-built_in">assert</span>(_count &gt; <span class="hljs-number">0</span>);<br>  <span class="hljs-keyword">if</span> (--_count == <span class="hljs-number">0</span>) &#123;<br>    <span class="hljs-built_in">DPRINTF</span>(Drain, <span class="hljs-string">&quot;All %u objects drained..\n&quot;</span>, <span class="hljs-built_in">drainableCount</span>());<br>    <span class="hljs-built_in">exitSimLoop</span>(<span class="hljs-string">&quot;Finished drain&quot;</span>, <span class="hljs-number">0</span>);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>第五步中，要让系统返回正常运行状态。DrainManager 类要使用 <code>DrainManager::resume()</code> 函数，将 drained 系统返回到正常状态：for 循环中让每个对象调用 <code>dmDrainResume()</code> 函数。<code>dmDrainResume()</code> 就是对 <code>drainResume()</code> 的包装。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">/** Resume normal simulation in a Drained system. */</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">DrainManager::resume</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-comment">// New objects (i.e., objects created while resuming) will</span><br>  <span class="hljs-comment">// inherit the Resuming state from the DrainManager.</span><br>  _state = DrainState::Resuming;<br>  <span class="hljs-keyword">do</span> &#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> *obj : _allDrainable) &#123;<br>      <span class="hljs-keyword">if</span> (obj-&gt;<span class="hljs-built_in">drainState</span>() != DrainState::Running) &#123;<br>        <span class="hljs-built_in">assert</span>(obj-&gt;<span class="hljs-built_in">drainState</span>() == DrainState::Drained ||<br>           obj-&gt;<span class="hljs-built_in">drainState</span>() == DrainState::Resuming);<br>        obj-&gt;<span class="hljs-built_in">dmDrainResume</span>();<br>      &#125;<br>    &#125;<br>  &#125; <span class="hljs-keyword">while</span> (!<span class="hljs-built_in">allInState</span>(DrainState::Running));<br>  _state = DrainState::Running;   <br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="Serialization">Serialization</h2>
+<p><strong>Serialization（序列化）指将对象转换成二进制</strong>，以方便长期保存、网络传递等。而 deserialization（反序列化）就是将二进制转换成对象。当前文提到的 drain 操作完成后，通常会跟上对象的序列化操作，将对象转换成二进制，用作快照（snapshot）保存或切换模型。在 gem5 中，Serializable 类为 SimObject 类提供序列化支持。Serializable 类通常用于创建检查点（Checkpoints）。<strong>所谓检查点其本质上是模拟的快照</strong>。当模拟需要非常长的时间时（几乎总是如此），用户可以使用检查点，在自己感兴趣的时间处加上检查点，以便稍后使用 DerivO3CPU 从该检查点恢复。</p>
+<h3 id="检查点创建与使用"><a target="_blank" rel="noopener" href="https://www.gem5.org/documentation/general_docs/checkpoints/">检查点创建与使用</a></h3>
+<p>通常，检查点会保存在新的文件夹目录 cpt.TICKNUMBER，其中 TICKNUMBER 指 要插入的检查点的 tick 时间值。要创建新的检查点，有以下几种方法：</p>
+<ul>
+<li>启动 gem5 模拟器后，执行 m5 的命令插入检查点。</li>
+<li>一个伪指令可以用来创建检查点。例如，可以在应用程序中包含这个pseduo指令，以便当应用程序达到某种状态时创建检查点</li>
+<li>使用 --take-checkpoints 可以周期性的输出检查点，–checkpoint-at-end 用于在模拟后创建检查点</li>
+</ul>
+<p>使用Ruby内存模型创建检查点时，必须使用MOESI锤协议。这是因为检查指向正确的内存状态要求缓存刷新到内存中。这种刷新操作目前仅支持MOESI锤协议。</p>
+<p>从检查点恢复通常可以很容易地从命令行完成:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">build/&lt;ISA&gt;/gem5.debug configs/example/fs.py -r N<br>OR<br>build/&lt;ISA&gt;/gem5.debug configs/example/fs.py --checkpoint-restore=N<br></code></pre></td></tr></table></figure>
+<p>整数N表示检查点编号，通常从1开始递增。</p>
+<h3 id="CheckPointIn">CheckPointIn</h3>
+<p>深入理解序列化的实现离不开对 CheckpointIn 类的剖析。该类主要负责完成检查点的创建与恢复工作。_cptDir 就是检查点保存的目录位置，db 表示 ini 文件。<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/INI_file">ini 文件</a>就是由很多 section 组成的初始化文件，其中每个 section 包含有若干 key-value 的 entry。通过 ini 文件以及 IniFile 类，检查点将模拟时的对象保存在了磁盘中，这便是序列化。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">CheckpointIn</span> &#123;<br>  <span class="hljs-keyword">private</span>:<br>    IniFile db;<br>    <span class="hljs-type">const</span> std::string _cptDir;<br>    <span class="hljs-comment">// current directory we&#x27;re serializing into.</span><br>    <span class="hljs-type">static</span> std::string currentDirectory;<br>    <span class="hljs-comment">// Filename for base checkpoint file within directory.</span><br>    <span class="hljs-type">static</span> <span class="hljs-type">const</span> <span class="hljs-type">char</span> *baseFilename;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>IniFile 类详细实现了 ini 文件的读写，section 的查询、访问等，这不是本博客的主题，不在详述。</p>
+<h3 id="Serializable">Serializable</h3>
+<p>任何继承并实现此接口的对象都可以包含在 gem5 的检查点系统中。所有支持序列化的对象都应该继承该类。继承该类对象可大致分为两类：1）真正的 SimObjects（继承了 SimObject 类，SimObject 类继承了 Serializable 类）和 2）未继承 SimObject 类，仅继承 Serializable 类的普通对象。</p>
+<p>SimObjects 可通过 <code>SimObject::serializeAll()</code> 函数自动完成序列化，写入到自己的 sections 中。前文提到，SimObjects 也可以包含其他未继承 SimObject 类的可序列化对象。然而，这些“普通”的可序列化成员不会自动序列化，因为它们没有 <code>SimObject::serializeAll()</code> 函数。因此有这些对象的类在实现时需要主动调用其序列化/反序列化函数，以完成序列化。</p>
+<p>其中，首选方法是使用 <code>serializeSection()</code> 函数，这会将序列化对象放入当前 section（此section 就是 ini 文件中的section） 中的新 subsection。另一种选择是直接调用 <code>serialize()</code> ，它将对象序列化到当前 section，但不推荐使用后者，因为这会导致可能存在的命名冲突。下面代码给出了 Serializable 类中最重要的函数。<code>serialize()</code> 和 <code>unserializa()</code> 函数都需要子类实现。<code>serializeAll()</code> 函数，从后往前（why?）遍历所有的对象，调用 <code>serializeSection()</code> 函数将它们序列化。因此，不应在其他任何地方对 SimObject 对象调用序列化函数；否则，这些对象将被不必要地序列化多次。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">/* In class SimObject</span><br><span class="hljs-comment">* Create a checkpoint by serializing all SimObjects in the system.*/</span><br><span class="hljs-function"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title">serializeAll</span><span class="hljs-params">(<span class="hljs-type">const</span> std::string &amp;cpt_dir)</span> </span>&#123;<br>  std::ofstream cp;<br>  Serializable::<span class="hljs-built_in">generateCheckpointOut</span>(cpt_dir, cp);<br>  SimObjectList::reverse_iterator ri = simObjectList.<span class="hljs-built_in">rbegin</span>();<br>  SimObjectList::reverse_iterator rend = simObjectList.<span class="hljs-built_in">rend</span>();<br>  <span class="hljs-keyword">for</span> (; ri != rend; ++ri) &#123;<br>    SimObject *obj = *ri;<br>    <span class="hljs-comment">// This works despite name() returning a fully qualified name</span><br>    <span class="hljs-comment">// since we are at the top level.</span><br>    obj-&gt;<span class="hljs-built_in">serializeSection</span>(cp, obj-&gt;<span class="hljs-built_in">name</span>());<br>   &#125;<br>&#125;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Serializable</span> &#123;<br>  <span class="hljs-comment">/* Serialize an object</span><br><span class="hljs-comment">   * Output an object&#x27;s state into the current checkpoint section. */</span><br>  <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">serialize</span><span class="hljs-params">(CheckpointOut &amp;cp)</span> <span class="hljs-type">const</span> </span>= <span class="hljs-number">0</span>;<br>    <br>  <span class="hljs-comment">/* Unserialize an object</span><br><span class="hljs-comment">   * Read an object&#x27;s state from the current checkpoint section. */</span><br>  <span class="hljs-function"><span class="hljs-keyword">virtual</span> <span class="hljs-type">void</span> <span class="hljs-title">unserialize</span><span class="hljs-params">(CheckpointIn &amp;cp)</span> </span>= <span class="hljs-number">0</span>;<br>  <br>  <span class="hljs-comment">/* Serialize an object into a new section in a checkpoint </span><br><span class="hljs-comment">   * and calls serialize() to serialize the current object into</span><br><span class="hljs-comment">   * the new section. */</span><br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">serializeSection</span><span class="hljs-params">(CheckpointOut &amp;cp, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *name)</span> <span class="hljs-type">const</span></span>;<br>  <span class="hljs-keyword">private</span>:<br>    <span class="hljs-type">static</span> std::stack&lt;std::string&gt; path;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>注意到 Serializable 类中仅维护了一个路径堆栈 path，实时记录对象所在的位置。下面代码可以看出，当新的 section 被创建后，其名字会被压栈进入到 path 中。ScopedCheckpointSection 类是为命名 section 时更加方便：section 名字便是该对象所在的系统位置。例如，Section1.Section2.Section3 表示对象从内到外处于Section3 Section2 Section1 中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++">Serializable::<span class="hljs-built_in">ScopedCheckpointSection</span>(CP &amp;cp, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *name) &#123;<br>  <span class="hljs-built_in">pushName</span>(name);<br>  <span class="hljs-built_in">nameOut</span>(cp);<br>&#125;<br><br><span class="hljs-type">void</span> Serializable::ScopedCheckpointSection::<span class="hljs-built_in">pushName</span>(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *obj_name) &#123;<br>  <span class="hljs-keyword">if</span> (path.<span class="hljs-built_in">empty</span>()) &#123;<br>    path.<span class="hljs-built_in">push</span>(obj_name);<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    path.<span class="hljs-built_in">push</span>(<span class="hljs-built_in">csprintf</span>(<span class="hljs-string">&quot;%s.%s&quot;</span>, path.<span class="hljs-built_in">top</span>(), obj_name));<br>  &#125;<br>  <span class="hljs-built_in">DPRINTF</span>(Checkpoint, <span class="hljs-string">&quot;ScopedCheckpointSection::pushName: %s\n&quot;</span>, obj_name);<br>&#125;<br><br><br><span class="hljs-type">void</span> Serializable::ScopedCheckpointSection::<span class="hljs-built_in">nameOut</span>(CheckpointOut &amp;cp) &#123;<br>  <span class="hljs-built_in">DPRINTF</span>(Checkpoint, <span class="hljs-string">&quot;ScopedCheckpointSection::nameOut: %s\n&quot;</span>,<br>          Serializable::<span class="hljs-built_in">currentSection</span>());<br>  cp &lt;&lt; <span class="hljs-string">&quot;\n[&quot;</span> &lt;&lt; Serializable::<span class="hljs-built_in">currentSection</span>() &lt;&lt; <span class="hljs-string">&quot;]\n&quot;</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++">Serializable::ScopedCheckpointSection::~<span class="hljs-built_in">ScopedCheckpointSection</span>() &#123;<br>    <span class="hljs-built_in">DPRINTF</span>(Checkpoint, <span class="hljs-string">&quot;Popping: %s\n&quot;</span>, path.<span class="hljs-built_in">top</span>());<br>    path.<span class="hljs-built_in">pop</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>下面给出创建检查点的函数。给定了文件目录名后，创建文件夹和 ini 文件，然后输出检查点即可。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Serializable::generateCheckpointOut</span><span class="hljs-params">(<span class="hljs-type">const</span> std::string &amp;cpt_dir,</span></span><br><span class="hljs-params"><span class="hljs-function">        std::ofstream &amp;outstream)</span> </span>&#123;<br>  std::string dir = CheckpointIn::<span class="hljs-built_in">setDir</span>(cpt_dir);<br>  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">mkdir</span>(dir.<span class="hljs-built_in">c_str</span>(), <span class="hljs-number">0775</span>) == <span class="hljs-number">-1</span> &amp;&amp; errno != EEXIST)<br>    <span class="hljs-built_in">fatal</span>(<span class="hljs-string">&quot;couldn&#x27;t mkdir %s\n&quot;</span>, dir);<br><br>  std::string cpt_file = dir + CheckpointIn::baseFilename;<br>  outstream = std::<span class="hljs-built_in">ofstream</span>(cpt_file.<span class="hljs-built_in">c_str</span>());<br>  <span class="hljs-type">time_t</span> t = <span class="hljs-built_in">time</span>(<span class="hljs-literal">NULL</span>);<br>  <span class="hljs-keyword">if</span> (!outstream)<br>    <span class="hljs-built_in">fatal</span>(<span class="hljs-string">&quot;Unable to open file %s for writing\n&quot;</span>, cpt_file.<span class="hljs-built_in">c_str</span>());<br>  outstream &lt;&lt; <span class="hljs-string">&quot;## checkpoint generated: &quot;</span> &lt;&lt; <span class="hljs-built_in">ctime</span>(&amp;t);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Cpp/" class="category-chain-item">Cpp</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Cpp/" class="print-no-link">#Cpp</a>
+      
+        <a href="/tags/gem5/" class="print-no-link">#gem5</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深入理解 Gem5 之二</div>
+      <div>https://dingfen.github.io/2022/03/08/2022-3-8-gem5-2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年3月8日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/03/13/2022-3-13-gem5-3/" title="深入理解 Gem5 之三">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深入理解 Gem5 之三</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/02/24/2022-2-24-gem5-1/" title="深入理解 Gem5 之一">
+                        <span class="hidden-mobile">深入理解 Gem5 之一</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

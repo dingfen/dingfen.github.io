@@ -1,0 +1,927 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RISC-V 在有了几十年的后世之见后，明确了自己的设计目标与原则，走出了一条非常成功的道路。本篇博客重点介绍 RISC-V 的指令集设计，并解释为何如此设计。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Why RISC-V ?">
+<meta property="og:url" content="https://dingfen.github.io/2020/09/17/2020-9-17-WHY%20RISC-V%202/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="RISC-V 在有了几十年的后世之见后，明确了自己的设计目标与原则，走出了一条非常成功的道路。本篇博客重点介绍 RISC-V 的指令集设计，并解释为何如此设计。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/RV32I_reg.png">
+<meta property="og:image" content="https://dingfen.github.io/img/RV32I_formats.png">
+<meta property="og:image" content="https://dingfen.github.io/img/RV32I_CSR.png">
+<meta property="og:image" content="https://dingfen.github.io/img/RV64I_reg.png">
+<meta property="og:image" content="https://dingfen.github.io/img/RV64I.png">
+<meta property="og:image" content="https://dingfen.github.io/img/RV128I.png">
+<meta property="article:published_time" content="2020-09-17T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RISC-V">
+<meta property="article:tag" content="RV32I">
+<meta property="article:tag" content="RV64I">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/RV32I_reg.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Why RISC-V ? - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Why RISC-V ?"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-09-17 12:00" pubdate>
+          2020年9月17日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          63 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Why RISC-V ?</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Why RISC-V ?</h1>
+<p>读 <a target="_blank" rel="noopener" href="https://people.eecs.berkeley.edu/~krste/papers/EECS-2016-1.pdf">Design of the RISC-V ISA</a> 论文后的总结与思考。这是本系列的第二部分，在调研了当代主要的 ISAs 后，作者认为现有 ISAs 不适合研究和教育目的，并因此设计了 RISC-V 。接下来我会继续研读这篇论文，细细体会这样设计带来的好处。</p>
+<h2 id="Why-call-it-RISC-V">Why call it RISC-V</h2>
+<p>既然是全新的 ISA，为何其名字中有 V (five 罗马数字) ？这是因为，RISC-V 在 <a target="_blank" rel="noopener" href="http://web.cecs.pdx.edu/~alaa/ece587/papers/patterson_isca_1981.pdf">RISC-I</a> 、<a target="_blank" rel="noopener" href="https://dl.acm.org/doi/10.5555/2334.2336">RISC-II</a> 、<a target="_blank" rel="noopener" href="https://www2.eecs.berkeley.edu/Pubs/TechRpts/1985/5940.html">SOAR</a> 和<a target="_blank" rel="noopener" href="https://ieeexplore.ieee.org/document/1663096">SPUR</a> 项目的基础上，是加州大学伯克利分校的第五项 RISC ISA 的设计成果，因此我们将其命名为 RISC-V。还有一点原因是设计人员期望新的 ISA 可以很好地支持并行，V 也有 “Vector” 的含义。</p>
+<h2 id="设计原则">设计原则</h2>
+<p>RISC-V ISA 总体的设计目标是什么？一句话概括，<strong>RISC-V ISA 要适用于几乎任何计算设备</strong>。这一目标带来了两个直观的结果：</p>
+<ol>
+<li><strong>RISC-V 不能针对任何特定的架构进行设计</strong>，这是因为在某些体系结构上带来的好处可能在别的地方会花费非常大的代价。之前讨论的主流架构中，之所以有非常多缺点，是因为架构师做出了对原先的实现过度优化的决策（例如，MIPS 的延迟分支和 SPARC 的条件码）。避免“架构技术”在 RISC-V 设计中的影响，因为它只会给 RISC-V 的实现带来很小的好处，却给其他实现带来不必要的损失。</li>
+<li>更重要的一点是，为了使 RISC-V 无处不在，<strong>RISC-V ISA 必须 open and free</strong>。开放标准的好处是多方面的，最重要的可能就是大量处理器实现；免费、开源将降低构建新系统的成本，它们与商业专营的实现的竞争将刺激微体系结构的创新；因为开放的实现可以提供第二种选择，对知识产权供应商垄断的担忧得到了缓解；如果采用同一标准和实现，那么学术界和工业界交流的障碍就会降低；开放的标准也可以改进一系列安全问题：商业间谍、爱干涉的政府等影响都会减弱 <code>:)</code>。</li>
+</ol>
+<p>之前说的目标过于笼统，在定义 RISC-V 前，应当有一个更加细化的特定技术目标：</p>
+<ul>
+<li><em>将 ISA 分为小而基础的 base ISA 和可选扩展 ISA</em> 。其中 base ISA 应当尽量小，适合教育和许多嵌入式处理器，但它必须足够完整，可以运行一个现代软件堆栈。扩展 ISA 可提高了计算工作性能，提供多进程的支持</li>
+<li><em>同时支持 32 bit 和 64 bit</em> ，因为 32 bit 更适合在小系统中使用，同时，还要预留给未来 128 位的机器</li>
+<li><em>考虑自定义 ISA 扩展</em>，提供包括紧密耦合的功能单元和松散耦合的协处理器单元</li>
+<li><em>支持变长指令集</em>，以提高代码密度，扩展自定义 ISA 的编码空间。</li>
+<li><em>给现代标准提供便利的硬件支持</em>，包括 IEEE-754 2008 中规定的浮点数运算标准，以及 C11 和 C++11 等编程语言。</li>
+<li><em>严格正交化用户级与特权级的 ISA</em> ，即严格分离用户级与特权级，并做到完全支持可虚拟化。支持在特权 ISA 下的实验，同时能维护用户应用程序 ABI 的兼容性。</li>
+</ul>
+<p>回顾一下 RISC-V 这几年的发展，博主认为这些具体目标都得到了很好的实现，这也是 RISC-V 目前在体系结构领域非常流行的原因之一。</p>
+<p>接下来，我会介绍一下 base ISA—— RV32I RV64I 和 RV32E，它们虽然是不同东西，但设计十分相近。RV32I 和 RV64I 仅在寄存器长度和内存地址空间不同，RV32E 是 RV32I 的变种，只不过有更少的寄存器，它专门为嵌入式系统设计。</p>
+<h2 id="RV32I">RV32I</h2>
+<p>RV32I 是 32 位整数 ISA 。它是非常简单，仅由 47 条指令组成，但它已经足够完整，足以形成一个编译目标，满足现代操作系统和运行时的基本要求。其中 8 条指令是系统指令（系统调用和性能计数）。</p>
+<p>和许多 RISC 指令集一样，其余的指令分为三类：运算，控制，内存访问。RISC-V 是一种 load-store 架构，算术指令只在寄存器上操作，只能使用 load 和 store 向存储器或从存储器传输数据。</p>
+<p>如下图，在 RV32I 中有 31 个通用整数寄存器，命名为 <code>x1</code> - <code>x31</code>，每个寄存器的宽度为 32 位。寄存器 <code>x0</code>  恒为 0；<code>x0</code> 可以被用作废弃指令结果的目标寄存器。唯一的附加寄存器是程序计数器，<code>PC</code>，它保存当前指令的地址。</p>
+<center>
+    <img src="/img/RV32I_reg.png" srcset="/img/loading.gif" lazyload />
+</center>
+<p>RV32I 中的指令有 32 位长，且以<strong>小端字节</strong>的顺序在内存中对齐存储。我们之所以这么做，是因为当前在通用计算中占主导地位的 x86 是小端法，且小端法软件更常见，虽然大多数软件都是兼容的😓。ISA 有六种指令格式组成：四种主要格式，<strong>R</strong>, <strong>I</strong>, <strong>S</strong>, <strong>U</strong>；还有两个变体 <strong>SB</strong> 和 <strong>UJ</strong>，除了直接操作数编码外，它们与 S 和 U 完全相同。指令中的两个源操作数寄存器分别被标识为 <code>rs1</code> 和 <code>rs2</code> ，输出结果的目的寄存器被标识为 <code>rd</code> 。<u>这样编码的一个重要特性是，当这些寄存器被用到时，它们在指令中的位置始终相同，这就允许寄存器获取与指令解码并行执行，改善了许多实现中的关键路径</u>。</p>
+<center>
+    <img src="/img/RV32I_formats.png" srcset="/img/loading.gif" lazyload />
+</center>
+<p><u>该编码方案的另一个特性是，从指令中生成立即操作数的成本很低</u>。在一个 32 位的立即数中，有 7 位总是来自指令中的相同位置（imm[10:5]），包括符号位，由于它们是最经常用到的，因而是最关键的。另外 24 位来自于两个地方，因此最终的立即数有三处来源。对于 SB 和 UJ 格式，它们的立即数一定会被 2 整除，立即数是通过旋转拼接而成的，而不是像 MIPS、SPARC 和 Alpha 一样使用多路选择器。这种设计降低了重用 ALU 数据路径来计算分支目标的硬件成本。</p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/mikewolf2002/p/11196680.html">这篇博客</a>描述了 RV32I 的主操作码的分配情况。主操作码 7 位宽，但在 base ISAs 中，末两位都是 11 ，也就是说一共可编码 32 条指令。这意味着我们留出了 3/4 的编码空间给扩展 ISA ，这可以显著提升代码密度。 在这可编码的 32 条指令中，RV32I 花了 11 个，其他 base ISAs 花了 4 个，标准扩展花了 8 个，另外剩下 9 个仍用于 ISA 扩展。</p>
+<h3 id="运算指令">运算指令</h3>
+<p>RV32I 有 21 个运算指令，包括算数、逻辑、比较。这些指令都是在整数寄存器上运算；有些指令会带上立即数。运算指令可以对有符号整数和无符号整数进行操作。有符号整数使用两者的补码表示。<u>所有的立即操作数都是符号扩展的</u>，即使是在立即数表示无符号量的上下文中也是如此。<u>这样可以降低 ISA 的描述复杂性，在某些情况下实际上会带来更好的性能</u>（MIPS 会零扩展某些立即数，比如逻辑运算中的立即数，但这有时额外需要一条屏蔽寄存器有效位的指令）。</p>
+<p>具体来说，运算指令的操作有加法、减法和移位。R-type 指令 ADD 和 SUB 分别用于加法、减法，将 <code>rs1</code> 和 <code>rs2</code> 中的值加/减得到结果，存回到 <code>rd</code> 寄存器中。SLL 、SRL 和 SRA 根据 <code>rs2</code> 寄存器中最低 5 位的值来分别进行逻辑左移、逻辑右移和算术右移 <code>rs1</code> 中的值。I-type 指令有 ADDI 、SLLI 、SRLI 和 SRAI 功能相同，只不过把 <code>rs2</code> 寄存器的值换成了立即数。注意到没有 SUBI 指令，因为 ADDI + 负立即数就可以其同样的作用。</p>
+<p>逻辑运算主要是布尔运算。AND 、OR 和 XOR 分别将寄存器 <code>rs1</code> 和 <code>rs2</code> 的值进行与/或/异或，得到的值写回寄存器 <code>rd</code> 。ANDI 、ORI 和 XORI 使用了立即数做了相同的事情。由于立即数是符号扩展的，RISC-V 为实现位反转，即 NOT，就可用 XORI + 立即数 -1。相比之下，MIPS 的零扩展可提供额外的指令 NOR，不过 NOR 很少使用🙃。</p>
+<p>比较操作 SLT 和 SLTU 分别有符号/无符号地比较 <code>rs1</code> 的值是否小于 <code>rs2</code> 的值，并将布尔值写回到寄存器 <code>rd</code> 。SLTI 和 SLTIU 使用立即数做了相同的事情。为实现 SEQZ 和 SNEZ（判断等于 0 /不等于 0），RISC-V 使用 SLTIU + 立即数 1 来判断 <code>rs1</code> 是否等于 0 ；使用 SLTU + <code>rs1</code> = <code>x0</code> 来判断 <code>rs2</code> 是否不等于 0 。</p>
+<p>最后，RV32I 提供了两个特殊的 U-type 运算指令。LUI (load upper immediate) 将寄存器 <code>rd</code> 的值的高 20 位赋为立即数，而低 12 位 为 0 。LUI 主要与 ADDI 一起，将任意的 32 位常量加载到寄存器中，也可以与load store 指令一起作用，访问任何静态 32 位地址，或与间接跳转指令一起将控制转移到任何静态 32 位地址。另一个是 AUIPC (add upper immediate to pc) ，它将 <code>PC</code> 的高 20 位加一个立即数，并将结果写入寄存器 <code>rd</code>。<u>AUIPC 构建了 RISC-V 的 PC 相对寻址方案：在 PIC 中，这对控制代码大小和性能至关重要</u>。</p>
+<h3 id="内存访问指令">内存访问指令</h3>
+<p>RV32I 中，有五条指令将数值从内存加载到整数寄存器中，三条指令将数值存储到内存中。所有这些指令都使用字节地址来标识内存位置；字节地址是通过将 <code>rs1</code> 的值加上立即数得到的。</p>
+<p>我们曾考虑支持其他寻址模式，包括索引寻址，即 <code>rs1</code> + <code>rs2</code>。但这将需要增加第三个源操作数 <code>rs3</code> 用于记录存入的数值。类似地，虽然自动递增的寻址模式可减少动态指令数量，但在指令中会增加第二个目标操作数 <code>rd2</code> 用于记录已经增加的偏移量。当然，我们可以采用一种混合的方法，仅为某些指令提供索引寻址，为其他指令提供自动增量，就像Intel i860 一样，但是我们认为这些额外的指令和非正交性使 ISA 复杂化了。此外，我们注意到，循环展开对动态指令数量的减少幅度是最大的，这对高性能代码来说都是个好消息（言外之意是，循环展开可以减少很多动态指令数量，不需要再增加以上提到的寻址模式，这可能会导致陷入过度优化的陷阱中）。</p>
+<p><u>非对齐 load store 是显式允许的，但注意到，它们不能保证被原子地执行或者高性能</u>。这条“规定”允许一些简单的实现 trap 这些指令，并通过非原子地操作相邻的字来模拟低级系统软件中的非对齐访问，但也给高性能系统保留了在硬件中实现非对齐访问的灵活性。其他 ISAs 对这个问题的处理完全不同，x86 要求非对齐的访问必须原子地执行，将非对齐访问委托给硬件实现，这会使硬件设计非常复杂。MIPS 和 Alpha 都将非对齐 load store 定义为非法，但额外提供了处理非对齐情况的指令。这些指令会占用了大量的编码空间，对于 MIPS ，还增加了新的流水线冒险。<u>我们认为，简单地允许非对齐的访问，但给实现留下很大的灵活性，是一个更好的 tradeoff</u> 。</p>
+<p>load 指令都使用了 I-type 形式。LW 指令将操作 32 bit ，LH 和 LB 分别操作 16 bit 和 8 bit ，并将数值放到 <code>rd</code> 的最低位部分，并符号扩展填充整个 <code>rd</code> 。类似地，LHU 和 LBU 也这么干，只不过最后是零扩展填充整个 <code>rd</code> 。store 指令都使用了 S-type 形式。SW 指令将操作 32 bit ，SH 和 SB 分别操作 16 bit 和 8 bit ，它们将<code> rs2</code> 的值的最低位部分存到内存的半字/字节中。</p>
+<h3 id="内存访问顺序"><a target="_blank" rel="noopener" href="https://www.cs.utexas.edu/~bornholt/post/memory-models.html">内存访问顺序</a></h3>
+<p>一个 RISC-V 的线程在执行时，它对自己的所有 load store 都是可见的，且是顺序发生的，但是在多线程环境中，我们不保证一个线程可见到另一个线程的内存访问。这个设计就是 relaxed memory model 。不得不承认，像 RISC-V 这样的 weak memory model 比 <a target="_blank" rel="noopener" href="https://jepsen.io/consistency/models/sequential">sequential consistency</a> (SC) 少了点直观性。因为 SC 规定“内存存入操作总是对所有线程可见，且内存访问顺序按程序指定的顺序执行”，给人的感觉更加合理直观。但是 SC 实际上不允许一些重要的内存系统优化，比如非阻塞 load 和带有旁路的写缓冲。</p>
+<p>我们观察到，很少有违反内存顺序的行为会被其他线程看到，乱序微体系结构可以推测出对内存访问的重排序是安全的，并且也可以做到若有线程注意到了重排序，就丢弃这个不正确的重排序。实际上，乱序微体系结构可以重用他们现有的推测机制来提供一个看起来像 SC ，但性能更接近 relax memory 的模型。遗憾的是，这种技术并不适用于简单、有序的微体系结构实现，因为它们不能装上这种昂贵的推测执行硬件。因此，若选择 SC 作为我们的内存访问模型，会过分地降低这些简单实现的性能。</p>
+<p><u>由于我们采取了 relax memory model 。因此强制地整理内存顺序变得显而易见的重要</u>。RV32I 提供了一个 FENCE 指令，给 FENCE 之前和之后的内存访问提供顺序保证。它参数有两个集合，即 <em>predecessor</em> 集合和 <em>successor</em> 集合，它们指示栅栏对哪种类型的访问进行排序：内存读取®、内存写入(W)、设备输入(I)和设备输出(O)。例如，<code>fence rw,w</code> 指令保证了在 fence 之前所有 load 和 store 操作都不会出现在 fence 之后的任何 store 前。</p>
+<p>RV32I 还提供了一条指令来同步指令流和数据访问，称为 FENCE.I 。对指令内存的 store 只保证在执行 FENCE.I 之后的后续指令 fetch 中反映出来。一些架构，如 x86 ，对 store 和 instruction fetch 提供了更强的保证。对于那些将指令 cache 和数据 cache 分开的系统，x86 要求这两个缓存保持一致。不过由于在运行中自我修改代码的情况实属罕见，我们认为最好的办法就是允许简单的实现使用不一致的指令 cache ，而把实现自我修改代码的任务，交给程序员，让他们用插入一条 FENCE.I 指令来完成。</p>
+<h3 id="控制流指令">控制流指令</h3>
+<p>RV32I 中有六条指令来有条件地更改控制流。这些使用 SB-type 格式的分支指令，在两个寄存器之间执行算术比较，然后将控制转移到 ±4 KiB (±1K 指令) 范围内的任何地方。新地址由符号扩展 12 位立即数加上当前 <code>PC</code> 形成。BEQ 比较 <code>rs1</code> 和 <code>rs2</code> 的值，在两值相等时分支跳转。BLT 有符号地比较 <code>rs1</code> 是否小于 <code>rs2</code> ，若为真则跳转，BLTU 则是无符号的。BNE 、BGE 和 BGEU 则分别是 <code>rs1</code> 和 <code>rs2</code> 是否不等/有符号大于/无符号大于。</p>
+<p>在其他 RISC 体系结构中，一个分支指令的常见特性是<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_42556934/article/details/106659053">分支延迟槽</a>。延迟槽指的是，在分支语句后，无论是否进行分支转移，紧接在其后的指令都将执行，以补充分支指令后流水线中出现的空槽。这一设计优化了层数较浅、单发射且顺序的流水线，分支跳转与否和后续指令的 fetch 会在一个周期内解决，因此延迟槽提高了流水线利用率，并消除了控制冒险。<u>然而，对于层次更深的流水线和具有超标量指令调度的微体系结构来说，延迟槽增加了复杂性却失去了好处</u>。事实上，它们甚至会降低性能：未填充的延迟槽必须用 NOP 填充，增加了代码大小。此外，现有的微体系结构技术可以保持流水线的繁忙，而不必在其上搞一个延迟槽：分支目标预测在通常情况下可以做到这一点。一个 2-entry 的分支目标缓冲区足以捕获大多数循环，只增加了大约 128 位的微体系结构状态，因此对于大多数流水线实现来说是很合理的。</p>
+<p>此外，为了在流水线的早期解决分支（这样可以提高流水线利用率），许多 RISC 架构只提供简单的分支。例如，Alpha 只提供与 0 的比较，比较两个寄存器的值需要额外的指令。其他 ISAs，如 SPARC，通过只在条件代码寄存器上提供分支来实现这种效果。在这种情况下，就需要额外的指令来设置条件代码。在 RISC-V 中，<u>我们通过将比较合并到分支指令中，可以获得更小的代码和更少的动态指令数量</u>。对于流水线实现，这个决定可能会使得解决分支必须放在之后的流水线阶段中。<u>但考虑到现代流水线往往具有准确的分支预测和分支目标预测，因此这一决定带来的分支延迟增加的代价，会被动态指令数量的减少和代码大小的减少所抵消</u>。</p>
+<p>我们有意识地忽略了对有条件移动和<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Predication_(computer_architecture)">预测</a>的支持。这两者都支持某种形式的 if-conversion，通过这种转换，可以用一些控制冒险交换数据冒险。有条件移动指令比预测弱得多：有条件移动指令在关键代码路径中，通常不能用于对可能导致异常（如 load store）的指令进行 if-convert。而预测更为通用，但会增加架构状态数量并消耗大量编码空间，因为我们必须为每条指令提供一个附加的预测操作码。这两种技术都使寄存器重命名的实现复杂化，因为当预测为假时，目标寄存器的旧值必须复制到新的寄存器上。最后，通常情况下，if-conversion 没有带来什么好处：分支预测将会胜出，有时具有更高的性能，因为它消除了额外的数据依赖。</p>
+<p>除了分支语句，RISC-V 还提供了两个无条件跳转指令。UJ-type 的 JAL (jump and link) 指令，将 <code>PC</code> 设定到 ±1MiB 范围（±256K 指令），还将写入 JAL 后一个指令的地址，即 <code>PC</code> +4 到 <code>rd</code> 寄存器中。因此，该指令可用于函数调用，并让被调用者知道返回的地址。当不需要用到 <code>rd</code> 时（就像简单跳转），<code>x0</code> 可以当作 <code>rd</code>，我们加了一个伪指令 J 用来表示这一情况。当然，JAL 是 <code>PC</code> 相关的寻址，肯定可以使用 PIC 。</p>
+<p>I-type 的指令 JALR 提供了间接跳转，其目的地址是 <code>rs1</code> 的值加上立即数。这个通用指令用于表跳转（在 C 的 switch 语句中），间接函数调用和函数返回。JALR 不需要计算地址的最末位（指令地址必然是两个字节对齐），并允许软件将数据放在这个位上，略微降低了硬件成本。与 JAL 一样，将 JALR 后一个指令的地址写入到寄存器 <code>rd</code> 中。</p>
+<p>所有的 control-transfer 指令都具有两字节的粒度。这对 RV32I 没有什么用处，因为它所有的指令都是 4 字节对齐的，但是它支持指令集扩展—— RV32C 的长度可以是两个字节的任意倍数。RV32C 是压缩 ISA 扩展，它增加了 16 位指令，以提升代码密度。</p>
+<h3 id="系统指令">系统指令</h3>
+<p>RV32I 有 8 条系统指令。简单的实现可以选择 trap 这些指令，并在系统软件中模拟它们的功能，高性能的实现可在硬件中实现它们的更多功能。</p>
+<p>ECALL 指令用于在操作系统中执行系统调用。RISC-V ISA 本身没有为系统调用定义参数传递规定；它是 ABI 的一个属性。大多数系统将参数传递给系统调用的方式与它们传递参数给普通函数调用的方式相同。</p>
+<p>EBREAK 指令用于调用调试器。与许多 ISAs 不同，<u>RISC-V 不允许在 EBREAK 指令字中编码元数据</u>。这个特性会消耗额外的编码空间，但是并不是特别有用，因为字段的宽度不足以容纳一个完整的内存地址。相反，这些数据最好存储在一个辅助的数据结构中，由 EBREAK 指令的程序计数器索引。</p>
+<p>还有六条指令都是用于读写控制与状态寄存器 (control and status registers) 的值，这些寄存器用于提供系统控制和 I/O 。CSR 地址空间支持最多 $ 2^{12}$ 个控制寄存器；现在，这些空间大部分都空着。CSRRW 指令将CSR 中的值复制到整数寄存器 <code>rd</code> 中，并将 <code>rs1</code> 的值自动覆盖到 CSR 寄存器中。CSRRC 指令原子地清除CSR 中的位。它复制 CSR 的旧值给 <code>rd</code>，然后对于寄存器 <code>rs1</code> 中设置的任何位，它会自动清除 CSR 中的相应位。CSRRS 指令与此类似，但它在 CSR 中设置位，而不是清除位。其余三个指令，CSRRWI 、CSRRCI 和 CSRRSI，它们的行为与没有 I 的对应指令类似，但是它们不是从寄存器 <code>rs1</code> 中获取源操作数，而是直接对一个 5 位立即数进行零扩展。</p>
+<center>
+<img src="/img/RV32I_CSR.png" srcset="/img/loading.gif" lazyload />
+</center>
+<p>由于读取或写入 CSR 都有副作用，因此我们定义了这些指令的两种特殊情况，每一种都显式地缺少其中一种副作用。用 CSRRS + <code>rs1</code> = <code>x0</code> 来读取 CSR 寄存器，但不设置任何位，失去了写副作用，这便是 CSRR 伪指令。用 CSRRW + <code>rd</code> = <code>x0</code> 来写入 CSR 寄存器，但旧值被丢弃，失去了读副作用，这就是 CSRW 伪指令。</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cycle</td>
+<td>Cycle counter</td>
+</tr>
+<tr>
+<td>time</td>
+<td>Real-time clock</td>
+</tr>
+<tr>
+<td>instret</td>
+<td>Instructions retired counter</td>
+</tr>
+<tr>
+<td>cycleh</td>
+<td>Upper 32 bits of cycle counter</td>
+</tr>
+<tr>
+<td>timeh</td>
+<td>Upper 32 bits of real-time clock</td>
+</tr>
+<tr>
+<td>instreth</td>
+<td>Upper 32 bits of instructions retired counter</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>In the context “retired” means: the instruction (<a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Micro-operation">microoperation</a>, μop) leaves the “Retirement Unit”. It means that in <a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Out-of-order_execution">Out-of-order</a> CPU pipeline the instruction is finally executed and its results are correct and visible in the <a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Architectural_state">architectural state</a> as if they execute in-order.</p>
+</blockquote>
+<p>在大多数系统中，大多数 CSR 只能由特权软件访问，但是 RV32I 要求一些用户级 CSR 提供基本的性能诊断工具。所有这些都是只读的，因此必须使用CSRR 伪指令进行访问。上表列出了它们。cycle counter 记录自参考时间以来经过的时钟周期数。instret counter 在指令已退出时滴答一次。time 寄存器记录了自启动计数以来的时间。<u>我们同时提供了 cycle 和 time，这都是有意义的，因为它们并不一定是线性相关的</u>。看到这里，你一定很惊讶。这是因为，当利用率和环境条件随时间变化时，许多处理器的实现使用动态电压和频率调节来调整性能和功耗，因此 time 对于基本性能测量是很有必要的。另一方面，cycle 对于判断处理器流水线的性能是必不可少的。</p>
+<p>理想情况下，cycle 寄存器、instret 寄存器和 time 寄存器都是 64 位，因为 32 位计数器溢出很快：例如，在 4 GHz 的实现中，cycle 在大约一秒后溢出。相比之下，64 位计数器需要一个多世纪才能溢出，大概超过了处理器发生故障的平均时间😂。为了在 32 位 ISA 中使用 64 位计数器，我们提供了额外的 CSRs：cycleh 、instreth 和 timeh，它们包含相应计数器的上 32 位。当然，读取其中一个计数器的两半部分的行为不是原子性的，而且计数器可能会在序列中间溢出，特别是在发生中断时。</p>
+<h2 id="RV32E">RV32E</h2>
+<p>对于低端实现来说，RV32I 中规定的 31 个整数寄存器通常是昂贵的。虽然对于许多嵌入式场景来说，有大量寄存器的机器能提供过好的性能，因而从硬件成本的角度看，这是不合理的。使用更少的寄存器也会更节能，RV32E 就旨在满足这一领域的设计需求。</p>
+<p>RV32I 和 RV32E 仅在整数寄存器的数量上有所不同：后者将数量减少到了 15 。图中描述了 RV32E 机器中用户可见的整个体系结构状态。RV32I 指令都出现在 RV32E 中，它们的行为是相同的，当然访问不存在的寄存器 <code>x16</code> - <code>x31</code> 会导致异常。不过，上一节中提到的性能计数器 CSR 在 RV32E 中是可选的。</p>
+<p>由于 RV32E 仅用于嵌入式的场景，它并不需要承载功能完整的操作系统。因此，虽然 RV32E 与 RV32I 不兼容 ABI，但也不必担心在 RV32 的软件生态系统中出现不友好的情况。</p>
+<h2 id="RV64I">RV64I</h2>
+<p>对于很多应用程序来说，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>32</mn></msup></mrow><annotation encoding="application/x-tex">2^{32}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span></span></span></span></span></span></span></span> 个字节的可寻址内存是不够的。2015 年，大型服务器拥有多达 64 TiB 的DRAM，需要 46 位才能完全寻址。甚至一些手机的内存也超过了 4 GiB。因此，尽管 RV32I 适用于大多数的小型系统，但其有限的地址空间已无法满足许多系统。RV64I 在其基础上解决了地址空间不足的问题。</p>
+<p>如下图所示，RV64I 的用户可见状态与 RV32I 非常相似：它只在整数寄存器和 <code>PC</code> 的位宽上都增加了一倍，达到 64 位。同样，RV32I 指令与 RV64I 对应的指令有相同的功能，当然 RV64I 能在 64 位寄存器上操作。除此之外，RV64I 提供了 12 条新的指令。</p>
+<center>
+    <img src="/img/RV64I_reg.png" srcset="/img/loading.gif" lazyload />
+</center>
+<p>虽然整数算术通常操作寄存器的所有位，特别是在处理地址时，但对 sub-word 的计算也很常见。这种效果在 64 位中得到了放大，因为 Java 和 C 中 <code>int</code> 等数据类型仍然保持 32 位的宽度。为了在 32 位的代码上保持合理的性能，RV64I 添加了几条运算指令（图中前 9 条指令），它们对整数的低 32 位进行运算，并得到 32 位的结果，最后符号扩展到 64 位。</p>
+<center>
+   <img src="/img/RV64I.png" srcset="/img/loading.gif" lazyload />
+</center>
+<p>在寄存器中保持 32 位数据符号扩展，可以在 C 类型 <code>int</code> 和 <code>unsigned int</code> 之间，以及 <code>int</code> 和 <code>long</code> 之间进行几乎无代价的强制类型转换。现有的分支指令在有符号/无符号的情况下都可以自动进行正常操作。</p>
+<p>还有三条新的内存访问指令：LWU load 32 位的字，并将结果零扩展到 64 位。LD 和 SD load/store 64 位的双字。</p>
+<h2 id="RV128I">RV128I</h2>
+<p>在 1976 年，DEC 的两位设计师 Gordon Bell 和 Bill Strecker ，他们在 16 位 PDP-11 架构设计上获得了巨大的成功，敏锐地观察到，“在计算机设计中只有一个错误是难以纠正的——没有足够的地址空间用于内存寻址和内存管理“。PDP 的 <em>Virtual Address eXtension</em> ，说 VAX 可能更多人会知道，几乎将 PDP 全部设计了一遍：因为 PDP-11 的操作码已经用完了，因此在原有基础上修修补补不可能支持 32 位的地址空间。</p>
+<p>为了避开这一设计错误，我们有意识地为 128 位地址空间 RV128I 保留了很多 RISC-V 的编码空间。虽然我们预计 64 位的地址空间在未来几十年对几乎所有的计算设备来说都是足够的，但 128 位的地址空间已经有了合理的应用，包括单地址空间操作系统。截至撰写本文时（2016），速度最快的超级计算机“天河 2 号”拥有 1.3 PiB 的内存，寻址需要 51 位。按照 TOP500 冠军的内存容量的历史增长率（每年约 70%），64 位地址空间将会在大约 20 年内耗尽。就从其全局可寻址的方面来看，我们认为扁平可寻址性是最好的方法； RV128I 提供了一个很有前途的解决方案。</p>
+<p>RV128I 对 RV64I 的扩展类似于 RV64I 对 RV32I 的扩展：整数寄存器的位宽加倍；增加新的 load store 指令；基本的算术运算的操作对象变为 128 位。为了在 64 位数据上保持合理的性能，添加了只处理低 64 位的新的算术操作。下图总结了 RV128I 中的新指令。</p>
+<center>
+    <img src="/img/RV128I.png" srcset="/img/loading.gif" lazyload />
+</center>
+<h2 id="总结">总结</h2>
+<p>RISC-V 的基础 ISAs 实现起来很简单，也很直接，但足够完整，能支持现代软件堆栈。基础 ISA 设计避免了为简单或复杂的微体系结构增加不合理的复杂的设计负担；基础 ISA 在设计时考虑到了译码、立即数扩展、关键路径等一系列电路实现中的效率，使得实现更有能效；RISC-V 充分考虑到了 PIC 的重要性，并丢弃了提升很小但完全不合算的设计方案（比如，有条件移动、预测、延迟槽等）；同时，RISC-V 为了更好地提高嵌入式领域/高性能领域的性能或者能效，设计了 RV32E 和 RV64I 甚至 RV128I ，并提供了各种标准扩展；RISC-V 留给了未来非常充裕的编码空间，给自定义的扩展指令集非常充分的选择；</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RISC-V/" class="category-chain-item">RISC-V</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RISC-V/" class="print-no-link">#RISC-V</a>
+      
+        <a href="/tags/RV32I/" class="print-no-link">#RV32I</a>
+      
+        <a href="/tags/RV64I/" class="print-no-link">#RV64I</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Why RISC-V ?</div>
+      <div>https://dingfen.github.io/2020/09/17/2020-9-17-WHY RISC-V 2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年9月17日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/09/19/2020-9-19-WHY%20RISC-V%203/" title="Why RISC-V ?">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Why RISC-V ?</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/09/15/2020-9-15-WHY%20RISC-V/" title="Why RISC-V ?">
+                        <span class="hidden-mobile">Why RISC-V ?</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

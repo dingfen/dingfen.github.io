@@ -1,0 +1,1175 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RISC-V from Scratch 4：写 UART 驱动（2 &#x2F; 3）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RISC-V from Scratch 4">
+<meta property="og:url" content="https://dingfen.github.io/2020/08/01/2020-8-1-riscv-from-scratch-4/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="RISC-V from Scratch 4：写 UART 驱动（2 &#x2F; 3）">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/uarthi.png">
+<meta property="article:published_time" content="2020-08-01T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-01-26T11:49:09.199Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RISC-V">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/uarthi.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>RISC-V from Scratch 4 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="RISC-V from Scratch 4"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-08-01 12:00" pubdate>
+          2020年8月1日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">RISC-V from Scratch 4</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-01-26T19:49:09+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>RISC-V from scratch 4: 写 UART 驱动</h1>
+<p>接上一篇<a href="https://dingfen.github.io/risc-v/2020/07/27/riscv-from-scratch-3.html">博客</a>，我今天继续写 <em>RISC-V from scratch</em> 系列博客。我原本打算将该系列全部翻译成中文，但原作者貌似没有把这一系列完成就咕咕了，<strong>因此本文的内容是我自己实践的内容，以及一些自己的想法，放在这里同大家探讨，算是狗尾续貂，弥补遗憾</strong>。</p>
+<h2 id="简介">简介</h2>
+<p>欢迎再次来到 <em>RISC-V from scratch</em> ，先快速回顾一下我们之前做过的内容，我们之前已经探索了很多与 RISC-V 及其生态相关的底层概念（例如编译、链接、原语运行时、汇编等）。具体来说，在上一篇文章中，我们初步认识了 <strong>UART</strong>，并从 <code>riscv64-virt.dts</code> 中找到了关于 UART 的基本信息，我们还在链接器脚本里添加了 UART 的基本地址，且已经搭建了一个驱动程序框架。</p>
+<p>在我实际动手操作的过程中，发现使用 RISC-V 汇编写 UART 驱动程序是吃力不讨好的行为，因此，我使用 C 语言完成了驱动的编写，这就是本篇博客的主要内容。如果大家想要看一下原博主的内容，那么就请参考 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/07/28/riscv-from-scratch-4.html">RISC-V from scratch 4: Creating a function prologue for our UART driver (2 / 3)</a> 。</p>
+<h2 id="搭建环境"><a href="https://dingfen.github.io/2020/07/24/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">搭建环境</a></h2>
+<p>如果你还未看本系列博客的第一部分，没有安装 <code>riscv-qemu</code> 和 RISC-V 工具链，那么赶紧点击上面标题的链接，跳转到 <a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/03/10/riscv-from-scratch-1.html#qemu-and-risc-v-toolchain-setup">“QEMU and RISC-V toolchain setup”</a> 。</p>
+<p>之后，再将博主创建的 github 库下载下来，作为我们的工作点。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs shell">git clone git@github.com:twilco/riscv-from-scratch.git<br><span class="hljs-meta prompt_"># </span><span class="language-bash">or `git <span class="hljs-built_in">clone</span> https://github.com/twilco/riscv-from-scratch.git` to <span class="hljs-built_in">clone</span></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">via HTTPS rather than SSH</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">alternatively, <span class="hljs-keyword">if</span> you are a GitHub user, you can fork this repo.</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">https://help.github.com/en/articles/fork-a-repo</span><br>cd riscv-from-scratch/work<br></code></pre></td></tr></table></figure>
+<p>译注：亲测无需下载 github 库也可实现下面的实验。</p>
+<h2 id="UART-回顾">UART 回顾</h2>
+<p>本博客的目的是在 <code>virt</code> 机器上，使用 UART 在屏幕打印出字符。为了使这一工作顺利，我们先来回顾一下 UART 在 <code>virt</code> 机器上的布局。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">uart@10000000 &#123;<br>        interrupts = &lt;0x0a&gt;;<br>        interrupt-parent = &lt;0x02&gt;;<br>        clock-frequency = &lt;0x384000&gt;;<br>        reg = &lt;0x00 0x10000000 0x00 0x100&gt;;<br>        compatible = &quot;ns16550a&quot;;<br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>参考之前的<a href="https://dingfen.github.io/risc-v/2020/07/27/riscv-from-scratch-3.html">博客</a>，我们已经了解到 UART 是用于传输、接收系列数据的硬件设备，根据上面所列的数据，UART 的时钟频率是3.6864 MHz，UART 在内存的位置起始于 <code>0x10000000</code> ，长度为 <code>0x100</code> 字节，我们在链接器脚本中定义了全局符号 <code>__uart_base_add</code> 。UART 与 NS16550a 编程模型兼容。</p>
+<h2 id="UART-细节">UART 细节</h2>
+<p>完整的了解该硬件是写驱动程序的前提。我细读了 <a target="_blank" rel="noopener" href="https://www.lammertbies.nl/comm/info/serial-uart">Serial UART information</a> 和 <a target="_blank" rel="noopener" href="http://www.byterunner.com/16550.html">TECHNICAL DATA ON 16550</a>，算是大致清楚了 UART 结构的数据存储传递情况 <code>: )</code>。</p>
+<p>考虑到文章的篇幅，以及读者的耐心等原因，我在这里简单的扯两句，想要完整的了解 UART ，啃英文技术文档是必不可少的。</p>
+<p>在 UART 中，可访问的 I/O 端口一共有8个，他们的功能作用列于下表，<code>base address</code> 指的就是 UART 的起始内存位置，而 <code>DLAB</code> 位于 <code>LCR</code> 寄存器，是一个用于转换功能的转换位。</p>
+<table>
+<caption>UART register to port conversion table</caption>
+<tbody>
+<tr>
+<th>&nbsp;</th>
+<th colspan="2">DLAB = 0</th>
+<th colspan="2">DLAB = 1</th>
+</tr>
+<tr>
+<th>I/O port</th>
+<th>Read</th>
+<th>Write</th>
+<th>Read</th>
+<th>Write</th>
+</tr>
+<tr class="odd" align="center">
+<td>base</td>
+<td><b>RHR</b><br />
+receiver<br />
+buffer</td>
+<td><b>THR</b><br />
+transmitter<br />
+holding</td>
+<td colspan="2"><b>DLL</b> divisor latch LSB</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 1</td>
+<td><b>IER</b><br />
+interrupt<br />
+enable</td>
+<td><b>IER</b><br />
+interrupt<br />
+enable</td>
+<td colspan="2"><b>DLM</b> divisor latch MSB</td>
+</tr>
+<tr class="odd" align="center">
+<td width="20%">base + 2</td>
+<td width="20%"><b>IIR</b><br />
+interrupt<br />
+identification</td>
+<td width="20%"><b>FCR</b><br />
+FIFO<br />
+control</td>
+<td width="20%"><b>IIR</b><br />
+interrupt<br />
+identification</td>
+<td width="20%"><b>FCR</b><br />
+FIFO<br />
+control</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 3</td>
+<td colspan="4"><b>LCR</b> line control</td>
+</tr>
+<tr class="odd" align="center">
+<td>base + 4</td>
+<td colspan="4"><b>MCR</b> modem control</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 5</td>
+<td><b>LSR</b><br />
+line<br />
+status</td>
+<td>–<br />
+factory<br />
+test</td>
+<td><b>LSR</b><br />
+line<br />
+status</td>
+<td>–<br />
+factory<br />
+test</td>
+</tr>
+<tr class="odd" align="center">
+<td>base + 6</td>
+<td><b>MSR</b><br />
+modem<br />
+status</td>
+<td>–<br />
+not<br />
+used</td>
+<td><b>MSR</b><br />
+modem<br />
+status</td>
+<td>–<br />
+not<br />
+used</td>
+</tr>
+<tr class="even" align="center">
+<td>base + 7</td>
+<td colspan="4"><b>SCR</b> scratch</td>
+</tr>
+</tbody>
+</table>
+<p>上表简单罗列了一下各个寄存器的位置、名称、相关功能等，基于这些内容，我们就已经可以明白很多了：</p>
+<ul>
+<li>
+<p>访问寄存器的方法非常简单，将之前定义的 <code>__uart_base_addr</code> 加上偏移量，就是各个寄存器的地址了</p>
+</li>
+<li>
+<p>我们的任务是在屏幕上打印出字符，显然不能将 <code>DLAB</code> 设置为1，DLAB = 1 时，RHR IER 寄存器就被用来设置通信速率了。具体描述见下：</p>
+<blockquote>
+<p><strong>DLL</strong> (Divisor Latch LSB Register) contains the lower 8-bit value that the MCU divides into the MCU clock (PCLK) to generate the UART baud rate.</p>
+<p><strong>DLM</strong> (Divisor Latch MSB Register) contains the upper 8-bit value that the MCU divides into the MCU clock (PCLK) to generate the UART baud rate.</p>
+</blockquote>
+</li>
+<li>
+<p>IER 寄存器是中断使能寄存器，到现在为止，我似乎还未解答读者的一个疑问，就是 UART 为什么需要中断。这里我稍加解释一下：在计算机运行起来时，需要处理很多驱动、系统调用等程序，若没有中断，那么 CPU 只能非常卑微地、每时每刻地“询问各个寄存器的变化情况”，以及时作出响应，若每个驱动都这么干，CPU 不得累死。有了中断，UART 就可以自己发送信号给 CPU ，通知它来处理事件。</p>
+</li>
+</ul>
+<p>虽然我们已经清楚了各个寄存器的地址以及它们的作用，但事实上具体如何控制我们仍旧不清楚，为此，我们必须参考更加详细的文档。</p>
+<hr>
+<table border="0" cellspacing="1" cellpadding="5" align="center">
+						<tr bgcolor="#666666">
+							<td align="center" valign="middle"><font color="white"><b>A2</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>A1</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>A0</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>REG.</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 7</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 6</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 5</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 4</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 3</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 2</b></font></td>
+							<td align="center" valign="middle"><font color="white"><b>BIT 1</b></font></td>
+							<td align="center" valign="middle" bgcolor="#006699"><font color="white"><b>BIT 0</b></font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">RHR</font></td>
+							<td align="center" valign="middle">bit 7</td>
+							<td align="center" valign="middle"><font color="#006699">bit 6</font></td>
+							<td align="center" valign="middle">bit 5</td>
+							<td align="center" valign="middle"><font color="#006699">bit 4</font></td>
+							<td align="center" valign="middle">bit 3</td>
+							<td align="center" valign="middle"><font color="#006699">bit 2</font></td>
+							<td align="center" valign="middle">bit 1</td>
+							<td align="center" valign="middle"><font color="#006699">bit 0</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">THR</font></td>
+							<td align="center" valign="middle">bit 7</td>
+							<td align="center" valign="middle"><font color="#006699">bit 6</font></td>
+							<td align="center" valign="middle">bit 5</td>
+							<td align="center" valign="middle"><font color="#006699">bit 4</font></td>
+							<td align="center" valign="middle">bit 3</td>
+							<td align="center" valign="middle"><font color="#006699">bit 2</font></td>
+							<td align="center" valign="middle">bit 1</td>
+							<td align="center" valign="middle"><font color="#006699">bit 0</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">IER</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="left" valign="middle">modem status interrupt</td>
+							<td align="left" valign="middle"><font color="#006699">receive line status interrupt</font></td>
+							<td align="left" valign="middle">transmit holding register interrupt</td>
+							<td align="left" valign="middle"><font color="#006699">receive holding register interrupt</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">FCR</font></td>
+							<td align="left" valign="middle">RCVR trigger MSB</td>
+							<td align="left" valign="middle"><font color="#006699">RCVR trigger LSB</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="left" valign="middle">DMA mode select</td>
+							<td align="left" valign="middle"><font color="#006699">transmit FIFO reset</font></td>
+							<td align="left" valign="middle">receiver FIFO reset</td>
+							<td align="left" valign="middle"><font color="#006699">FIFO enable</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">ISR</font></td>
+							<td align="left" valign="middle">0/FIFO enabled</td>
+							<td align="left" valign="middle"><font color="#006699">0/FIFO enabled</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="left" valign="middle">interrupt prior. bit 2</td>
+							<td align="left" valign="middle"><font color="#006699">interrupt prior. bit 1</font></td>
+							<td align="left" valign="middle">interrupt prior. bit 0</td>
+							<td align="left" valign="middle"><font color="#006699">interrupt status</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">LCR</font></td>
+							<td align="left" valign="middle">divisor latch enable</td>
+							<td align="left" valign="middle"><font color="#006699">set break</font></td>
+							<td align="left" valign="middle">set parity</td>
+							<td align="left" valign="middle"><font color="#006699">even parity</font></td>
+							<td align="left" valign="middle">parity enable</td>
+							<td align="left" valign="middle"><font color="#006699">stop bits</font></td>
+							<td align="left" valign="middle">word length bit 1</td>
+							<td align="left" valign="middle"><font color="#006699">word length bit 0</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">MCR</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="left" valign="middle"><font color="#006699">loop back</font></td>
+							<td align="center" valign="middle">OP2</td>
+							<td align="center" valign="middle"><font color="#006699">OP1</font></td>
+							<td align="center" valign="middle">RTS</td>
+							<td align="left" valign="middle"><font color="#006699">DTR</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">0</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">LSR</font></td>
+							<td align="left" valign="middle">0/FIFO error</td>
+							<td align="left" valign="middle"><font color="#006699">transmit empty</font></td>
+							<td align="left" valign="middle">transmit holding empty</td>
+							<td align="left" valign="middle"><font color="#006699">break interrupt</font></td>
+							<td align="left" valign="middle">framing error</td>
+							<td align="left" valign="middle"><font color="#006699">parity error</font></td>
+							<td align="left" valign="middle">overrun error</td>
+							<td align="left" valign="middle"><font color="#006699">receive data ready</font></td>
+						</tr>
+						<tr bgcolor="#f5f5f5">
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">0</td>
+							<td align="center" valign="middle"><font color="#006699">MSR</font></td>
+							<td align="center" valign="middle">CD</td>
+							<td align="center" valign="middle"><font color="#006699">RI</font></td>
+							<td align="center" valign="middle">DSR</td>
+							<td align="center" valign="middle"><font color="#006699">CTS</font></td>
+							<td align="center" valign="middle">delta CD</td>
+							<td align="center" valign="middle"><font color="#006699">delta RI</font></td>
+							<td align="center" valign="middle">delta DSR</td>
+							<td align="center" valign="middle"><font color="#006699">delta CTS</font></td>
+						</tr>
+						<tr>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">1</font></td>
+							<td align="center" valign="middle">1</td>
+							<td align="center" valign="middle"><font color="#006699">SPR</font></td>
+							<td align="center" valign="middle">bit 7</td>
+							<td align="center" valign="middle"><font color="#006699">bit 6</font></td>
+							<td align="center" valign="middle">bit 5</td>
+							<td align="center" valign="middle"><font color="#006699">bit 4</font></td>
+							<td align="center" valign="middle">bit 3</td>
+							<td align="center" valign="middle"><font color="#006699">bit 2</font></td>
+							<td align="center" valign="middle">bit 1</td>
+							<td align="center" valign="middle"><font color="#006699">bit 0</font></td>
+						</tr>
+					</table>
+<span id="tip">为了完成接下来的工作，有几点必须**注意**：</span>
+<ul>
+<li>
+<p>RHR (Receiver Holding Register) 与 THR (Transmitter Holding Register) 事实上共用一个地址，在 UART 读模式时，地址0被解读为 RHR 寄存器，它将 RHR 中的数据读入。在写模式时，被解读为 THR 寄存器，将数据传输到目标地。</p>
+</li>
+<li>
+<p>LCR 寄存器的 0，1 bit 位，规定了字长，相当于在说一次能传几位数据。ASCII 码都是用一个字节8位表示的，所以一次传8位肯定是最方便的。</p>
+<table>
+<thead>
+<tr>
+<th>BIT-1</th>
+<th>BIT-0</th>
+<th>Word Length</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>5</td>
+</tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>6</td>
+</tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>7</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>8</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>FCR 寄存器主要控制 FIFO，那么我们到底需不需要 FIFO 呢？参考 <a target="_blank" rel="noopener" href="https://www.lammertbies.nl/comm/info/serial-uart">Serial UART information</a> ，我发现如果不使用 FIFO，那么 THR 一次只能存储一个 character，这在 5G 已经开始商用的年代，是不是有点太少了😅，而使用 FIFO 就可以将多个 character 写入或者传输，效率明显提高了，因此我们选择使用 FIFO。</p>
+</li>
+<li>
+<p>那么我们怎么知道数据是否被写入或传输了？LSR 寄存器貌似可以回答这个问题，LSR bit 5 为 0 时，表明 THR 已经满了，而为 1 时，THR为空。LSR bit 0 为 0 时，表示没有数据在 RHR 中，而为 1 时，表示数据已经被放入到 RHR 中，可以读取数据了。</p>
+</li>
+</ul>
+<p>好啦，我们所需要的内容，我已经介绍的差不多了。大家一定发现这里面还有很多很多内容尚待挖掘，但是这里空白太小，我写不下。还是那句话，要想深入研究的话，啃英文技术文档是必不可少的。</p>
+<h2 id="开工！UART-驱动">开工！UART 驱动</h2>
+<p>再次强调，本博客的驱动是使用 C 语言实现的，要想看原博主的 RISC-V 汇编语言实现，那么就点<a target="_blank" rel="noopener" href="https://twilco.github.io/riscv-from-scratch/2019/07/28/riscv-from-scratch-4.html">这里</a>。</p>
+<p>首先，创建一个新文件，就叫它 <code>ns16550a.h</code> 吧，这里面主要放一些宏定义和函数声明，有了这些宏，整个程序就更加人性化了，编写更加方便，理解更加轻松。这些宏的值，参考上一节的内容，大家应该不难理解吧。</p>
+<p>虽然宏定义这些年被批判的很惨，主要缘由是无法进入符号表导致 debug 困难，以及一不小心会出现一些与程序员主观不符的表达式，或者改变了某个变量的值而不自知等等。但是考虑到驱动程序小而快的要求，全部定义成全局常量显然不合适，而直接使用立即数肯定会被批判一番，所以，在有些地方，宏定义还是绕不开的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// file ns16550a.h</span><br><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> _DF_RISCV_NS16550A_H</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> _DF_RISCV_NS16550A_H</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_RHR  0  <span class="hljs-comment">// read mode: Receive holding reg   </span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_THR  0  <span class="hljs-comment">// write mode: Transmit Holding Reg</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_IER  1  <span class="hljs-comment">// write mode: interrupt enable reg</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_FCR  2  <span class="hljs-comment">// write mode: FIFO control Reg</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_ISR  2  <span class="hljs-comment">// read mode: Interrupt Status Reg</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_LCR  3  <span class="hljs-comment">// write mode:Line Control Reg</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_MCR  4  <span class="hljs-comment">// write mode:Modem Control Reg</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_LSR  5  <span class="hljs-comment">// read mode: Line Status Reg</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> REG_MSR  6  <span class="hljs-comment">// read mode: Modem Status Reg</span></span><br><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> UART_DLL  0  <span class="hljs-comment">// LSB of divisor Latch when enabled</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> UART_DLM  1  <span class="hljs-comment">// MSB of divisor Latch when enabled</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> UART_BASE_ADDR  0x10000000L</span><br><br><span class="hljs-keyword">volatile</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *<span class="hljs-title function_">Reg</span><span class="hljs-params">(<span class="hljs-type">int</span> reg)</span>;<br><span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> <span class="hljs-title function_">ReadReg</span><span class="hljs-params">(<span class="hljs-type">int</span> reg)</span>;<br><span class="hljs-type">void</span> <span class="hljs-title function_">WriteReg</span><span class="hljs-params">(<span class="hljs-type">int</span> reg, <span class="hljs-type">char</span> c)</span>;<br><br><span class="hljs-type">void</span> <span class="hljs-title function_">uartinit</span><span class="hljs-params">()</span>;<br><span class="hljs-type">void</span> <span class="hljs-title function_">uartputc</span><span class="hljs-params">(<span class="hljs-type">int</span> c)</span>;<br><span class="hljs-type">int</span> <span class="hljs-title function_">uartgetc</span><span class="hljs-params">()</span>;<br><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span> <span class="hljs-comment">// _DF_RISCV_NS16550A_H</span></span><br></code></pre></td></tr></table></figure>
+<p>大家一定注意到，除了宏定义，我还声明了几个函数。这些函数的实现，全部放在了 <code>ns16550a.c</code> 文件中。</p>
+<p>很明显，函数的实现就是本博客的重头戏了。</p>
+<p>首先，我们实现函数 <code>Reg</code> 它接收一个偏移量，返回一个 <code>char</code> 指针，即该寄存器的数值。从上一节的讨论中，我们已经明白，UART 的寄存器地址就是它的起始地址加上偏移量，这样一来，这个函数应该没什么大问题：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">inline</span> <span class="hljs-keyword">volatile</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *<span class="hljs-title function_">Reg</span><span class="hljs-params">(<span class="hljs-type">int</span> reg)</span> &#123;<br>    <span class="hljs-keyword">return</span> (<span class="hljs-keyword">volatile</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> *)(UART_BASE_ADDR+reg);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>唯一要注意的是，因为寄存器的值非常容易变化，<code>volatile</code> 关键字可以保证程序每次读取寄存器值的内容都是最新的。</p>
+<p>实现了这个函数后，<code>ReadReg</code> 函数和 <code>WriteReg</code> 函数应该不成问题：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">inline</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span> <span class="hljs-title function_">ReadReg</span><span class="hljs-params">(<span class="hljs-type">int</span> reg)</span> &#123;<br>    <span class="hljs-keyword">return</span> (*(Reg(reg)));<br>&#125;<br><br><span class="hljs-keyword">inline</span> <span class="hljs-type">void</span> <span class="hljs-title function_">WriteReg</span><span class="hljs-params">(<span class="hljs-type">int</span> reg, <span class="hljs-type">char</span> c)</span> &#123;<br>    (*Reg(reg)) = c;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接下来就是对 UART 设备的初始化，在计算机刚刚开机时，我们无法保证设备内（尤其是寄存器）的值到底是什么的，因此，在使用 UART 设备前，初始化是完全必要的。</p>
+<p>这是我在 <code>ns16550a.c</code> 中编写的初始化代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">uartinit</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-comment">// disable interrupt</span><br>    WriteReg(REG_IER, <span class="hljs-number">0x00</span>);<br>    <span class="hljs-comment">// set baud rate</span><br>    WriteReg(REG_LCR, <span class="hljs-number">0x80</span>);<br>    WriteReg(UART_DLL, <span class="hljs-number">0x03</span>);<br>    WriteReg(UART_DLM, <span class="hljs-number">0x00</span>);<br>    <span class="hljs-comment">// set word length to 8-bits</span><br>    WriteReg(REG_LCR, <span class="hljs-number">0x03</span>);<br>    <span class="hljs-comment">// enable FIFOs</span><br>    WriteReg(REG_FCR, <span class="hljs-number">0x07</span>);<br>    <span class="hljs-comment">// enable receiver interrupts</span><br>    WriteReg(REG_IER, <span class="hljs-number">0x01</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>如果你弄懂了之前我写的<a href="#tip">注意事项</a>，那么这边的代码对你来说就问题不大了。如你所见，<code>WriteReg</code> 函数可以让我们的代码变得更加简洁明了。在 <code>uartinit</code> 函数中，首先要将中断置为失效（我们当然不希望在 UART 初始化的时候就开始产生中断），然后，设置 UART 的传输速率，再设置传输的字长为 8 bit，并打开 FIFO 功能，最后不能忘记，一定要打开中断功能，那么，UART 的初始化就算是完成了！</p>
+<p>好了，将 UART 初始化后，接下来就是把字符传到屏幕上的时刻了，回顾一下我们之前了解到的，UART 中寄存器 LSR 的 bit 5 是用来指示 THR 寄存器是否为空，那么我们可以写个死循环，每时每刻判断是否有字符需要传输。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">uartputc</span><span class="hljs-params">(<span class="hljs-type">int</span> c)</span> &#123;<br>    <span class="hljs-keyword">while</span>(ReadReg(REG_LSR) &amp; (<span class="hljs-number">1</span> &lt;&lt; <span class="hljs-number">5</span>) == <span class="hljs-number">0</span>)<br>        ;<br>    WriteReg(REG_THR, c);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>我承认使用死循环来处理是一个非常愚蠢的做法：浪费了大量的 CPU 计算资源。但这却是最简单的方案。我早已经迫不及待地想看到我们的成果了！</p>
+<p>现在，我们已经接近完工了，只要把之前博客中的 <code>main</code> 函数稍加改造，就可以了：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">char</span> p = <span class="hljs-string">&#x27;h&#x27;</span>;<br>    uartinit();<br>    uartputc(p);<br>    p++;<br>    uartputc(p);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>先将 UART 初始化，再让 UART 输出一个 ‘h’ 和 ‘i’ 。</p>
+<hr>
+<p><strong>08-05 Update</strong></p>
+<p>也许我该写一下如何实现 <code>uartgetc</code> 函数？emmm… 只要我们认真学习了 UART 的相关知识，会发现 <code>uartgetc</code> 函数不难写：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">uartgetc</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">if</span> (ReadReg(REG_LSR) &amp; (<span class="hljs-number">0x01</span>)) &#123;<br>        <span class="hljs-keyword">return</span> ReadReg(REG_RHR);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>嗯哼，貌似只要每次调用该函数时，判断 LSR 寄存器来检查 RHR 寄存器是否为空就可以了。但是这样真的可以吗？</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// the echo program I wrote in naive way</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> a = uartgetc();<br>    uartputc(a);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>若真的将 <code>main</code> 函数构建并运行，你会发现得到的输出永远是 -1 。你的屏幕上永远不会显示出你在键盘上摁下的字符。为什么？道理很简单，我们的小内核还不足以“感知”键盘的敲击。换句话说，我在交代完小内核所有的任务并让它开始运行后，它飞快地帮我做完了所有事情，不会等待我在键盘上敲击字符，直接认为什么东西都没有输入，以至于我根本来不及反应。因此，我们需要一个完整的中断响应机制，让内核感知到键盘发出信号，才能实现 <code>echo</code>。</p>
+<h2 id="构建工程">构建工程</h2>
+<p>到目前为止，我们的工程算是初具规模，如果大家都按着我的步调来的话，那么工程中的文件应当有</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs pgsql"><span class="hljs-keyword">work</span><br>|<span class="hljs-comment">--	crt0.s</span><br>|<span class="hljs-comment">--	main.c</span><br>|<span class="hljs-comment">-- ns16550a.c</span><br>|<span class="hljs-comment">-- ns16550a.h</span><br></code></pre></td></tr></table></figure>
+<p>编译过程与之前<a href="https://dingfen.github.io/risc-v/2020/07/27/riscv-from-scratch-3.html">博客</a>提到的类似，只不过要改几个文件名</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">riscv64-unknown-elf-gcc -g -ffreestanding -O0 -Wl,--gc-sections \<br>    -nostartfiles -nostdlib -nodefaultlibs -Wl,-T,riscv64-virt.ld \<br>    crt0.s main.c ns16550a.c<br></code></pre></td></tr></table></figure>
+<p><code>-ffreestanding</code> <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/17692428/what-is-ffreestanding-option-in-gcc#17692510">告诉编译器标准库可能不存在</a>，因此不能做任何假设。在主机环境中运行应用程序时，此选项不是必需的，但是我们没有这样做，因为重要的是告诉编译器该信息。</p>
+<p><code>-Wl</code> 是逗号分隔的标志列表，以传递给链接器 <code>ld</code>。 <code>--gc-sections</code> 代表“垃圾收集 section”，告诉<code>ld</code> 在链接后删除未使用的节。 <code>-nostartfiles</code>，<code>-nostdlib</code> 和 <code>-nodefaultlibs</code> 分别告诉链接器不要链接任何标准系统启动文件（例如默认 <code>crt0</code>），任何标准系统 stdlib 实现或任何标准系统默认可链接库。我们提供了自己的 <code>crt0</code> 和链接描述文件，因此传递这些标志以告知编译器，我们不希望使用这些默认设置中的任何一个。</p>
+<p><code>-T</code> 允许你将你的链接器脚本路径传给链接器，在我们这次实验中就是 <code>riscv64-virt.ld</code> 。最后，加上我们想要编译的文件名就可以了。</p>
+<p>每次打这么长的命令想必令大家感到不愉快，这里还是建议大家写个 <code>Makefile</code> ：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs makefile">CC=riscv64-unknown-elf-gcc<br>FLAG= -g -ffreestanding -O0 -Wl,--gc-sections -nostartfiles -nostdlib -nodefaultlibs<br>VIRTLD=-Wl,-T,kernel/riscv64-virt.ld<br>TARGET=build/a.out<br><span class="hljs-section">all: work/crt0.s work/ns16550a.c work/main.c</span><br>	<span class="hljs-variable">$(CC)</span> <span class="hljs-variable">$(FLAG)</span> <span class="hljs-variable">$(VIRTLD)</span> <span class="hljs-variable">$^</span> -o <span class="hljs-variable">$(TARGET)</span><br></code></pre></td></tr></table></figure>
+<p>这样的话，大家每次在 shell 中敲入 <code>make</code> 就可以了。紧接着，我们就需要用 <code>qemu</code> 运行一下，看看它会不会与我们打招呼：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs makefile"><span class="hljs-section">qemu: <span class="hljs-variable">$(TARGET)</span></span><br>	qemu-system-riscv64 -machine virt -m 128M -nographic \<br> 	-kernel build/a.out  \<br>    -bios none<br></code></pre></td></tr></table></figure>
+<p>还是一样，我怕麻烦，将这些命令都放到了 <code>Makefile</code> 中，敲入 <code>make qemu</code> ，就会运行这些命令了！</p>
+<h2 id="运行与调试">运行与调试</h2>
+<p>如果大家成功地做完了上面的步骤，那么，在你的文件夹下，输入：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">&gt; </span><span class="language-bash">make</span><br><span class="hljs-meta prompt_">&gt; </span><span class="language-bash">make qemu</span><br></code></pre></td></tr></table></figure>
+<p>应该会出现下面的情况：</p>
+<p><img src="/img/uarthi.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>看，在最后一行，hi 已经出现了，说明我们的驱动已经可以工作了（虽然粗糙拙劣至极）。</p>
+<p>如果大家想要调试，在 GDB 中看程序一条一条执行的话，那么建议在 <code>Makefile</code> 中写入：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs makefile"><span class="hljs-section">qemudebug: <span class="hljs-variable">$(TARGET)</span></span><br>	qemu-system-riscv64 -machine virt -m 128M -nographic -gdb tcp::1234 \<br> 	-kernel build/a.out  \<br> 	-bios none -S<br></code></pre></td></tr></table></figure>
+<p>然后在终端输入：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">make qemudebug<br></code></pre></td></tr></table></figure>
+<p>再打开另一个终端，使用 <code>riscv64-unknown-elf-gdb</code>，具体内容参考<a href="https://dingfen.github.io/risc-v/2020/07/26/riscv-from-scratch-2.html">该博客</a></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell">(gdb) target remote :1234                                                                             │<br>Remote debugging using :1234<br><br>(gdb) b main<br>Breakpoint 1 at 0x80000xxx: file main.c, line 2.<br></code></pre></td></tr></table></figure>
+<h2 id="接下来">接下来</h2>
+<p>好了，UART 驱动程序我们大致算是完成了！</p>
+<p>到此为止，我们的小内核干了什么？很遗憾，几乎什么也没有，它与我们说了 hi 后就死机了😅，要写出更加复杂的功能，我们还有很长的路要走，接下来，我们要细细研究一下 RISC-V 体系结构的三种模式：<code>machine mode</code>、<code>user mode</code>、<code>supervisor mode</code>，并要合理安排一下内存布局，做一些更棒的事情。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RISC-V/" class="category-chain-item">RISC-V</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RISC-V/" class="print-no-link">#RISC-V</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>RISC-V from Scratch 4</div>
+      <div>https://dingfen.github.io/2020/08/01/2020-8-1-riscv-from-scratch-4/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年8月1日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年1月26日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2020/08/05/2020-8-5-riscv-privileged/" title="RISC-V 特权架构">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">RISC-V 特权架构</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/07/27/2020-7-27-riscv-from-scratch-3/" title="RISC-V from Scratch 3">
+                        <span class="hidden-mobile">RISC-V from Scratch 3</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>
