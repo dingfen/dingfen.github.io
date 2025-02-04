@@ -1,0 +1,844 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="ncompute 使用示例 准备工作  机器设备：NVIDIA GeForce RTX 4060 laptop CUDA 环境：12.4 docker 环境：nvcr.io&#x2F;nvidia&#x2F;pytorch:24.05-py3  我简单地写了一个 elementwise 的 kernel 函数，并使用 ncu 对其做性能分析 1234567891011__global__ void elementwi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ncompute 学习与使用">
+<meta property="og:url" content="https://dingfen.github.io/2025/02/03/2025-2-3-ncompute/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="ncompute 使用示例 准备工作  机器设备：NVIDIA GeForce RTX 4060 laptop CUDA 环境：12.4 docker 环境：nvcr.io&#x2F;nvidia&#x2F;pytorch:24.05-py3  我简单地写了一个 elementwise 的 kernel 函数，并使用 ncu 对其做性能分析 1234567891011__global__ void elementwi">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://docs.nvidia.com/nsight-compute/_static/nsight-compute.png">
+<meta property="article:published_time" content="2025-02-03T08:10:00.000Z">
+<meta property="article:modified_time" content="2025-02-04T13:14:00.494Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="cuda">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.nvidia.com/nsight-compute/_static/nsight-compute.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>ncompute 学习与使用 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://docs.nvidia.com/nsight-compute/_static/nsight-compute.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="ncompute 学习与使用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-02-03 16:10" pubdate>
+          2025年2月3日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          12 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">ncompute 学习与使用</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-02-04T21:14:00+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>ncompute 使用示例</h1>
+<h2 id="准备工作">准备工作</h2>
+<ul>
+<li>机器设备：NVIDIA GeForce RTX 4060 laptop</li>
+<li>CUDA 环境：12.4</li>
+<li>docker 环境：<a target="_blank" rel="noopener" href="http://nvcr.io/nvidia/pytorch:24.05-py3">nvcr.io/nvidia/pytorch:24.05-py3</a></li>
+</ul>
+<p>我简单地写了一个 elementwise 的 kernel 函数，并使用 <code>ncu</code> 对其做性能分析</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">elementwise_add_f32_kernel</span><span class="hljs-params">(<span class="hljs-type">float</span>* a, <span class="hljs-type">float</span>* b, <span class="hljs-type">float</span>* c, <span class="hljs-type">int</span> N)</span> </span>&#123;<br>  <span class="hljs-type">int</span> idx = blockIdx.x * blockDim.x + threadIdx.x;<br>  <span class="hljs-keyword">if</span> (idx &lt; N) c[idx] = a[idx] + b[idx];<br>&#125;<br><br><span class="hljs-comment">/* .. */</span><br><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> N = <span class="hljs-number">2048</span> * <span class="hljs-number">4096</span>;<br><span class="hljs-type">const</span> <span class="hljs-type">int</span> blockSize = <span class="hljs-number">256</span>;<br><span class="hljs-type">const</span> <span class="hljs-type">int</span> numBlocks = (N + blockSize - <span class="hljs-number">1</span>) / blockSize;<br>elementwise_add_f32_kernel&lt;&lt;&lt;numBlocks, blockSize&gt;&gt;&gt;(d_a, d_b, d_c, N);<br></code></pre></td></tr></table></figure>
+<p>用如下命令编译并执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">nvcc -O3 ut.cu -std=c++17<br>ncu a.out<br></code></pre></td></tr></table></figure>
+<p>就可以获得 ncompute 的相关性能数据输出。这篇文章中，我们从这些性能数据出发，尝试寻找一个适配于当前环境的最佳性能实践。</p>
+<h2 id="性能数据一览">性能数据一览</h2>
+<h3 id="elementwise-add-f32-kernel">elementwise_add_f32_kernel</h3>
+<p><img src="/img/LLM/ncompute/elementwise_add_f32_kernel.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>我们从上往下看，注意到在 Section: GPU Speed Of Light Throughput 中：</p>
+<ul>
+<li>表示内存数据传输吞吐量的 Memory Throughput 高达 95.27%</li>
+<li>而计算的吞吐量（Compute (SM) Throughput）仅有 9.06%。</li>
+</ul>
+<p>注意，这可不是说明内存数据传输的利用率高，计算的利用率低。恰恰相反，这是说明该 kernel 函数的性能瓶颈在内存数据搬运上。因此我们后续要针对该 kernel 作性能优化，必须先从优化数据 load 开始。</p>
+<p>再来看下一节表格的数据 Section: Launch Statistics。这个表格主要介绍了 kernel 启动时的统计数据。我们重点看下面的数据：</p>
+<ul>
+<li>Waves Per SM: 227.56</li>
+<li>SMs: 24</li>
+<li>Block Size: 256</li>
+<li>Grid Size: 32768</li>
+<li>Threads: 8388608</li>
+<li>Registers Per Thread: 16</li>
+<li>Shared Memory: 16.38 KB</li>
+<li>Warps = 32 个 threads</li>
+</ul>
+<p>这些数字与我们调用的线程数量和设备中的 SM 数息息相关。首先，在软件层面，我们使用 cuda 调用 (32768, 256)=8388608 个线程来执行 <code>elementwise_add_f32_kernel</code> 函数。</p>
+<p>而 device 中其实仅有 24 个 SMs，无法同时启动这么多线程来执行 kernel 函数。于是，device 必须多次循环使用这 24 个 SMs，来完成多线程的“并行”计算，一次循环在 CUDA 中被称之为 wave，<code>waves per SM</code> 记录了为了完成这个 kernel 函数，每个 SM 平均执行了多少个 waves。</p>
+<p>那么一个 SM 可以执行多少个线程呢？这个取决于每个线程消耗了多少资源。因为一个 SM 中的资源都是固定的，这都是在芯片出厂后就确定下来的，无法随意改变。因此，每个线程消耗的资源多，那么一个 SM 可以同时执行的线程数量就少，反之则 SM 可以同时执行更多的线程。</p>
+<p>一个 SM 可以执行多少个线程需要从下面的 Section: Occupancy 得出：</p>
+<ul>
+<li>Block Limit SM：24 blocks</li>
+<li>Block Limit Registers：16 blocks</li>
+<li>Block Limit Shared Mem：16 blocks</li>
+<li>Block Limit Warps：6 blocks</li>
+<li>Theoretical Active Warps per SM：48 warps</li>
+</ul>
+<p>从上面的数据可以得到：若从 SM 角度看，由于设备限制，每个 SM 最多可激活 24 个 blocks，所以此处 <code>Block Limit SM</code> 是 24；若从 Registers 角度看，由于设备限制，每个 SM 最多可激活 16 个 blocks，所以此处 <code>Block Limit Registers</code> 是 16；若从 Shared Mem 角度看，由于设备限制，每个 SM 最多可激活 16 个 blocks，所以此处 <code>Block Limit Shared Mem</code> 是 16；若从 Warps 角度看，由于设备限制，每个 SM 最多可激活 6 个 blocks，所以此处 <code>Block Limit Warps</code> 是 6。</p>
+<p>为了满足所有资源的可用，我们必须取上面几个 limit 里的最小值，我们可以得到一个 SM 最多只能启动 6 个 blocks，而先前我们规定一个 block 有 256 个线程，即 8 个 warps，所以说，一个 SM 最多可以启动 6 * 8 = 48 个 warps，正好对应了 <code>Theoretical Active Warps per SM</code>。</p>
+<p>更进一步，我们可以发现，因为一个 SM 最多可以启动 48 个 warps，即 48 * 32 = 1536 个线程，那么 24 个 SMs 可以启动 1536 * 24 = 36864 个线程，而我们总共需要启动 8388608 个线程，所以一共需要 8388608 / 36864 = 227.56 个 waves 来完成，也能正好对应 <code>Waves Per SM</code>。</p>
+<p>当然，前面的分析都只是理论计算，ncompute 中还定义了占用率这个概念：</p>
+<blockquote>
+<p>占用率(Occupancy) = 每个 SM 中激活的 Warp / 每个 SM 可以激活的 Warp 的最大值。</p>
+</blockquote>
+<p>在本例中，理论上每个 SM 可以启动 48 个 Warps，但实际激活的 warps 数只有 38.98，于是占用率为 81.20%。</p>
+<h3 id="elementwise-add-f32x4-kernel">elementwise_add_f32x4_kernel</h3>
+<p>从上面的数据中可以看出，</p>
+<ol>
+<li>kernel 函数的性能瓶颈在内存数据搬运上。因此需要充分利用内存带宽。</li>
+<li>线程块分配得过大，线程数量过多，进而导致 wave 数量过多。</li>
+</ol>
+<p>优化的点在于 CUDA 的访存行为上。在 CUDA 内部，一个访问内存事务（transaction）会消耗 128 bit 的内存带宽，而 <code>elementwise_add_f32_kernel</code> 函数中一次仅 load 一个 32 bit 的 float。</p>
+<p>我们可以写一个让线程一次性 load 4 个元素的程序，增加内存访问事务的利用率。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> FLOAT4(value) (reinterpret_cast<span class="hljs-string">&lt;float4*&gt;</span>(&amp;(value))[0])</span><br><br><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">elementwise_add_f32x4_kernel</span><span class="hljs-params">(<span class="hljs-type">float</span>* a, <span class="hljs-type">float</span>* b, <span class="hljs-type">float</span>* c, <span class="hljs-type">int</span> N)</span> </span>&#123;<br>  <span class="hljs-type">int</span> idx = <span class="hljs-number">4</span> * (blockIdx.x * blockDim.x + threadIdx.x);<br>  <span class="hljs-keyword">if</span> (idx &lt; N) &#123;<br>    float4 reg_a = <span class="hljs-built_in">FLOAT4</span>(a[idx]);<br>    float4 reg_b = <span class="hljs-built_in">FLOAT4</span>(b[idx]);<br>    float4 reg_c;<br>    reg_c.x = reg_a.x + reg_b.x;<br>    reg_c.y = reg_a.y + reg_b.y;<br>    reg_c.z = reg_a.z + reg_b.z;<br>    reg_c.w = reg_a.w + reg_b.w;<br>    <span class="hljs-built_in">FLOAT4</span>(c[idx]) = reg_c;<br>  &#125;<br>&#125;<br><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> N = <span class="hljs-number">2048</span> * <span class="hljs-number">4096</span>;<br><span class="hljs-type">const</span> <span class="hljs-type">int</span> blockSize = <span class="hljs-number">64</span>;<br><span class="hljs-type">const</span> <span class="hljs-type">int</span> numBlocks = (N + blockSize - <span class="hljs-number">1</span>) / blockSize;<br>elementwise_add_f32_kernel&lt;&lt;&lt;numBlocks, blockSize&gt;&gt;&gt;(d_a, d_b, d_c, N);<br></code></pre></td></tr></table></figure>
+<p>这个函数中，宏定义 <code>FLOAT4</code> 可以将四个 float 一起打包成 <code>float4</code> 数据类型，这样线程在 load 时就可以一次性读取四个 float 数据。</p>
+<p>再次用同样的方法编译和执行，得到 ncompute 输出的数据：</p>
+<p><img src="/img/LLM/ncompute/elementwise_add_f32x4_kernel.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>我们发现，因为线程一次性 load 4 个 float，总共 128 bits，能完全利用 CUDA 中一次 memory transaction 的带宽。读入数据都为有效数据，也因此，L1/L2 cache 的命中率更高。最后， <code>elementwise_add_f32_kernel</code> 总共需要 625496 个 cycles，而优化 <code>elementwise_add_f32x4_kernel</code> 总共仅需 540826 个 cycles。</p>
+<p>再看 Occupancy 表格，我们发现，因为线程块大小为 64，即 2 个 warps，所以 Block Limit Warp 改为了 24，但一个 SM 理论上可以激活的 warps 无法改变，最多为 48 个。因为线程数量减少了 4 倍，所以 <code>waves Per SM</code> = 227.56 / 4 = 56.89 ，Occupancy 提高到了 94.70 %。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/cuda/" class="print-no-link">#cuda</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>ncompute 学习与使用</div>
+      <div>https://dingfen.github.io/2025/02/03/2025-2-3-ncompute/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年2月3日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年2月4日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/27/2025-01-30-MLA/" title="DeepSeek 背后的 MLA 和 MoE 架构">
+                        <span class="hidden-mobile">DeepSeek 背后的 MLA 和 MoE 架构</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>
