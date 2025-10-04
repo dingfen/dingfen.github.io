@@ -1,0 +1,948 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Ray 框架内部原理理解 本文参考 Ray 论文 Ray 框架解决的需求 最新的强化学习(RL)算法强调让 AI 通过与环境的不断交互来学习提升自己。其核心目标是要让 AI 学习一个策略，这个策略将根据环境的变化，让 AI 自主做出相关的应对动作，并在环境中不断提升应对策略，久而久之 AI 将学会一个有效的任务（例如赢得游戏或驾驶一架无人机）。在大规模的应用中，寻找有效的策略需要三大能力：   模">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ray 框架初步认知与理解">
+<meta property="og:url" content="https://dingfen.github.io/2025/10/04/2025-10-04-ray/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="Ray 框架内部原理理解 本文参考 Ray 论文 Ray 框架解决的需求 最新的强化学习(RL)算法强调让 AI 通过与环境的不断交互来学习提升自己。其核心目标是要让 AI 学习一个策略，这个策略将根据环境的变化，让 AI 自主做出相关的应对动作，并在环境中不断提升应对策略，久而久之 AI 将学会一个有效的任务（例如赢得游戏或驾驶一架无人机）。在大规模的应用中，寻找有效的策略需要三大能力：   模">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://docs.ray.io/en/latest/_images/map-of-ray.svg">
+<meta property="article:published_time" content="2025-10-04T08:10:00.000Z">
+<meta property="article:modified_time" content="2025-10-04T07:29:21.925Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="RL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.ray.io/en/latest/_images/map-of-ray.svg">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Ray 框架初步认知与理解 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Ray 框架初步认知与理解"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-10-04 16:10" pubdate>
+          2025年10月4日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          40 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Ray 框架初步认知与理解</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-10-04T15:29:21+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Ray 框架内部原理理解</h1>
+<p>本文参考 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/1712.05889">Ray 论文</a></p>
+<h2 id="Ray-框架解决的需求">Ray 框架解决的需求</h2>
+<p>最新的强化学习(RL)算法强调让 AI 通过与环境的不断交互来学习提升自己。其核心目标是要让 AI 学习一个策略，这个策略将根据环境的变化，让 AI 自主做出相关的应对动作，并在环境中不断提升应对策略，久而久之 AI 将学会一个有效的任务（例如赢得游戏或驾驶一架无人机）。在大规模的应用中，寻找有效的策略需要三大能力：</p>
+<ol>
+<li>
+<p>模拟仿真（或者说 Rollout）。RL方法通常依赖于大量模拟来评估一个策略。仿真能够让智能体去探索众多不同的动作选择序列，并能够了解这些选择对于实现目标有怎样的长期影响。</p>
+</li>
+<li>
+<p>分布式训练。在强化学习中，完成策略评估后，需要对策略做改进，这些改进通常是通过训练深度神经网络的方法来进行的，训练使用的数据来自 1 中仿真过程或与物理环境的交互。</p>
+</li>
+<li>
+<p>服务部署。RL 策略的最终目的是要为控制问题提供解决方案，因此在训练完成之后还需要将策略作为服务部署，应用于交互式的闭环或开环的控制问题场景。</p>
+</li>
+</ol>
+<p>强化学习的上述特征对框架提出了新的系统需求：</p>
+<ol>
+<li>
+<p>支持细粒度的计算。即单次计算任务非常轻量，但是所需计算的次数十分庞大，例如与真实世界进行大量的动作交互，或进行大量的仿真。</p>
+</li>
+<li>
+<p>支持对于时间和资源的非均匀使用 (heterogeneity)。例如一次仿真可能只需要几毫秒，也可能需要好几个小时；仿真主要使用CPU，而训练则主要使用GPU.</p>
+</li>
+<li>
+<p>支持动态执行。仿真结果或与环境交互的结果可能会实时地影响后续的计算任务。</p>
+</li>
+</ol>
+<h2 id="Ray-框架简介">Ray 框架简介</h2>
+<p>Ray 是为满足上面这些需求而开发的通用集群计算框架，既支持模型的训练，又支持对环境的仿真或与环境的交互，还支持模型服务。</p>
+<p>Ray 所面临的任务涵盖了从<strong>轻量级、无状态</strong>的计算任务（例如仿真）到<strong>长时间运行的、有状态</strong>的计算任务（例如训练）。</p>
+<p>为此，Ray 实现了一套统一的接口，这套接口既能表达基于任务的并行计算(task-parallel)，又能表达基于行动器的并行计算(actor-based)。</p>
+<p>前者使得 Ray 能高效地、动态地对仿真、高维状态输入处理（如图像、视频）和错误恢复等任务进行负载均衡，后者行动器的设计使得 Ray 能有效地支持有状态的计算，例如模型训练、与客户端共享可变状态（如参数服务器）。Ray 在一个具有高可扩展性和容错性的动态执行引擎上实现了对任务和行动器的抽象。</p>
+<h2 id="Ray-编程模型">Ray 编程模型</h2>
+<p>正如上文需求分析中所述，Ray 中有两个重要的概念：任务(Task)和行动器(Actor)。Ray 编程模型是指 Ray 框架基于任务和行动器这两个重要需求所向用户提供的一套 API 及其编程范式。下表展示了 Ray 提供的核心API，详细参考 <a target="_blank" rel="noopener" href="https://docs.ray.io/en/latest/ray-core/tips-for-first-time.html">Ray 文档</a>。</p>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ray.init()</td>
+<td>初始化 Ray</td>
+</tr>
+<tr>
+<td>@ray.remote</td>
+<td>函数或类的装饰器，加上后可以在其他进程上执行</td>
+</tr>
+<tr>
+<td>.remote()</td>
+<td>每个 remote 函数的后缀，remote 函数会被异步调用</td>
+</tr>
+<tr>
+<td>ray.put()</td>
+<td>将传入的参数同步地保存起来，返回 ID</td>
+</tr>
+<tr>
+<td>ray.get()</td>
+<td>阻塞直到远端将计算得到的值传回来</td>
+</tr>
+<tr>
+<td>ray.wait()</td>
+<td>等待返回已经就绪的值</td>
+</tr>
+</tbody>
+</table>
+<p>具体来说，使用时需牢记：任务是无状态的远程函数。远程函数被调用时无法立即返回值（因为它是远端的），只能先给一个 future 对象，真正的返回值需通过 <code>ray.get(&lt;future对象&gt;)</code> 的方式来获取。</p>
+<p>这样的编程模型既允许用户编写并行计算代码，同时又提醒用户要关注数据之间的依赖性。</p>
+<p>任务的编程范式如下：</p>
+<ol>
+<li>注册任务：在需要注册为任务的函数上加上 <code>@ray.remote</code> 装饰器</li>
+<li>提交任务：在调用具有 <code>@ray.remote</code> 装饰器的函数时，需要带上 <code>.remote()</code> 而不是直接调用</li>
+<li>非阻塞提交：无论任务的运行需要多少时间，在提交任务后都会立即返回一个 ObjectRef 对象</li>
+<li>按需阻塞获取结果：在你需要函数的返回值时，可以通过 <code>ray.get</code> 来获取</li>
+</ol>
+<p>以下代码是一个任务从注册到运行完成获得结果的示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@ray.remote</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">f</span>(<span class="hljs-params">x</span>):<br>    <span class="hljs-keyword">return</span> x * x<br><br>object_ref = f.remote(<span class="hljs-number">2</span>)<br><span class="hljs-keyword">assert</span> ray.get(object_ref) == <span class="hljs-number">4</span><br></code></pre></td></tr></table></figure>
+<p>任务是无状态的，任务所操作的对象都可以看作不可变对象(Immutable Objects)，或者任务调用可以看作一个无副作用的(Side-effect Free)表达式，任务的输出（返回值）仅与输入（实参）有关。</p>
+<p>任务的设计使得 Ray 具备以下能力：</p>
+<ol>
+<li>细粒度负载均衡：利用任务级粒度的负载感知调度来进行细粒度的负载均衡</li>
+<li>输入数据本地化：每个任务可以在存有它所需要的数据的节点上调度</li>
+<li>较低的恢复开销：无需记录检查点或恢复到中间状态</li>
+</ol>
+<p>行动器是有状态的，每个行动器都有一些可供远程调用的函数，类似于任务中的远程函数，不同的是，使用 <code>f.remote</code> 顺序地提交若干个远程函数后，这些函数是并行执行的，但在同一个 actor 下使用<code>actor.method.remote</code> 顺序地提交若干个远程方法后，这些方法将串行地执行。但不同 actor 之间的调用是可以并行的。可以用一个图来描述任务和行动器的区别和联系：</p>
+<p><img src="/img/LLM/ray-actor-tasks.png" srcset="/img/loading.gif" lazyload alt="Ray Actor &amp; Task"></p>
+<p>行动器的编程范式如下：</p>
+<ol>
+<li>注册行动器：在需要注册为行动器的类上加上@ray.remote装饰器</li>
+<li>实例化行动器：相比于普通Python类的实例化，需要在类名后加上.remote</li>
+<li>提交方法调用：调用行动器的方法时，同样需要带上.remote()而不是直接调用</li>
+<li>非阻塞提交：无论方法的运行需要多少时间，在提交任务后都会立即返回一个ObjectRef对象（同一行动器实例下，方法会按照提交顺序串行地运行）</li>
+<li>按需阻塞获取结果：在需要方法运行的返回值时，可以通过ray.get来获取</li>
+</ol>
+<p>以下代码是一个行动器从注册到运行完成获得结果的示例，且展示了行动器方法的串行性质：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@ray.remote</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Counter</span>(<span class="hljs-title class_ inherited__">object</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        self.value = <span class="hljs-number">0</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">increment</span>(<span class="hljs-params">self</span>):<br>        self.value += <span class="hljs-number">1</span><br>        <span class="hljs-keyword">return</span> self.value<br><br>counter = Counter.remote()<br><br>refs = []<br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>    ref = counter.increment.remote()<br>    refs.append(ref)<br><br><span class="hljs-keyword">for</span> i, ref <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(refs):<br>    <span class="hljs-keyword">assert</span> ray.get(ref) == i + <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+<p>行动器使得 Ray 具备更高效的细粒度更新能力。因为它是一种高内聚的设计，状态与可能改变状态的操作被设计在一个类中，使得这些操作不依赖于外界的状态，从而在更新状态时省去了许多序列化和反序列化的开销。</p>
+<p>举例说，在使用行动器来实现参数服务器时，参数是有状态的，在 PyTorch 中，分布式训练的每个训练进程都维护了一份参数信息，并且都各自计算出一个梯度，进程之间需要交换梯度信息以计算出总梯度和更新后的参数，这就意味着梯度需要被序列化和反序列化以便在进程间传递。而使用行动器时，整个系统中只维护<strong>一份参数信息</strong>，并且对于同一份参数的更新操作都是串行的。另外，提交参数更新的请求是非阻塞的，因此在提交完后还可以并行地去做其他 CPU 密集型的任务，这也是 Ray 框架异构性的体现。</p>
+<h2 id="Ray-计算模型">Ray 计算模型</h2>
+<p>Ray 采用动态任务图计算模型，在这一模型中，当输入数据就绪时，系统将自动触发相应的远程函数和行动器方法的执行。本节将介绍计算图是如何在用户程序中构建的。</p>
+<p>首先，不考虑行动器，计算图的节点可以分为两类：数据对象和远程函数调用（任务）。同样地，边也可以分为两类：数据边和控制边。</p>
+<p>数据边用来记录数据和任务之间的依赖关系，如果数据对象 D 是任务 T 的输出，那么就增加一条从 T 指向 D 的边；反之如果是输入，则增加 D 指向 T 的边。</p>
+<p>控制边用来记录任务之间嵌套调用的依赖关系。如果任务 T1 调用了任务 T2，则增加一条 T1 指向 T2 的边。</p>
+<p>然后我们再考虑行动器，其方法的调用也表示为节点，它们与远程函数基本相同，只是为了记录同一行动器上的后续方法调用之间的状态依赖关系，需要增加第三种类型的边：状态边。<br>
+如果方法 Mj 紧接着 Mi 之后调用，且这两个方法属于同一个行动器，那么就增加一条 Mi 指向 Mj 的边。如此，状态边将同一行动器下的方法调用组织成链式结构，这一链式结构记录了方法的调用顺序。</p>
+<p>下面的 Python 代码搭建了一个基本的 RL 训练框架</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@ray.remote</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">create_policy</span>():<br>    <span class="hljs-comment"># 随机初始化策略</span><br>    <span class="hljs-keyword">return</span> policy<br><br><span class="hljs-meta">@ray.remote(<span class="hljs-params">num_gpus=<span class="hljs-number">1</span></span>)</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Simulator</span>(<span class="hljs-title class_ inherited__">object</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-comment"># 初始化环境</span><br>        self.env = Environment()<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">rollout</span>(<span class="hljs-params">self, policy, num_steps</span>):<br>        observations = []<br>        observation = self.env.current_state()<br>        <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_steps):<br>            action = policy(observation)<br>            observation = self.env.step(action)<br>            observations.append(observation)<br>        <span class="hljs-keyword">return</span> observations<br><br><span class="hljs-meta">@ray.remote(<span class="hljs-params">num_gpus=<span class="hljs-number">2</span></span>)</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">update_policy</span>(<span class="hljs-params">policy, *rollouts</span>):<br>    <span class="hljs-comment"># 更新策略</span><br>    <span class="hljs-keyword">return</span> policy<br><br><span class="hljs-meta">@ray.remote</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_policy</span>():<br>    <span class="hljs-comment"># 创建策略</span><br>    policy_id = create_policy.remote()<br>    <span class="hljs-comment"># 创建10个行动器(仿真器)</span><br>    simulators = [Simulator.remote() <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>)]<br>    <span class="hljs-comment"># 做100次训练</span><br>    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">100</span>):<br>        <span class="hljs-comment"># 每个行动器做一次预演</span><br>        rollout_ids = [s.rollout.remote(policy_id) <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> simulators]<br>        <span class="hljs-comment"># 使用预演生成的轨迹来更新策略</span><br>        policy_id = update_policy.remote(policy_id, *rollout_ids)<br>    <span class="hljs-keyword">return</span> ray.get(policy_id)<br></code></pre></td></tr></table></figure>
+<p><img src="/img/LLM/ray_graph.png" srcset="/img/loading.gif" lazyload alt="Ray Graph"></p>
+<p>图中的主任务是 T0，T0 中创建了策略（任务），并实例化了若干个模拟器（行动器）A10，A20 （图中为了简便且不失一般性只画了两个），这些过程都是并行的。</p>
+<p>然后进入策略评估和策略改进的循环中。策略评估需要策略作为输入，并输出 rollout 的结果，而策略改进需要策略和众多 rollout 结果作为输入。我们把 A1k，Ank 称为第 k 批 rollout，从而可以知道，每一批 rollout 都是基于同一个策略进行的，而必须等前一批 rollout 被用于更新策略后，下一批 rollout 才能基于新的策略开始。</p>
+<p>相比完全串行的策略学习方法，这种并行化的设计主要是将 rollout 批量化并行，从而增加单位时间内采样的数量，从而加速策略改进的过程。</p>
+<h2 id="Ray-架构">Ray 架构</h2>
+<p>Ray的架构由应用层和系统层组成，其中应用层实现了Ray的API，作为前端供用户使用，而系统层则作为后端来保障Ray的高可扩展性和容错性。整体的架构图如下图所示：</p>
+<p><img src="/img/LLM/ray_arch.png" srcset="/img/loading.gif" lazyload alt="Ray Arch"></p>
+<h3 id="应用层">应用层</h3>
+<p>应用层中有三种类型的进程：</p>
+<ol>
+<li>驱动器进程 (Driver): 执行用户程序的进程。所有操作都需要由主进程来驱动。</li>
+<li>工作器进程 (Worker): 调用任务（远程函数）的无状态进程。Worker 由 Driver 或另一个 worker 分配任务并自动启动。当声明一个远程函数时，该函数将被自动发布到所有的 workers 中。在同一个 worker 中，任务是串行地执行的，worker 并不维护其任务与任务之间的局部状态，即在 worker 中，一个远程函数执行完后，其局部作用域的所有变量将不再能被其他任务所访问。</li>
+<li>行动器进程 (Actor): actor 被调用时只执行其所暴露的方法。actor 由 worker 或 driver 显式地进行实例化。与 worker 相同的是，actor 也会串行地执行任务，不同的是 actor 上执行的每个方法都依赖于其前面所执行的方法所导致的状态。</li>
+</ol>
+<p>三种进程体现到Python代码中如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@ray.remote</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">f</span>(<span class="hljs-params">x</span>):<br>    <span class="hljs-comment"># ==== 工作器进程 ====</span><br>    <span class="hljs-keyword">return</span> x * x<br><br><span class="hljs-meta">@ray.remote</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Counter</span>(<span class="hljs-title class_ inherited__">object</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-comment"># ==== 行动器进程 ====</span><br>        self.value = <span class="hljs-number">0</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">increment</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-comment"># ==== 行动器进程 ====</span><br>        self.value += <span class="hljs-number">1</span><br>        <span class="hljs-keyword">return</span> self.value<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    <span class="hljs-comment"># ==== 驱动器进程 ====</span><br>    object_ref = f.remote(<span class="hljs-number">2</span>)<br>    <span class="hljs-keyword">assert</span> ray.get(object_ref) == <span class="hljs-number">4</span><br><br>    counter = Counter.remote()<br>    refs = []<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>        ref = counter.increment.remote()<br>        refs.append(ref)<br>    <span class="hljs-keyword">for</span> i, ref <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(refs):<br>        <span class="hljs-keyword">assert</span> ray.get(ref) == i + <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+<h3 id="系统层">系统层</h3>
+<p>系统层由三个主要部件组成：全局控制存储器 (Global Control Store)、分布式调度器 (Distributed Scheduler)和分布式对象存储器 (Distributed Object Store)。这些部件在横向上是可扩展的，即可以增减这些部件的数量，同时还具有一定的容错性。</p>
+<h3 id="GCS">GCS</h3>
+<p>GCS 设计的初衷是让系统中的各个组件都变得尽可能地无状态，因此 GCS 维护了一些全局状态：</p>
+<ul>
+<li>对象表 (Object Table)：记录每个对象存在于哪些节点</li>
+<li>任务表 (Task Table)：记录每个任务运行于哪个节点</li>
+<li>函数表 (Function Table)：记录用户进程中定义的远程函数</li>
+<li>事件日志 (Event Logs)：记录任务运行日志</li>
+</ul>
+<h3 id="分布式调度器">分布式调度器</h3>
+<p>Ray 中的任务调度器被分为两层，由一个<strong>全局调度器</strong>和<strong>每个节点各自的局部调度器</strong>组成。为了避免全局调度器负载过重，在节点创建的任务首先被提交到局部调度器，如果该节点没有过载且节点资源能够满足任务的需求（如 GPU 的需求），则任务将在本地被调度，否则任务才会被传递到全局调度器，考虑将任务调度到远端。由于 Ray 首先考虑在本地调度，本地不满足要求才考虑在远端调用，因此这样的调度方式也被称为自底向上的调度。</p>
+<p>下图展示了 Ray 的调度过程，<strong>箭头的粗细表示过程发生频率的高低</strong>。用户进程和工作器向本地调度器提交任务，大多数情况下，任务将在本地被调度。少数情况下，局部调度器会向全局调度器提交任务，并向 GCS 传递任务的相关信息，将任务涉及的对象和函数存入全局的对象表和函数表中，然后全局调度器会从 GCS 中读取到信息，并选择在其他合适的节点上调度这一任务。更具体地来说，全局调度器会根据任务的请求选出具有足够资源的一系列节点，并在这些节点中选出等待时间最短的一个节点。</p>
+<p><img src="/img/LLM/ray_dist_scheduler.png" srcset="/img/loading.gif" lazyload alt="Ray dist scheduler"></p>
+<h3 id="分布式对象存储器">分布式对象存储器</h3>
+<p>Ray 实现了一个内存式的分布式存储系统来存储每个任务的输入和输出。Ray 通过内存共享机制在每个节点上实现了一个对象存储器 (Object Store)，从而使在同一个节点运行的任务之间不需要拷贝就可以共享数据。当一个任务的输入不在本地时，则会在执行之前将它的输入复制到本地的对象存储器中。同样地，任务总会将输出写入到本地的对象存储器中。这样的复制机制可以减少任务的执行时间，因为任务永远只会从本地对象存储器中读取数据（否则任务不会被调度），并且消除了热数据可能带来的潜在的瓶颈。</p>
+<h2 id="案例">案例</h2>
+<p>最后，我们来看两个实际例子来结束这篇博客：</p>
+<p>假设有一个求两数之和的任务需要交给Ray来执行，我们来具体分析一下这一任务在Ray的架构中是如何执行的。以下以全局调度为例，因为它更具有一般性。</p>
+<p><img src="/img/LLM/ray_task.png" srcset="/img/loading.gif" lazyload alt="Ray Task"></p>
+<p>图(a)描述了任务的定义、提交和执行的过程</p>
+<ol start="0">
+<li>【定义远程函数】位于 N1 的用户程序中定义的远程函数add被装载到GCS的函数表中，位于 N2 的工作器从 GCS 中读取并装载远程函数add</li>
+<li>【提交任务】位于 N1 的用户程序向本地调度器提交 add(a, b) 的任务</li>
+<li>【提交任务到全局】本地调度器将任务提交至全局调度器</li>
+<li>【检查对象表】全局调度器从GCS中找到add任务所需的实参a, b，发现 a 在 N1 上，b 在 N2 上（a, b 已在用户程序中事先定义）</li>
+<li>【执行全局调度】由上一步可知，任务的输入平均地分布在两个节点，因此全局调度器随机选择一个节点进行调度，此处选择了 N2</li>
+<li>【检查任务输入】 N2 的局部调度器检查任务所需的对象是否都在 N2 的本地对象存储器中</li>
+<li>【查询缺失输入】 N2 的局部调度器发现任务所需的a不在 N2 中，在 GCS 中查找后发现 a 在 N1 中</li>
+<li>【对象复制】将 a 从 N1 复制到 N2</li>
+<li>【执行局部调度】在 N2 的工作器上执行add(a, b)的任务</li>
+<li>【访问对象存储器】add(a, b)访问局部对象存储器中相应的对象</li>
+</ol>
+<p><img src="/img/LLM/ray_task_1.png" srcset="/img/loading.gif" lazyload alt="Ray task"></p>
+<p>图(b)描述了获取任务执行结果的的过程</p>
+<ol>
+<li>【提交get请求】向本地调度器提交 ray.get 的请求，期望获取 add 任务执行的返回值</li>
+<li>【注册回调函数】 N1 本地没有存储返回值，所以根据返回值对象的引用 id_c 在 GCS 的对象表中查询该对象位于哪个节点，假设此时任务没有执行完成，那么对象表中找不到 id_c，因此 N1 的对象存储器会注册一个回调函数，当 GCS 对象表中出现 id_c 时触发该回调，将c从对应的节点复制到 N1 上</li>
+<li>【任务执行完毕】 N2 上的 add 任务执行完成，返回值c被存储到 N2 的对象存储器中</li>
+<li>【将对象同步到GCS】 N2 将 c 及其引用 id_c 存入 GCS 的对象表中</li>
+<li>【触发回调函数】2中注册的回调函数被触发</li>
+<li>【执行回调函数】将c从 N2 复制到 N1</li>
+<li>【返回用户程序】将c返回给用户程序，任务结束</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/RL/" class="category-chain-item">RL</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RL/" class="print-no-link">#RL</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Ray 框架初步认知与理解</div>
+      <div>https://dingfen.github.io/2025/10/04/2025-10-04-ray/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年10月4日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年10月4日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/03/09/2025-3-9-mma/" title="使用 MMA 的 flash-attn 实现">
+                        <span class="hidden-mobile">使用 MMA 的 flash-attn 实现</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

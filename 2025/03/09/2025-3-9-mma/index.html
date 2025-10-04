@@ -1,0 +1,1036 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Tensor Core 与 MMA 自 Volta 架构开始，nvidia 在显卡上装上了 Tensor Core 架构。该架构是为满足深度学习中所需的大量矩阵类运算需求而设计的硬件架构，专门提供高效小块的矩阵乘法：D&#x3D;A×B+CD&#x3D;A\times B+CD&#x3D;A×B+C。 因为深度学习中高精度 float 运算不是必须的，所以 Tensor Core 还支持更低精度的计算，更低精度的计算意味着更高">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 MMA 的 flash-attn 实现">
+<meta property="og:url" content="https://dingfen.github.io/2025/03/09/2025-3-9-mma/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="Tensor Core 与 MMA 自 Volta 架构开始，nvidia 在显卡上装上了 Tensor Core 架构。该架构是为满足深度学习中所需的大量矩阵类运算需求而设计的硬件架构，专门提供高效小块的矩阵乘法：D&#x3D;A×B+CD&#x3D;A\times B+CD&#x3D;A×B+C。 因为深度学习中高精度 float 运算不是必须的，所以 Tensor Core 还支持更低精度的计算，更低精度的计算意味着更高">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/tgi/flash-attn.png">
+<meta property="article:published_time" content="2025-03-09T03:23:00.000Z">
+<meta property="article:modified_time" content="2025-10-04T07:27:56.272Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="cuda">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/tgi/flash-attn.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>使用 MMA 的 flash-attn 实现 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://docs.vllm.ai/en/stable/assets/logos/vllm-logo-text-dark.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="使用 MMA 的 flash-attn 实现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-03-09 11:23" pubdate>
+          2025年3月9日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          28 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">使用 MMA 的 flash-attn 实现</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2025-10-04T15:27:56+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Tensor Core 与 MMA</h1>
+<p>自 Volta 架构开始，nvidia 在显卡上装上了 Tensor Core 架构。该架构是为满足深度学习中所需的大量矩阵类运算需求而设计的硬件架构，专门提供高效小块的矩阵乘法：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>A</mi><mo>×</mo><mi>B</mi><mo>+</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D=A\times B+C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">A</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>。</p>
+<p>因为深度学习中高精度 float 运算不是必须的，所以 Tensor Core 还支持更低精度的计算，更低精度的计算意味着更高的计算效率，更少的能量消耗。</p>
+<p><img src="/img/LLM/tensor_core.gif" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>来自<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=yyR0ZoCeBO8">NVIDIA 的 Tensor Core 油管视频</a>。</p>
+<p>Tensor Core 提供了两种使用方法。第一种是利用 nvidia 提供的矩阵计算库 cublas 和深度学习库 cudnn，它们封装了常用的矩阵类计算和深度学习计算所需要的函数，以 SDK 的形式提供封装的接口。这里可以参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/CV_Autobot/article/details/138460383">Tensor Core 的三种用法</a></p>
+<p>第二种是通过CUDA编程提供的特定的接口和PTX汇编实现。对于第二种形式，CUDA编译器 nvcc 提供了 WMMA（Warp Matrix Multiply Accumulate）和 MMA（Matrix Multiply Accumulate）两种形式，第一种形式是通过提供fragment数据表示和特定的 <code>load_matrix_sync()</code>、<code>store_matrix_sync()</code>、<code>mma_sync()</code> 数据加载存储和计算API来触发对 Tensor Core的编程。另一种是通过 PTX 汇编实现，其数据直接面向寄存器表示，计算则是通过 <code>mma.sync</code> 类的函数实现。WMMA 形式对数据和API都进行了相应的抽象，编程相对简单，但对指令单控制也相对粗糙。MMA 形式的编程直接面向寄存器表示和汇编指令，难道较大，容易出错，但是可以实现精细的控制从而达到更高的计算效率。</p>
+<h1>MMA 指令入门</h1>
+<p>先具体介绍一下 PTX 汇编实现的 MMA 指令。毕竟目前 LLM 大火导致大家对 attention 计算速度和实现灵活性有了更加极致追求，用其他的方式实现的 attention 已经不能令全球 geek 们满意了。</p>
+<h2 id="ldmatrix">ldmatrix</h2>
+<p>指令格式：</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">ldmatrix.sync.aligned.shape.num&#123;<span class="hljs-string">.trans</span>&#125;&#123;<span class="hljs-string">.ss</span>&#125;<span class="hljs-string">.type</span> r, [p];<br><br><span class="hljs-string">.shape</span>   = &#123;<span class="hljs-string">.m8n8</span>, <span class="hljs-string">.m16n16</span>&#125;;<br><span class="hljs-string">.num</span>     = &#123;<span class="hljs-string">.x1</span>, <span class="hljs-string">.x2</span>, <span class="hljs-string">.x4</span>&#125;;<br><span class="hljs-string">.ss</span>      = &#123;<span class="hljs-string">.shared</span>&#123;:<span class="hljs-function">:cta</span>&#125;&#125;;<br><span class="hljs-string">.type</span>    = &#123;<span class="hljs-string">.b16</span>, <span class="hljs-string">.b8</span>&#125;;<br><span class="hljs-string">.dst_fmt</span> = &#123; <span class="hljs-string">.b8x16</span> &#125;;<br><span class="hljs-string">.src_fmt</span> = &#123; <span class="hljs-string">.b6x16_p32</span>, <span class="hljs-string">.b4x16_p64</span> &#125;;<br></code></pre></td></tr></table></figure>
+<p>ldmatrix指令的使用格式例子: <code>ldmatrix.sync.aligned.m8n8.x1.shared.b16 &#123; %0 &#125;, [ %1 ];</code><br>
+这条 PTX 指令掺杂了太多信息，让我们逐个分析：</p>
+<ul>
+<li>ldmatrix：PTX 指令名字，说明该指令用于 load matrix</li>
+<li>sync 同步而非异步执行的，即 Warp 内所有的线程必须都完成后才能再往下执行</li>
+<li>aligned 需要 Warp 内所有线程执行相同的 ldmatrix 指令</li>
+<li>m8n8 意思是矩阵的数据维度，必须是 8 行 8 列</li>
+<li>x1：加载的矩阵数量，表示一个</li>
+<li>shared：从 shared memory 中加载</li>
+<li>b16：数据类型为 bfloat16，即bf16</li>
+<li>%0, %1 是占位符，分别对应输出和输入操作数。PTX 汇编本身不会直接使用 {}，[] 用于表示 内存地址访问 或 间接寻址 。它类似于 C/C++ 中的数组下标操作，用于从内存中加载数据或将数据存储到内存中</li>
+</ul>
+<p>总结下来，可以这么说，该指令让一个 Warp（32个线程），从 Shared Memory 的 [p] 地址中加载 1 个 8*8(m8n8) 的矩阵（必须要求该矩阵的每行必须连续存放，但行间可以不连续存放），存放到了目标寄存器 %0 中。</p>
+<p>那我们来继续分析一下这条指令的其他细节，首先 m8n8 的 bf16 矩阵有 64 个数据元素，每个元素占两个字节，一共 128 个字节，每个线程获得 2 个元素。</p>
+<p>因为行间的位置可以不连续，所以需要用户确保 thread0-thread7 的 %1 寄存器填充的是8个行首地址，其他情况见下面表格。</p>
+<table>
+<thead>
+<tr>
+<th>.num</th>
+<th>Threads 0–7</th>
+<th>Threads 8–15</th>
+<th>Threads 16–23</th>
+<th>Threads 24–31</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.x1</td>
+<td>addr0–addr7</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>.x2</td>
+<td>addr0–addr7</td>
+<td>addr8–addr15</td>
+<td>-</td>
+<td>–</td>
+</tr>
+<tr>
+<td>.x4</td>
+<td>addr0–addr7</td>
+<td>addr8–addr15</td>
+<td>addr16–addr23</td>
+<td>addr24–addr31</td>
+</tr>
+</tbody>
+</table>
+<p>读取矩阵时，四个连续的线程会先加载连续的一行，即 8 个元素 16 个字节。线程 0 的 %0 会获得头两个元素，其他线程情况见下表：</p>
+<table>
+<thead>
+<tr>
+<th>Row\Col</th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>T0:r</td>
+<td>T0:r</td>
+<td>T1:r</td>
+<td>T1:r</td>
+<td>T2:r</td>
+<td>T2:r</td>
+<td>T3:r</td>
+<td>T3:r</td>
+</tr>
+<tr>
+<td>1</td>
+<td>T4:r</td>
+<td>T4:r</td>
+<td>T5:r</td>
+<td>T5:r</td>
+<td>T6:r</td>
+<td>T6:r</td>
+<td>T7:r</td>
+<td>T7:r</td>
+</tr>
+<tr>
+<td>2</td>
+<td>T8:r</td>
+<td>T8:r</td>
+<td>T9:r</td>
+<td>T9:r</td>
+<td>T10:r</td>
+<td>T10:r</td>
+<td>T11:r</td>
+<td>T11:r</td>
+</tr>
+<tr>
+<td>3</td>
+<td>T12:r</td>
+<td>T12:r</td>
+<td>T13:r</td>
+<td>T13:r</td>
+<td>T14:r</td>
+<td>T14:r</td>
+<td>T15:r</td>
+<td>T15:r</td>
+</tr>
+<tr>
+<td>4</td>
+<td>T16:r</td>
+<td>T16:r</td>
+<td>T17:r</td>
+<td>T17:r</td>
+<td>T18:r</td>
+<td>T18:r</td>
+<td>T19:r</td>
+<td>T19:r</td>
+</tr>
+<tr>
+<td>5</td>
+<td>T20:r</td>
+<td>T20:r</td>
+<td>T21:r</td>
+<td>T21:r</td>
+<td>T22:r</td>
+<td>T22:r</td>
+<td>T23:r</td>
+<td>T23:r</td>
+</tr>
+<tr>
+<td>6</td>
+<td>T24:r</td>
+<td>T24:r</td>
+<td>T25:r</td>
+<td>T25:r</td>
+<td>T26:r</td>
+<td>T26:r</td>
+<td>T27:r</td>
+<td>T27:r</td>
+</tr>
+<tr>
+<td>7</td>
+<td>T28:r</td>
+<td>T28:r</td>
+<td>T29:r</td>
+<td>T29:r</td>
+<td>T30:r</td>
+<td>T30:r</td>
+<td>T31:r</td>
+<td>T31:r</td>
+</tr>
+</tbody>
+</table>
+<p>而对于 <code>ldmatrix.sync.aligned.m8n8.x4.shared.b16 &#123;%0, %1, %2, %3&#125;, [%4];</code>，情况略有不同，因为这里会一次性读入 4 个 m8n8 的矩阵，所以对应的每个 thread 也需要 4 个寄存器来存放矩阵数据，%0 存放第一个 m8n8 的对应数值，%1 存放第二个，以此类推。</p>
+<hr>
+<p>初步认识好这条 PTX 指令后，又要如何在 CUDA C++ 中使用呢？我们可以使用 C++ 中 <code>asm volatile</code> 指令来将 PTX 指令嵌入到 CUDA C++ 中。</p>
+<p>参考使用 PTX 指令模板：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">__asm__ <span class="hljs-title">volatile</span> <span class="hljs-params">(<span class="hljs-string">&quot;汇编指令&quot;</span></span></span><br><span class="hljs-params"><span class="hljs-function">                 : <span class="hljs-string">&quot;输出操作数&quot;</span></span></span><br><span class="hljs-params"><span class="hljs-function">                 : <span class="hljs-string">&quot;输入操作数&quot;</span></span></span><br><span class="hljs-params"><span class="hljs-function">                 : <span class="hljs-string">&quot;clobber 列表&quot;</span>)</span></span>;<br></code></pre></td></tr></table></figure>
+<p>可以写出如下宏指令或 <code>inline</code> 函数来帮助我们使用 PTX 指令</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> LDMATRIX_M8N8_X1(R0, addr) asm volatile(<span class="hljs-string">&quot;ldmatrix.sync.aligned.m8n8.x4.shared.b16 &#123;%0&#125;, [%1];\n&quot;</span> : <span class="hljs-string">&quot;=r&quot;</span>(R0) : <span class="hljs-string">&quot;r&quot;</span>(addr))</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> LDMATRIX_M8N8_X4(R0, R1, R2, R3, addr) asm volatile(<span class="hljs-string">&quot;ldmatrix.sync.aligned.m8n8.x4.shared.b16 &#123;%0, %1, %2, %3&#125;, [%4];\n&quot;</span> : <span class="hljs-string">&quot;=r&quot;</span>(R0), <span class="hljs-string">&quot;=r&quot;</span>(R1), <span class="hljs-string">&quot;=r&quot;</span>(R2), <span class="hljs-string">&quot;=r&quot;</span>(R3) : <span class="hljs-string">&quot;r&quot;</span>(addr))</span><br><br><span class="hljs-function"><span class="hljs-type">static</span> __device__ __forceinline__ <span class="hljs-type">void</span> <span class="hljs-title">ldmatrix_m8n8_x1</span><span class="hljs-params">(<span class="hljs-type">uint32_t</span> &amp;r0, <span class="hljs-type">uint64_t</span> addr)</span> </span>&#123;<br>  <span class="hljs-function"><span class="hljs-keyword">asm</span> <span class="hljs-title">volatile</span><span class="hljs-params">(<span class="hljs-string">&quot;ldmatrix.sync.aligned.m8n8.x4.shared.b16 &#123;%0&#125;, [%1];\n&quot;</span> : <span class="hljs-string">&quot;=r&quot;</span>(r0) : <span class="hljs-string">&quot;r&quot;</span>(addr))</span></span>;<br>&#125;<br><span class="hljs-function"><span class="hljs-type">static</span> __device__ __forceinline__ <span class="hljs-type">void</span> <span class="hljs-title">ldmatrix_m8n8_x4</span><span class="hljs-params">(<span class="hljs-type">uint32_t</span> &amp;r0, <span class="hljs-type">uint32_t</span> &amp;r1, <span class="hljs-type">uint32_t</span> &amp;r2, <span class="hljs-type">uint32_t</span> &amp;r3, <span class="hljs-type">uint64_t</span> addr)</span> </span>&#123;<br>  <span class="hljs-function"><span class="hljs-keyword">asm</span> <span class="hljs-title">volatile</span><span class="hljs-params">(<span class="hljs-string">&quot;ldmatrix.sync.aligned.m8n8.x4.shared.b16 &#123;%0, %1, %2, %3&#125;, [%4];\n&quot;</span> :<span class="hljs-string">&quot;=r&quot;</span>(r0), <span class="hljs-string">&quot;=r&quot;</span>(r1), <span class="hljs-string">&quot;=r&quot;</span>(r2), <span class="hljs-string">&quot;=r&quot;</span>(r3) : <span class="hljs-string">&quot;r&quot;</span>(addr))</span></span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="mma">mma</h2>
+<p>指令格式：</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">mma.sync.aligned.m8n8k4.alayout.blayout.dtype.f16.f16.ctype  d, a, b, c;<br>mma.sync.aligned.m16n8k8.row.col.dtype.f16.f16.ctype  d, a, b, c;<br>mma.sync.aligned.m16n8k16.row.col.dtype.f16.f16.ctype d, a, b, c;<br><br><span class="hljs-string">.alayout</span> = &#123;<span class="hljs-string">.row</span>, <span class="hljs-string">.col</span>&#125;;<br><span class="hljs-string">.blayout</span> = &#123;<span class="hljs-string">.row</span>, <span class="hljs-string">.col</span>&#125;;<br><span class="hljs-string">.ctype</span>   = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><span class="hljs-string">.dtype</span>   = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><br><br>mma.sync.aligned.m16n8k4.row.col.f32.tf32.tf32.f32        d, a, b, c;<br>mma.sync.aligned.m16n8k8.row.col.f32.atype.btype.f32      d, a, b, c;<br>mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32       d, a, b, c;<br>mma.sync.aligned.shape.row.col.dtype.f8type.f8type.ctype  d, a, b, c;<br>mma.sync.aligned.m16n8k32.row.col.kind.dtype.f8f6f4type.f8f6f4type.ctype d, a, b, c;<br><br><span class="hljs-string">.atype</span>      = &#123;<span class="hljs-string">.bf16</span>, <span class="hljs-string">.tf32</span>&#125;;<br><span class="hljs-string">.btype</span>      = &#123;<span class="hljs-string">.bf16</span>, <span class="hljs-string">.tf32</span>&#125;;<br><span class="hljs-string">.f8type</span>     = &#123;<span class="hljs-string">.e4m3</span>, <span class="hljs-string">.e5m2</span>&#125;;<br><span class="hljs-string">.f8f6f4type</span> = &#123;<span class="hljs-string">.e4m3</span>, <span class="hljs-string">.e5m2</span>, <span class="hljs-string">.e3m2</span>, <span class="hljs-string">.e2m3</span>, <span class="hljs-string">.e2m1</span>&#125;;<br><span class="hljs-string">.ctype</span>      = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><span class="hljs-string">.dtype</span>      = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><span class="hljs-string">.shape</span>      = &#123;<span class="hljs-string">.m16n8k16</span>, <span class="hljs-string">.m16n8k32</span>&#125;;<br><span class="hljs-string">.kind</span>       = &#123;<span class="hljs-string">.kind</span>:<span class="hljs-function">:f8f6f4</span>&#125;;<br></code></pre></td></tr></table></figure>
+<p>mma 的指令格式要复杂得多，但功能都是一样的，实现 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>A</mi><mo>×</mo><mi>B</mi><mo>+</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D=A\times B+C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">A</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>，结合 flash-attn 的要求，我们主要看一下这条指令：</p>
+<p><code>mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 &#123;%0, %1&#125;, &#123;%2, %3, %4, %5&#125;, &#123;%6, %7&#125;, &#123;%8, %9&#125;;</code></p>
+<p>mma m16n8k16 中，矩阵 A <code>MxK</code>，矩阵 B <code>KxN</code>，矩阵 C 和 D 都是 <code>MxN</code>，数据类型位 bf16。先来看矩阵 A 的 layout，它有16行16列，每个寄存器放2个元素：</p>
+<p>其中 a0:a1 元素存放在 %2 寄存器内，a2:a3 元素存放在 %3 寄存器内，以此类推。</p>
+<p><img src="https://docs.nvidia.com/cuda/parallel-thread-execution/_images/mma-16816-A-f16.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>对于矩阵 B，它必须是列主序，16行8列的，矩阵 layout 是这样：</p>
+<p><img src="https://docs.nvidia.com/cuda/parallel-thread-execution/_images/mma-16816-B-f16.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>官方的图看上去有点抽象，我用 excel 画了一张图，一个方块代表一个数据元素。深色部分是一个 Warps 读取一次的部分，用白色加粗的字体写明了每个线程加载的方块元素。</p>
+<p><img src="/img/LLM/m16n8k16.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>Warps 会分四次把矩阵 A load 完成，与此同时还会把矩阵 B 分两次 load 完成，最后完成矩阵计算。</p>
+<p>同样地，可以写出如下宏指令或 <code>inline</code> 函数来帮助我们使用 PTX 指令</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> MMA_M16N8K16_FP16(RD0, RD1, RA0, RA1, RA2, RA3, RB0, RB1, RC0, RC1) asm volatile(<span class="hljs-string">&quot;mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 &#123;%0, %1&#125;, &#123;%2, %3, %4, %5&#125;, &#123;%6, %7&#125;, &#123;%8, %9&#125;;\n&quot;</span> : <span class="hljs-string">&quot;=r&quot;</span>(RD0), <span class="hljs-string">&quot;=r&quot;</span>(RD1) : <span class="hljs-string">&quot;r&quot;</span>(RA0), <span class="hljs-string">&quot;r&quot;</span>(RA1), <span class="hljs-string">&quot;r&quot;</span>(RA2), <span class="hljs-string">&quot;r&quot;</span>(RA3), <span class="hljs-string">&quot;r&quot;</span>(RB0), <span class="hljs-string">&quot;r&quot;</span>(RB1), <span class="hljs-string">&quot;r&quot;</span>(RC0), <span class="hljs-string">&quot;r&quot;</span>(RC1))</span><br><br><span class="hljs-function"><span class="hljs-type">static</span> __device__ __forceinline__ <span class="hljs-type">void</span> <span class="hljs-title">MMA_M16N8K16_FP16</span><span class="hljs-params">(<span class="hljs-type">uint32_t</span> &amp;rd0, <span class="hljs-type">uint32_t</span> &amp;rd1, <span class="hljs-type">uint32_t</span> ra0,  <span class="hljs-type">uint32_t</span> ra1,  <span class="hljs-type">uint32_t</span> ra2,  <span class="hljs-type">uint32_t</span> ra3, <span class="hljs-type">uint32_t</span> rb0,  <span class="hljs-type">uint32_t</span> rb1, <span class="hljs-type">uint32_t</span> rc0,  <span class="hljs-type">uint32_t</span> rc1)</span> </span>&#123;<br>  <span class="hljs-function"><span class="hljs-keyword">asm</span> <span class="hljs-title">volatile</span><span class="hljs-params">(<span class="hljs-string">&quot;mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 &#123;%0, %1&#125;, &#123;%2, %3, %4, %5&#125;, &#123;%6, %7&#125;, &#123;%8, %9&#125;;\n&quot;</span> : <span class="hljs-string">&quot;=r&quot;</span>(rd0), <span class="hljs-string">&quot;=r&quot;</span>(rd1) : <span class="hljs-string">&quot;r&quot;</span>(ra0), <span class="hljs-string">&quot;r&quot;</span>(ra1), <span class="hljs-string">&quot;r&quot;</span>(ra2), <span class="hljs-string">&quot;r&quot;</span>(ra3), <span class="hljs-string">&quot;r&quot;</span>(rb0), <span class="hljs-string">&quot;r&quot;</span>(rb1), <span class="hljs-string">&quot;r&quot;</span>(rc0), <span class="hljs-string">&quot;r&quot;</span>(rc1))</span></span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h1>flash-attn 实现 prefill 阶段</h1>
+<p>初步认识好 MMA 指令后，我们来看一下 flash-attn 要怎么用 MMA 指令来实现。</p>
+<h2 id="问题分析">问题分析</h2>
+<p>首先，需要明确 flash-attn 的输入输出，那么在很多大模型的 prefill 阶段，输入输出 Q K V O 张量的输入张量维度都是：<code>[batch_size, num_heads, seq_len, head_dim]</code>，我们为方便起见，简写成 <code>[b, h, sq, d]</code>。</p>
+<p>另外，大多模型的 head_dim 维度都是固定为 128，因此我们优先考虑 d=128 的情况。</p>
+<p>再来看计算过程。attention 的计算公式是：</p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>attn</mtext><mo>=</mo><mtext>softmax</mtext><mo stretchy="false">(</mo><mfrac><mrow><mi>Q</mi><msup><mi>K</mi><mi>T</mi></msup></mrow><msqrt><mi>d</mi></msqrt></mfrac><mo stretchy="false">)</mo><mi>V</mi></mrow><annotation encoding="application/x-tex">\text{attn} = \text{softmax}(\frac{QK^T}{\sqrt{d}})V
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord text"><span class="mord">attn</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4483em;vertical-align:-0.93em;"></span><span class="mord text"><span class="mord">softmax</span></span><span class="mopen">(</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5183em;"><span style="top:-2.1778em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9322em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">d</span></span></span><span style="top:-2.8922em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1078em;"><span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.93em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.22222em;">V</span></span></span></span></span></p>
+<p>但这样的 QKV 张量实在是太大，不可能直接用一个 mma 就完成。对于四维张量，前面两维度是可以完全并行起来的，后面两维度才涉及到矩阵乘法。因此，可将前两个维度放到 GPU block 间做并行（即 grid size），反正他们完全可并行，不需要考虑这么多。</p>
+<p>于是，我们得到了这样一张矩阵乘法图，首先计算 QK，得到矩阵 S，然后 S 与 V 相乘获得最后的结果 O（softmax 和 scale 等先略去）。</p>
+<p><img src="/img/LLM/attn_slice1.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>然而，这样的矩阵乘还是太大了，一个线程块都无法处理。我们需要进一步将矩阵切分，这里涉及到矩阵乘法时要如何切分的问题。对 M 和 N 方向切分还是对 K 方向切分？让我们回到实际问题，M 和 N 方向相当于是 seq_len 的长度，显然它是不确定的，它可能会非常长，也可能会非常短，而 K 方向的长度是一定的，我们只考虑 K=128 的情况，因此，我们选择在 M 和 N 方向切分，将不确定的长度切分成确定的大小，才有利于我们后续实现矩阵乘，否则 seq_len 要适配所有情况，难度太大。</p>
+<p>那么我们现在一拍脑袋，先把 Seqlenq 和 Seqlenk 切分成等长 64 的吧（这些值的最有配置需要后续实现完成后 tune 一把，现在实现不考虑性能优劣）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">const</span> <span class="hljs-type">int</span> nrow = <span class="hljs-number">64</span>;<br></code></pre></td></tr></table></figure>
+<p>切分完成后，我们终于可以让一个 CUDA 线程块来处理深色部分的区域了，得到的计算结果会填充到深绿色地方。</p>
+<p><img src="/img/LLM/attn_slice2.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>于是，让我们考虑一个线程块内的事情，由于 MMA 指令都是指挥一个 Warp 做事情，因此我们还需要考虑一个线程块内所有 Warp 要如何切分。</p>
+<p>这里的关键在于 m16n8k16 的矩阵方块对应一个 Warp，需要用这个16行16列的颗粒度铺满整个矩阵 A，用16行8列颗粒度铺满矩阵 B，进而完成矩阵乘法计算。</p>
+<p>在纸上画一下，使用 mma 分割方式只有一种，但用 Warp 分割的方式可以有很多种。比如说，我们假定一个线程块有 8 个 Warps，即 256 个线程，那么可以按下面任意方式将矩阵分成 8 份，每份由一个 Warp 来负责计算，每种 Warps 的切分实现的代码就会不一样。若再考虑到 block size 可以改变的话，实现的方案会更多，至于哪种性能最优，最简单的办法就是 tune 一遍看。</p>
+<p><img src="/img/LLM/attn_slice3.png" srcset="/img/loading.gif" lazyload alt=""></p>
+<p>那么，我们就取图中第一种分割方法来实现 mma 吧。</p>
+<h2 id="线程与数据的映射">线程与数据的映射</h2>
+<p>写 CUDA 马虎不得，尤其是处理哪个线程对应处理哪块数据时更加马虎不得。我们仔细地按照上图第一种方式做切分。调用函数情况如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">dim3 <span class="hljs-title">gird</span><span class="hljs-params">(b*h, (sq+<span class="hljs-number">63</span>)/<span class="hljs-number">64</span>)</span></span>;<br><span class="hljs-function">dim3 <span class="hljs-title">block</span><span class="hljs-params">(<span class="hljs-number">256</span>)</span></span>;<br>flash_attn_fwd&lt;&lt;&lt;grid, block&gt;&gt;&gt;(Q, K, V, ...);<br></code></pre></td></tr></table></figure>
+<p><img src="" srcset="/img/loading.gif" lazyload alt="使用该图作参考"></p>
+<p>假设我们已经拿到了 QKV 三个 global tensor 指针：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++">half* Q;<br>half* K;<br>half* V;<br></code></pre></td></tr></table></figure>
+<p>那么首先，要确定哪个线程块对应哪块数据，然后把他们的部分装到 shared memory，否则就在一开始就 load 错数据了。</p>
+<p>考虑矩阵 Q，注意它是四维的，<code>[b, h, sq, d]</code>，所以寻址会非常复杂。我们之前说过，前两个维度是用 grid 切的 <code>grid(b*h, (sq+nrow)/nrow)</code>。</p>
+<p>所以图中，矩阵 A 的一页大矩阵就是一个 <code>blockIdx.x</code> ，它将矩阵 A 切分成了 <code>b*h</code> 份，因而一个 <code>blockIdx.x</code> 对应的大小是 <code>sq*d</code>，所以这块的偏移量是：<code>blockIdx.x * sq * d</code>，然后再考虑 <code>blockIdx.y</code> 它用于寻址页内的block id 数，因此它对应的大小是 <code>64 * d</code>，所以这块偏移量是 <code>blockIdx.y * nrow * d</code>，那么总偏移量就是：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 对应一个深色块起始地址 Q</span><br><span class="hljs-type">int</span> Q_blk_gmem_offset = blockIdx.x * sq * d + blockIdx.y * nrow * d;<br></code></pre></td></tr></table></figure>
+<p>对于 K 而言，也是一样的道理：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 对应一个深色块起始地址 K</span><br><span class="hljs-type">int</span> K_blk_gmem_offset = blockIdx.x * sq * d + blockIdx.y * nrow * d;<br></code></pre></td></tr></table></figure>
+<p>然后要确认线程块内每个 Warp 负责区域的偏移量，要明确每个线程属于哪个 warp：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">int</span> warpid = threadIdx.x % <span class="hljs-number">32</span>;<br><span class="hljs-type">const</span> <span class="hljs-type">int</span> mmaDimx = <span class="hljs-number">2</span>;<br><span class="hljs-type">const</span> <span class="hljs-type">int</span> mmaDimy = <span class="hljs-number">2</span>;<br><span class="hljs-type">int</span> Q_warp_smem_offset = warpid / <span class="hljs-number">4</span> * mmaDimx * <span class="hljs-number">16</span> * d;<br><span class="hljs-type">int</span> K_warp_smem_offset = warpid % <span class="hljs-number">4</span> * mmaDimy * <span class="hljs-number">8</span> * d;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/cuda/" class="print-no-link">#cuda</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>使用 MMA 的 flash-attn 实现</div>
+      <div>https://dingfen.github.io/2025/03/09/2025-3-9-mma/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年3月9日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2025年10月4日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/10/04/2025-10-04-ray/" title="Ray 框架初步认知与理解">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Ray 框架初步认知与理解</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/02/03/2025-2-3-ncompute/" title="ncompute 学习与使用">
+                        <span class="hidden-mobile">ncompute 学习与使用</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>
