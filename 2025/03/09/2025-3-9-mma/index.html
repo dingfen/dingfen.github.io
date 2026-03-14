@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dingfen.github.io/img/LLM/flashattention_logo.png">
 <meta property="article:published_time" content="2025-03-09T03:23:00.000Z">
-<meta property="article:modified_time" content="2026-03-08T06:28:44.597Z">
+<meta property="article:modified_time" content="2026-03-10T15:58:52.328Z">
 <meta property="article:author" content="Bill Ding">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="cuda">
@@ -281,7 +281,7 @@
                 
                   
                     <!-- compatible with older versions-->
-                    更新于：2026-03-08T14:28:44+08:00
+                    更新于：2026-03-10T23:58:52+08:00
                   
                   
 
@@ -303,10 +303,10 @@
 <li>MMA 则是一种更加底层的实现，通过 PTX 汇编语言描述，其数据直接面向寄存器表示，计算则是通过 <code>mma.sync</code> 类的函数实现。MMA 形式的编程直接面向寄存器表示和汇编指令，难道较大，容易出错，但是可以实现精细的控制从而达到更高的计算效率。</li>
 </ul>
 <p>那么今天这篇博客先介绍一下常见的 MMA 指令以及使用方法。</p>
-<h1>MMA 指令入门</h1>
+<h2 id="MMA-指令入门">MMA 指令入门</h2>
 <p>先具体介绍一下 PTX 汇编实现的 MMA 指令。</p>
-<h2 id="ldmatrix">ldmatrix</h2>
-<h3 id="指令格式">指令格式</h3>
+<h3 id="ldmatrix">ldmatrix</h3>
+<h4 id="指令格式">指令格式</h4>
 <figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">ldmatrix.sync.aligned.shape.num&#123;<span class="hljs-string">.trans</span>&#125;&#123;<span class="hljs-string">.ss</span>&#125;<span class="hljs-string">.type</span> r, [p];<br><br><span class="hljs-string">.shape</span>   = &#123;<span class="hljs-string">.m8n8</span>, <span class="hljs-string">.m16n16</span>&#125;;<br><span class="hljs-string">.num</span>     = &#123;<span class="hljs-string">.x1</span>, <span class="hljs-string">.x2</span>, <span class="hljs-string">.x4</span>&#125;;<br><span class="hljs-string">.ss</span>      = &#123;<span class="hljs-string">.shared</span>&#123;:<span class="hljs-function">:cta</span>&#125;&#125;;<br><span class="hljs-string">.type</span>    = &#123;<span class="hljs-string">.b16</span>, <span class="hljs-string">.b8</span>&#125;;<br><span class="hljs-string">.dst_fmt</span> = &#123; <span class="hljs-string">.b8x16</span> &#125;;<br><span class="hljs-string">.src_fmt</span> = &#123; <span class="hljs-string">.b6x16_p32</span>, <span class="hljs-string">.b4x16_p64</span> &#125;;<br></code></pre></td></tr></table></figure>
 <p>ldmatrix 指令的使用格式例子: <code>ldmatrix.sync.aligned.m8n8.x1.shared.b16 &#123; %0 &#125;, [ %1 ];</code><br>
 这条 PTX 指令掺杂了太多信息，让我们逐个分析：</p>
@@ -322,7 +322,7 @@
 </ul>
 <p>注意：PTX 汇编本身不会直接使用 {}，[] 用于表示<em>内存地址访问</em>或<em>间接寻址</em>。它类似于 C/C++ 中的数组下标操作，用于从内存中加载数据或将数据存储到内存中</p>
 <p>总结下来，可以这么说，该指令让一个 Warp（32个线程），从 Shared Memory 的 [p] 地址中加载 1 个 8*8(m8n8) 的矩阵（必须要求该矩阵的每行必须连续存放，但行间可以不连续存放），存放到了目标寄存器 %0 中。</p>
-<h3 id="行列数据排布">行列数据排布</h3>
+<h4 id="行列数据排布">行列数据排布</h4>
 <p>那我们来继续分析一下这条指令其他值得注意的地方，首先 ldmatrix 指令一次执行，可以将 m8n8 的 bf16 矩阵的 64 个数据元素从 shared memory 搬运到寄存器中，一共 128 个字节。</p>
 <p>读取 shared memory 时，这 8 行 8 列中，仅要求行内的元素连续，而行间的位置可以不连续，所以需要用户确保 thread0-thread7 的 %1 寄存器填充的是8个行首地址，其他情况见下面表格。</p>
 <table>
@@ -375,8 +375,8 @@
 <p>已知使用 ldmatrix 指令一次可以加载 m8n8 大小的矩阵数据，故需要加载 4 个 m8n8 的矩阵，于是可直接使用 <code>ldmatrix.sync.aligned.m8n8.x4.shared.b16</code> 这个 PTX 指令。另外需要注意，我们必须给 Warp 内的每个线程都安排好对应的寄存器，否则就会出现错误。x4 意味着每个线程需要准备 4 个寄存器，加载 8 个 bf16 元素。对于线程 Ti，根据之前的分析，</p>
 <p>于是，代码可以这么写：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">const</span> <span class="hljs-type">int</span> lane_id = threadIdx.x % <span class="hljs-number">32</span>; <span class="hljs-comment">// First, we get the current thread id in the warp</span><br><span class="hljs-type">uint32_t</span> r[<span class="hljs-number">4</span>];                        <span class="hljs-comment">// Allocate 4 registers for each thread</span><br><span class="hljs-type">uint32_t</span> load_smem_ptr = __cvta_generic_to_shared( <span class="hljs-comment">// convert generic address(pointer)</span><br>  &amp;src_matrix[lane_id % <span class="hljs-number">16</span>][(lane_id / <span class="hljs-number">16</span>) * <span class="hljs-number">8</span>]    <span class="hljs-comment">// to share space offset, often used</span><br>);                      <span class="hljs-comment">// in PTX which requires shared space offset rather than pointer</span><br><span class="hljs-built_in">LDMATRIX_M8N8_X4</span>(r[<span class="hljs-number">0</span>], r[<span class="hljs-number">1</span>], r[<span class="hljs-number">2</span>], r[<span class="hljs-number">3</span>], load_smem_ptr);<br></code></pre></td></tr></table></figure>
-<h2 id="mma">mma</h2>
-<h3 id="指令格式-2">指令格式</h3>
+<h3 id="mma">mma</h3>
+<h4 id="指令格式-2">指令格式</h4>
 <figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">mma.sync.aligned.m8n8k4.alayout.blayout.dtype.f16.f16.ctype  d, a, b, c;<br>mma.sync.aligned.m16n8k8.row.col.dtype.f16.f16.ctype  d, a, b, c;<br>mma.sync.aligned.m16n8k16.row.col.dtype.f16.f16.ctype d, a, b, c;<br><br><span class="hljs-string">.alayout</span> = &#123;<span class="hljs-string">.row</span>, <span class="hljs-string">.col</span>&#125;;<br><span class="hljs-string">.blayout</span> = &#123;<span class="hljs-string">.row</span>, <span class="hljs-string">.col</span>&#125;;<br><span class="hljs-string">.ctype</span>   = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><span class="hljs-string">.dtype</span>   = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><br><br>mma.sync.aligned.m16n8k4.row.col.f32.tf32.tf32.f32        d, a, b, c;<br>mma.sync.aligned.m16n8k8.row.col.f32.atype.btype.f32      d, a, b, c;<br>mma.sync.aligned.m16n8k16.row.col.f32.bf16.bf16.f32       d, a, b, c;<br>mma.sync.aligned.shape.row.col.dtype.f8type.f8type.ctype  d, a, b, c;<br>mma.sync.aligned.m16n8k32.row.col.kind.dtype.f8f6f4type.f8f6f4type.ctype d, a, b, c;<br><br><span class="hljs-string">.atype</span>      = &#123;<span class="hljs-string">.bf16</span>, <span class="hljs-string">.tf32</span>&#125;;<br><span class="hljs-string">.btype</span>      = &#123;<span class="hljs-string">.bf16</span>, <span class="hljs-string">.tf32</span>&#125;;<br><span class="hljs-string">.f8type</span>     = &#123;<span class="hljs-string">.e4m3</span>, <span class="hljs-string">.e5m2</span>&#125;;<br><span class="hljs-string">.f8f6f4type</span> = &#123;<span class="hljs-string">.e4m3</span>, <span class="hljs-string">.e5m2</span>, <span class="hljs-string">.e3m2</span>, <span class="hljs-string">.e2m3</span>, <span class="hljs-string">.e2m1</span>&#125;;<br><span class="hljs-string">.ctype</span>      = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><span class="hljs-string">.dtype</span>      = &#123;<span class="hljs-string">.f16</span>, <span class="hljs-string">.f32</span>&#125;;<br><span class="hljs-string">.shape</span>      = &#123;<span class="hljs-string">.m16n8k16</span>, <span class="hljs-string">.m16n8k32</span>&#125;;<br><span class="hljs-string">.kind</span>       = &#123;<span class="hljs-string">.kind</span>:<span class="hljs-function">:f8f6f4</span>&#125;;<br></code></pre></td></tr></table></figure>
 <p>mma 的指令格式要复杂得多，但功能都是一样的，实现 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>A</mi><mo>×</mo><mi>B</mi><mo>+</mo><mi>C</mi></mrow><annotation encoding="application/x-tex">D=A\times B+C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">A</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>，简单起见，我们主要看一下这条指令（下指 mma m16n8k16）：</p>
 <p><code>mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 &#123;%0, %1&#125;, &#123;%2, %3, %4, %5&#125;, &#123;%6, %7&#125;, &#123;%8, %9&#125;;</code></p>
@@ -390,7 +390,7 @@
 <hr>
 <p>同样地，可以写出如下宏指令或 <code>inline</code> 函数来帮助我们使用 PTX 指令</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">define</span> HMMA16816(RD0, RD1, RA0, RA1, RA2, RA3, RB0, RB1, RC0, RC1) \</span><br><span class="hljs-meta">  asm volatile(<span class="hljs-string">&quot;mma.sync.aligned.m16n8k16.row.col.f16.f16.f16.f16 \</span></span><br><span class="hljs-string"><span class="hljs-meta">  &#123;%0, %1&#125;, &#123;%2, %3, %4, %5&#125;, &#123;%6, %7&#125;, &#123;%8, %9&#125;;\n&quot;</span> : \</span><br><span class="hljs-meta">  <span class="hljs-string">&quot;=r&quot;</span>(RD0), <span class="hljs-string">&quot;=r&quot;</span>(RD1) : \</span><br><span class="hljs-meta">  <span class="hljs-string">&quot;r&quot;</span>(RA0), <span class="hljs-string">&quot;r&quot;</span>(RA1), <span class="hljs-string">&quot;r&quot;</span>(RA2), <span class="hljs-string">&quot;r&quot;</span>(RA3), \</span><br><span class="hljs-meta">  <span class="hljs-string">&quot;r&quot;</span>(RB0), <span class="hljs-string">&quot;r&quot;</span>(RB1), \</span><br><span class="hljs-meta">  <span class="hljs-string">&quot;r&quot;</span>(RC0), <span class="hljs-string">&quot;r&quot;</span>(RC1))</span><br><br><span class="hljs-built_in">HMMA16816</span>(RC[<span class="hljs-number">0</span>], RC[<span class="hljs-number">1</span>], RA[<span class="hljs-number">0</span>], RA[<span class="hljs-number">1</span>], RA[<span class="hljs-number">2</span>], RA[<span class="hljs-number">3</span>], RB[<span class="hljs-number">0</span>], RB[<span class="hljs-number">1</span>], RC[<span class="hljs-number">0</span>], RC[<span class="hljs-number">1</span>]);<br></code></pre></td></tr></table></figure>
-<h3 id="使用-MMA-完成矩阵乘法">使用 MMA 完成矩阵乘法</h3>
+<h4 id="使用-MMA-完成矩阵乘法">使用 MMA 完成矩阵乘法</h4>
 <p>学会了 mma 指令和 ldmatrix 指令后，我们就可以简单地用他们来练练手，写一个 m16n8k16 bf16 的矩阵乘法：</p>
 <p>首先假设，我们已经从 global memory 中加载了矩阵 A 和 B，并放在了 shared memory 中。于是我们就只剩下将他们从 shared memory 中加载到寄存器中，再进行矩阵乘法了！</p>
 <p>考虑到矩阵 A 的大小是 16x16 的 bf16 矩阵，于是和之前的 ldmatrix 例子一样，我们使用 <code>ldmatrix.sync.aligned.m8n8.x4.shared.b16</code> 将矩阵 A load 到寄存器中：</p>
@@ -483,7 +483,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>更新于</div>
-          <div>2026年3月8日</div>
+          <div>2026年3月10日</div>
         </div>
       
       
