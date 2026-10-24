@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="170 0 690 950" width="690" height="950" role="img" aria-labelledby="moe-flow-title">
+  <title id="moe-flow-title">DeepSeek V4 MoE 层全局计算流：gate 路由、routed experts 的 gemm1/激活/gemm2 与 shared experts 旁路</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6B7280"/>
+    </marker>
+    <style>
+      .box   { fill:#EBF3FB; stroke:#5B8DB8; stroke-width:1.5; }
+      .iobox { fill:#EEF1F5; stroke:#5A6B7B; stroke-width:1.5; }
+      .sbox  { fill:#E6F6EC; stroke:#61A983; stroke-width:1.5; }
+      .vbox  { fill:#FAFBFD; stroke:#9AA8B8; stroke-width:1.2; stroke-dasharray:5 4; }
+      .vboxg { fill:#F2FAF5; stroke:#7CBFA0; stroke-width:1.2; stroke-dasharray:5 4; }
+      .t  { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#1F2937; font-size:14px; font-weight:600; text-anchor:middle; }
+      .ts { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#6B7280; font-size:12px; text-anchor:middle; }
+      .tt { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#374151; font-size:13px; font-weight:600; text-anchor:middle; }
+      .ln  { stroke:#6B7280; stroke-width:1.5; fill:none; marker-end:url(#arrow); }
+      .lnn { stroke:#6B7280; stroke-width:1.5; fill:none; }
+    </style>
+  </defs>
+
+  <rect x="170" y="0" width="690" height="950" fill="#FFFFFF"/>
+
+  <!-- 输入 -->
+  <rect class="iobox" x="230" y="24" width="300" height="52" rx="10"/>
+  <text class="t" x="380" y="55">hidden_states [M, H] · bf16</text>
+
+  <!-- 分叉：主链 + shared 旁路 -->
+  <path class="lnn" d="M 380 76 V 96"/>
+  <circle cx="380" cy="96" r="3.5" fill="#6B7280"/>
+  <path class="lnn" d="M 380 96 H 700"/>
+  <path class="ln" d="M 700 96 V 114"/>
+  <path class="ln" d="M 380 96 V 114"/>
+
+  <!-- gate -->
+  <rect class="box" x="230" y="116" width="300" height="58" rx="10"/>
+  <text class="t" x="380" y="141">gate（router）：Linear H→E</text>
+  <text class="ts" x="380" y="161">打分 → logits [M, 256]</text>
+
+  <!-- Top-K -->
+  <path class="ln" d="M 380 174 V 202"/>
+  <rect class="box" x="230" y="204" width="300" height="58" rx="10"/>
+  <text class="t" x="380" y="229">Top-K 路由（6 / 256）</text>
+  <text class="ts" x="380" y="249">topk_ids / topk_weights [M, 6]</text>
+
+  <!-- dispatch -->
+  <path class="ln" d="M 380 262 V 290"/>
+  <rect class="box" x="230" y="292" width="300" height="58" rx="10"/>
+  <text class="t" x="380" y="317">dispatch：token 按目标专家分组</text>
+  <text class="ts" x="380" y="337">EP 部署：all2all 发往专家所在 rank</text>
+
+  <!-- routed experts 容器 -->
+  <path class="ln" d="M 380 350 V 378"/>
+  <rect class="vbox" x="200" y="380" width="360" height="300" rx="12"/>
+  <text class="tt" x="380" y="404">routed experts（本 rank 本地专家，EP 分片）</text>
+
+  <rect class="box" x="215" y="418" width="330" height="56" rx="10"/>
+  <text class="t" x="380" y="442">gemm1：w13（gate / up 投影）</text>
+  <text class="ts" x="380" y="462">H → 2I · fp8 激活 × MXFP4 权重</text>
+
+  <path class="ln" d="M 380 474 V 500"/>
+  <rect class="box" x="215" y="502" width="330" height="56" rx="10"/>
+  <text class="t" x="380" y="526">SiLU / SiTU 激活</text>
+  <text class="ts" x="380" y="546">融合激活量化 → fp8</text>
+
+  <path class="ln" d="M 380 558 V 584"/>
+  <rect class="box" x="215" y="586" width="330" height="56" rx="10"/>
+  <text class="t" x="380" y="610">gemm2：w2（down 投影）</text>
+  <text class="ts" x="380" y="630">I → H</text>
+
+  <!-- combine -->
+  <path class="ln" d="M 380 642 V 716"/>
+  <rect class="box" x="230" y="718" width="300" height="58" rx="10"/>
+  <text class="t" x="380" y="743">combine：按 topk 权重加权求和</text>
+  <text class="ts" x="380" y="763">EP：反 all2all 收回原 token</text>
+
+  <!-- 相加 -->
+  <path class="ln" d="M 380 776 V 798"/>
+  <circle cx="380" cy="816" r="16" fill="#E3EEF9" stroke="#5B8DB8" stroke-width="1.5"/>
+  <text class="t" x="380" y="822" font-size="16">+</text>
+
+  <!-- shared experts 旁路 -->
+  <rect class="vboxg" x="575" y="116" width="250" height="300" rx="12"/>
+  <text class="tt" x="700" y="140">shared experts（始终激活）</text>
+
+  <rect class="sbox" x="595" y="158" width="210" height="56" rx="10"/>
+  <text class="t" x="700" y="182">gemm1：w13</text>
+  <text class="ts" x="700" y="202">H → 2I&#8242;</text>
+
+  <path class="ln" d="M 700 214 V 240"/>
+  <rect class="sbox" x="595" y="242" width="210" height="56" rx="10"/>
+  <text class="t" x="700" y="266">SiLU / SiTU</text>
+  <text class="ts" x="700" y="286">激活 + 量化</text>
+
+  <path class="ln" d="M 700 298 V 324"/>
+  <rect class="sbox" x="595" y="326" width="210" height="56" rx="10"/>
+  <text class="t" x="700" y="350">gemm2：w2</text>
+  <text class="ts" x="700" y="370">I&#8242; → H</text>
+
+  <!-- shared 输出汇入相加 -->
+  <path class="ln" d="M 700 416 V 816 H 398"/>
+
+  <!-- 输出 -->
+  <path class="ln" d="M 380 832 V 864"/>
+  <rect class="iobox" x="230" y="866" width="300" height="52" rx="10"/>
+  <text class="t" x="380" y="897">output [M, H] · bf16 → 下一层</text>
+</svg>

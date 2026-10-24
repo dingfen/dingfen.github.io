@@ -1,0 +1,1399 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从 routing 到 ep_gather，逐段拆解 vLLM v0.30.0 的 DeepGemm MoE 三段式栈， 以及 FP8 block &#x2F; MXFP8 &#x2F; W4A8 MXFP4 三条配方在 SM100 上的差异">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Blackwell 上的 DeepGEMM FusedMoE（vLLM）">
+<meta property="og:url" content="https://dingfen.github.io/2026/09/23/2026-9-23-deepseek-v4-sm100-deepgemm-moe/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="从 routing 到 ep_gather，逐段拆解 vLLM v0.30.0 的 DeepGemm MoE 三段式栈， 以及 FP8 block &#x2F; MXFP8 &#x2F; W4A8 MXFP4 三条配方在 SM100 上的差异">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-09-23T07:30:00.000Z">
+<meta property="article:modified_time" content="2026-10-24T11:28:34.487Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="cuda">
+<meta property="article:tag" content="deepgemm">
+<meta property="article:tag" content="moe">
+<meta property="article:tag" content="vllm">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Blackwell 上的 DeepGEMM FusedMoE（vLLM） - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Blackwell 上的 DeepGEMM FusedMoE（vLLM）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-23 15:30" pubdate>
+          2026年9月23日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          37 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Blackwell 上的 DeepGEMM FusedMoE（vLLM）</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2026-10-24T19:28:34+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Blackwell 上的 DeepGEMM FusedMoE</h1>
+<ul>
+<li>基准版本：vLLM <strong><code>v0.30.0</code></strong>（本地 tag 检出）</li>
+<li>代码路径前缀：<code>vllm/model_executor/layers/fused_moe/</code>（下文链接均指向 v0.30.0 源码，链接文字即函数 / 类 / 变量名）</li>
+</ul>
+<h2 id="TL-DR">TL;DR</h2>
+<p>今天我们来扒一下当前最火热的大模型推理框架之一 vLLM 在 Blackwell（SM100/SM103）上的 FusedMoE 栈，它（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L227"><code>MoERunner</code></a> + <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1100"><code>FusedMoEKernelModularImpl</code></a> 三段式）通过 <code>moe_backend=deep_gemm</code>（或 oracle/auto 落到 DeepGEMM）支持三种配方：</p>
+<table>
+<thead>
+<tr>
+<th>量化方法</th>
+<th>Experts 类</th>
+<th>grouped GEMM</th>
+<th>量化组合</th>
+<th>硬件门槛</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FP8 block 128×128</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L125"><code>DeepGemmExperts</code></a>（Triton 兜底由 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/triton_deep_gemm_moe.py#L24"><code>TritonOrDeepGemmExperts</code></a> 组合）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L486:L493"><code>m_grouped_fp8_gemm_nt_contiguous</code></a></td>
+<td>W8A8（静态 block 权重 + 动态 128 激活）</td>
+<td>SM90 起（SM100 上激活尺度走 E8M0 路径）</td>
+</tr>
+<tr>
+<td>MXFP8（1×32）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L125"><code>DeepGemmExperts</code></a>（<code>block_shape == [1,32]</code> 分支，见 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L128:L141"><code>__init__</code></a>）</td>
+<td>同上 + recipe (1,32)</td>
+<td>权重 MXFP8（E8M0/32） + 动态 MXFP8 激活</td>
+<td>SM100</td>
+</tr>
+<tr>
+<td>W4A8 MXFP4</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L396"><code>DeepGemmFP4Experts</code></a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L495:L502"><code>m_grouped_fp8_fp4_gemm_nt_contiguous</code></a></td>
+<td>MXFP4 权重（E2M1 + E8M0/32） × FP8 激活（128）</td>
+<td>SM100/120</td>
+</tr>
+</tbody>
+</table>
+<p>每个专家的计算是固定的六步流水线：</p>
+<ol>
+<li>对齐 M 维度（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L28:L84"><code>compute_aligned_M_and_alignment</code></a>）→</li>
+<li>重排序 permute（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L459:L552"><code>deepgemm_moe_permute</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L275:L354"><code>ep_scatter</code></a>：Triton <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L115:L159"><code>_fwd_kernel_ep_scatter_1</code></a>/<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L161:L273"><code>_fwd_kernel_ep_scatter_2</code></a>，产出 <code>m_indices</code>/<code>inv_perm</code>）→</li>
+<li>计算 GEMM1（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L486:L493"><code>m_grouped_fp8_gemm_nt_contiguous</code></a>）→</li>
+<li>激活运算，SwiGLU + 动态量化（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L225:L285"><code>DeepGemmExperts._act_mul_quant</code></a>：<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L250:L325"><code>silu_mul_quant_fp8_packed_triton</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L414:L489"><code>silu_mul_per_token_group_quant_fp8_colmajor</code></a>）→</li>
+<li>计算 GEMM2（同 <code>m_grouped_fp8_gemm_nt_contiguous</code>）→</li>
+<li>ep_gather 加权归约（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L554:L570"><code>deepgemm_unpermute_and_reduce</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L418:L457"><code>ep_gather</code></a>：Triton <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L356:L416"><code>_fwd_kernel_ep_gather</code></a>）</li>
+</ol>
+<p>SM100 与 Hopper 的差别集中在尺度格式（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L54:L108"><code>UE8M0</code></a> int32 packed vs fp32）与 FP4/MXFP8 两条 Blackwell 专属配方上；TP 与 EP（无 DP / DP+SP）的分岔逻辑两代一致。</p>
+<p>本文讲的代码路径：（以 vLLM 0.30.0 为例）</p>
+<ul>
+<li>模型侧：DeepSeek V4/Kimi K3 等<strong>非 mega</strong> MoE 层，经由 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/layer.py#L88"><code>FusedMoEFactory</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L227"><code>MoERunner</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1452:L1547"><code>FusedMoEKernelModularImpl.apply</code></a>；</li>
+<li>Kernel 侧：<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L125"><code>DeepGemmExperts</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L396"><code>DeepGemmFP4Experts</code></a> / <code>BatchedDeepGemmExperts</code>，以及 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/triton_deep_gemm_moe.py#L24"><code>TritonOrDeepGemmExperts</code></a> 的 fallback 组合；</li>
+<li>后端选择：<code>moe_backend=deep_gemm</code> / <code>batched_deep_gemm</code> / <code>auto</code>（oracle）。</li>
+</ul>
+<hr>
+<h2 id="1-全景">1. 全景</h2>
+<h3 id="1-1-六步速览">1.1 六步速览</h3>
+<table>
+<thead>
+<tr>
+<th>步</th>
+<th>位置（v0.30.0）</th>
+<th>关键函数 / 类 / Triton kernel</th>
+<th>输入 → 输出</th>
+<th>重点 tensor（形状 / dtype）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><code>models/deepseek_v4/nvidia/model.py:1260-1353</code></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1260:L1353"><code>DeepseekV4DecoderLayer.forward</code></a>；TileLang <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1291"><code>mhc_pre_tilelang</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1305"><code>mhc_fused_post_pre_tilelang</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1325"><code>sp_all_gather</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1329"><code>sp_reduce_scatter</code></a></td>
+<td>attention 输出 → hidden <code>[M,H]</code> bf16</td>
+<td><code>hidden_states [M,H] bf16</code></td>
+<td>mhc norm/混合 + SP 的 all_gather/reduce_scatter</td>
+</tr>
+<tr>
+<td>1</td>
+<td><code>runner/moe_runner.py:681-791 / 862-937</code></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L681:L791"><code>MoERunner.forward</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L862:L937"><code>_forward_impl</code></a>；shared experts <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L892:L895"><code>maybe_forward_async</code></a></td>
+<td>hidden、router_logits → <code>_forward_impl</code></td>
+<td><code>hidden_states [M,H] bf16</code>；<code>router_logits [M,E_global] fp32</code></td>
+<td>gate → shared expert（可多流 overlap）→ SP context → dispatch</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>runner/moe_runner.py:626-631</code>、<code>router/fused_topk_bias_router.py:345</code></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L626:L631"><code>router.select_experts</code></a>（DSV4 为 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py#L345"><code>FusedTopKBiasRouter</code></a>）</td>
+<td>router_logits → <code>topk_weights [M,topk] fp32</code>、<code>topk_ids [M,topk]</code></td>
+<td><code>topk_weights [M,topk] fp32</code>；<code>topk_ids [M,topk] int32</code>（HT/LL 为 int64）</td>
+<td><code>select_experts</code>，dtype 由 prepare/finalize 约束</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>modular_kernel.py:1452-1547</code></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1452:L1547"><code>FusedMoEKernelModularImpl.apply</code></a>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1211:L1298"><code>_prepare</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1300:L1382"><code>_fused_experts</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1384:L1450"><code>_finalize</code></a>）</td>
+<td>(hidden, topk) → 三段式 apply</td>
+<td><code>output [M,H] bf16</code>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1494"><code>empty_like</code></a>）</td>
+<td><code>output = empty_like</code>；<code>_prepare</code> → <code>_fused_experts</code> → <code>_finalize</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>prepare_finalize/no_dp_ep.py:14-98</code>（或 <code>deepep_ht.py</code> / <code>deepep_ll.py</code>）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/no_dp_ep.py#L57:L79"><code>MoEPrepareAndFinalizeNoDPEPModular.prepare</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/no_dp_ep.py#L14:L39"><code>_quantize_input</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L361:L433"><code>moe_kernel_quantize_input</code></a></td>
+<td>hidden bf16 → <code>a1q fp8 [M,K]</code> + scale</td>
+<td><code>a1q [M,K] fp8_e4m3</code>；scale <code>[M,K/128] fp32</code>（FP8 block）/ <code>[M,K/32] uint8</code>（MXFP8 UE8M0，permute 时打包）</td>
+<td>本地 block 量化（NoDPEP）或 dispatch（HT/LL）</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>experts/deep_gemm_moe.py:287-394</code>（FP8）/ <code>:535-636</code>（FP4）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L287:L394"><code>DeepGemmExperts.apply</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L535:L636"><code>DeepGemmFP4Experts.apply</code></a>；<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L459:L552"><code>deepgemm_moe_permute</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L275:L354"><code>ep_scatter</code></a></td>
+<td>a1q → permuted 缓冲 + <code>m_indices</code> + <code>inv_perm</code></td>
+<td><code>a1q_perm [M_sum,K] fp8_e4m3</code>；<code>expert_ids [M_sum] int32</code>（m_indices）；<code>inv_perm [M,topk] int32</code></td>
+<td><code>deepgemm_moe_permute</code>（ep_scatter）</td>
+</tr>
+<tr>
+<td>6</td>
+<td>同上</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L486:L493"><code>m_grouped_fp8_gemm_nt_contiguous</code></a>（FP4 为 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L495:L502"><code>m_grouped_fp8_fp4_gemm_nt_contiguous</code></a>）；<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L395:L408"><code>mk_alignment_scope</code></a> 包裹</td>
+<td><code>[M_sum,K]</code> → <code>[M_sum,N]</code></td>
+<td><code>mm1_out [M_sum,N] bf16</code>（N = 2×intermediate_size_per_partition）</td>
+<td>grouped GEMM1（<code>mk_alignment_scope</code> 包裹）</td>
+</tr>
+<tr>
+<td>7</td>
+<td>同上 + <code>fp8_utils.py:250/414/683</code></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L225:L285"><code>_act_mul_quant</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L250:L325"><code>silu_mul_quant_fp8_packed_triton</code></a>（本地别名 <code>fused_silu_mul_fp8_quant_packed</code>）/ <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L414:L489"><code>silu_mul_per_token_group_quant_fp8_colmajor</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L683:L755"><code>per_token_group_quant_fp8_packed_for_deepgemm</code></a></td>
+<td><code>[M_sum,N]</code> → <code>[M_sum,N/2]</code> fp8 + packed scale</td>
+<td><code>a2q [M_sum,N/2] fp8_e4m3</code>；scale <code>int32</code>（UE8M0 packed）或 <code>fp32</code>（col-major）</td>
+<td>SwiGLU(gate×up) + clamp + 动态量化</td>
+</tr>
+<tr>
+<td>8</td>
+<td>同上</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L486:L493"><code>m_grouped_fp8_gemm_nt_contiguous</code></a>（GEMM2）；<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L554:L570"><code>deepgemm_unpermute_and_reduce</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L418:L457"><code>ep_gather</code></a></td>
+<td><code>[M_sum,K]</code> → <code>[M,H]</code> bf16</td>
+<td><code>mm2_out [M_sum,K] bf16</code> → <code>output [M,K] bf16</code>（fp32 累加后 cast）</td>
+<td>grouped GEMM2 + <code>ep_gather</code>（fp32 加权累加）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="1-2-调用图">1.2 调用图</h3>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs text">DeepseekV4DecoderLayer.forward()                      models/deepseek_v4/nvidia/model.py:1260<br> ├── self.attn(...)                                   （DP attention 时另有同步处理）<br> └── self.ffn(...) = DeepseekV4MoE                    model.py:1019 / 类 :774<br>      ├── self.gate(hidden_states) → router_logits    （DSV4 用 fp32 logits）<br>      └── self.experts(...) = MoERunner               layer.py:408（FusedMoEFactory 构造）<br>           └── MoERunner.forward()                    runner/moe_runner.py:681<br>                ├── self._forward_entry(...)          :731  = torch.ops.vllm.moe_forward(_shared)<br>                │    └── _forward_impl(...)           :862<br>                │         ├─ shared experts maybe_forward_async   :892<br>                │         ├─ gate → router_logits                 :900<br>                │         └─ with _sequence_parallel_context():   :907<br>                │              ├─ _maybe_dispatch(...)            :911 / :799<br>                │              ├─ _apply_quant_method(...)        :916 / :595<br>                │              │    ├─ router.select_experts(...) :626<br>                │              │    └─ routed_experts.forward_modular<br>                │              │         └─ FusedMoEKernelModularImpl.apply   modular_kernel.py:1452<br>                │              │              ├─ _prepare(...)         :1211  量化 + dispatch<br>                │              │              ├─ _fused_experts(...)   :1300  → DeepGemmExperts.apply<br>                │              │              │    ├─ compute_aligned_M_and_alignment  deep_gemm_moe.py:320<br>                │              │              │    ├─ deepgemm_moe_permute              :331<br>                │              │              │    ├─ with mk_alignment_scope(...)      :356<br>                │              │              │    │    ├─ grouped GEMM1                :358<br>                │              │              │    │    ├─ _act_mul_quant               :370<br>                │              │              │    │    └─ grouped GEMM2                :375<br>                │              │              │    └─ deepgemm_unpermute_and_reduce      :386<br>                │              │              └─ _finalize(...)        :1384<br>                │              └─ _maybe_combine(...)             :924 / :826<br>                └── shared + routed 相加 → 可选 all-reduce  :782 / :480<br></code></pre></td></tr></table></figure>
+<hr>
+<h2 id="2-分步拆解">2. 分步拆解</h2>
+<h3 id="2-1-Step-0：attention-→-hidden-states">2.1 Step 0：attention → hidden states</h3>
+<p>DSV4 的 decoder 层（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1260:L1353"><code>DeepseekV4DecoderLayer.forward</code></a>）里，attention 前后有 mhc（post/pre mix + norm 融合 tilelang kernel，<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1291"><code>mhc_pre_tilelang</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1305"><code>mhc_fused_post_pre_tilelang</code></a>）与 SP 的通信（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1325"><code>sp_all_gather</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L1329"><code>sp_reduce_scatter</code></a>）；输出 <code>hidden_states [num_tokens, hidden]</code> bf16 交给 <code>self.ffn</code>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/models/deepseek_v4/nvidia/model.py#L774"><code>DeepseekV4MoE</code></a>）。这一步与 MoE 后端无关，略过。</p>
+<h3 id="2-2-Step-1：MoERunner——路由之前">2.2 Step 1：MoERunner——路由之前</h3>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L681:L791"><code>MoERunner.forward</code></a>：</p>
+<ol>
+<li>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L731"><code>_forward_entry</code></a>（custom op）→ <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L862:L937"><code>_forward_impl</code></a>；entry 由 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L306:L324"><code>_select_forward</code></a> 在 <code>__init__</code> 里选好，最后落到 <code>torch.ops.vllm.moe_forward</code> 或者 <code>torch.ops.vllm.moe_forward_shared</code>，取决于有没有 shared experts。</p>
+ <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python">self._forward_entry = self._select_forward()<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">_select_forward</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-type">Callable</span>:<br>    <span class="hljs-keyword">if</span> current_platform.is_tpu():<br>        ...<br>    <span class="hljs-keyword">if</span> current_platform.is_cpu():<br>        ...<br><br>    <span class="hljs-keyword">return</span> (<br>        torch.ops.vllm.moe_forward<br>        <span class="hljs-keyword">if</span> self._shared_experts <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span><br>        <span class="hljs-keyword">else</span> torch.ops.vllm.moe_forward_shared<br>    )<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">...</span>):<br>    result = self._forward_entry(<br>        hidden_states,<br>        router_logits,<br>        shared_experts_input,<br>        input_ids,<br>        self._encode_layer_name(),<br>        self.moe_config.hidden_dim_unpadded<br>        <span class="hljs-keyword">if</span> self._quant_method.has_unpadded_output<br>        <span class="hljs-keyword">else</span> <span class="hljs-number">0</span>,<br>    )<br></code></pre></td></tr></table></figure>
+<p><code>torch.ops.vllm.moe_forward_shared</code> 会调用到 <code>DeepseekV4MoE.experts</code> 层实现中（详细过程见附录 B），而 experts 的类其实就是 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L227"><code>MoERunner</code></a>（经过 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/layer.py#L88"><code>FusedMoEFactory</code></a> 构造得到）。</p>
+</li>
+<li>
+<p>shared experts 若支持多流，先 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L892:L895"><code>maybe_forward_async</code></a> 异步发射，与后续 dispatch 重叠；</p>
+</li>
+<li>
+<p>gate 输出 <code>router_logits</code>（FP8 模型里 DSV4 用 fp32 logits，见 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L900:L905"><code>self.gate</code></a>）；</p>
+</li>
+<li>
+<p><code>with self._sequence_parallel_context():</code> 内做 dispatch → quant method → combine（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L907:L927"><code>_sequence_parallel_context</code></a>）。</p>
+</li>
+</ol>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L799:L824"><code>_maybe_dispatch</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L826:L860"><code>_maybe_combine</code></a> 只在 <strong>naive 模式</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L794:L797"><code>do_naive_dispatch_combine</code></a>：<code>dp&gt;1</code> 或 SP 且不用 all2all kernels）才走 <code>get_ep_group().dispatch_router_logits/combine</code> 的 AG+RS；用了 DeepEP HT/LL 时 dispatch/combine 在 prepare/finalize 内部完成。</p>
+<h3 id="2-3-Step-2：路由与-topk-dtype">2.3 Step 2：路由与 topk dtype</h3>
+<p>模块化路径下先显式选专家（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L595:L648"><code>_apply_quant_method</code></a>）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python">topk_weights, topk_ids = self.router.select_experts(<br>    hidden_states=hidden_states,<br>    router_logits=router_logits,<br>    topk_indices_dtype=self._quant_method.topk_indices_dtype,<br>    input_ids=input_ids,<br>)<br></code></pre></td></tr></table></figure>
+<p><code>topk_indices_dtype</code> 由 prepare/finalize 反向决定（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/fused_moe_method_base.py#L110:L113"><code>FusedMoEMethodBase.topk_indices_dtype</code></a> → <code>moe_kernel.prepare_finalize.topk_indices_dtype()</code>）：</p>
+<table>
+<thead>
+<tr>
+<th>prepare/finalize</th>
+<th>topk dtype</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NoDPEP（TP / 无 DP 的 EP）</td>
+<td><code>None</code>（保持 int32 等原 dtype）</td>
+<td>纯本地，无约束（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/no_dp_ep.py#L48:L49"><code>MoEPrepareAndFinalizeNoDPEPModular.topk_indices_dtype</code></a>）</td>
+</tr>
+<tr>
+<td>DeepEP HT</td>
+<td><code>torch.int64</code></td>
+<td>DeepEP dispatch 要求 int64（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ht.py#L93:L94"><code>DeepEPHTPrepareAndFinalize.topk_indices_dtype</code></a>）</td>
+</tr>
+<tr>
+<td>DeepEP LL</td>
+<td><code>torch.int64</code></td>
+<td>同上（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L152:L153"><code>DeepEPLLPrepareAndFinalize.topk_indices_dtype</code></a>）</td>
+</tr>
+</tbody>
+</table>
+<p>DSV4 的路由器是 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/router/fused_topk_bias_router.py#L345"><code>FusedTopKBiasRouter</code></a>（sqrtsoftplus + <code>e_score_correction_bias</code> + hash 查表 + vision <code>bias_vl</code>），输出 <code>topk_weights</code> fp32、<code>topk_ids</code>（<code>select_experts</code> 里按 dtype 需求转换）。DeepGEMM 的 permute 内核要求 topk_ids <strong>必须是有符号类型</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L470"><code>topk_ids.dtype.is_signed</code></a>），用 -1 表示无效槽位。</p>
+<h3 id="2-4-Step-3：FusedMoEKernel-apply-三段式">2.4 Step 3：FusedMoEKernel.apply 三段式</h3>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1452:L1547"><code>FusedMoEKernelModularImpl.apply</code></a>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">output = torch.empty_like(hidden_states)                       <span class="hljs-comment"># :1494</span><br>a1q, a1q_scale, expert_tokens_meta, topk_ids, topk_weights = self._prepare(...)   <span class="hljs-comment"># :1500</span><br>fused_out = self._fused_experts(in_dtype=hidden_states.dtype, a1q=a1q, ...)        <span class="hljs-comment"># :1516</span><br><span class="hljs-keyword">return</span> self._finalize(output, fused_out, hidden_states, topk_weights, topk_ids, ...)  <span class="hljs-comment"># :1536</span><br></code></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1211:L1298"><code>_prepare</code></a> 调 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1243:L1252"><code>self.prepare_finalize.prepare</code></a>（<code>defer_input_quant=self.fused_experts.expects_unquantized_inputs</code>）。DeepGEMM 的 experts <strong>不</strong>消费未量化输入，所以 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L523"><code>expects_unquantized_inputs</code></a> 为 <code>False</code>（默认），量化在 prepare 阶段完成。</p>
+<h3 id="2-5-Step-4：prepare——量化与-dispatch">2.5 Step 4：prepare——量化与 dispatch</h3>
+<p>以最常见的 NoDPEP（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/no_dp_ep.py#L40:L98"><code>MoEPrepareAndFinalizeNoDPEPModular</code></a>）为例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_quantize_input</span>(<span class="hljs-params">a1, quant_config, defer_input_quant=<span class="hljs-literal">False</span></span>):     <span class="hljs-comment"># :14-39</span><br>    input_sf = quant_config.a1_scale<br>    a1q, a1q_scale = moe_kernel_quantize_input(<br>        a1, input_sf,<br>        quant_dtype=quant_config.quant_dtype,<br>        per_act_token_quant=quant_config.per_act_token_quant,<br>        block_shape=quant_config.block_shape,<br>        is_scale_swizzled=quant_config.is_scale_swizzled,<br>        mx_alignment=quant_config.mx_alignment,<br>    )<br></code></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L361:L433"><code>moe_kernel_quantize_input</code></a> 按 <code>quant_dtype</code> 分派：</p>
+<table>
+<thead>
+<tr>
+<th>quant_dtype</th>
+<th>实现</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fp8</code>（DSV4 fp8 权重路径）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L223:L247"><code>_fp8_quantize</code></a> → block 时 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L554:L681"><code>per_token_group_quant_fp8</code></a></td>
+<td>fp8 激活 + fp32 分组尺度（128 组）</td>
+</tr>
+<tr>
+<td><code>mxfp8</code>（Kimi K3 等）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L311:L325"><code>_mxfp8_e4m3_quantize</code></a></td>
+<td>fp8 激活 + <strong>uint8 UE8M0</strong> 分组尺度（32 组，permute 时打包）</td>
+</tr>
+<tr>
+<td><code>nvfp4</code> / <code>int8</code> / …</td>
+<td>对应实现（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L215:L222"><code>_nvfp4_quantize</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L249:L282"><code>_int8_quantize</code></a>）</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>EP 场景：</p>
+<ul>
+<li><strong>DeepEP HT</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ht.py#L269:L322"><code>prepare_async</code></a>）：<code>quant_config.is_block_quantized and not defer_input_quant</code> 时<strong>先量化再 dispatch</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ht.py#L293:L303"><code>quant_config.is_block_quantized</code></a> 分支），否则 dispatch bf16、落地后量化（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ht.py#L194:L264"><code>_receiver</code></a>）。dispatch 返回的 <code>expert_topk_ids</code> 带 rank 偏移，接收侧把它<strong>还原回全局 id</strong> 以便 <code>expert_map</code> 映射，并构造 <code>ExpertTokensMetadata</code>。这种“每专家 token 数已知”的元数据是 kernel 侧省掉一次计数 kernel 的关键。</li>
+<li><strong>DeepEP LL</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L229:L326"><code>prepare_async</code></a>）：<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L229:L326"><code>low_latency_dispatch</code></a> 按 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L61"><code>SUPPORTED_HIDDEN_SIZES</code></a> 走 batched 格式，激活为 <code>[E_local, max_tokens, K]</code>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L146:L147"><code>activation_format</code></a> 为 <code>BatchedExperts</code>），专家侧换成 <code>BatchedDeepGemmExperts</code>（masked GEMM）。</li>
+</ul>
+<h3 id="2-6-Step-5：experts-apply-五步流水线（以-FP8-DeepGemmExperts-为准）">2.6 Step 5：experts.apply 五步流水线（以 FP8 <code>DeepGemmExperts</code> 为准）</h3>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L287:L394"><code>DeepGemmExperts.apply</code></a>，对照 FP4 版 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L535:L636"><code>DeepGemmFP4Experts.apply</code></a>。</p>
+<h4 id="2-6-1-对齐-M-sum">2.6.1 对齐 M_sum</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">M_sum, _ = compute_aligned_M_and_alignment(<br>    M=topk_ids.size(<span class="hljs-number">0</span>), num_topk=topk_ids.size(<span class="hljs-number">1</span>),<br>    local_num_experts=local_num_experts,<br>    alignment=get_mk_alignment_for_contiguous_layout()[<span class="hljs-number">0</span>],<br>    expert_tokens_meta=expert_tokens_meta)<br></code></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L28:L84"><code>compute_aligned_M_and_alignment</code></a> 两条路径：</p>
+<ul>
+<li>有 CPU 侧每专家 token 数（HT/LL dispatch 提供）→ 每专家 round_up(align) 后求和，<strong>精确</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L47:L55"><code>expert_num_tokens_cpu</code></a>）；</li>
+<li>否则（TP/无 meta）→ 上界估算 <code>M*topk + min(M*topk, E_local)*(align-1)</code> 再 round_up；并且在 SM100/SM120 上会用 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L346:L374"><code>get_theoretical_mk_alignment_for_contiguous_layout</code></a> <strong>收缩实际对齐粒度</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L62:L78"><code>per_call_align</code></a>），返回 <code>(M_sum, align_used)</code>。</li>
+</ul>
+<h4 id="2-6-2-permute：ep-scatter-→-连续布局-m-indices-inv-perm">2.6.2 permute：ep_scatter → 连续布局 + m_indices + inv_perm</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python">a1q_perm = _resize_cache(workspace13.view(dtype=torch.float8_e4m3fn), (M_sum, K))<br>a1q, a1q_scale, expert_ids, inv_perm, align_used = deepgemm_moe_permute(<br>    aq=a1q, aq_scale=a1q_scale, topk_ids=topk_ids,<br>    local_num_experts=local_num_experts, expert_map=expert_map,<br>    expert_tokens_meta=expert_tokens_meta, aq_out=a1q_perm,<br>    block_size=self.block_shape[<span class="hljs-number">1</span>] <span class="hljs-keyword">if</span> self.mxfp8 <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span>,   <span class="hljs-comment"># MXFP8: 32；FP8: 默认 128</span><br>)<br></code></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L459:L552"><code>deepgemm_moe_permute</code></a> 做四件事：</p>
+<ol>
+<li><strong>分配三类输出</strong>：<code>aq_out [M_sum,H]</code>（激活）、<code>aq_scale_out</code>（尺度）、<code>expert_ids [M_sum] int32</code>（即 DeepGEMM 的 <code>m_indices</code>）、<code>inv_perm [M,topk] int32</code>；</li>
+<li><strong>尺度格式分叉</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L498:L510"><code>pack_ue8m0</code></a>）：<code>pack_ue8m0 = aq_scale.dtype == torch.uint8</code>（MXFP8 的 UE8M0 尺度）→ <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L503:L508"><code>empty_strided</code></a><code>((M_sum, ceil(sf_k/4)), (1, round_up(M_sum,4)), int32)</code>，即 <strong>4 个 8-bit 指数打包进 int32、并按 TMA 对齐</strong>；否则（fp32 尺度）→ <code>zeros((M_sum, sf_k), fp32)</code>。zeros（而非 empty）保证 padding 行的尺度是 0；</li>
+<li><strong>m_indices 初始化为 -1</strong>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L517:L522"><code>expert_ids</code></a>）：未被 scatter 写入的行 = padding，DeepGEMM 调度器会跳过负值块；</li>
+<li><strong>执行 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L535:L549"><code>ep_scatter</code></a></strong>。</li>
+</ol>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L275:L354"><code>ep_scatter</code></a> 是两个 Triton kernel：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L115:L159"><code>_fwd_kernel_ep_scatter_1</code></a>（grid=num_experts）：对每专家 token 数按 <code>ALIGN_M</code> 取整后前缀和 → <code>expert_start_loc[e]</code> 给出每个专家段在 <code>[M_sum]</code> 中的起点；同时把该段前 n_e 个 <code>m_indices</code> 填成专家 id（padding 槽保持 -1）；</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L161:L273"><code>_fwd_kernel_ep_scatter_2</code></a>（grid=min(T,8192)）：逐 token 加载 x/scale，<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L248"><code>atomic_add</code></a> 得到目标行，写 <code>aq_out[dest]</code>、<code>inv_perm[token,k] = dest</code>；<code>expert_id &lt; 0</code>（无效）直接跳过（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L247"><code>expert_id &gt;= 0</code></a>）；<code>PACK_UE8M0</code> 时把 4 个 uint8 尺度合并成一个 int32（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L212:L234"><code>PACK_UE8M0</code></a>）。</li>
+</ul>
+<p>permute 之后：</p>
+<ul>
+<li><code>a1q [M_sum, K]</code>：每个专家一段、段内按 token 顺序，<strong>每段 M 按 align_used 对齐</strong>；</li>
+<li><code>expert_ids [M_sum] int32</code>：行 → 专家 id（padding = -1）；</li>
+<li><code>inv_perm [M, topk]</code>：反查表，finalize 时用。</li>
+</ul>
+<h4 id="2-6-3-grouped-GEMM1">2.6.3 grouped GEMM1</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">with</span> mk_alignment_scope(align_used):                      <span class="hljs-comment"># :356</span><br>    mm1_out = _resize_cache(workspace2, (M_sum, N))<br>    m_grouped_fp8_gemm_nt_contiguous(<br>        (a1q, a1q_scale), (w1, self.w1_scale), mm1_out, expert_ids, **gemm_kwargs)<br></code></pre></td></tr></table></figure>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L395:L408"><code>mk_alignment_scope</code></a> 临时把 DeepGEMM 的 contiguous-layout BLOCK_M 上限设为 <code>align_used</code>。必要性见 2.6.1 / 2.8：DeepGEMM 调度器按 <code>m_block_idx * BLOCK_M</code> 去读 <code>m_indices</code> 取专家 id，若实际对齐粒度比 BLOCK_M 小，就会读到别的专家的 id → 计算错乱甚至 IMA（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L376"><code>set_mk_alignment_for_contiguous_layout</code></a> 的 docstring 写得很明确）；</li>
+<li><code>gemm_kwargs</code> 对 MXFP8 传 <code>recipe_a/b=(1,32)</code>（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L347:L351"><code>gemm_kwargs</code></a>）；</li>
+<li>wrapper（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L486:L493"><code>m_grouped_fp8_gemm_nt_contiguous</code></a>）统一带 <code>disable_ue8m0_cast=not is_deep_gemm_e8m0_used()</code>。</li>
+</ul>
+<h4 id="2-6-4-SwiGLU-clamp-动态量化">2.6.4 SwiGLU + clamp + 动态量化</h4>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L225:L285"><code>_act_mul_quant</code></a> 按尺度格式三分支：</p>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>kernel</th>
+<th>产物</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scale_fmt == UE8M0</code>（SM100/120 默认）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L250:L325"><code>silu_mul_quant_fp8_packed_triton</code></a>（模块内别名 <code>fused_silu_mul_fp8_quant_packed</code>）</td>
+<td>gate×silu(up) + clamp + 量化 + <strong>packed int32 UE8M0</strong>（一条龙）</td>
+</tr>
+<tr>
+<td>其他且是门控激活</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L414:L489"><code>silu_mul_per_token_group_quant_fp8_colmajor</code></a>（<code>use_ue8m0 = (fmt == FLOAT32_CEIL_UE8M0)</code>）</td>
+<td>同上但尺度为 fp32/列主序</td>
+</tr>
+<tr>
+<td>非门控兜底</td>
+<td>先 <code>self.activation</code>，再 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L554:L681"><code>per_token_group_quant_fp8</code></a></td>
+<td>fp32 尺度</td>
+</tr>
+</tbody>
+</table>
+<p>配方标量（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L142:L149"><code>gemm1_alpha</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L142:L149"><code>gemm1_beta</code></a>）让同一个 kernel 覆盖 silu（α=1, β=0）与 swigluoai；<code>gemm1_clamp_limit</code> 来自模型 <code>swiglu_limit</code>。</p>
+<h4 id="2-6-5-grouped-GEMM2-与-ep-gather">2.6.5 grouped GEMM2 与 ep_gather</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">mm2_out = _resize_cache(workspace2, (M_sum, K))<br>m_grouped_fp8_gemm_nt_contiguous((a2q, a2q_scale), (w2, self.w2_scale), mm2_out, expert_ids, ...)<br><span class="hljs-keyword">if</span> apply_router_weight_on_input: topk_weights = torch.ones_like(topk_weights)<br>deepgemm_unpermute_and_reduce(a=mm2_out, topk_ids=topk_ids, topk_weights=topk_weights,<br>                              inv_perm=inv_perm, expert_map=expert_map, output=output)<br></code></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L418:L457"><code>ep_gather</code></a>（kernel <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L356:L416"><code>_fwd_kernel_ep_gather</code></a>）：grid <code>(cdiv(H,BLOCK_D), min(T,1024))</code>，<code>BLOCK_D = gcd(H,1024)</code>；对每个 token 的 topk 槽位，按 <code>inv_perm</code> 取回专家输出行，<strong>fp32 累加 <code>weight * value</code></strong>，最后 cast 回 bf16 写 <code>output [M,H]</code>。注意 <code>topk_ids == -1</code>（EP 时该 token 不在本 rank）直接跳过。</p>
+<h3 id="2-7-Step-6：finalize">2.7 Step 6：finalize</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>finalize 行为</th>
+<th>关键代码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NoDPEP（TP / 无 DP 的 EP）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py#L11"><code>TopKWeightAndReduceDelegate</code></a> → 换 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py#L80"><code>TopKWeightAndReduceContiguous</code></a>，但 DeepGemm 返回的是 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py#L44"><code>TopKWeightAndReduceNoOP</code></a>，<code>output.copy_</code> 直通（ep_gather 已完成加权归约）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/no_dp_ep.py#L80:L98"><code>MoEPrepareAndFinalizeNoDPEPModular.finalize</code></a>；<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L196:L197"><code>finalize_weight_and_reduce_impl</code></a></td>
+</tr>
+<tr>
+<td>DeepEP HT</td>
+<td>对 NoOP：combine 时 <code>topk_weights=None</code>（加权已在 ep_gather 做），combine 后 <code>output.copy_</code>；<code>output_is_reduced=True</code></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ht.py#L347:L410"><code>_finalize</code></a></td>
+</tr>
+<tr>
+<td>DeepEP LL</td>
+<td>要求 <code>TopKWeightAndReduceDelegate</code>（LL 的 combine 内部做加权），<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L399:L408"><code>low_latency_combine</code></a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L372:L410"><code>_finalize</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>之后回到 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L681:L791"><code>MoERunner.forward</code></a> 尾部：<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L782:L789"><code>shared_output + fused_output</code></a> 把 shared expert 输出相加，再按条件做最终 all-reduce（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L480:L514"><code>_maybe_reduce_final_output</code></a>）：<code>not SP and not skip_final_all_reduce and (tp&gt;1 or ep&gt;1) and not output_is_reduced</code>。</p>
+<h3 id="2-8-Step-7：工程细节">2.8 Step 7：工程细节</h3>
+<p><strong>（a）workspace 复用。</strong> <code>workspace13</code>（激活/量化输出）与 <code>workspace2</code>（GEMM 输出）按最大需求分配、跨层共享；kernel 内用 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L204:L213"><code>_resize_cache</code></a> 把同一块存储在不同阶段视图化成 <code>(M_sum,K)</code>、<code>(M_sum,N)</code> 等形状。<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L199:L223"><code>workspace_shapes</code></a> 里 <code>workspace1=(M_sum, max(act_out,K))</code>、<code>workspace2=(M_sum, max(N,K))</code>。cudagraph 捕获时形状固定，因此 <code>M_sum</code> 必须覆盖最坏情况。</p>
+<p><strong>（b）TritonOrDeepGemmExperts 的动态选择。</strong> <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/triton_deep_gemm_moe.py#L77:L86"><code>_select_experts_impl</code></a>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> is_deep_gemm_e8m0_used() <span class="hljs-keyword">or</span> _valid_deep_gemm(hidden_states, w1, w2):<br>    <span class="hljs-keyword">return</span> self.experts           <span class="hljs-comment"># DeepGemm</span><br><span class="hljs-keyword">return</span> self.fallback_experts      <span class="hljs-comment"># Triton</span><br></code></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L58:L123"><code>_valid_deep_gemm</code></a> 的条件：<code>deep_gemm</code> 可用、<code>M ≥ align</code> 且 <code>N/K</code> 是 align 倍数、<code>N &gt; 512</code>、权重是 fp8、三张量连续。workspace 则<strong>悲观</strong>按 DeepGemm 尺寸分配（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/triton_deep_gemm_moe.py#L40:L75"><code>workspace_shapes</code></a>），因为 DeepGemm 的 workspace 严格更大。</p>
+<p><strong>（c）权重预处理链（FP8）。</strong> 加载后 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/fp8.py#L698:L727"><code>Fp8MoEMethod._setup_kernel</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/fp8.py#L490:L599"><code>convert_to_fp8_moe_kernel_format</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1169:L1190"><code>prepare_fp8_moe_layer_for_deepgemm</code></a>：</p>
+<ol>
+<li>若 checkpoint 尺度非 E8M0 且当前启用 E8M0 → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1010:L1068"><code>requant_weight_ue8m0_inplace</code></a>（把权重 scale 重新量化为 UE8M0）；</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1108:L1167"><code>deepgemm_post_process_fp8_weight_block</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1070:L1080"><code>_upcast_e8m0_to_fp32</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1082:L1106"><code>deepgemm_post_process_weight_scale_block</code></a> → <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L513"><code>transform_sf_into_required_layout</code></a><code>(sf, mn, k, recipe=(1, block_n, block_k), num_groups, is_sfa=False)</code>，得到内核要求的 MN-major、TMA 对齐 packed 布局。</li>
+</ol>
+<p><strong>（d）FP4 权重尺度。</strong> <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L68:L100"><code>_pack_deepgemm_mxfp4_scales</code></a>：对 w13/w2 各调一次 <code>deepgemm_post_process_weight_scale_block(..., quant_block_shape=(1,32))</code>。权重本身保持 <code>(E, N, K//2)</code> 的 packed uint8/FP4，在 apply 里 <code>w.view(torch.int8)</code> 传给 GEMM。</p>
+<p><strong>（e）oracle 选择。</strong></p>
+<ul>
+<li>FP8（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/fp8.py#L70:L134"><code>_get_priority_backends</code></a>）：默认优先级 AITER → FLASHINFER_TRTLLM → FLASHINFER_CUTLASS → <strong>DEEPGEMM</strong> → VLLM_CUTLASS → TRITON → …；SM100 + DeepEP v2 contiguous 布局时 TRTLLM 提权到最前（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/fp8.py#L104:L111"><code>_move_to_front</code></a>）。</li>
+<li>MXFP4（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L357:L382"><code>_get_priority_backends</code></a>）：CUDA 上 FLASHINFER_TRTLLM_MXFP8 → <strong>DEEPGEMM_MXFP4</strong>（激活 key 由 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L384:L400"><code>_backend_activation_key</code></a> 给出，= <code>kFp8Dynamic128Sym</code>）→ MARLIN → BATCHED_MARLIN；选中后 hidden/intermediate 由 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L723:L779"><code>mxfp4_round_up_hidden_size_and_intermediate_size</code></a> round up 到 128（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L740:L743"><code>Mxfp4MoeBackend.DEEPGEMM_MXFP4</code></a>）。</li>
+<li>显式指定：<code>--moe-backend deep_gemm</code>（FP8→DEEPGEMM；FP4→DEEPGEMM_MXFP4），<code>--moe-backend batched_deep_gemm</code>（LL 的 batched 形式）。</li>
+</ul>
+<p><strong>（f）E8M0 开关与白名单。</strong> <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L54:L108"><code>DeepGemmQuantScaleFMT</code></a>：<code>VLLM_USE_DEEP_GEMM_E8M0=1</code>（默认）且 DeepGEMM 支持时，SM100/120 → <code>UE8M0</code>，Hopper → <code>FLOAT32_CEIL_UE8M0</code>；否则 <code>FLOAT32</code>。已知 Blackwell 上 E8M0 掉精度的模型白名单（Qwen3.5 系列）会被 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L38:L52"><code>should_auto_disable_deep_gemm</code></a> 在 oracle 层自动关掉 DeepGEMM。</p>
+<hr>
+<h2 id="3-TP-与-EP-四种形态">3. TP 与 EP 四种形态</h2>
+<p>并行决策（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/config.py#L1132:L1259"><code>FusedMoEParallelConfig.make</code></a>）：<code>use_ep = dp*pcp*tp &gt; 1 and enable_expert_parallel</code>；EP 时 <code>tp_size=1、ep_size=flattened</code>，非 EP 时 <code>ep_size=1、expert_map=None</code>。</p>
+<table>
+<thead>
+<tr>
+<th>形态</th>
+<th>prepare/finalize</th>
+<th>权重切分</th>
+<th>尾部归约</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TP（ep=1）</td>
+<td>NoDPEP：本地量化，<code>num_dispatchers=1</code></td>
+<td>每个专家中间维 <code>I//tp</code>（<code>intermediate_size_per_partition</code>）</td>
+<td><code>tp&gt;1</code> → all-reduce（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L480:L514"><code>_maybe_reduce_final_output</code></a>）</td>
+</tr>
+<tr>
+<td>EP，无 DP/SP</td>
+<td>NoDPEP + <code>expert_map</code>（全局 id → 本地 id）</td>
+<td>专家维切分：<code>n_local = n_physical / ep_size</code></td>
+<td><code>ep&gt;1</code> → all-reduce</td>
+</tr>
+<tr>
+<td>EP + DP/SP（all2all）</td>
+<td>DeepEP HT：先量化后 dispatch、<code>ExpertTokensMetadata</code>、combine 不加权</td>
+<td>同上（可叠加 EPLB 冗余副本）</td>
+<td><code>output_is_reduced=True</code>，跳过</td>
+</tr>
+<tr>
+<td>EP + DeepEP LL</td>
+<td>batched 格式 + <code>BatchedDeepGemmExperts</code> + LL combine（内部加权）</td>
+<td>同上</td>
+<td>同上</td>
+</tr>
+</tbody>
+</table>
+<p>对 kernel 而言，TP 与 EP 的差别只有两点：<code>expert_map</code> 是否存在（影响 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L275:L354"><code>ep_scatter</code></a> 里 id→本地 id 的映射）与每专家 token 数来源（CPU 列表 vs 估算）。这也是 DeepGEMM 的 contiguous-layout 设计能同时服务两种并行的原因。</p>
+<hr>
+<h2 id="4-与-Hopper-的差异（一页对照）">4. 与 Hopper 的差异（一页对照）</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>SM90（Hopper）</th>
+<th>SM100+（Blackwell）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FP8 block 配方</td>
+<td>✅ <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L125"><code>DeepGemmExperts</code></a></td>
+<td>✅ 同左</td>
+</tr>
+<tr>
+<td>激活/权重尺度格式</td>
+<td><code>FLOAT32_CEIL_UE8M0</code>（fp32 存储）</td>
+<td><code>UE8M0</code>（4×uint8 → int32 packed，TMA 对齐 stride）</td>
+</tr>
+<tr>
+<td>SwiGLU+量化 kernel</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L414:L489"><code>silu_mul_per_token_group_quant_fp8_colmajor</code></a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L250:L325"><code>silu_mul_quant_fp8_packed_triton</code></a></td>
+</tr>
+<tr>
+<td>MXFP8（1×32）</td>
+<td>❌</td>
+<td>✅ 复用 fp8_fp4 GEMM 的 (1,32) recipe（family 100）</td>
+</tr>
+<tr>
+<td>W4A8 MXFP4</td>
+<td>❌（family 限制）</td>
+<td>✅ <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L396"><code>DeepGemmFP4Experts</code></a>（family 100/120）</td>
+</tr>
+<tr>
+<td>对齐 M_sum 估算</td>
+<td>固定 128 对齐</td>
+<td>可用 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L346:L374"><code>get_theoretical_mk_alignment_for_contiguous_layout</code></a> 收缩每调用 BLOCK_M</td>
+</tr>
+</tbody>
+</table>
+<p>整体流水线（permute → GBMM → act/quant → GBMM → ep_gather）与 TP/EP 的 prepare/finalize 拓扑两代完全一致，差异都收敛在&quot;尺度格式&quot;与&quot;配方可用性&quot;两处。</p>
+<hr>
+<h2 id="5-小结">5. 小结</h2>
+<ol>
+<li>SM100+ 上 DeepGEMM 在通用 FusedMoE 栈里有三条配方：FP8 block（主力）、MXFP8 1×32（Blackwell 专属）、W4A8 MXFP4（Blackwell 专属）；它们共享同一套 permute/GEMM/gather 骨架。</li>
+<li>一个专家的全部计算可概括为：<strong>ep_scatter 重排 → grouped GEMM1 → 门控激活+量化 → grouped GEMM2 → ep_gather 加权归约</strong>；通信只在 EP 时由 prepare/finalize（HT/LL）介入。</li>
+<li>SM100 的工程关键点是 <strong>E8M0 packed 尺度</strong>（量化 kernel、scale buffer stride、DG wrapper 的 <code>disable_ue8m0_cast</code>）与 <strong><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L395:L408"><code>mk_alignment_scope</code></a></strong>（把 DG 调度器的 BLOCK_M 上限锁到本次调用的实际对齐，避免 cudagraph 下 m_indices 调度错位）。</li>
+<li>选型：DSV4-Flash 的 fp4 checkpoint 在非 mega 路径下落 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L396"><code>DeepGemmFP4Experts</code></a>；fp8 checkpoint 与 Kimi K3 的 MXFP8 落 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L125"><code>DeepGemmExperts</code></a>；LL 场景落 <code>BatchedDeepGemmExperts</code>。</li>
+</ol>
+<blockquote>
+<p>下一篇：MegaMoE——<code>deep_gemm_mega_moe</code> 与 FlashInfer moe_ep mega 的对称内存单 kernel 实现。</p>
+</blockquote>
+<hr>
+<h2 id="附录-A：符号速查">附录 A：符号速查</h2>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>符号（v0.30.0）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MoERunner（gate / quant method / reduce）</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L227:L1034"><code>MoERunner</code></a>（类）、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L681:L791"><code>forward</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L862:L937"><code>_forward_impl</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L595:L648"><code>_apply_quant_method</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L650"><code>_sequence_parallel_context</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L480:L514"><code>_maybe_reduce_final_output</code></a></td>
+</tr>
+<tr>
+<td>FusedMoEKernel 三段式</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1452:L1547"><code>FusedMoEKernelModularImpl.apply</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1211:L1298"><code>_prepare</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1300:L1382"><code>_fused_experts</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L1384:L1450"><code>_finalize</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/modular_kernel.py#L523"><code>expects_unquantized_inputs</code></a></td>
+</tr>
+<tr>
+<td>NoDPEP prepare/finalize</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/no_dp_ep.py#L40:L98"><code>MoEPrepareAndFinalizeNoDPEPModular</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/no_dp_ep.py#L14:L39"><code>_quantize_input</code></a></td>
+</tr>
+<tr>
+<td>DeepEP HT / LL</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ht.py#L29"><code>DeepEPHTPrepareAndFinalize</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/prepare_finalize/deepep_ll.py#L52"><code>DeepEPLLPrepareAndFinalize</code></a></td>
+</tr>
+<tr>
+<td>DeepGemmExperts / DeepGemmFP4Experts</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L125:L394"><code>DeepGemmExperts</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/deep_gemm_moe.py#L396:L636"><code>DeepGemmFP4Experts</code></a></td>
+</tr>
+<tr>
+<td>Triton 兜底组合</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/triton_deep_gemm_moe.py#L24:L86"><code>TritonOrDeepGemmExperts</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/experts/fallback.py#L14:L170"><code>FallbackExperts</code></a></td>
+</tr>
+<tr>
+<td>permute / ep_scatter / ep_gather</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L28:L84"><code>compute_aligned_M_and_alignment</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L459:L552"><code>deepgemm_moe_permute</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L275:L354"><code>ep_scatter</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L418:L457"><code>ep_gather</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/deep_gemm_utils.py#L554:L570"><code>deepgemm_unpermute_and_reduce</code></a></td>
+</tr>
+<tr>
+<td>TopK 加权归约三件套</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py#L11"><code>TopKWeightAndReduceDelegate</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py#L44"><code>TopKWeightAndReduceNoOP</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py#L80"><code>TopKWeightAndReduceContiguous</code></a></td>
+</tr>
+<tr>
+<td>输入量化分派</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L361:L433"><code>moe_kernel_quantize_input</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L223:L247"><code>_fp8_quantize</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L311:L325"><code>_mxfp8_e4m3_quantize</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L215:L222"><code>_nvfp4_quantize</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/utils.py#L249:L282"><code>_int8_quantize</code></a></td>
+</tr>
+<tr>
+<td>scale FMT / alignment / GEMM 包装</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L54:L108"><code>DeepGemmQuantScaleFMT</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L119:L141"><code>is_deep_gemm_e8m0_used</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L346:L374"><code>get_theoretical_mk_alignment_for_contiguous_layout</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L395:L408"><code>mk_alignment_scope</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L486:L493"><code>m_grouped_fp8_gemm_nt_contiguous</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/deep_gemm.py#L495:L502"><code>m_grouped_fp8_fp4_gemm_nt_contiguous</code></a></td>
+</tr>
+<tr>
+<td>激活量化 kernel</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L250:L325"><code>silu_mul_quant_fp8_packed_triton</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L414:L489"><code>silu_mul_per_token_group_quant_fp8_colmajor</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L554:L681"><code>per_token_group_quant_fp8</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L683:L755"><code>per_token_group_quant_fp8_packed_for_deepgemm</code></a></td>
+</tr>
+<tr>
+<td>权重尺度预处理</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1010:L1068"><code>requant_weight_ue8m0_inplace</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1070:L1080"><code>_upcast_e8m0_to_fp32</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1082:L1106"><code>deepgemm_post_process_weight_scale_block</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1108:L1167"><code>deepgemm_post_process_fp8_weight_block</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py#L1169:L1190"><code>prepare_fp8_moe_layer_for_deepgemm</code></a>（均在 <code>fp8_utils.py</code>）</td>
+</tr>
+<tr>
+<td>FP8 / FP4 oracle</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/fp8.py#L70:L134"><code>_get_priority_backends</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/fp8.py#L490:L599"><code>convert_to_fp8_moe_kernel_format</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L68:L100"><code>_pack_deepgemm_mxfp4_scales</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L357:L382"><code>_get_priority_backends</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L525:L646"><code>select_mxfp4_moe_backend</code></a>、<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/oracle/mxfp4.py#L723:L779"><code>mxfp4_round_up_hidden_size_and_intermediate_size</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="附录-B：direct-register-custom-op-速查">附录 B：<code>direct_register_custom_op</code> 速查</h2>
+<p>vLLM 内注册 custom op 的统一入口（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/utils/torch_utils.py#L1058:L1096"><code>direct_register_custom_op</code></a>），vLLM 几乎所有 custom op（<code>moe_forward*</code>、<code>sequence_parallel_chunk_impl</code> 等）都走它。它的定位很清楚：<strong>绕过 <code>torch.library.custom_op</code> 的复杂 dispatch 逻辑（后者有明显 overhead），直接把算子 define + impl 到指定后端</strong>。</p>
+<h3 id="用法示例">用法示例</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> vllm.utils.torch_utils <span class="hljs-keyword">import</span> direct_register_custom_op<br><br>direct_register_custom_op(<br>    op_name=<span class="hljs-string">&quot;moe_forward_shared&quot;</span>,        <span class="hljs-comment"># 注册为 torch.ops.vllm.moe_forward_shared</span><br>    op_func=_moe_forward_shared,         <span class="hljs-comment"># 实现：查表转发到 layer._forward_impl</span><br>    fake_impl=_moe_forward_shared_fake,  <span class="hljs-comment"># 编译期 meta 形状推断</span><br>    tags=(torch.Tag.needs_fixed_stride_order,),<br>)<br><br><span class="hljs-comment"># 之后即可调用：</span><br>torch.ops.vllm.moe_forward_shared(hidden_states, router_logits, ...)<br></code></pre></td></tr></table></figure>
+<h3 id="参数意义">参数意义</h3>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>默认值</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>op_name</code></td>
+<td>—</td>
+<td>算子名，注册后完整路径为 <code>torch.ops.&lt;lib&gt;.&lt;op_name&gt;</code>（vLLM 默认 <code>torch.ops.vllm.*</code>）。</td>
+</tr>
+<tr>
+<td><code>op_func</code></td>
+<td>—</td>
+<td>实现函数。<strong>它的类型标注就是 op 的 schema</strong>：<code>infer_schema()</code> 从函数签名反推参数/返回类型，标注不全或返回 union 类型都无法注册（<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L116:L134"><code>_moe_forward</code></a> / <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L153:L171"><code>_moe_forward_shared</code></a> 拆成两个 op 正是这个限制逼出来的）。</td>
+</tr>
+<tr>
+<td><code>mutates_args</code></td>
+<td><code>None</code> → 内部补 <code>[]</code></td>
+<td>声明哪些输入参数会被<strong>原地修改</strong>（按参数名，如 <code>[&quot;hidden_states&quot;]</code>）。它决定 functionalization 如何对待这些 buffer：声明了才允许原地写；不声明却实际原地改，会在 <code>torch.compile</code> 下引发正确性问题。</td>
+</tr>
+<tr>
+<td><code>fake_impl</code></td>
+<td><code>None</code></td>
+<td>meta 设备上的 fake 实现，负责<strong>编译期形状/类型推断</strong>。custom op 对 Dynamo 是黑盒，输出形状的唯一来源就是它；不传则没有 fake kernel。</td>
+</tr>
+<tr>
+<td><code>target_lib</code></td>
+<td><code>vllm_lib</code></td>
+<td>注册到哪个 <code>Library</code>，默认 <code>Library(&quot;vllm&quot;, &quot;FRAGMENT&quot;)</code>（FRAGMENT 允许<strong>跨文件逐片追加</strong> schema，全 vLLM 共用一个库）。<strong>op 的生命周期与 Library 对象绑定</strong>。</td>
+</tr>
+<tr>
+<td><code>dispatch_key</code></td>
+<td><code>current_platform.dispatch_key</code></td>
+<td>实现绑定的后端 key：CUDA/ROCm 为 <code>&quot;CUDA&quot;</code>、XPU 为 <code>&quot;XPU&quot;</code>、CPU 为 <code>&quot;CPU&quot;</code>（见 <code>vllm/platforms/*.py</code>）。运行时按设备类型走对应实现。</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>()</code></td>
+<td><code>torch.library</code> 的 tag 元组。vLLM 最常用 <code>torch.Tag.needs_fixed_stride_order</code>：要求输出保持<strong>固定 stride 顺序</strong>、禁止 Inductor 做布局改写，保证 compile / CUDA Graph 下与 eager 的内存布局一致。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="关键理解点">关键理解点</h3>
+<ol>
+<li><strong>实现只有三步</strong>：<code>infer_schema(op_func, mutates_args)</code> 生成 schema 字符串 → <code>my_lib.define(op_name + schema_str, tags=tags)</code> 注册 → <code>my_lib.impl(op_name, op_func, dispatch_key=...)</code> 绑定实现 → 若有 fake 则 <code>my_lib._register_fake(...)</code>。等价于官方 <code>custom_op</code> 的最简子集。</li>
+<li><strong>schema 完全来自签名标注</strong>：参数要标注成 <code>torch.Tensor</code> / <code>int</code> / <code>str</code> 等可映射类型；返回类型<strong>不支持 union</strong>——这就是同一个 MoE 前向要拆成 <code>moe_forward</code> 与 <code>moe_forward_shared</code> 两个 op 的根因。</li>
+<li><strong><code>FRAGMENT</code> 库语义</strong>：<code>Library(&quot;vllm&quot;, &quot;FRAGMENT&quot;)</code> 创建后，各文件可以各自往里追加算子（区别于 DEF 模式的一次性定义）；同名算子重复注册会直接报错，因此 <code>op_name</code> 是全局唯一约定。</li>
+<li><strong>fake impl 的设计约束</strong>：为保持 fake 是&quot;输入的纯函数&quot;、让编译期子图去重（dedup）生效，vLLM 常把影响输出形状的运行时信息<strong>显式作为 op 参数传入</strong>（如 <code>hidden_dim_unpadded</code>），而不是在 fake 里回查 layer 状态。</li>
+<li><strong>与 CUDA Graph 的配合</strong>：op 边界确立后，整个 MoE 在 cudagraph capture 时就是一次调用；<code>needs_fixed_stride_order</code> tag 保证输出 tensor 布局在重放中稳定（cudagraph 复用内存，输出 stride 漂移会破坏下游 kernel 的地址假设）。</li>
+<li><strong>实例对照</strong>：<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L116:L134"><code>_moe_forward</code></a>（带 <code>mutates_args=[&quot;hidden_states&quot;]</code>）与 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L153:L171"><code>_moe_forward_shared</code></a>（不声明）的注册见 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L199:L213"><code>direct_register_custom_op</code></a>——前者向编译器声明会原地写输入，后者按纯函数对待。</li>
+</ol>
+<h3 id="用例说明">用例说明</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python">direct_register_custom_op(<br>    op_name=<span class="hljs-string">&quot;moe_forward&quot;</span>,<br>    op_func=_moe_forward,<br>    mutates_args=[<span class="hljs-string">&quot;hidden_states&quot;</span>],<br>    fake_impl=_moe_forward_fake,<br>    tags=(torch.Tag.needs_fixed_stride_order,),<br>)<br><br><br>direct_register_custom_op(<br>    op_name=<span class="hljs-string">&quot;moe_forward_shared&quot;</span>,<br>    op_func=_moe_forward_shared,<br>    fake_impl=_moe_forward_shared_fake,<br>    tags=(torch.Tag.needs_fixed_stride_order,),<br>)<br></code></pre></td></tr></table></figure>
+<p>关键理解点：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L153:L171"><code>_moe_forward_shared</code></a> 本体只是个&quot;查表 + 转发&quot;：它通过 layer_name 找回 layer 再调 <code>_forward_impl</code>。也就是说从编译器的视角，路由、dispatch、量化、grouped GEMM 全部被藏在这一个 op 里面，torch Dynamo 不会去 trace 内部。</li>
+<li>为什么传 layer_name 而不是 layer 本身：nn.Module 引用不能进编译图。<code>__init__</code> 里通过 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L58:L69"><code>register_layer_for_moe_forward_op</code></a> 把 layer 塞进 <code>static_forward_context</code>，运行时 <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L71:L99"><code>get_layer_from_name</code></a> 再取回来；一个值得品味的细节是，<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/blob/v0.30.0/vllm/model_executor/layers/fused_moe/runner/moe_runner.py#L516:L525"><code>_encode_layer_name</code></a> 函数在非 LayerName 模式下会统一传常量 <code>&quot;from_forward_context&quot;</code>，而在 <code>get_layer_from_name</code> 遇到这个常量时，会自动按 <code>moe_layer_index</code> 自增顺序取层——这样所有 MoE 层共享同一个编译图，避免每层因常量不同而图分化。
+<ol>
+<li>layer 是怎么注册进去的？</li>
+</ol>
+ <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">DeepseekV4DecoderLayer.__init__                   <span class="hljs-comment"># model.py:1132</span><br>└─ DeepseekV4MoE(prefix=<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;prefix&#125;</span>.ffn&quot;</span>)          → prefix = <span class="hljs-string">&quot;model.layers.&#123;i&#125;.ffn&quot;</span><br>    └─ FusedMoEFactory(prefix=<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;prefix&#125;</span>.experts&quot;</span>)   <span class="hljs-comment"># model.py:996-1017（非 mega 分支）</span><br>            ├─ layer_name = prefix                        <span class="hljs-comment"># layer.py:217 → &quot;model.layers.&#123;i&#125;.ffn.experts&quot;</span><br>            ├─ routed_experts = RoutedExperts(layer_name, ...)   <span class="hljs-comment"># layer.py:374</span><br>            └─ runner = MoERunner(layer_name=..., ...)           <span class="hljs-comment"># layer.py:405-428</span><br>                │   ← DSV4 没传 runner_cls/routed_experts_cls，所以就是默认的 MoERunner + RoutedExperts<br>                └─ register_layer_for_moe_forward_op(vllm_config, self)   <span class="hljs-comment"># moe_runner.py:299</span><br>                    ├─ compilation_config.static_forward_context[layer_name] = self   <span class="hljs-comment"># :58-69</span><br>                    └─ static_all_moe_layers.append(layer_name)<br></code></pre></td></tr></table></figure>
+<code>get_layer_from_name</code> 查表时，<code>no_compile_layers[&quot;model.layers.&#123;i&#125;.ffn.experts&quot;]</code> 拿到的就是这一层的 MoERunner 对象本身。</li>
+<li>fake impl：编译期在 meta 上给出两个输出的形状。<code>hidden_dim_unpadded &gt; 0</code> 分支对应 TRT-LLM MXFP4 路径（真实 kernel 写出的宽度比 <code>hidden_states.shape[-1]</code> 窄）；shared_out 在 latent MoE 时取 <code>shared_experts_input</code> 的形状。</li>
+<li><code>torch.Tag.needs_fixed_stride_order</code>：要求该 op 的输出保持固定 stride 顺序，不允许 Inductor 做 flexible-layout 之类的布局改写，保证 CUDA Graph 下输出内存布局与 eager 一致。这是 vLLM custom op 的模式化做法（<code>sequence_parallel_chunk_impl</code> 等也带此 tag）。</li>
+<li>上下对比 <code>moe_forward</code> 和 <code>moe_forward_shared</code> 注册可以发现：<code>mutates_args=[&quot;hidden_states&quot;]</code>，会声明该值存在原地写输入的情况。</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/cuda/" class="print-no-link">#cuda</a>
+      
+        <a href="/tags/deepgemm/" class="print-no-link">#deepgemm</a>
+      
+        <a href="/tags/moe/" class="print-no-link">#moe</a>
+      
+        <a href="/tags/vllm/" class="print-no-link">#vllm</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Blackwell 上的 DeepGEMM FusedMoE（vLLM）</div>
+      <div>https://dingfen.github.io/2026/09/23/2026-9-23-deepseek-v4-sm100-deepgemm-moe/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月23日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2026年10月24日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/10/03/2026-10-03-sglang-dpsk-moe/" title="Blackwell 上的 DeepGEMM FusedMoE（sglang）">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Blackwell 上的 DeepGEMM FusedMoE（sglang）</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/09/19/2026-9-19-gdn/" title="从 Full Attention 到 Gated DeltaNet：Qwen3.5 线性注意力">
+                        <span class="hidden-mobile">从 Full Attention 到 Gated DeltaNet：Qwen3.5 线性注意力</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>
