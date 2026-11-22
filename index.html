@@ -223,6 +223,751 @@
   <div class="row mx-auto index-card">
     
     
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/11/22/2026-11-22-Step5-ppu01/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step-5 在 PPU 上的推理优化：总览篇">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/11/22/2026-11-22-Step5-ppu01/" target="_self">
+          Step-5 在 PPU 上的推理优化：总览篇
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/11/22/2026-11-22-Step5-ppu01/" target="_self">
+        <div>
+          从稀疏打分、区域选择、MoE 路由、Q/K 融合、区域并集到投影合并，逐项拆解 Step-5 在 PPU 上的推理优化： 服务实测输入吞吐 718 到 924 tok/s，一轮 decode 少启动 229 次 kernel，并给出每篇的阅读入口
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-11-22 20:30" pubdate>
+              2026-11-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/moe/">#moe</a>
+            
+              <a href="/tags/attention/">#attention</a>
+            
+              <a href="/tags/sparse-attention/">#sparse-attention</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/11/22/2026-11-22-Step5-ppu02/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step-5 稀疏注意力打分：让相邻 query 共用一批 key">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/11/22/2026-11-22-Step5-ppu02/" target="_self">
+          Step-5 稀疏注意力打分：让相邻 query 共用一批 key
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/11/22/2026-11-22-Step5-ppu02/" target="_self">
+        <div>
+          用 float8e4b15 解释 E4M3FN 的 key 如何直接参与点积，让同请求相邻 query 分组共享一次 key 读取， decode 改为连续 16 字节取地址加宽写出，prefill 大形状从 83.28 ms 降到 5.56 ms
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-11-22 20:29" pubdate>
+              2026-11-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/attention/">#attention</a>
+            
+              <a href="/tags/sparse-attention/">#sparse-attention</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/11/22/2026-11-22-Step5-ppu03/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step-5 区域选择：只剩 511 项有效历史时，top-k 为什么反而最慢">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/11/22/2026-11-22-Step5-ppu03/" target="_self">
+          Step-5 区域选择：只剩 511 项有效历史时，top-k 为什么反而最慢
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/11/22/2026-11-22-Step5-ppu03/" target="_self">
+        <div>
+          把每行有效长度交给 top_k_ragged_transform，在写分时统一正负零、去掉打包阶段的重复排序， 并在最后一次写回里顺手算出物理位置，511 项形状整条 selection 从 562.3 µs 降到 11.7 µs
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-11-22 20:28" pubdate>
+              2026-11-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/attention/">#attention</a>
+            
+              <a href="/tags/sparse-attention/">#sparse-attention</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/11/22/2026-11-22-Step5-ppu04/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step-5 的 MoE 路由：选出 8 个专家，再找到它们在哪张卡上">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/11/22/2026-11-22-Step5-ppu04/" target="_self">
+          Step-5 的 MoE 路由：选出 8 个专家，再找到它们在哪张卡上
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/11/22/2026-11-22-Step5-ppu04/" target="_self">
+        <div>
+          把分数与专家编号打包成 int64 比较键，一轮整数最大值归约同时拿到最高分与编号； 分发阶段直接用 int32 查本卡专家表并保留负索引回绕，完整 top-8 从 82.85 µs 降到 36.72 µs
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-11-22 20:27" pubdate>
+              2026-11-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/moe/">#moe</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/11/22/2026-11-22-Step5-ppu05/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step-5 的 Q/K 归一化与 RoPE：一次调度完成，顺手写入 KV cache">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/11/22/2026-11-22-Step5-ppu05/" target="_self">
+          Step-5 的 Q/K 归一化与 RoPE：一次调度完成，顺手写入 KV cache
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/11/22/2026-11-22-Step5-ppu05/" target="_self">
+        <div>
+          把 Q 与 K/V 放进同一个网格，DSA 层算完 K/V 直接写 full 池，并保留归一化与旋转之间的 BF16 舍入； 一轮 decode 少 118 次启动，32768 token prefill 从 249.79 µs 降到 84.77 µs
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-11-22 20:26" pubdate>
+              2026-11-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/attention/">#attention</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/11/22/2026-11-22-Step5-ppu06/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step-5 的 prefill 区域并集：16 行 query 选中同一区域时存几次">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/11/22/2026-11-22-Step5-ppu06/" target="_self">
+          Step-5 的 prefill 区域并集：16 行 query 选中同一区域时存几次
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/11/22/2026-11-22-Step5-ppu06/" target="_self">
+        <div>
+          位图原子 OR 两趟扫描的代价是 8192 token 回放 1042 µs，改成按逻辑区域建表、 按 query 槽位串行更新成员掩码，再用前缀和就地压缩；表放不下时回退旧路径
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-11-22 20:25" pubdate>
+              2026-11-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/attention/">#attention</a>
+            
+              <a href="/tags/sparse-attention/">#sparse-attention</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/11/22/2026-11-22-Step5-ppu07/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step-5 的 gate 与 indexer 投影：哪些矩阵乘可以拼在一起算">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/11/22/2026-11-22-Step5-ppu07/" target="_self">
+          Step-5 的 gate 与 indexer 投影：哪些矩阵乘可以拼在一起算
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/11/22/2026-11-22-Step5-ppu07/" target="_self">
+        <div>
+          gate 的 16 行接在 QKV 权重尾部，省掉约 51 µs/层的独立矩阵乘； indexer 的 Q/K/Z 三次投影拼成一块 [1536, hidden_size] 权重一次算出，替代约 372 µs/层的三次投影
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-11-22 20:24" pubdate>
+              2026-11-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/attention/">#attention</a>
+            
+              <a href="/tags/sparse-attention/">#sparse-attention</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/10/24/2026-10-24-ai/" target="_self">
+          
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/10/24/2026-10-24-ai/" target="_self">
+        <div>
+          静候大帝的登基 声明：这篇博客完全由人类（准确地说，由我）完成。 时代 ai 发展 淘汰 变化 难以理解 个人现状 同事 新闻 才华 天赋 行业 变化 人类 结局 历史的终结 最后展望与理想升华 点题 “时代变得很快”。作为一个 90 后，我始终以为这是一句“正确的废话”，因为自我出生开始，时代就在变化。我甚至很庆幸我能生长在这一个时代，因为只有时代的车轮一直滚滚向前，无情碾轧掉旧事物，方能给我们
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-10-24 21:24" pubdate>
+              2026-10-24
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/10/24/2026-10-24-sglang-step5-preview/" target="_self">
+          <img src="/img/Step5/step5-logo.png" srcset="/img/loading.gif" lazyload alt="Step5 Preview 在 SGLang 上的实现：稀疏注意力、新 kernel 与 SM90/Blackwell 分叉">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/10/24/2026-10-24-sglang-step5-preview/" target="_self">
+          Step5 Preview 在 SGLang 上的实现：稀疏注意力、新 kernel 与 SM90/Blackwell 分叉
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/10/24/2026-10-24-sglang-step5-preview/" target="_self">
+        <div>
+          从 92 层 3:1 混合注意力出发，拆解 Step5 Preview 的 indexer / R8 压缩 / top-512 选择 / union prefill / split-kv decode 全链路，并逐个对照 SM90、SM100 与 SM103 上真正执行的 kernel
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-10-24 20:30" pubdate>
+              2026-10-24
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/cuda/">#cuda</a>
+            
+              <a href="/tags/sglang/">#sglang</a>
+            
+              <a href="/tags/attention/">#attention</a>
+            
+              <a href="/tags/blackwell/">#blackwell</a>
+            
+              <a href="/tags/sparse-attention/">#sparse-attention</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
@@ -303,660 +1048,11 @@
     </article>
   </div>
 
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/09/23/2026-9-23-deepseek-v4-sm100-deepgemm-moe/" target="_self">
-          Blackwell 上的 DeepGEMM FusedMoE（vLLM）
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/09/23/2026-9-23-deepseek-v4-sm100-deepgemm-moe/" target="_self">
-        <div>
-          从 routing 到 ep_gather，逐段拆解 vLLM v0.30.0 的 DeepGemm MoE 三段式栈， 以及 FP8 block / MXFP8 / W4A8 MXFP4 三条配方在 SM100 上的差异
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-09-23 15:30" pubdate>
-              2026-09-23
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
-  
-  
-
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/cuda/">#cuda</a>
-            
-              <a href="/tags/deepgemm/">#deepgemm</a>
-            
-              <a href="/tags/moe/">#moe</a>
-            
-              <a href="/tags/vllm/">#vllm</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/09/19/2026-9-19-gdn/" target="_self">
-          <img src="https://qianwen-res.oss-accelerate-overseas.aliyuncs.com/3.5banner.png" srcset="/img/loading.gif" lazyload alt="从 Full Attention 到 Gated DeltaNet：Qwen3.5 线性注意力">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/09/19/2026-9-19-gdn/" target="_self">
-          从 Full Attention 到 Gated DeltaNet：Qwen3.5 线性注意力
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/09/19/2026-9-19-gdn/" target="_self">
-        <div>
-          注意力机制再进化
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-09-19 11:49" pubdate>
-              2026-09-19
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
-  
-  
-
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/cuda/">#cuda</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/03/15/2026-3-15-torchrec/" target="_self">
-          
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/03/15/2026-3-15-torchrec/" target="_self">
-        <div>
-          # torchrec 相关实现介绍 https://docs.pytorch.org/tutorials/intermediate/torchrec_intro_tutorial.html https://blog.csdn.net/lovechris00/article/details/147542184 # TorchRec 简介 torchrec：为构建可扩展和高效的使用 embedding
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-03-15 15:30" pubdate>
-              2026-03-15
-            </time>
-          </div>
-        
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/03/15/2026-3-15-flashattnv2/" target="_self">
-          <img src="/img/LLM/flashattention_logo.png" srcset="/img/loading.gif" lazyload alt="flash attention V2 代码走读">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/03/15/2026-3-15-flashattnv2/" target="_self">
-          flash attention V2 代码走读
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/03/15/2026-3-15-flashattnv2/" target="_self">
-        <div>
-          深入探索 flash attention 源码世界
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-03-15 15:26" pubdate>
-              2026-03-15
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
-  
-  
-
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/cuda/">#cuda</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/03/08/2026-3-7-flashattn/" target="_self">
-          <img src="/img/LLM/flashattention_logo.png" srcset="/img/loading.gif" lazyload alt="flash attention 进化史">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/03/08/2026-3-7-flashattn/" target="_self">
-          flash attention 进化史
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/03/08/2026-3-7-flashattn/" target="_self">
-        <div>
-          了解 flash attention 算法的优化思想
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-03-08 10:23" pubdate>
-              2026-03-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
-  
-  
-
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/cuda/">#cuda</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2025/10/04/2025-10-04-ray/" target="_self">
-          <img src="https://docs.ray.io/en/latest/_images/map-of-ray.svg" srcset="/img/loading.gif" lazyload alt="Ray 框架初步认知与理解">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/10/04/2025-10-04-ray/" target="_self">
-          Ray 框架初步认知与理解
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2025/10/04/2025-10-04-ray/" target="_self">
-        <div>
-          Ray 框架内部原理理解 本文参考 Ray 论文 Ray 框架解决的需求 最新的强化学习(RL)算法强调让 AI 通过与环境的不断交互来学习提升自己。其核心目标是要让 AI 学习一个策略，这个策略将根据环境的变化，让 AI 自主做出相关的应对动作，并在环境中不断提升应对策略，久而久之 AI 将学会一个有效的任务（例如赢得游戏或驾驶一架无人机）。在大规模的应用中，寻找有效的策略需要三大能力：   模
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-10-04 16:10" pubdate>
-              2025-10-04
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/RL/" class="category-chain-item">RL</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/RL/">#RL</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2025/03/09/2025-3-9-mma/" target="_self">
-          <img src="/img/LLM/flashattention_logo.png" srcset="/img/loading.gif" lazyload alt="Tensor Core 和 MMA">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/03/09/2025-3-9-mma/" target="_self">
-          Tensor Core 和 MMA
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2025/03/09/2025-3-9-mma/" target="_self">
-        <div>
-          MMA 使用详细示例
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-03-09 11:23" pubdate>
-              2025-03-09
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
-  
-  
-
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/cuda/">#cuda</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2025/02/03/2025-2-3-ncompute/" target="_self">
-          <img src="https://docs.nvidia.com/nsight-compute/_static/nsight-compute.png" srcset="/img/loading.gif" lazyload alt="ncompute 学习与使用">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/02/03/2025-2-3-ncompute/" target="_self">
-          ncompute 学习与使用
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2025/02/03/2025-2-3-ncompute/" target="_self">
-        <div>
-          ncompute 使用示例 准备工作  机器设备：NVIDIA GeForce RTX 4060 laptop CUDA 环境：12.4 docker 环境：nvcr.io/nvidia/pytorch:24.05-py3  我简单地写了一个 elementwise 的 kernel 函数，并使用 ncu 对其做性能分析 1234567891011__global__ void elementwi
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-02-03 16:10" pubdate>
-              2025-02-03
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/cuda/" class="category-chain-item">cuda</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/cuda/">#cuda</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2025/01/27/2025-01-30-MLA/" target="_self">
-          <img src="/img/LLM/deepseek-index.png" srcset="/img/loading.gif" lazyload alt="DeepSeek 背后的 MLA 和 MoE 架构">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/01/27/2025-01-30-MLA/" target="_self">
-          DeepSeek 背后的 MLA 和 MoE 架构
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2025/01/27/2025-01-30-MLA/" target="_self">
-        <div>
-          最近，DeepSeek（深度求索）公司推出的 DeepSeek-V3 和 DeepSeek-R1 大火，吸引了太平洋两岸所有关心关注 AI 发展的人的目光。本文试图从 DeepSeek 这轮爆火现象的背后，探究其中的架构创新，进而挖掘它如此低廉却好用的原因。 MLA(Multi-head Latent Attention) 一句话说明什么是 MLA 为了进一步解决 KV cache 在模型推理中的
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-01-27 14:44" pubdate>
-              2025-01-27
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/AI/" class="category-chain-item">AI</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
 
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/#board">8</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/#board">9</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 

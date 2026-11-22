@@ -1,0 +1,901 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="把 Q 与 K&#x2F;V 放进同一个网格，DSA 层算完 K&#x2F;V 直接写 full 池，并保留归一化与旋转之间的 BF16 舍入； 一轮 decode 少 118 次启动，32768 token prefill 从 249.79 µs 降到 84.77 µs">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Step-5 的 Q&#x2F;K 归一化与 RoPE：一次调度完成，顺手写入 KV cache">
+<meta property="og:url" content="https://dingfen.github.io/2026/11/22/2026-11-22-Step5-ppu05/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="把 Q 与 K&#x2F;V 放进同一个网格，DSA 层算完 K&#x2F;V 直接写 full 池，并保留归一化与旋转之间的 BF16 舍入； 一轮 decode 少 118 次启动，32768 token prefill 从 249.79 µs 降到 84.77 µs">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/Step5/step5-logo.png">
+<meta property="article:published_time" content="2026-11-22T12:26:00.000Z">
+<meta property="article:modified_time" content="2026-11-22T12:10:25.733Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="cuda">
+<meta property="article:tag" content="sglang">
+<meta property="article:tag" content="attention">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/Step5/step5-logo.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Step-5 的 Q/K 归一化与 RoPE：一次调度完成，顺手写入 KV cache - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://static.stepfun.com/static/step-website/assets/cost-chart-DsHOPdKv.jpeg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Step-5 的 Q/K 归一化与 RoPE：一次调度完成，顺手写入 KV cache"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-11-22 20:26" pubdate>
+          2026年11月22日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          17 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Step-5 的 Q/K 归一化与 RoPE：一次调度完成，顺手写入 KV cache</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2026-11-22T20:10:25+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Step-5 的 Q、K 做完归一化和 RoPE 后，怎样少启动两次 kernel？</h1>
+<p>在一段 Step-5 decode trace 里，每层注意力开头都有两次很短的调用。第一项处理 Q，平均 2.45 µs。第二项处理 K/V，平均 2.53 µs。到了稀疏注意力层（DSA），紧接着还有一次 2.45 µs 的 KV cache 写入。要把这三步合起来，需要先看清两件事：哪些行可以同时算，以及 K/V 最终该写到哪里。</p>
+<p>改法是让同一个网格里的不同线程块分别处理 Q 和 K/V。负责 K/V 的线程块已经拿到结果，只要后端能提前给出缓存槽位，就能把值直接写过去。</p>
+<h2 id="Q-和-K-可以一起发出去">Q 和 K 可以一起发出去</h2>
+<p>举一个实际形状。16 个 token，每个有 4 个 Q head，每个 head 宽 192。原先第一批线程块处理 16 × 4 个 Q 行，第二批处理 16 个 K/V 行。Q 和 K 各用自己的归一化权重，对各自的行做 RMSNorm 和旋转位置编码（RoPE）。同一 token 的 Q 无需等 K，K 也无需等 Q。</p>
+<p>把调度网格改成 16 × 5 即可。每个 token 的前四个位置各处理一个 Q head，第五个位置处理 K，并读出 V。Q、K 仍从原来的地址读取，各用各的权重；V 直接取原值。这样原本单独发出的 16 个 K/V 线程块就可以和 Q 一起调度。固定 16 token、4 个 Q head 做微基准，两次调用合计 4.86 µs，合并后 2.54 µs。</p>
+<h2 id="写-cache-前要拿到正确的槽位">写 cache 前要拿到正确的槽位</h2>
+<p>滑窗注意力层（SWA）当时已经能在算完 K/V 时直接写 cache。DSA 仍走另一条路：先写出 K/V，再让 <code>set_kv_buffer</code> 取回这两行，写入保存完整历史的缓存池。K 是刚算出的结果，V 也已经读入，第二次调用可以省掉。难点是千万别照搬滑窗层的目标地址。</p>
+<p>SWA 用滑窗池的槽位，DSA 用 full 池的槽位。在适用配置下，这两个写入动作都是“把一行 192 个 BF16 值写进指定槽”。后端先按层找到缓存池，再把 K 缓冲、V 缓冲和槽位交给同一个计算 kernel。只有这组目标可用，调用方才跳过原来的写入。缓存需要量化缩放、槽位还需翻译，或者 K/V 的行宽、类型、布局不匹配时，都继续走原来的缓存接口。验证时既要比 K/V 的值，也要比它们最终写到的物理行，尤其是无效槽位不能被覆盖。<a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/blob/484bd782ce78e3ea05ad0039642a91840e6cb0ff/python/sglang/kernels/ops/attention/step5/qknorm_rope_triton.py">归一化与写回实现</a> · <a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/blob/484bd782ce78e3ea05ad0039642a91840e6cb0ff/test/ppu/unit/test_step5_qknorm_triton.py">对照测试</a></p>
+<h2 id="共同的输出只计一次">共同的输出只计一次</h2>
+<p>同一组报告中，旧 Q 与 K/V 平均合计 4.98 µs，DSA 层还要加上 2.45 µs 的独立写入。合并后，报告将新 kernel 汇总为平均 3.26 µs，这个数已经包含在适用层写 cache 的成本。</p>
+<p>按每轮调用计数，95 次 Q 和 95 次 K/V 合成 95 次调用，又省掉了 23 次 DSA cache 写入，总共少启动 118 次。用报告里的各项设备时长核算，合计每轮约省 0.22 ms。这种算法只算一次新 kernel，也避免把同一次缓存写入产生的收益重复记到两处。</p>
+<h2 id="跟一个-token-看-Q、K、V-分别读哪一段">跟一个 token 看 Q、K、V 分别读哪一段</h2>
+<p>以 4 个 Q head 为例。投影给每个 token 留一行数据：前 768 个元素是四段 Q，接下来的 192 个是 K，再后面的 192 个是 V，启用 gate 时行末还有 gate。线程块先用 <code>token * ROW_WIDTH</code> 找到行首，第二维的编号决定它负责哪一段：</p>
+<table>
+<thead>
+<tr>
+<th>网格第二维</th>
+<th>相对行首的元素下标</th>
+<th>这个线程块做什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 至 3</td>
+<td>各自从 <code>head * 192</code> 开始</td>
+<td>用 Q 的权重归一化，做 RoPE，写该 head 的 Q</td>
+</tr>
+<tr>
+<td>4</td>
+<td>K 在 768 至 959，V 在 960 至 1151</td>
+<td>用 K 的权重处理 K，原样取 V，按需写 gate 和 cache</td>
+</tr>
+</tbody>
+</table>
+<p>比如处理 head 2 的线程块从下标 384 读，处理 K/V 的线程块从 768 和 960 读。它们写入不同输出，所以无需彼此等待。网格合并以后，Q 和 K 各自的归一化、旋转次数都和原来一样，减少的是提交到设备的调用次数。</p>
+<h3 id="归一化和旋转之间的-BF16-舍入要保留">归一化和旋转之间的 BF16 舍入要保留</h3>
+<p><code>_norm_rope_row</code> 为一行展开 256 个通道位置，真正的 head 宽度是 192，所以加载时用 <code>channel &lt; 192</code> 屏蔽尾部并补零。计算均方时分母仍取 192。下面两行决定了融合后能否保持原有数值：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">inverse_rms = tl.rsqrt(tl.<span class="hljs-built_in">sum</span>(x * x, <span class="hljs-number">0</span>) / <span class="hljs-number">192</span> + EPS)<br>norm = (x * inverse_rms * (w + <span class="hljs-number">1.0</span>)).to(tl.bfloat16).to(tl.float32)<br></code></pre></td></tr></table></figure>
+<p>权重是零中心表示，所以乘的是 <code>w + 1</code>。先转 BF16，再转回 FP32，是为了让 RoPE 读到与原来两步计算相同的输入。设旋转的半宽为 RD，通道 0 和 RD 配成一对：前者得到 <code>a*cos - b*sin</code>，后者得到 <code>b*cos + a*sin</code>。从 <code>2*RD</code> 到 191 的尾部只保留归一化值。V 跳过这两步，直接保留投影值。</p>
+<h3 id="cache-的行号可能和-token-的行号不同">cache 的行号可能和 token 的行号不同</h3>
+<p>假设本批第 2 个 token 的目标槽位是 37，普通 K 输出应写到第 2 个 token 对应的行，cache 却必须写到第 37 行。融合后的代码在 K/V 线程块里同时持有 <code>k_out</code> 和 <code>v_raw</code>，可以沿用同一份值做这次分散写入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> STORE_CACHE:<br>    loc = tl.load(LOC + token).to(tl.int64)<br>    <span class="hljs-keyword">if</span> loc &gt;= <span class="hljs-number">0</span>:<br>        tl.store(KCACHE + loc * <span class="hljs-number">192</span> + channel, k_out, mask=mask)<br>        tl.store(VCACHE + loc * <span class="hljs-number">192</span> + channel, v_raw, mask=mask)<br></code></pre></td></tr></table></figure>
+<p>这里的乘数 192 有明确前提：后端交给 kernel 的缓存必须能按连续的 192 个 BF16 元素看成一行，每个槽位对应一个 K head 和一个 V head。SWA 和 DSA 各自提供池和槽位；需要额外缩放或位置尚未转换时，调用方沿用原来的缓存写入。对 <code>loc &lt; 0</code> 的行仍可计算正常的 K/V 输出，但绝不能碰缓存。测试这条路径时，给不同 token 分配不连续的槽位，比只用 <code>loc = token</code> 更容易发现行号用错的问题。</p>
+<h2 id="长-prefill：一次启动之后，还有多少个线程块？">长 prefill：一次启动之后，还有多少个线程块？</h2>
+<p>前面的 16 × 5 网格适合解释一次 decode。把它直接搬到 32768-token prefill，每卡 4 个 Q head，就会发出 <code>32768 × (4 + 1) = 163840</code> 个 Triton program，每个只处理一行。后来的实现仍把 Q 与 K/V 放在同一次启动里，但每个 program 处理 16 行。一维网格前半段负责 Q，后半段负责 K/V、gate 和 cache：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">q_programs = triton.cdiv(tokens * heads, <span class="hljs-number">16</span>)<br>kv_programs = triton.cdiv(tokens, <span class="hljs-number">16</span>)<br></code></pre></td></tr></table></figure>
+<p>代入上面的形状，Q 用 8192 个 program，K/V 用 2048 个，合计 10240 个。每个 Q program 拿连续的 16 个行号，用 <code>token = row // heads</code>、<code>head = row % heads</code> 找回各行输入。每行又按旋转的两半和尾部拆成三段读取。例如半宽 64 时，通道 0-63 与 64-127 天然成对，128-191 只需归一化。两半直接计算 <code>n1*cos - n2*sin</code> 与 <code>n2*cos + n1*sin</code>，省去了原先为配对做的 <code>tl.gather</code>。<a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/blob/60af7b98c274f051c9aa1c46dc8c39955cf3ce62/python/sglang/kernels/ops/attention/step5/qknorm_rope_triton.py">行块版归一化与 RoPE</a></p>
+<table>
+<thead>
+<tr>
+<th>ZW810E，32768 token，4 个 Q head，开启 gate 和缓存写入</th>
+<th style="text-align:right">原网格</th>
+<th style="text-align:right">每块 16 行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>同一次 acu 采集，两个实例</td>
+<td style="text-align:right">249.79 / 250.20 µs</td>
+<td style="text-align:right">84.77 / 85.05 µs</td>
+</tr>
+<tr>
+<td>冷缓存 graph 重放，11 次取最小值</td>
+<td style="text-align:right">260.1 µs</td>
+<td style="text-align:right">108.1 µs</td>
+</tr>
+</tbody>
+</table>
+<p>第一对实例的 DRAM 流量从 132.98 MiB 变到 130.88 MiB，传输量接近，耗时相差约 2.95 倍。数值上仍保留 RoPE 前的 BF16 舍入，但分段累加平方和改变了加法顺序：该样本中 Q 有 70 个元素不同，K 与 K cache 各有 24 个，相差 1-2 ULP；V、V cache 和 gate 逐位相同。缩到 512 token 后，冷缓存略快、热缓存略慢，原实验没有观察到稳定的加速。</p>
+<h2 id="对应提交">对应提交</h2>
+<table>
+<thead>
+<tr>
+<th>文中改动与代码入口</th>
+<th>原始提交</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>先在 PPU 启用融合 QK-norm/RoPE 和 SWA 写缓存，为后续 full 池写入提供已有实现。</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/72dafedd9cb5f92050dec3509172a3d65ef4fbf7">72dafedd9c</a></td>
+</tr>
+<tr>
+<td>将 Q 和 K/V 合入同一 <code>_qknorm_rope</code> 网格，新增 <code>full_kv_write_target</code>，让符合条件的 DSA 层直接写 full 池。文中的 118 次来自这两处。</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/484bd782ce78e3ea05ad0039642a91840e6cb0ff">484bd782ce</a></td>
+</tr>
+<tr>
+<td>后续调整每个线程块处理的 token 行数。文中的 16 × 5 网格取自上一行提交。</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/60af7b98c274f051c9aa1c46dc8c39955cf3ce62">60af7b98c2</a></td>
+</tr>
+</tbody>
+</table>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/cuda/" class="print-no-link">#cuda</a>
+      
+        <a href="/tags/sglang/" class="print-no-link">#sglang</a>
+      
+        <a href="/tags/attention/" class="print-no-link">#attention</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Step-5 的 Q/K 归一化与 RoPE：一次调度完成，顺手写入 KV cache</div>
+      <div>https://dingfen.github.io/2026/11/22/2026-11-22-Step5-ppu05/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年11月22日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2026年11月22日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/11/22/2026-11-22-Step5-ppu04/" title="Step-5 的 MoE 路由：选出 8 个专家，再找到它们在哪张卡上">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Step-5 的 MoE 路由：选出 8 个专家，再找到它们在哪张卡上</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/11/22/2026-11-22-Step5-ppu06/" title="Step-5 的 prefill 区域并集：16 行 query 选中同一区域时存几次">
+                        <span class="hidden-mobile">Step-5 的 prefill 区域并集：16 行 query 选中同一区域时存几次</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

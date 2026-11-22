@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 930" width="860" height="930" role="img" aria-labelledby="step5-dsa-title">
+  <title id="step5-dsa-title">Step5 DSA 层前向：QKV 投影与 indexer 双路并行，经 R8 压缩、paged 打分与 top-512 选择后，在 packed region 上执行稀疏注意力</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6B7280"/>
+    </marker>
+    <style>
+      .box   { fill:#EBF3FB; stroke:#5B8DB8; stroke-width:1.5; }
+      .iobox { fill:#EEF1F5; stroke:#5A6B7B; stroke-width:1.5; }
+      .kbox  { fill:#FDF2E4; stroke:#C08A46; stroke-width:1.5; }
+      .t  { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#1F2937; font-size:14px; font-weight:600; text-anchor:middle; }
+      .ts { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#6B7280; font-size:12px; text-anchor:middle; }
+      .tn { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#8A6D3B; font-size:11.5px; text-anchor:middle; }
+      .ln  { stroke:#6B7280; stroke-width:1.5; fill:none; marker-end:url(#arrow); }
+      .lnn { stroke:#6B7280; stroke-width:1.5; fill:none; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="860" height="930" fill="#FFFFFF"/>
+
+  <!-- 输入 -->
+  <rect class="iobox" x="280" y="26" width="300" height="46" rx="10"/>
+  <text class="t" x="430" y="55">hidden_states [T, 4096] bf16</text>
+
+  <!-- 分叉：主链 + indexer 旁路 -->
+  <path class="lnn" d="M 430 72 V 90"/>
+  <path class="lnn" d="M 230 90 H 630"/>
+  <path class="ln" d="M 230 90 V 102"/>
+  <path class="ln" d="M 630 90 V 102"/>
+  <text class="ts" x="530" y="84">decode / verify 走 alt stream</text>
+
+  <!-- 右列：indexer -->
+  <rect class="box" x="480" y="104" width="300" height="66" rx="10"/>
+  <text class="t" x="630" y="130">Step5Indexer 四投影</text>
+  <text class="ts" x="630" y="150">q_i / k_i / z_i [T,4,256] · w [T,4]</text>
+
+  <path class="ln" d="M 630 170 V 190"/>
+  <rect class="box" x="480" y="192" width="300" height="66" rx="10"/>
+  <text class="t" x="630" y="218">step5_indexer_norm_rope</text>
+  <text class="ts" x="630" y="238">RMSNorm(q) · LayerNorm(k) · RoPE 32 维</text>
+
+  <path class="ln" d="M 630 258 V 278"/>
+  <rect class="box" x="480" y="280" width="300" height="66" rx="10"/>
+  <text class="t" x="630" y="306">compress_index_keys（CSA R8）</text>
+  <text class="ts" x="630" y="326">8 token 按 z 加权 → E4M3 page key</text>
+
+  <path class="ln" d="M 630 346 V 366"/>
+  <rect class="box" x="480" y="368" width="300" height="66" rx="10"/>
+  <text class="t" x="630" y="394">step5_paged_scores</text>
+  <text class="ts" x="630" y="414">FP32 [T, ceil(pos/8)] · paged cache 上打分</text>
+
+  <path class="ln" d="M 630 434 V 454"/>
+  <rect class="box" x="480" y="456" width="300" height="66" rx="10"/>
+  <text class="t" x="630" y="482">top-512 + 当前 region</text>
+  <text class="ts" x="630" y="502">packed int64 [T, 513]</text>
+
+  <!-- 左列：主链 -->
+  <rect class="box" x="80" y="104" width="300" height="66" rx="10"/>
+  <text class="t" x="230" y="130">qkv_proj（+ g_proj）</text>
+  <text class="ts" x="230" y="150">SM103：qkv_gate_weight 一次 GEMM</text>
+
+  <path class="ln" d="M 230 170 V 190"/>
+  <rect class="box" x="80" y="192" width="300" height="66" rx="10"/>
+  <text class="t" x="230" y="218">step5_qknorm_rope(_gated)</text>
+  <text class="ts" x="230" y="238">GemmaRMSNorm(fp32) + RoPE 64 / 192 维</text>
+
+  <path class="ln" d="M 230 258 V 278"/>
+  <rect class="iobox" x="80" y="280" width="300" height="242" rx="10"/>
+  <text class="t" x="230" y="320">Q [T, H, 192] bf16</text>
+  <text class="t" x="230" y="348">K / V [T, 1, 192] → paged</text>
+  <text class="t" x="230" y="376">gate [T, H] bf16</text>
+  <text class="ts" x="230" y="414">indexer 在 alt stream 并行推进</text>
+  <text class="ts" x="230" y="436">此处等选择结果才开始算</text>
+
+  <!-- 汇合 -->
+  <path class="lnn" d="M 230 522 V 552"/>
+  <path class="lnn" d="M 630 522 V 552"/>
+  <path class="lnn" d="M 230 552 H 630"/>
+  <path class="ln" d="M 430 552 V 568"/>
+
+  <!-- 稀疏注意力 -->
+  <rect class="kbox" x="110" y="572" width="640" height="84" rx="10"/>
+  <text class="t" x="430" y="598">sparse attention：只在选中的 region 上算</text>
+  <text class="ts" x="430" y="620">prefill：组内 region 取 union → per-query mask 精筛</text>
+  <text class="ts" x="430" y="640">decode：1 / 2 / 4 路 split → LSE merge</text>
+
+  <!-- head gate -->
+  <path class="ln" d="M 430 656 V 680"/>
+  <rect class="box" x="200" y="684" width="460" height="66" rx="10"/>
+  <text class="t" x="430" y="710">head gate：fused_sigmoid_mul</text>
+  <text class="ts" x="430" y="730">sigmoid(gate) ⊙ attn_out（round_gate=True）</text>
+
+  <!-- o_proj -->
+  <path class="ln" d="M 430 750 V 774"/>
+  <rect class="box" x="200" y="776" width="460" height="66" rx="10"/>
+  <text class="t" x="430" y="802">o_proj（RowParallelLinear）</text>
+  <text class="ts" x="430" y="822">H · 192 → 4096 · TP all-reduce</text>
+
+  <!-- 输出 -->
+  <path class="ln" d="M 430 842 V 864"/>
+  <rect class="iobox" x="280" y="868" width="300" height="46" rx="10"/>
+  <text class="t" x="430" y="897">output [T, 4096] bf16 → 残差</text>
+</svg>

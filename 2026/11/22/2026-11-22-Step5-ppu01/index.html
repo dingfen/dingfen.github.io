@@ -1,0 +1,947 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Bill Ding">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="从稀疏打分、区域选择、MoE 路由、Q&#x2F;K 融合、区域并集到投影合并，逐项拆解 Step-5 在 PPU 上的推理优化： 服务实测输入吞吐 718 到 924 tok&#x2F;s，一轮 decode 少启动 229 次 kernel，并给出每篇的阅读入口">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Step-5 在 PPU 上的推理优化：总览篇">
+<meta property="og:url" content="https://dingfen.github.io/2026/11/22/2026-11-22-Step5-ppu01/index.html">
+<meta property="og:site_name" content="峰子的乐园">
+<meta property="og:description" content="从稀疏打分、区域选择、MoE 路由、Q&#x2F;K 融合、区域并集到投影合并，逐项拆解 Step-5 在 PPU 上的推理优化： 服务实测输入吞吐 718 到 924 tok&#x2F;s，一轮 decode 少启动 229 次 kernel，并给出每篇的阅读入口">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dingfen.github.io/img/Step5/step5-logo.png">
+<meta property="article:published_time" content="2026-11-22T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-22T12:11:54.465Z">
+<meta property="article:author" content="Bill Ding">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="cuda">
+<meta property="article:tag" content="sglang">
+<meta property="article:tag" content="moe">
+<meta property="article:tag" content="attention">
+<meta property="article:tag" content="sparse-attention">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://dingfen.github.io/img/Step5/step5-logo.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Step-5 在 PPU 上的推理优化：总览篇 - 峰子的乐园</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"dingfen.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"|","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":null,"onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>峰子的乐园</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://static.stepfun.com/static/step-website/assets/cost-chart-DsHOPdKv.jpeg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Step-5 在 PPU 上的推理优化：总览篇"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-11-22 20:30" pubdate>
+          2026年11月22日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Step-5 在 PPU 上的推理优化：总览篇</h1>
+            
+              <p id="updated-time" class="note note-info" style="display: none">
+                
+                  
+                    <!-- compatible with older versions-->
+                    更新于：2026-11-22T20:11:54+08:00
+                  
+                  
+
+                
+              </p>
+            
+            
+              <div class="markdown-body">
+                
+                <h1>Step-5 在 PPU 上的推理优化总览篇</h1>
+<p>如果关心长提示词多久能处理完，先看稀疏打分。在 PPU-ZW810E 的一次 TP8、64K 输入、并发 1 的测试里，优化后输入吞吐从约 718 提到 924 tok/s。如果关心每生成一步花了多少时间，就要沿着打分、选择历史、计算注意力和路由逐项看。这里有些改动每层只省几微秒，却会在一次迭代里重复几十次。</p>
+<h2 id="从哪里读起">从哪里读起</h2>
+<table>
+<thead>
+<tr>
+<th>你在 trace 里看到的现象</th>
+<th>对应文章</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prefill 不断解码同一批索引 key，长上下文 decode 读写分散</td>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu02/">稀疏打分：FP8 点积、跨行复用与连续读写</a></td>
+</tr>
+<tr>
+<td>只有 511 项有效历史，top-k 却扫描十几万列</td>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu03/">区域选择：按行传长度，合并排序和打包中的重复工作</a></td>
+</tr>
+<tr>
+<td>选 8 个专家需要连续归约，分发前还要转换专家编号</td>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu04/">MoE 路由：选专家与本卡编号映射</a></td>
+</tr>
+<tr>
+<td>每层分别处理 Q 和 K，部分层还要重新读取 K/V 写 cache</td>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu05/">注意力输入：合并 Q/K 计算与 KV cache 写入</a></td>
+</tr>
+<tr>
+<td>Prefill 中多行选中相同区域，构建并集时反复更新几个位图字</td>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu06/">区域并集：成员掩码怎样一次写出来</a></td>
+</tr>
+<tr>
+<td>Gate 单独算一次，indexer 对同一份输入又做三次矩阵乘</td>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu07/">投影：哪些权重可以拼在一起算</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="长提示词的服务实测">长提示词的服务实测</h2>
+<p>打分改动的服务对照各跑了三轮。基线输入吞吐为 717.89、717.88、717.63 tok/s，优化后为 919.28、927.11、927.05 tok/s，平均提高 28.8%。三轮的平均请求耗时从约 48.1 秒降到 37.4 秒。作为参照，同一实验中的大形状打分 kernel 从 83.28 ms 降到 5.56 ms。服务还要跑其他层和算子，各 chunk 的有效历史也长短不一，因此不能拿单次打分的 15 倍直接推算服务吞吐。</p>
+<p>另一次 TP16/EP16 的 INT8 测试只替换 MoE top-8。8192 行的单算子快了 2.26 倍，102400 token 的 prefill 实际省下 59 ms，约占原耗时的 0.33%。这两组测试的配置和改动范围各不相同。</p>
+<h2 id="一轮-decode-少了-229-次调用">一轮 decode 少了 229 次调用</h2>
+<p>在 TP16/EP16、batch 4、EAGLE 配置 4 个 draft token 的 graph 采集中，可以逐项核算每轮少了多少次启动。下表按原报告的调用次数和各 kernel 的设备时长归一到一轮；次数描述的是这段 trace。</p>
+<table>
+<thead>
+<tr>
+<th>改动</th>
+<th style="text-align:right">每轮少启动</th>
+<th style="text-align:right">每轮减少的累计设备时间</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>直接用 int32 查本卡专家编号</td>
+<td style="text-align:right">88 次</td>
+<td style="text-align:right">约 723 µs</td>
+</tr>
+<tr>
+<td>Q 与 K/V 一次调度，DSA 在同一次调用写 cache</td>
+<td style="text-align:right">118 次</td>
+<td style="text-align:right">约 220 µs</td>
+</tr>
+<tr>
+<td>选出 region 时直接打包物理位置</td>
+<td style="text-align:right">23 次</td>
+<td style="text-align:right">约 39 µs</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td style="text-align:right"><strong>229 次</strong></td>
+<td style="text-align:right"><strong>约 982 µs</strong></td>
+</tr>
+</tbody>
+</table>
+<p>这些相关调用从每轮 435 次降到 206 次。设备时间可以按 kernel 相加，用户等到下一个 token 的时间还受多条流重叠执行的影响。两份报告的采样窗口也有差别，优化后采到了更多 MTP 验证工作。要回答这四处融合让实际 decode 快了多少，还缺同一负载、同一采样窗口下的服务开关对照。</p>
+<p>原实验还发现 <code>prepare_varlen_num_blocks</code> 在多层间重复出现。不过当时调用的是厂商 FA3 的预编译实现，Python 接口未提供可直接复用这段结果的途径。这项保留为观察，没有计入上表。同样，原稿对 selection 优化后整步时延的推算，也没有作为服务实测列入本文。</p>
+<h2 id="从一轮-trace-找回调用次数">从一轮 trace 找回调用次数</h2>
+<p>以一次专家查表为例。Python 里只写了一句 <code>table[topk_ids]</code>，trace 中却先出现一项转成 int64 的拷贝，再出现一项索引操作。两者都是每轮 88 次。换成直接读取 int32 的查表 kernel 后，每轮只剩 88 次调用。旧报告里同名拷贝实际出现了 90 次，新报告里还剩 2 次；把这 2 次也算成路由开销，就会多算。</p>
+<p>其余几项也可以这样核对。95 次 Q 和 95 次 K/V 合成 95 次，另外省下 23 次单独写 KV 的调用；23 次选择结果打包仍然保留，只是它们顺手完成了后面 23 次地址打包的工作。于是每轮少掉的次数是 <code>88 + (95 + 23) + 23 = 229</code>。保留下来的打包 kernel 从 1.79 µs 增到 2.27 µs，它接过了查页表的工作。单看它会以为改慢了，把省下的 2.18 µs 地址打包也放回来，才能看到这两步的净收益。</p>
+<h2 id="长-prefill-还花时间在哪些地方？">长 prefill 还花时间在哪些地方？</h2>
+<p>看一个 8192-token chunk。单是把每行选中的 region 合成每组的并集，旧实现就在一次 dump 中花了 1042 µs，约占当时 Triton prefill 路径的四分之一。这里还没开始算注意力。另两处开销来自投影：gate 单独发一次矩阵乘，indexer 又对同一份隐状态做三次投影。下面按代码位置列出这几项的进展。</p>
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>原实验能回答什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu06/">Prefill 区域并集</a></td>
+<td>旧路径集中更新少量位图字。按 region 建表、按 query 槽位更新后，当时同一份输入回放的构建加速约 3.6 倍。</td>
+</tr>
+<tr>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu02/">索引 key 打包</a></td>
+<td>ZW810E 的 FP8 测试变体从 340.60 降到 85.16 µs。890P 的生产入口有独立设备门槛，原稿尚无该入口的对照耗时。</td>
+</tr>
+<tr>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu03/">短历史选择</a></td>
+<td>最多 512 个历史区域都能保留。PPU radix 路径直接给出 ID，打分端也能跳过相应工作。</td>
+</tr>
+<tr>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu07/">注意力与 indexer 投影</a></td>
+<td>合并前 gate 约 51 µs/层，indexer 三次投影约 372 µs/层。提交记录明确了调用变化，未给出合并后的同口径净耗时。</td>
+</tr>
+<tr>
+<td><a href="/2026/11/22/2026-11-22-Step5-ppu05/">Q/K 归一化与 RoPE</a></td>
+<td>ZW810E 上，32768 token、每卡 4 个 Q head，同一次 acu 采集从 249.79 降到 84.77 µs。</td>
+</tr>
+</tbody>
+</table>
+<p>这些结果来自不同形状、平台和采集窗口。要知道五项合在一起让首 token 提前了多少，还需要同一服务配置的端到端对照。</p>
+<h2 id="对应提交">对应提交</h2>
+<p>下表链接到 <code>support-step5-preview</code> 上的原始提交。各篇的源码链接也固定在对应的实验版本。</p>
+<table>
+<thead>
+<tr>
+<th>文中改动与代码入口</th>
+<th>原始提交</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>长提示词打分：FP8 与分组，随后按请求切 span。</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/15176336a95770b01ad07695418e9a3e45e71407">15176336a9</a>、<a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/dfe015ae146d5f5cc56c41d6c7087102cd6e8a10">dfe015ae14</a></td>
+</tr>
+<tr>
+<td>长上下文打分的连续读写，以及 selection 按有效长度取 top-k。</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/594b73bb53c0621e9553a1ac89c463b09c236744">594b73bb53</a>、<a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/c98eafce19e672f21ba4c40c2a34d3a65abe5618">c98eafce19</a></td>
+</tr>
+<tr>
+<td>MoE top-8 的 int64 版本及后续双归约版本，原稿的 2.26 倍对应前者。</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/0eef32dd7e2b43b24ba5d913f1471c5890daded7">0eef32dd7e</a>、<a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/8131e7a3e497e922305f507ee18c96cac0c532f6">8131e7a3e4</a></td>
+</tr>
+<tr>
+<td>四处 decode 融合分布在三篇模块文章里，每轮少 229 次启动对应同一个原始提交。</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/t-head/sglang-for-sail/commit/484bd782ce78e3ea05ad0039642a91840e6cb0ff">484bd782ce</a></td>
+</tr>
+</tbody>
+</table>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI/" class="category-chain-item">AI</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/" class="category-chain-item">Parallel Computing</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/AI/Parallel-Computing/cuda/" class="category-chain-item">cuda</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/cuda/" class="print-no-link">#cuda</a>
+      
+        <a href="/tags/sglang/" class="print-no-link">#sglang</a>
+      
+        <a href="/tags/moe/" class="print-no-link">#moe</a>
+      
+        <a href="/tags/attention/" class="print-no-link">#attention</a>
+      
+        <a href="/tags/sparse-attention/" class="print-no-link">#sparse-attention</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Step-5 在 PPU 上的推理优化：总览篇</div>
+      <div>https://dingfen.github.io/2026/11/22/2026-11-22-Step5-ppu01/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Bill Ding</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年11月22日</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>更新于</div>
+          <div>2026年11月22日</div>
+        </div>
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="SA - 相同方式共享">
+                    <i class="iconfont icon-sa"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/11/22/2026-11-22-Step5-ppu02/" title="Step-5 稀疏注意力打分：让相邻 query 共用一批 key">
+                        <span class="hidden-mobile">Step-5 稀疏注意力打分：让相邻 query 共用一批 key</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  var relativeDate = function() {
+    var updatedTime = document.getElementById('updated-time');
+    if (updatedTime) {
+      var text = updatedTime.textContent;
+      var reg = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})/;
+      var matchs = text.match(reg);
+      if (matchs) {
+        var relativeTime = moment(matchs[0]).fromNow();
+        updatedTime.textContent = text.replace(reg, relativeTime);
+      }
+      updatedTime.style.display = '';
+    }
+  };
+  Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/moment.min.js', function() {
+    if (!'zh-cn'.startsWith('en')) {
+      Fluid.utils.createScript('https://lib.baomitu.com/moment.js/2.29.4/locale/zh-cn.min.js', function() {
+        relativeDate();
+      });
+    } else {
+      relativeDate();
+    }
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.min.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<!-- hexo injector body_end start -->
+  <link rel="stylesheet" crossorigin href="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.css" />
+  <script type="module" crossorigin src="https://g.alicdn.com/aliyun-documentation/web-chatbot-ui/0.0.11/index.js"></script>
+  <script>
+    window.CHATBOT_CONFIG = {
+      endpoint: "https://web-chatbot-syz-knthhrjfeq.cn-hangzhou.fcapp.run/chat", // 可以替换为 https://{your-fc-http-trigger-domain}/chat
+      displayByDefault: false, // 默认不显示 AI 助手对话框
+      aiChatOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+        conversationOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#conversation-options
+          conversationStarters: [
+            {prompt: '请问你是谁，能为我做什么？'},
+            {prompt: '请介绍一下博客的主人'}
+          ],
+          layout: 'bubbles'
+        },
+        displayOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#display-options
+          height: 550,
+          // width: 400,
+        },
+        personaOptions: { // 自定义取值参考：https://docs.nlkit.com/nlux/reference/ui/ai-chat#chat-personas
+          assistant: {
+            name: '你好，我是本网站的 AI 助手',
+            // AI 助手的图标
+            avatar: 'https://img.alicdn.com/imgextra/i2/O1CN01Pda9nq1YDV0mnZ31H_!!6000000003025-54-tps-120-120.apng',
+            tagline: '输入您的问题，我会尽力帮你解答！',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      /* webchat 工具栏的颜色 */
+      --webchat-toolbar-background-color: #1464E4;
+      /* webchat 工具栏文字和按钮的颜色 */
+      --webchat-toolbar-text-color: #FFF;
+    }
+    /* webchat 对话框如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整*/
+    .webchat-container {
+      z-index: 100;
+      bottom: 10px;
+      right: 10px;
+    }
+    /* webchat 的唤起按钮如果被遮挡，可以尝试通过 z-index、bottom、right 等设置 来调整。也可以通过 CSS 进一步定制唤起按钮的形状、大小等。 */
+    .webchat-bubble-tip {
+      z-index: 99;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
+  <!-- hexo injector body_end end --></body>
+</html>

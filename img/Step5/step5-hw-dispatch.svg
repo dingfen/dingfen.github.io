@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 566" width="900" height="566" role="img" aria-labelledby="step5-hw-title">
+  <title id="step5-hw-title">Step5 在 SGLang 中的硬件分派：SM90、SM100 与 SM103 各自走到的 indexer 打分、top-k 选择、稀疏 prefill/decode、KV cache 与 MoE 实现</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6B7280"/>
+    </marker>
+    <style>
+      .box   { fill:#EBF3FB; stroke:#5B8DB8; stroke-width:1.5; }
+      .hbox  { fill:#DCE8F5; stroke:#5B8DB8; stroke-width:1.5; }
+      .gbox  { fill:#E6F6EC; stroke:#61A983; stroke-width:1.5; }
+      .dbox  { fill:#EEF1F5; stroke:#5A6B7B; stroke-width:1.5; }
+      .t  { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#1F2937; font-size:13px; font-weight:600; text-anchor:middle; }
+      .th { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#1F2937; font-size:14px; font-weight:700; text-anchor:middle; }
+      .ts { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#6B7280; font-size:11.5px; text-anchor:middle; }
+      .tl { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#4B5563; font-size:12px; font-weight:600; text-anchor:end; }
+      .tsl { font-family: ui-sans-serif,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; fill:#6B7280; font-size:11.5px; text-anchor:start; }
+      .ln  { stroke:#6B7280; stroke-width:1.5; fill:none; marker-end:url(#arrow); }
+      .lnn { stroke:#6B7280; stroke-width:1.5; fill:none; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="566" fill="#FFFFFF"/>
+
+  <!-- 判据 -->
+  <rect class="dbox" x="330" y="24" width="240" height="48" rx="10"/>
+  <text class="t" x="450" y="54">torch.cuda.get_device_capability()</text>
+
+  <path class="lnn" d="M 450 72 V 88"/>
+  <path class="lnn" d="M 278 88 H 766"/>
+  <path class="ln" d="M 278 88 V 102"/>
+  <path class="ln" d="M 522 88 V 102"/>
+  <path class="ln" d="M 766 88 V 102"/>
+
+  <!-- 表头 -->
+  <rect class="hbox" x="160" y="104" width="236" height="56" rx="8"/>
+  <text class="th" x="278" y="127">SM90 · H200</text>
+  <text class="ts" x="278" y="147">capability (9, 0)</text>
+
+  <rect class="hbox" x="404" y="104" width="236" height="56" rx="8"/>
+  <text class="th" x="522" y="127">SM100 · B200</text>
+  <text class="ts" x="522" y="147">capability (10, 0)</text>
+
+  <rect class="hbox" x="648" y="104" width="236" height="56" rx="8"/>
+  <text class="th" x="766" y="127">SM103 · B300</text>
+  <text class="ts" x="766" y="147">capability (10, 3)</text>
+
+  <!-- 行 1：indexer 打分 -->
+  <text class="tl" x="148" y="202">indexer 打分</text>
+  <rect class="box" x="160" y="170" width="236" height="52" rx="8"/>
+  <text class="t" x="278" y="191">Triton kernel</text>
+  <text class="ts" x="278" y="209">group_rows 1 / 4 / 32</text>
+
+  <rect class="box" x="404" y="170" width="236" height="52" rx="8"/>
+  <text class="t" x="522" y="191">CuTe tcgen05</text>
+  <text class="ts" x="522" y="209">4 Q heads / KV · D=256</text>
+
+  <rect class="gbox" x="648" y="170" width="236" height="52" rx="8"/>
+  <text class="t" x="766" y="191">CuTe + 投影融合</text>
+  <text class="ts" x="766" y="209">packed QKZ · Q→E4M3</text>
+
+  <!-- 行 2：top-k -->
+  <text class="tl" x="148" y="262">top-k 选择</text>
+  <rect class="box" x="160" y="230" width="236" height="52" rx="8"/>
+  <text class="t" x="278" y="251">FlashInfer top_k</text>
+  <text class="ts" x="278" y="269">deterministic · Triton pack</text>
+
+  <rect class="box" x="404" y="230" width="236" height="52" rx="8"/>
+  <text class="t" x="522" y="251">CuTe stable top-512</text>
+  <text class="ts" x="522" y="269">tie 保序</text>
+
+  <rect class="box" x="648" y="230" width="236" height="52" rx="8"/>
+  <text class="t" x="766" y="251">CuTe / DeepSelect</text>
+  <text class="ts" x="766" y="269">512 history regions</text>
+
+  <!-- 行 3：prefill -->
+  <text class="tl" x="148" y="322">sparse prefill</text>
+  <rect class="box" x="160" y="290" width="236" height="52" rx="8"/>
+  <text class="t" x="278" y="311">WGMMA union GQA</text>
+  <text class="ts" x="278" y="329">512 threads · block_n 64</text>
+
+  <rect class="box" x="404" y="290" width="236" height="52" rx="8"/>
+  <text class="t" x="522" y="311">sm100_union</text>
+  <text class="ts" x="522" y="329">StepFun 贡献 kernel</text>
+
+  <rect class="box" x="648" y="290" width="236" height="52" rx="8"/>
+  <text class="t" x="766" y="311">sm100_union</text>
+  <text class="ts" x="766" y="329">producer + 双 consumer</text>
+
+  <!-- 行 4：decode -->
+  <text class="tl" x="148" y="382">sparse decode</text>
+  <rect class="box" x="160" y="350" width="236" height="52" rx="8"/>
+  <text class="t" x="278" y="371">WGMMA 64-GQA</text>
+  <text class="ts" x="278" y="389">寄存器累加器</text>
+
+  <rect class="box" x="404" y="350" width="236" height="52" rx="8"/>
+  <text class="t" x="522" y="371">SparseDecodeSm103</text>
+  <text class="ts" x="522" y="389">TMEM 累加器</text>
+
+  <rect class="gbox" x="648" y="350" width="236" height="52" rx="8"/>
+  <text class="t" x="766" y="371">+ head gate epilogue</text>
+  <text class="ts" x="766" y="389">verify 4 row 折叠</text>
+
+  <!-- 行 5：KV cache -->
+  <text class="tl" x="148" y="442">KV cache</text>
+  <rect class="box" x="160" y="410" width="236" height="52" rx="8"/>
+  <text class="t" x="278" y="431">BF16</text>
+  <text class="ts" x="278" y="449">稀疏路径只给 BF16</text>
+
+  <rect class="box" x="404" y="410" width="236" height="52" rx="8"/>
+  <text class="t" x="522" y="431">BF16 / FP8 E4M3</text>
+  <text class="ts" x="522" y="449">仅 full-attention 层</text>
+
+  <rect class="box" x="648" y="410" width="236" height="52" rx="8"/>
+  <text class="t" x="766" y="431">BF16 / FP8 E4M3</text>
+  <text class="ts" x="766" y="449">per-token scale</text>
+
+  <!-- 行 6：MoE -->
+  <text class="tl" x="148" y="502">MoE / 通信</text>
+  <rect class="box" x="160" y="470" width="236" height="52" rx="8"/>
+  <text class="t" x="278" y="491">Triton runner</text>
+  <text class="ts" x="278" y="509">TP8 / EP8</text>
+
+  <rect class="box" x="404" y="470" width="236" height="52" rx="8"/>
+  <text class="t" x="522" y="491">flashinfer_trtllm</text>
+  <text class="ts" x="522" y="509">或 MegaMoE</text>
+
+  <rect class="gbox" x="648" y="470" width="236" height="52" rx="8"/>
+  <text class="t" x="766" y="491">MegaMoE + 边界融合</text>
+  <text class="ts" x="766" y="509">allreduce + residual + RMSNorm</text>
+
+  <!-- 图例 -->
+  <rect class="gbox" x="24" y="536" width="14" height="14" rx="3"/>
+  <text class="tsl" x="46" y="547">绿色：只有 capability (10, 3) 才走到的路径</text>
+</svg>
